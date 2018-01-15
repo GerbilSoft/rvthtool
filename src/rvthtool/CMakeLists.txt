@@ -2,7 +2,12 @@ PROJECT(rvthtool)
 
 # Sources and headers.
 SET(rvthtool_SRCS main.c)
-SET(rvthtool_H)
+SET(rvthtool_H
+	common.h
+	byteorder.h
+	byteswap.h
+	rvth.h
+	)
 
 #########################
 # Build the executable. #
