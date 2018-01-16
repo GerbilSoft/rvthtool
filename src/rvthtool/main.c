@@ -44,6 +44,10 @@ static int print_bank_table(const RvtH *rvth)
 		if (!entry) {
 			printf("Bank %u: Empty\n\n", i+1);
 			continue;
+		} else if (entry->type == RVTH_BankType_Wii_DL_Bank2) {
+			// Bank 2 for DL images.
+			// We don't need to print this.
+			continue;
 		}
 
 		const char *s_type;
@@ -65,6 +69,10 @@ static int print_bank_table(const RvtH *rvth)
 			case RVTH_BankType_Wii_DL:
 				// TODO: Invalid for Bank 8; need to skip the next bank.
 				s_type = "Wii (Dual-Layer)";
+				break;
+			case RVTH_BankType_Wii_DL_Bank2:
+				// NOTE: Should not happen...
+				s_type = "Wii (Dual-Layer) (Bank 2)";
 				break;
 			default:
 				s_type = "Unknown";

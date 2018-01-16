@@ -182,6 +182,13 @@ RvtH *rvth_open(const char *filename)
 		NHCD_BankEntry nhcd_entry;
 		GCN_DiscHeader discHeader;
 
+		if (i > 0 && (rvth_entry-1)->type == RVTH_BankType_Wii_DL) {
+			// Second bank for a dual-layer Wii image.
+			rvth_entry->type = RVTH_BankType_Wii_DL_Bank2;
+			rvth_entry->timestamp = -1;
+			continue;
+		}
+
 		errno = 0;
 		ret = fseeko(f_img, addr, SEEK_SET);
 		if (ret != 0) {
@@ -230,6 +237,7 @@ RvtH *rvth_open(const char *filename)
 				break;
 			case NHCD_BankType_Wii_DL:
 				// Wii (dual-layer)
+				// TODO: Cannot start in Bank 8.
 				rvth_entry->type = RVTH_BankType_Wii_DL;
 				break;
 		}

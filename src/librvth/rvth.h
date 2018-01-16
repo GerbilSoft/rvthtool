@@ -50,11 +50,12 @@ typedef struct RvtH_BankEntry {
 
 // RVT-H bank types.
 typedef enum {
-	RVTH_BankType_Empty	= 0,	// Magic is 0.
-	RVTH_BankType_Unknown	= 1,	// Unknown magic.
-	RVTH_BankType_GCN	= 2,
-	RVTH_BankType_Wii_SL	= 3,
-	RVTH_BankType_Wii_DL	= 4,
+	RVTH_BankType_Empty		= 0,	// Magic is 0.
+	RVTH_BankType_Unknown		= 1,	// Unknown magic.
+	RVTH_BankType_GCN		= 2,
+	RVTH_BankType_Wii_SL		= 3,
+	RVTH_BankType_Wii_DL		= 4,
+	RVTH_BankType_Wii_DL_Bank2	= 5,	// Bank 2 for DL images.
 
 	RVTH_BankType_MAX
 } RvtH_BankType_e;
