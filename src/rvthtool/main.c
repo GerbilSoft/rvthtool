@@ -21,13 +21,18 @@
 #include "config.version.h"
 
 #include <errno.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "librvth/byteswap.h"
 #include "librvth/rvth.h"
+
+#ifdef _MSC_VER
+# define CDECL __cdecl
+#else
+# define CDECL
+#endif
 
 /**
  * Print an RVT-H Bank Table.
@@ -37,9 +42,12 @@
 static int print_bank_table(const RvtH *rvth)
 {
 	struct tm timestamp;
+	unsigned int i;
 
 	// Print the entries.
-	for (unsigned int i = 0; i < RVTH_BANK_COUNT; i++) {
+	for (i = 0; i < RVTH_BANK_COUNT; i++) {
+		const char *s_type;
+
 		const RvtH_BankEntry *const entry = rvth_get_BankEntry(rvth, i);
 		if (!entry) {
 			printf("Bank %u: Empty\n\n", i+1);
@@ -50,7 +58,6 @@ static int print_bank_table(const RvtH *rvth)
 			continue;
 		}
 
-		const char *s_type;
 		switch (entry->type) {
 			case RVTH_BankType_Empty:
 				// NOTE: Should not happen...
@@ -132,8 +139,10 @@ static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
 	return true;
 }
 
-int main(int argc, char *argv[])
+int CDECL main(int argc, char *argv[])
 {
+	RvtH *rvth;
+
 	((void)argc);
 	((void)argv);
 
@@ -148,7 +157,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Open the disk image.
-	RvtH *rvth = rvth_open(argv[1]);
+	rvth = rvth_open(argv[1]);
 	if (!rvth) {
 		fprintf(stderr, "*** ERROR opening '%s': %s\n", argv[1], strerror(errno));
 		return EXIT_FAILURE;

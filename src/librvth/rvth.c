@@ -62,6 +62,7 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 	unsigned int ymd = 0;
 	unsigned int hms = 0;
 	unsigned int i;
+	struct tm ymdtime;
 
 	// Convert the date to an unsigned integer.
 	for (i = 0; i < 8; i++) {
@@ -102,8 +103,6 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 	// NOTE: struct tm has some oddities:
 	// - tm_year: year - 1900
 	// - tm_mon: 0 == January
-	struct tm ymdtime;
-
 	ymdtime.tm_year = (ymd / 10000) - 1900;
 	ymdtime.tm_mon  = ((ymd / 100) % 100) - 1;
 	ymdtime.tm_mday = ymd % 100;
