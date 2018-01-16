@@ -116,6 +116,22 @@ static int print_bank_table(const RvtH *rvth)
 	return 0;
 }
 
+/**
+ * RVT-H progress callback.
+ * @param lba_processed LBAs processed.
+ * @param lba_total LBAs total.
+ * @return True to continue; false to abort.
+ */
+static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
+{
+	#define MEGABYTE (1048576 / RVTH_BLOCK_SIZE)
+	printf("\r%4u MB / %4u MB processed...",
+		lba_processed / MEGABYTE,
+		lba_total / MEGABYTE);
+	fflush(stdout);
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	((void)argc);
@@ -124,8 +140,10 @@ int main(int argc, char *argv[])
 	printf("RVT-H Tool v" VERSION_STRING "\n"
 		"Copyright (c) 2018 by David Korth.\n\n");
 
-	if (argc != 2) {
-		printf("Syntax: %s diskimage.img\n", argv[0]);
+	if (argc != 2 && argc != 3) {
+		printf("Syntax: %s diskimage.img [bank]\n"
+			"If a bank number (1-8) is specified, that image will be extracted into BankX.gcm."
+			, argv[0]);
 		return EXIT_FAILURE;
 	}
 
@@ -139,7 +157,31 @@ int main(int argc, char *argv[])
 	// Print the bank table.
 	printf("RVT-H Bank Table:\n\n");
 	print_bank_table(rvth);
-	rvth_close(rvth);
 
+	if (argc == 3) {
+		// Validate the bank number.
+		char gcm_filename[16];
+		char *endptr;
+		int ret;
+
+		unsigned int bank = (unsigned int)strtoul(argv[2], &endptr, 10) - 1;
+		if (*endptr != 0 || bank > RVTH_BANK_COUNT) {
+			fprintf(stderr, "*** ERROR: Invalid bank number '%s'.\n", argv[2]);
+			return EXIT_FAILURE;
+		}
+
+		printf("Extracting Bank %u into Bank%u.gcm...\n", bank+1, bank+1);
+		snprintf(gcm_filename, sizeof(gcm_filename), "Bank%u.gcm", bank+1);
+		ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
+		printf("\n");
+		if (ret == 0) {
+			printf("Bank extracted to '%s' successfully.\n\n", gcm_filename);
+		} else {
+			// TODO: Delete the gcm file?
+			printf("*** ERROR: rvth_extract() failed: %s\n\n", strerror(-ret));
+		}
+	}
+
+	rvth_close(rvth);
 	return EXIT_SUCCESS;
 }

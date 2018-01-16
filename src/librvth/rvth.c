@@ -139,6 +139,7 @@ RvtH *rvth_open(const char *filename)
 	size_t size;
 
 	// Open the disk image.
+	// TODO: Unicode filename support on Windows.
 	f_img = fopen(filename, "rb");
 	if (!f_img) {
 		// Could not open the file.
@@ -352,8 +353,7 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return NULL;
-	}
-	if (bank >= ARRAY_SIZE(rvth->entries)) {
+	} else if (bank >= ARRAY_SIZE(rvth->entries)) {
 		errno = ERANGE;
 		return NULL;
 	}
@@ -364,4 +364,88 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank)
 	}
 
 	return &rvth->entries[bank];
+}
+
+/**
+ * Extract a disc image from the RVT-H disk image.
+ * @param rvth		[in] RVT-H disk image.
+ * @param bank		[in] Bank number. (0-7)
+ * @param filename	[in] Destination filename.
+ * @param callback	[in,opt] Progress callback.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH_Progress_Callback callback)
+{
+	// TODO: Windows file I/O for sparse file handling.
+	FILE *f_extract;
+	const RvtH_BankEntry *entry;
+	uint8_t *buf;
+	unsigned int lba_count, lba_progress;
+	int ret;
+
+	if (!rvth || !filename || filename[0] == 0) {
+		errno = EINVAL;
+		return -EINVAL;
+	} else if (bank >= ARRAY_SIZE(rvth->entries)) {
+		errno = ERANGE;
+		return -ERANGE;
+	}
+
+	// Seek to the start of the disc image in the RVT-H.
+	entry = &rvth->entries[bank];
+	errno = 0;
+	ret = fseeko(rvth->f_img, (int64_t)entry->lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		return -errno;
+	}
+
+	// Process 1 MB at a time.
+	#define BUF_SIZE 1048576
+	#define LBA_COUNT_BUF (BUF_SIZE / NHCD_BLOCK_SIZE)
+	errno = 0;
+	buf = malloc(BUF_SIZE);
+	if (!buf) {
+		// Error allocating memory.
+		return -errno;
+	}
+
+	// TODO: Unicode filename support on Windows.
+	errno = 0;
+	f_extract = fopen(filename, "wb");
+	if (!f_extract) {
+		// Error opening the file.
+		int err = errno;
+		free(buf);
+		errno = err;
+		return -err;
+	}
+
+
+	lba_progress = 0;
+	for (lba_count = entry->lba_len; lba_count >= LBA_COUNT_BUF;
+	     lba_count -= LBA_COUNT_BUF)
+	{
+		// TODO: Error handling.
+		// TODO: Sparse file handling.
+		fread(buf, 1, BUF_SIZE, rvth->f_img);
+		fwrite(buf, 1, BUF_SIZE, f_extract);
+
+		if (callback) {
+			lba_progress += LBA_COUNT_BUF;
+			callback(lba_progress, entry->lba_len);
+		}
+	}
+
+	// Process any remaining LBAs.
+	fread(buf, 1, lba_count * NHCD_BLOCK_SIZE, rvth->f_img);
+	fwrite(buf, 1, lba_count * NHCD_BLOCK_SIZE, f_extract);
+	if (callback) {
+		callback(entry->lba_len, entry->lba_len);
+	}
+
+	// Finished extracting the disc image.
+	fclose(f_extract);
+	free(buf);
+	return 0;
 }

@@ -93,6 +93,24 @@ void rvth_close(RvtH *rvth);
  */
 const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank);
 
+/**
+ * RVT-H progress callback.
+ * @param lba_processed LBAs processed.
+ * @param lba_total LBAs total.
+ * @return True to continue; false to abort.
+ */
+typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_total);
+
+/**
+ * Extract a disc image from the RVT-H disk image.
+ * @param rvth		[in] RVT-H disk image.
+ * @param bank		[in] Bank number. (0-7)
+ * @param filename	[in] Destination filename.
+ * @param callback	[in,opt] Progress callback.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH_Progress_Callback callback);
+
 #ifdef __cplusplus
 }
 #endif
