@@ -437,10 +437,12 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 	}
 
 	// Process any remaining LBAs.
-	fread(buf, 1, lba_count * NHCD_BLOCK_SIZE, rvth->f_img);
-	fwrite(buf, 1, lba_count * NHCD_BLOCK_SIZE, f_extract);
-	if (callback) {
-		callback(entry->lba_len, entry->lba_len);
+	if (lba_count > 0) {
+		fread(buf, 1, lba_count * NHCD_BLOCK_SIZE, rvth->f_img);
+		fwrite(buf, 1, lba_count * NHCD_BLOCK_SIZE, f_extract);
+		if (callback) {
+			callback(entry->lba_len, entry->lba_len);
+		}
 	}
 
 	// Finished extracting the disc image.
