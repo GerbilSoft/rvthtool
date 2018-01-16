@@ -9,6 +9,7 @@ SET(librvth_H
 	byteswap.h
 	nhcd_structs.h
 	gcn_structs.h
+	rvth.h
 	)
 
 ######################
