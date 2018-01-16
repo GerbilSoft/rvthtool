@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool                                                              *
+ * RVT-H Tool (librvth)                                                    *
  * common.h: Common types and macros.                                      *
  *                                                                         *
  * Copyright (c) 2016-2018 by David Korth.                                 *
@@ -19,8 +19,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.           *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RVTHTOOL_COMMON_H__
-#define __RVTHTOOL_RVTHTOOL_COMMON_H__
+#ifndef __RVTHTOOL_LIBRVTH_COMMON_H__
+#define __RVTHTOOL_LIBRVTH_COMMON_H__
 
 /**
  * Number of elements in an array.
@@ -113,4 +113,4 @@
  */
 #define ASSERT_ALIGNMENT(a, ptr)	assert(reinterpret_cast<uintptr_t>(ptr) % 16 == 0);
 
-#endif /* __RVTHTOOL_RVTHTOOL_COMMON_H__ */
+#endif /* __RVTHTOOL_LIBRVTH_COMMON_H__ */

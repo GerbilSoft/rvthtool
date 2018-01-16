@@ -2,12 +2,7 @@ PROJECT(rvthtool)
 
 # Sources and headers.
 SET(rvthtool_SRCS main.c)
-SET(rvthtool_H
-	common.h
-	byteorder.h
-	byteswap.h
-	rvth.h
-	)
+SET(rvthtool_H)
 
 #########################
 # Build the executable. #
@@ -41,6 +36,8 @@ TARGET_INCLUDE_DIRECTORIES(rvthtool
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>
 		$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
 	)
+
+TARGET_LINK_LIBRARIES(rvthtool rvth)
 
 # CMake-3.7.2 doesn't add include paths to windres.
 IF(MINGW)

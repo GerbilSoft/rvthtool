@@ -1,8 +1,8 @@
 /***************************************************************************
- * RVT-H Tool                                                              *
- * rvth.h: RVT-H data structures.                                          *
+ * RVT-H Tool (librvth)                                                    *
+ * rvth_structs.h: RVT-H data structures.                                  *
  *                                                                         *
- * Copyright (c) 2008-2018 by David Korth.                                 *
+ * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -20,8 +20,8 @@
 
 // FIXME: ASSERT_STRUCT() doesn't work in C99.
 
-#ifndef __RVTHTOOL_RVTHTOOL_RVTH_H__
-#define __RVTHTOOL_RVTHTOOL_RVTH_H__
+#ifndef __RVTHTOOL_LIBRVTH_RVTH_STRUCTS_H__
+#define __RVTHTOOL_LIBRVTH_RVTH_STRUCTS_H__
 
 #include <stdint.h>
 #include "common.h"
@@ -96,4 +96,4 @@ typedef struct _RVTH_BankTable {
 }
 #endif
 
-#endif /* __RVTHTOOL_RVTHTOOL_RVTH_H__ */
+#endif /* __RVTHTOOL_LIBRVTH_RVTH_STRUCTS_H__ */

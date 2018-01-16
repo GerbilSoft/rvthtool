@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "byteswap.h"
-#include "rvth.h"
+#include "rvth_structs.h"
 #include "gcn_structs.h"
 
 /**
@@ -91,7 +91,7 @@ static int print_bank_table(const RVTH_BankTable *tbl, FILE *f_img)
 		if (lba_start == 0) {
 			// No LBA start address.
 			// Use the default LBA start and length.
-			lba_start = ((RVTH_BANK_1_START + (RVTH_BANK_SIZE * i)) / RVTH_BLOCK_SIZE);
+			lba_start = (uint32_t)((RVTH_BANK_1_START + (RVTH_BANK_SIZE * i)) / RVTH_BLOCK_SIZE);
 			lba_len = RVTH_BANK_SIZE / RVTH_BLOCK_SIZE;
 		}
 

@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool                                                              *
+ * RVT-H Tool (librvth)                                                    *
  * gcn_structs.h: Nintendo GameCube and Wii data structures.               *
  *                                                                         *
  * Copyright (c) 2016-2018 by David Korth.                                 *
@@ -20,8 +20,8 @@
 
 // FIXME: ASSERT_STRUCT() doesn't work in C99.
 
-#ifndef __RVTHTOOL_GCN_STRUCTS_H__
-#define __RVTHTOOL_GCN_STRUCTS_H__
+#ifndef __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__
+#define __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__
 
 #include <stdint.h>
 #include "common.h"
@@ -211,4 +211,4 @@ typedef struct PACKED _RVL_RegionSetting {
 }
 #endif
 
-#endif /* __RVTHTOOL_GCN_STRUCTS_H__ */
+#endif /* __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__ */

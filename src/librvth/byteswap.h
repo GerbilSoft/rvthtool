@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool                                                              *
+ * RVT-H Tool (librvth)                                                    *
  * byteswap.h: Byteswapping functions.                                     *
  *                                                                         *
  * Copyright (c) 2008-2018 by David Korth.                                 *
@@ -19,8 +19,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.           *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RVTHTOOL_BYTESWAP_H__
-#define __RVTHTOOL_RVTHTOOL_BYTESWAP_H__
+#ifndef __RVTHTOOL_LIBRVTH_BYTESWAP_H__
+#define __RVTHTOOL_LIBRVTH_BYTESWAP_H__
 
 // C includes.
 #include <stdint.h>
@@ -100,4 +100,4 @@
 	#define cpu_to_le64(x)	__swab64(x)
 #endif
 
-#endif /* __RVTHTOOL_RVTHTOOL_BYTESWAP_H__ */
+#endif /* __RVTHTOOL_LIBRVTH_BYTESWAP_H__ */
