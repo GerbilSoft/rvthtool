@@ -7,7 +7,7 @@ SET(librvth_H
 	common.h
 	byteorder.h
 	byteswap.h
-	rvth_structs.h
+	nhcd_structs.h
 	gcn_structs.h
 	)
 

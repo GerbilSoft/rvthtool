@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "byteswap.h"
-#include "rvth_structs.h"
+#include "nhcd_structs.h"
 #include "gcn_structs.h"
 
 /**
@@ -36,10 +36,10 @@
  * @param f_img	[in,opt] If not NULL, disk image file for loading the disc headers.
  * @return 0 on success; non-zero on error.
  */
-static int print_bank_table(const RVTH_BankTable *tbl, FILE *f_img)
+static int print_bank_table(const NHCD_BankTable *tbl, FILE *f_img)
 {
 	// Verify the bank table header.
-	if (tbl->header.magic != cpu_to_be32(RVTH_BANKTABLE_MAGIC)) {
+	if (tbl->header.magic != cpu_to_be32(NHCD_BANKTABLE_MAGIC)) {
 		fprintf(stderr, "*** ERROR: Bank table is invalid.\n");
 		return 1;
 	}
@@ -48,7 +48,7 @@ static int print_bank_table(const RVTH_BankTable *tbl, FILE *f_img)
 	// TODO: Calculate expected LBAs and compare them to the bank table.
 
 	// Print the entries.
-	const RVTH_BankEntry *entry = tbl->entries;
+	const NHCD_BankEntry *entry = tbl->entries;
 	for (unsigned int i = 0; i < ARRAY_SIZE(tbl->entries); i++, entry++) {
 		const uint32_t type = be32_to_cpu(entry->type);
 		const char *s_type;
@@ -57,13 +57,13 @@ static int print_bank_table(const RVTH_BankTable *tbl, FILE *f_img)
 				// TODO: Print "Deleted" if a game is still present.
 				s_type = "Empty";
 				break;
-			case RVTH_BankType_GCN:
+			case NHCD_BankType_GCN:
 				s_type = "GameCube";
 				break;
-			case RVTH_BankType_Wii_SL:
+			case NHCD_BankType_Wii_SL:
 				s_type = "Wii (Single-Layer)";
 				break;
-			case RVTH_BankType_Wii_DL:
+			case NHCD_BankType_Wii_DL:
 				// TODO: Invalid for Bank 8; need to skip the next bank.
 				s_type = "Wii (Dual-Layer)";
 				break;
@@ -91,8 +91,8 @@ static int print_bank_table(const RVTH_BankTable *tbl, FILE *f_img)
 		if (lba_start == 0) {
 			// No LBA start address.
 			// Use the default LBA start and length.
-			lba_start = (uint32_t)((RVTH_BANK_1_START + (RVTH_BANK_SIZE * i)) / RVTH_BLOCK_SIZE);
-			lba_len = RVTH_BANK_SIZE / RVTH_BLOCK_SIZE;
+			lba_start = (uint32_t)((NHCD_BANK_1_START + (NHCD_BANK_SIZE * i)) / NHCD_BLOCK_SIZE);
+			lba_len = NHCD_BANK_SIZE / NHCD_BLOCK_SIZE;
 		}
 
 		printf("- LBA start:  0x%08X\n", lba_start);
@@ -103,7 +103,7 @@ static int print_bank_table(const RVTH_BankTable *tbl, FILE *f_img)
 			bool is_wii = false;
 
 			// Read the disc header.
-			int64_t addr = (int64_t)lba_start * RVTH_BLOCK_SIZE;
+			int64_t addr = (int64_t)lba_start * NHCD_BLOCK_SIZE;
 			GCN_DiscHeader discHeader;
 			ret = fseeko(f_img, addr, SEEK_SET);
 			if (ret != 0) {
@@ -171,13 +171,13 @@ int main(int argc, char *argv[])
 	}
 
 	// Read the bank table.
-	RVTH_BankTable tbl;
-	int ret = fseeko(f_img, RVTH_BANKTABLE_ADDRESS, SEEK_SET);
+	NHCD_BankTable tbl;
+	int ret = fseeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
 	if (ret != 0) {
 		fprintf(stderr, "*** ERROR seeking to bank table: %s\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
-	size_t size = fread(&tbl, 1, sizeof(RVTH_BankTable), f_img);
+	size_t size = fread(&tbl, 1, sizeof(NHCD_BankTable), f_img);
 	if (size != sizeof(tbl)) {
 		fprintf(stderr, "*** ERROR reading bank table.\n");
 		return EXIT_FAILURE;
