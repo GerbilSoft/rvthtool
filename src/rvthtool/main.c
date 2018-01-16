@@ -26,124 +26,82 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "byteswap.h"
-#include "nhcd_structs.h"
-#include "gcn_structs.h"
+#include "librvth/byteswap.h"
+#include "librvth/rvth.h"
 
 /**
  * Print an RVT-H Bank Table.
- * @param tbl	[in] RVT-H bank table.
- * @param f_img	[in,opt] If not NULL, disk image file for loading the disc headers.
+ * @param rvth	[in] RVT-H disk image.
  * @return 0 on success; non-zero on error.
  */
-static int print_bank_table(const NHCD_BankTable *tbl, FILE *f_img)
+static int print_bank_table(const RvtH *rvth)
 {
-	// Verify the bank table header.
-	if (tbl->header.magic != cpu_to_be32(NHCD_BANKTABLE_MAGIC)) {
-		fprintf(stderr, "*** ERROR: Bank table is invalid.\n");
-		return 1;
-	}
-
-	// TODO: Figure out the other entries in the bank table.
-	// TODO: Calculate expected LBAs and compare them to the bank table.
+	struct tm timestamp;
 
 	// Print the entries.
-	const NHCD_BankEntry *entry = tbl->entries;
-	for (unsigned int i = 0; i < ARRAY_SIZE(tbl->entries); i++, entry++) {
-		const uint32_t type = be32_to_cpu(entry->type);
+	for (unsigned int i = 0; i < RVTH_BANK_COUNT; i++) {
+		const RvtH_BankEntry *const entry = rvth_get_BankEntry(rvth, i);
+		if (!entry) {
+			printf("Bank %u: Empty\n\n", i+1);
+			continue;
+		}
+
 		const char *s_type;
-		switch (type) {
-			case 0:
-				// TODO: Print "Deleted" if a game is still present.
+		switch (entry->type) {
+			case RVTH_BankType_Empty:
+				// NOTE: Should not happen...
 				s_type = "Empty";
 				break;
-			case NHCD_BankType_GCN:
+			case RVTH_BankType_Unknown:
+				// TODO: Print the bank type magic?
+				s_type = "Unknown";
+				break;
+			case RVTH_BankType_GCN:
 				s_type = "GameCube";
 				break;
-			case NHCD_BankType_Wii_SL:
+			case RVTH_BankType_Wii_SL:
 				s_type = "Wii (Single-Layer)";
 				break;
-			case NHCD_BankType_Wii_DL:
+			case RVTH_BankType_Wii_DL:
 				// TODO: Invalid for Bank 8; need to skip the next bank.
 				s_type = "Wii (Dual-Layer)";
 				break;
 			default:
-				s_type = NULL;
+				s_type = "Unknown";
 				break;
 		}
 
-		if (s_type) {
-			printf("Bank %u: %s\n", i+1, s_type);
-		} else {
-			printf("Bank %u: Unknown (0x%08X)\n", i+1, type);
+		printf("Bank %u: %s%s\n", i+1, s_type, (entry->is_deleted ? " [DELETED]" : ""));
+		if (entry->type <= RVTH_BankType_Unknown ||
+		    entry->type >= RVTH_BankType_MAX)
+		{
+			// Cannot display any information for this type.
+			continue;
 		}
 
-		if (type != 0 && s_type != NULL) {
-			// Print timestamp.
-			printf("- Timestamp: %.4s/%.2s/%.2s %.2s:%.2s:%.2s\n",
-				&entry->mdate[0], &entry->mdate[4], &entry->mdate[6],
-				&entry->mtime[0], &entry->mtime[2], &entry->mtime[4]);
+		// Print the timestamp.
+		// TODO: Reentrant gmtime() if available.
+		if (entry->timestamp != -1) {
+			timestamp = *gmtime(&entry->timestamp);
+			printf("- Timestamp:  %04d/%02d/%02d %02d:%02d:%02d\n",
+				timestamp.tm_year + 1900, timestamp.tm_mon + 1, timestamp.tm_mday,
+				timestamp.tm_hour, timestamp.tm_min, timestamp.tm_sec);
+		} else {
+			printf("- Timestamp:  Unknown\n");
 		}
 
 		// LBAs.
-		uint32_t lba_start = be32_to_cpu(entry->lba_start);
-		uint32_t lba_len = be32_to_cpu(entry->lba_len);
-		if (lba_start == 0) {
-			// No LBA start address.
-			// Use the default LBA start and length.
-			lba_start = (uint32_t)((NHCD_BANK_1_START + (NHCD_BANK_SIZE * i)) / NHCD_BLOCK_SIZE);
-			lba_len = NHCD_BANK_SIZE / NHCD_BLOCK_SIZE;
-		}
+		printf("- LBA start:  0x%08X\n", entry->lba_start);
+		printf("- LBA length: 0x%08X\n", entry->lba_len);
 
-		printf("- LBA start:  0x%08X\n", lba_start);
-		printf("- LBA length: 0x%08X\n", lba_len);
+		// Game ID.
+		printf("- Game ID:    %.6s\n", entry->id6);
 
-		if (f_img) {
-			int ret; size_t size; int i;
-			bool is_wii = false;
+		// Game title.
+		// rvth_open() has already trimmed the title.
+		printf("- Title:      %.64s\n", entry->game_title);
 
-			// Read the disc header.
-			int64_t addr = (int64_t)lba_start * NHCD_BLOCK_SIZE;
-			GCN_DiscHeader discHeader;
-			ret = fseeko(f_img, addr, SEEK_SET);
-			if (ret != 0) {
-				printf("- *** ERROR: Cannot seek to LBA start position: %s\n", strerror(errno));
-				goto skip_disc_info;
-			}
-			size = fread(&discHeader, 1, sizeof(discHeader), f_img);
-			if (size != sizeof(discHeader)) {
-				printf("- *** ERROR: Unable to read the GCN/Wii disc header.\n");
-				goto skip_disc_info;
-			}
-
-			// Check for magic numbers.
-			if (discHeader.magic_wii == cpu_to_be32(WII_MAGIC)) {
-				printf("- Disc type:  Wii\n");
-				is_wii = true;
-			} else if (discHeader.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
-				printf("- Disc type:  GameCube\n");
-				is_wii = false;
-			} else {
-				printf("- Disc type:  Unknown\n");
-				goto skip_disc_info;
-			}
-
-			// Print the game ID.
-			printf("- Game ID:    %.6s\n", discHeader.id6);
-
-			// Print the disc title.
-			// First, trim excess spaces.
-			for (i = ARRAY_SIZE(discHeader.game_title)-1; i >= 0; i--) {
-				if (discHeader.game_title[i] != ' ')
-					break;
-				discHeader.game_title[i] = 0;
-			}
-			printf("- Title:      %.64s\n", discHeader.game_title);
-
-			// TODO: Print encryption status for Wii.
-		}
-
-skip_disc_info:
+		// TODO: Print encryption status for Wii.
 		printf("\n");
 	}
 
@@ -164,29 +122,16 @@ int main(int argc, char *argv[])
 	}
 
 	// Open the disk image.
-	FILE *f_img = fopen(argv[1], "rb");
-	if (!f_img) {
+	RvtH *rvth = rvth_open(argv[1]);
+	if (!rvth) {
 		fprintf(stderr, "*** ERROR opening '%s': %s\n", argv[1], strerror(errno));
-		return EXIT_FAILURE;
-	}
-
-	// Read the bank table.
-	NHCD_BankTable tbl;
-	int ret = fseeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
-	if (ret != 0) {
-		fprintf(stderr, "*** ERROR seeking to bank table: %s\n", strerror(errno));
-		return EXIT_FAILURE;
-	}
-	size_t size = fread(&tbl, 1, sizeof(NHCD_BankTable), f_img);
-	if (size != sizeof(tbl)) {
-		fprintf(stderr, "*** ERROR reading bank table.\n");
 		return EXIT_FAILURE;
 	}
 
 	// Print the bank table.
 	printf("RVT-H Bank Table:\n\n");
-	print_bank_table(&tbl, f_img);
-	fclose(f_img);
+	print_bank_table(rvth);
+	rvth_close(rvth);
 
 	return EXIT_SUCCESS;
 }

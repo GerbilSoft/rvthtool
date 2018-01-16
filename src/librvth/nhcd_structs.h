@@ -39,6 +39,8 @@ extern "C" {
 
 #pragma pack(1)
 
+#define NHCD_BANK_COUNT 8
+
 /**
  * RVT-H bank table header.
  * All fields are in big-endian.
@@ -83,9 +85,11 @@ typedef enum {
  */
 typedef struct _NHCD_BankTable {
 	NHCD_BankTable_Header header;
-	NHCD_BankEntry entries[8];
+	NHCD_BankEntry entries[NHCD_BANK_COUNT];
 } NHCD_BankTable;
 //ASSERT_STRUCT(NHCD_BankTable, 512*9);
+
+/** Byte values. **/
 
 // Bank table address.
 #define NHCD_BANKTABLE_ADDRESS	0x60000000ULL
@@ -93,6 +97,15 @@ typedef struct _NHCD_BankTable {
 #define NHCD_BANK_1_START	0x60001200ULL
 // Maximum bank size.
 #define NHCD_BANK_SIZE		0x118940000ULL
+
+/** LBA values. **/
+
+// Bank table address.
+#define NHCD_BANKTABLE_ADDRESS_LBA	0x300000U
+// Bank 1 starting address.
+#define NHCD_BANK_1_START_LBA		0x300009U
+// Maximum bank size.
+#define NHCD_BANK_SIZE_LBA		0x8C4A00U
 
 // Block size.
 #define NHCD_BLOCK_SIZE		512
