@@ -413,7 +413,7 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		}
 
 		// For valid types, use the listed LBAs if they're non-zero.
-		if (rvth_entry->type >= RVTH_BankType_GCN) {
+		if (type >= RVTH_BankType_GCN) {
 			lba_start = be32_to_cpu(nhcd_entry.lba_start);
 			lba_len = be32_to_cpu(nhcd_entry.lba_len);
 		}
