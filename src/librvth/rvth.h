@@ -21,7 +21,10 @@
 #ifndef __RVTHTOOL_LIBRVTH_RVTH_H__
 #define __RVTHTOOL_LIBRVTH_RVTH_H__
 
+#include "ref_file.h"
+
 #include <stdint.h>
+#include <stdio.h>
 #include <time.h>
 
 // TODO: Move to another file.
@@ -50,14 +53,16 @@ typedef enum {
 struct _RvtH;
 typedef struct _RvtH RvtH;
 
-// RVT-H bank entry.
+// Disc image and RVT-H bank entry definition.
 typedef struct RvtH_BankEntry {
+	RefFile *f_img;		// Disc image file.
+	// TODO: Function pointer table for reading CISO and WBFS.
 	uint32_t lba_start;	// Starting LBA. (512-byte sectors)
 	uint32_t lba_len;	// Length, in 512-byte sectors.
-	time_t timestamp;	// Timestamp. (no timezone information)
-	uint8_t type;		// Bank type. (See RvtH_BankType_e.)
 	char id6[6];		// Game ID. (NOT NULL-terminated!)
 	char game_title[65];	// Game title. (from GCN header)
+	time_t timestamp;	// Timestamp. (no timezone information)
+	uint8_t type;		// Bank type. (See RvtH_BankType_e.)
 	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
 	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)
 	bool is_deleted;	// If true, this entry was deleted.

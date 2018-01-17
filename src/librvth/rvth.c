@@ -39,7 +39,7 @@
 
 // RVT-H main struct.
 struct _RvtH {
-	FILE *f_img;
+	RefFile *f_img;
 	RvtH_BankEntry entries[NHCD_BANK_COUNT];
 };
 
@@ -138,7 +138,7 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 RvtH *rvth_open(const char *filename, int *pErr)
 {
 	NHCD_BankTable_Header header;
-	FILE *f_img;
+	RefFile *f_img;
 	RvtH *rvth;
 	RvtH_BankEntry *rvth_entry;
 	int ret;
@@ -148,7 +148,7 @@ RvtH *rvth_open(const char *filename, int *pErr)
 
 	// Open the disk image.
 	// TODO: Unicode filename support on Windows.
-	f_img = fopen(filename, "rb");
+	f_img = ref_open(filename, "rb");
 	if (!f_img) {
 		// Could not open the file.
 		if (pErr) {
@@ -159,7 +159,7 @@ RvtH *rvth_open(const char *filename, int *pErr)
 
 	// Check the bank table header.
 	errno = 0;
-	ret = fseeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
+	ret = ref_seeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (pErr) {
@@ -168,14 +168,14 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		return NULL;
 	}
 	errno = 0;
-	size = fread(&header, 1, sizeof(header), f_img);
+	size = ref_read(&header, 1, sizeof(header), f_img);
 	if (size != sizeof(header)) {
 		// Short read.
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		fclose(f_img);
+		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -186,7 +186,7 @@ RvtH *rvth_open(const char *filename, int *pErr)
 	// Check the magic number.
 	if (header.magic != be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
 		// Incorrect magic number.
-		fclose(f_img);
+		ref_close(f_img);
 		if (pErr) {
 			*pErr = RVTH_ERROR_NHCD_TABLE_MAGIC;
 		}
@@ -199,7 +199,7 @@ RvtH *rvth_open(const char *filename, int *pErr)
 	if (!rvth) {
 		// Error allocating memory.
 		int err = errno;
-		fclose(f_img);
+		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -222,29 +222,27 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		}
 
 		errno = 0;
-		ret = fseeko(f_img, addr, SEEK_SET);
+		ret = ref_seeko(f_img, addr, SEEK_SET);
 		if (ret != 0) {
 			// Seek error.
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			free(rvth);
-			fclose(f_img);
+			rvth_close(rvth);
 			errno = err;
 			return NULL;
 		}
 
 		errno = 0;
-		size = fread(&nhcd_entry, 1, sizeof(nhcd_entry), f_img);
+		size = ref_read(&nhcd_entry, 1, sizeof(nhcd_entry), f_img);
 		if (size != sizeof(nhcd_entry)) {
 			// Short read.
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			free(rvth);
-			fclose(f_img);
+			rvth_close(rvth);
 			errno = err;
 			return NULL;
 		}
@@ -289,33 +287,34 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		if (rvth_entry->type == RVTH_BankType_Unknown) {
 			// Unknown entry type.
 			// Don't bother reading anything else.
+
+			// Duplicate the file handle.
+			rvth_entry->f_img = ref_dup(f_img);
 			continue;
 		}
 
 		// Read the GCN disc header.
 		// TODO: For non-deleted banks, verify the magic number?
 		errno = 0;
-		ret = fseeko(f_img, (int64_t)rvth_entry->lba_start * 512, SEEK_SET);
+		ret = ref_seeko(f_img, (int64_t)rvth_entry->lba_start * 512, SEEK_SET);
 		if (ret != 0) {
 			// Seek error.
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			free(rvth);
-			fclose(f_img);
+			rvth_close(rvth);
 			errno = err;
 			return NULL;
 		}
-		size = fread(&discHeader, 1, sizeof(discHeader), f_img);
+		size = ref_read(&discHeader, 1, sizeof(discHeader), f_img);
 		if (size != sizeof(discHeader)) {
 			// Short read.
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			free(rvth);
-			fclose(f_img);
+			rvth_close(rvth);
 			errno = err;
 			return NULL;
 		}
@@ -352,6 +351,9 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		rvth_entry->timestamp = rvth_parse_timestamp(&nhcd_entry);
 
 		// TODO: Check encryption status.
+
+		// Duplicate the file handle.
+		rvth_entry->f_img = ref_dup(f_img);
 	}
 
 	// RVT-H image loaded.
@@ -362,15 +364,27 @@ RvtH *rvth_open(const char *filename, int *pErr)
  * Close an opened RVT-H disk image.
  * @param rvth RVT-H disk image.
  */
-void rvth_close(RvtH *img)
+void rvth_close(RvtH *rvth)
 {
-	if (!img)
+	unsigned int i;
+
+	if (!rvth)
 		return;
 
-	if (img->f_img) {
-		fclose(img->f_img);
+	// Close all bank entry files.
+	// RefFile has a reference count, so we have to clear the count.
+	for (i = 0; i < ARRAY_SIZE(rvth->entries); i++) {
+		if (rvth->entries[i].f_img) {
+			ref_close(rvth->entries[i].f_img);
+		}
 	}
-	free(img);
+
+	// Clear the main reference.
+	if (rvth->f_img) {
+		ref_close(rvth->f_img);
+	}
+
+	free(rvth);
 }
 
 /**
@@ -473,7 +487,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 
 	// Seek to the start of the disc image in the RVT-H.
 	errno = 0;
-	ret = fseeko(rvth->f_img, (int64_t)entry->lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
+	ret = ref_seeko(rvth->f_img, (int64_t)entry->lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		return -errno;
@@ -526,7 +540,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 	     lba_count -= LBA_COUNT_BUF)
 	{
 		// TODO: Error handling.
-		fread(buf, 1, BUF_SIZE, rvth->f_img);
+		ref_read(buf, 1, BUF_SIZE, rvth->f_img);
 
 		// Check for empty 4 KB blocks.
 		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
@@ -549,7 +563,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 	// Process any remaining LBAs.
 	if (lba_count > 0) {
 		const unsigned int sz_left = lba_count * RVTH_BLOCK_SIZE;
-		fread(buf, 1, sz_left, rvth->f_img);
+		ref_read(buf, 1, sz_left, rvth->f_img);
 
 		// Check for empty 512-byte blocks.
 		for (sprs = 0; sprs < sz_left; sprs += 512) {

@@ -8,7 +8,10 @@ CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.librvth.h")
 
 # Sources.
-SET(librvth_SRCS rvth.c)
+SET(librvth_SRCS
+	rvth.c
+	ref_file.c
+	)
 # Headers.
 SET(librvth_H
 	common.h
@@ -17,6 +20,7 @@ SET(librvth_H
 	nhcd_structs.h
 	gcn_structs.h
 	rvth.h
+	ref_file.h
 	)
 
 ######################
