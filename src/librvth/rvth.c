@@ -18,16 +18,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
+#include "config.librvth.h"
+
 #include "rvth.h"
 #include "byteswap.h"
 #include "nhcd_structs.h"
 #include "gcn_structs.h"
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef HAVE_FTRUNCATE
+# include <unistd.h>
+# include <sys/types.h>
+#endif
 
 // RVT-H main struct.
 struct _RvtH {
@@ -366,6 +374,37 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank)
 }
 
 /**
+ * Check if a block is empty.
+ * @param block Block.
+ * @param size Block size. (Must be a multiple of 64 bytes.)
+ * @return True if the block is all zeroes; false if not.
+ */
+static bool is_block_empty(const uint8_t *block, unsigned int size)
+{
+	// Process the block using 64-bit pointers.
+	const uint64_t *block64 = (const uint64_t*)block;
+	unsigned int i;
+	assert(size % 64 == 0);
+	for (i = size/8/8; i > 0; i--, block64 += 8) {
+		uint64_t x = block64[0];
+		x |= block64[1];
+		x |= block64[2];
+		x |= block64[3];
+		x |= block64[4];
+		x |= block64[5];
+		x |= block64[6];
+		x |= block64[7];
+		if (x != 0) {
+			// Non-zero block.
+			return false;
+		}
+	}
+
+	// Block is all zeroes.
+	return true;
+}
+
+/**
  * Extract a disc image from the RVT-H disk image.
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
@@ -380,6 +419,8 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 	const RvtH_BankEntry *entry;
 	uint8_t *buf;
 	unsigned int lba_count, lba_progress;
+	unsigned int lba_nonsparse;	// Last LBA written that wasn't sparse.
+	unsigned int sprs;		// Sparse counter.
 	int ret;
 
 	if (!rvth || !filename || filename[0] == 0) {
@@ -420,15 +461,45 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 		return -err;
 	}
 
+	// Set the file size.
+	// NOTE: If the underlying file system doesn't support sparse files,
+	// this may take a long time. (TODO: Check this.)
+	ret = ftruncate(fileno(f_extract), (int64_t)entry->lba_len * RVTH_BLOCK_SIZE);
+	if (ret != 0) {
+		// Error setting the file size.
+		// Allow all errors except for EINVAL or EFBIG,
+		// since those mean the file system doesn't support
+		// large files.
+		int err = errno;
+		if (err == EINVAL || err == EFBIG) {
+			// File is too big.
+			// TODO: Delete the file?
+			fclose(f_extract);
+			free(buf);
+			errno = err;
+			return -err;
+		}
+	}
 
 	lba_progress = 0;
+	lba_nonsparse = 0;
 	for (lba_count = entry->lba_len; lba_count >= LBA_COUNT_BUF;
 	     lba_count -= LBA_COUNT_BUF)
 	{
 		// TODO: Error handling.
-		// TODO: Sparse file handling.
 		fread(buf, 1, BUF_SIZE, rvth->f_img);
-		fwrite(buf, 1, BUF_SIZE, f_extract);
+
+		// Check for empty 4 KB blocks.
+		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
+			if (is_block_empty(&buf[sprs], 4096)) {
+				// 4 KB block is empty.
+				fseeko(f_extract, 4096, SEEK_CUR);
+			} else {
+				// 4 KB block is not empty.
+				fwrite(&buf[sprs], 1, 4096, f_extract);
+				lba_nonsparse = lba_progress + (sprs / 512) + 7;
+			}
+		}
 
 		if (callback) {
 			lba_progress += LBA_COUNT_BUF;
@@ -438,14 +509,40 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 
 	// Process any remaining LBAs.
 	if (lba_count > 0) {
-		fread(buf, 1, lba_count * NHCD_BLOCK_SIZE, rvth->f_img);
-		fwrite(buf, 1, lba_count * NHCD_BLOCK_SIZE, f_extract);
+		const unsigned int sz_left = lba_count * RVTH_BLOCK_SIZE;
+		fread(buf, 1, sz_left, rvth->f_img);
+
+		// Check for empty 512-byte blocks.
+		for (sprs = 0; sprs < sz_left; sprs += 512) {
+			if (is_block_empty(&buf[sprs], 512)) {
+				// 512-byte block is empty.
+				fseeko(f_extract, 512, SEEK_CUR);
+			} else {
+				// 512-byte block is not empty.
+				fwrite(&buf[sprs], 1, 512, f_extract);
+				lba_nonsparse = lba_progress + (sprs / 512) + 7;
+			}
+		}
+
 		if (callback) {
 			callback(entry->lba_len, entry->lba_len);
 		}
 	}
 
+	// lba_nonsparse should be equal to entry->lba_len - 1.
+	if (lba_nonsparse != entry->lba_len - 1) {
+		// Last LBA was sparse.
+		// We'll need to write an actual zero block.
+		// TODO: Maybe not needed if ftruncate() succeeded?
+		// TODO: Check for errors.
+		int64_t last_lba_pos = (int64_t)(entry->lba_len - 1) * RVTH_BLOCK_SIZE;
+		memset(buf, 0, 512);
+		fseeko(f_extract, last_lba_pos, SEEK_SET);
+		fwrite(buf, 1, 512, f_extract);
+	}
+
 	// Finished extracting the disc image.
+	fflush(f_extract);
 	fclose(f_extract);
 	free(buf);
 	return 0;
