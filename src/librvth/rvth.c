@@ -35,7 +35,7 @@
 #ifdef HAVE_FTRUNCATE
 # include <unistd.h>
 # include <sys/types.h>
-#endif
+#endif /* HAVE_FTRUNCATE */
 
 // RVT-H main struct.
 struct _RvtH {
@@ -605,6 +605,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 		return -err;
 	}
 
+#ifdef HAVE_FTRUNCATE
 	// Set the file size.
 	// NOTE: If the underlying file system doesn't support sparse files,
 	// this may take a long time. (TODO: Check this.)
@@ -624,6 +625,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 			return -err;
 		}
 	}
+#endif /* HAVE_FTRUNCATE */
 
 	lba_progress = 0;
 	lba_nonsparse = 0;
