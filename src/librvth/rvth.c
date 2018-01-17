@@ -131,10 +131,11 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 /**
  * Open an RVT-H disk image.
  * TODO: R/W mode.
- * @param filename Filename.
+ * @param filename	[in] Filename.
+ * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  * @return RvtH struct pointer if the file is a valid RvtH disk image; NULL on error. (check errno)
  */
-RvtH *rvth_open(const char *filename)
+RvtH *rvth_open(const char *filename, int *pErr)
 {
 	NHCD_BankTable_Header header;
 	FILE *f_img;
@@ -150,6 +151,9 @@ RvtH *rvth_open(const char *filename)
 	f_img = fopen(filename, "rb");
 	if (!f_img) {
 		// Could not open the file.
+		if (pErr) {
+			*pErr = -errno;
+		}
 		return NULL;
 	}
 
@@ -158,6 +162,9 @@ RvtH *rvth_open(const char *filename)
 	ret = fseeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
+		if (pErr) {
+			*pErr = -errno;
+		}
 		return NULL;
 	}
 	errno = 0;
@@ -170,6 +177,20 @@ RvtH *rvth_open(const char *filename)
 		}
 		fclose(f_img);
 		errno = err;
+		if (pErr) {
+			*pErr = -err;
+		}
+		return NULL;
+	}
+
+	// Check the magic number.
+	if (header.magic != be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
+		// Incorrect magic number.
+		fclose(f_img);
+		if (pErr) {
+			*pErr = RVTH_ERROR_NHCD_TABLE_MAGIC;
+		}
+		errno = EIO;
 		return NULL;
 	}
 
@@ -180,6 +201,9 @@ RvtH *rvth_open(const char *filename)
 		int err = errno;
 		fclose(f_img);
 		errno = err;
+		if (pErr) {
+			*pErr = -err;
+		}
 		return NULL;
 	}
 
@@ -351,22 +375,32 @@ void rvth_close(RvtH *img)
 
 /**
  * Get a bank table entry.
- * @param rvth RVT-H disk image.
- * @param bank Bank number. (0-7)
+ * @param rvth	[in] RVT-H disk image.
+ * @param bank	[in] Bank number. (0-7)
+ * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  * @return Bank table entry, or NULL if out of range or empty.
  */
-const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank)
+const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr)
 {
 	if (!rvth) {
 		errno = EINVAL;
+		if (pErr) {
+			*pErr = -EINVAL;
+		}
 		return NULL;
 	} else if (bank >= ARRAY_SIZE(rvth->entries)) {
 		errno = ERANGE;
+		if (pErr) {
+			*pErr = -EINVAL;
+		}
 		return NULL;
 	}
 
 	// Check if the bank is empty.
 	if (rvth->entries[bank].type == RVTH_BankType_Empty) {
+		if (pErr) {
+			*pErr = RVTH_ERROR_BANK_EMPTY;
+		}
 		return NULL;
 	}
 
@@ -410,7 +444,7 @@ static bool is_block_empty(const uint8_t *block, unsigned int size)
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
  * @param callback	[in,opt] Progress callback.
- * @return 0 on success; negative POSIX error code on error.
+ * @return 0 on success; negative POSIX error code or positive RVT-H error code on error.
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH_Progress_Callback callback)
 {
@@ -431,8 +465,13 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 		return -ERANGE;
 	}
 
-	// Seek to the start of the disc image in the RVT-H.
+	// Check if the bank is empty.
 	entry = &rvth->entries[bank];
+	if (entry->type == RVTH_BankType_Empty) {
+		return RVTH_ERROR_BANK_EMPTY;
+	}
+
+	// Seek to the start of the disc image in the RVT-H.
 	errno = 0;
 	ret = fseeko(rvth->f_img, (int64_t)entry->lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
 	if (ret != 0) {

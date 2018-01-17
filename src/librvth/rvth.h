@@ -40,6 +40,12 @@ extern "C" {
 #define RVTH_BANK_COUNT 8
 #define RVTH_BLOCK_SIZE 512
 
+typedef enum {
+	RVTH_ERROR_SUCCESS		= 0,
+	RVTH_ERROR_NHCD_TABLE_MAGIC	= 1,	// NHCD bank table has the wrong magic.
+	RVTH_ERROR_BANK_EMPTY		= 2,	// Selected bank is empty.
+} RvtH_Errors;
+
 // RVT-H struct.
 struct _RvtH;
 typedef struct _RvtH RvtH;
@@ -53,6 +59,7 @@ typedef struct RvtH_BankEntry {
 	char id6[6];		// Game ID. (NOT NULL-terminated!)
 	char game_title[65];	// Game title. (from GCN header)
 	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
+	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)
 	bool is_deleted;	// If true, this entry was deleted.
 } RvtH_BankEntry;
 
@@ -77,15 +84,23 @@ typedef enum {
 	RVTH_CryptoType_Korean	= 4,	// Korean retail encryption.
 } RvtH_CryptoType_e;
 
+// Signature types.
+typedef enum {
+	RVTH_SigType_Unknown	= 0,	// Unknown signature.
+	RVTH_SigType_Debug	= 1,	// Debug signature.
+	RVTH_SigType_Retail	= 2,	// Retail signature.
+} RvtH_SigType_e;
+
 /** Functions. **/
 
 /**
  * Open an RVT-H disk image.
  * TODO: R/W mode.
- * @param filename Filename.
+ * @param filename	[in] Filename.
+ * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  * @return RvtH struct pointer if the file is a valid RvtH disk image; NULL on error. (check errno)
  */
-RvtH *rvth_open(const char *filename);
+RvtH *rvth_open(const char *filename, int *pErr);
 
 /**
  * Close an opened RVT-H disk image.
@@ -95,11 +110,12 @@ void rvth_close(RvtH *rvth);
 
 /**
  * Get a bank table entry.
- * @param rvth RVT-H disk image.
- * @param bank Bank number. (0-7)
+ * @param rvth	[in] RVT-H disk image.
+ * @param bank	[in] Bank number. (0-7)
+ * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  * @return Bank table entry, or NULL if out of range or empty.
  */
-const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank);
+const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr);
 
 /**
  * RVT-H progress callback.

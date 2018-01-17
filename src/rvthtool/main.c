@@ -48,7 +48,8 @@ static int print_bank_table(const RvtH *rvth)
 	for (i = 0; i < RVTH_BANK_COUNT; i++) {
 		const char *s_type;
 
-		const RvtH_BankEntry *const entry = rvth_get_BankEntry(rvth, i);
+		// TODO: Check the error code.
+		const RvtH_BankEntry *const entry = rvth_get_BankEntry(rvth, i, NULL);
 		if (!entry) {
 			printf("Bank %u: Empty\n\n", i+1);
 			continue;
@@ -142,6 +143,7 @@ static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
 int CDECL main(int argc, char *argv[])
 {
 	RvtH *rvth;
+	int err;
 
 	((void)argc);
 	((void)argv);
@@ -157,9 +159,14 @@ int CDECL main(int argc, char *argv[])
 	}
 
 	// Open the disk image.
-	rvth = rvth_open(argv[1]);
+	rvth = rvth_open(argv[1], &err);
 	if (!rvth) {
-		fprintf(stderr, "*** ERROR opening '%s': %s\n", argv[1], strerror(errno));
+		fprintf(stderr, "*** ERROR opening '%s': ", argv[1]);
+		if (err < 0) {
+			fprintf(stderr, "%s\n", strerror(-err));
+		} else {
+			fprintf(stderr, "RVT-H error %d\n", err);
+		}
 		return EXIT_FAILURE;
 	}
 
@@ -187,7 +194,12 @@ int CDECL main(int argc, char *argv[])
 			printf("Bank extracted to '%s' successfully.\n\n", gcm_filename);
 		} else {
 			// TODO: Delete the gcm file?
-			printf("*** ERROR: rvth_extract() failed: %s\n\n", strerror(-ret));
+			fprintf(stderr, "*** ERROR: rvth_extract() failed: ");
+			if (err < 0) {
+				fprintf(stderr, "%s\n", strerror(-ret));
+			} else {
+				fprintf(stderr, "RVT-H error %d\n", ret);
+			}
 		}
 	}
 
