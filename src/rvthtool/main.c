@@ -43,9 +43,10 @@ static int print_bank_table(const RvtH *rvth)
 {
 	struct tm timestamp;
 	unsigned int i;
+	const unsigned int banks = rvth_get_BankCount(rvth);
 
 	// Print the entries.
-	for (i = 0; i < RVTH_BANK_COUNT; i++) {
+	for (i = 0; i < banks; i++) {
 		const char *s_type;
 
 		// TODO: Check the error code.
@@ -181,7 +182,7 @@ int CDECL main(int argc, char *argv[])
 		int ret;
 
 		unsigned int bank = (unsigned int)strtoul(argv[2], &endptr, 10) - 1;
-		if (*endptr != 0 || bank > RVTH_BANK_COUNT) {
+		if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
 			fprintf(stderr, "*** ERROR: Invalid bank number '%s'.\n", argv[2]);
 			return EXIT_FAILURE;
 		}

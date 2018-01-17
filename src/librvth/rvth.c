@@ -39,8 +39,16 @@
 
 // RVT-H main struct.
 struct _RvtH {
+	// Reference-counted FILE*.
 	RefFile *f_img;
-	RvtH_BankEntry entries[NHCD_BANK_COUNT];
+
+	// Number of banks.
+	// - RVT-H system or disk image: 8
+	// - Standalone disc image: 1
+	unsigned int banks;
+
+	// BankEntry objects.
+	RvtH_BankEntry *entries;
 };
 
 /**
@@ -257,6 +265,15 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		return NULL;
 	}
 
+	/**
+	 * TODO: Heuristics to determine if this is RVT-H vs. individual disc.
+	 * - RVT-H will be either a block device or a >20 GB disk image.
+	 *   - Note that RVT-H images may start with a disc image, even though
+	 *     that image is likely corrupted and unusable.
+	 * - Individual disc will be <= 8.0 GB and not a block device.
+	 *   - If it's CISO or WBFS, it's an individual disc.
+	 */
+
 	// Check the bank table header.
 	errno = 0;
 	ret = ref_seeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
@@ -295,10 +312,14 @@ RvtH *rvth_open(const char *filename, int *pErr)
 	}
 
 	// Allocate memory for the RvtH object
-	rvth = calloc(1, sizeof(RvtH));
+	errno = 0;
+	rvth = malloc(sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
 		int err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
 		ref_close(f_img);
 		errno = err;
 		if (pErr) {
@@ -307,10 +328,28 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		return NULL;
 	}
 
+	// Allocate memory for the 8 RvtH_BankEntry objects.
+	rvth->banks = 8;
+	rvth->entries = calloc(8, sizeof(RvtH_BankEntry));
+	if (!rvth->entries) {
+		// Error allocating memory.
+		int err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		free(rvth);
+		ref_close(f_img);
+		errno = err;
+		if (pErr) {
+			*pErr = -err;
+		}
+		return NULL;
+	};
+
 	rvth->f_img = f_img;
 	rvth_entry = rvth->entries;
 	addr = (uint32_t)(NHCD_BANKTABLE_ADDRESS + NHCD_BLOCK_SIZE);
-	for (i = 0; i < ARRAY_SIZE(rvth->entries); i++, rvth_entry++, addr += 512) {
+	for (i = 0; i < rvth->banks; i++, rvth_entry++, addr += 512) {
 		NHCD_BankEntry nhcd_entry;
 		uint32_t lba_start = 0, lba_len = 0;
 		uint8_t type = RVTH_BankType_Unknown;
@@ -407,11 +446,14 @@ void rvth_close(RvtH *rvth)
 
 	// Close all bank entry files.
 	// RefFile has a reference count, so we have to clear the count.
-	for (i = 0; i < ARRAY_SIZE(rvth->entries); i++) {
+	for (i = 0; i < rvth->banks; i++) {
 		if (rvth->entries[i].f_img) {
 			ref_close(rvth->entries[i].f_img);
 		}
 	}
+
+	// Free the bank entries array.
+	free(rvth->entries);
 
 	// Clear the main reference.
 	if (rvth->f_img) {
@@ -419,6 +461,21 @@ void rvth_close(RvtH *rvth)
 	}
 
 	free(rvth);
+}
+
+/**
+ * Get the number of banks in an opened RVT-H disk image.
+ * @param rvth RVT-H disk image.
+ * @return Number of banks.
+ */
+unsigned int rvth_get_BankCount(const RvtH *rvth)
+{
+	if (!rvth) {
+		errno = EINVAL;
+		return 0;
+	}
+
+	return rvth->banks;
 }
 
 /**
@@ -436,7 +493,7 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 			*pErr = -EINVAL;
 		}
 		return NULL;
-	} else if (bank >= ARRAY_SIZE(rvth->entries)) {
+	} else if (bank >= rvth->banks) {
 		errno = ERANGE;
 		if (pErr) {
 			*pErr = -EINVAL;
@@ -508,7 +565,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 	if (!rvth || !filename || filename[0] == 0) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank >= ARRAY_SIZE(rvth->entries)) {
+	} else if (bank >= rvth->banks) {
 		errno = ERANGE;
 		return -ERANGE;
 	}

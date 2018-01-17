@@ -40,7 +40,6 @@ typedef unsigned char bool;
 extern "C" {
 #endif
 
-#define RVTH_BANK_COUNT 8
 #define RVTH_BLOCK_SIZE 512
 
 typedef enum {
@@ -112,6 +111,13 @@ RvtH *rvth_open(const char *filename, int *pErr);
  * @param rvth RVT-H disk image.
  */
 void rvth_close(RvtH *rvth);
+
+/**
+ * Get the number of banks in an opened RVT-H disk image.
+ * @param rvth RVT-H disk image.
+ * @return Number of banks.
+ */
+unsigned int rvth_get_BankCount(const RvtH *rvth);
 
 /**
  * Get a bank table entry.
