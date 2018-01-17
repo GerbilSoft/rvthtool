@@ -118,7 +118,49 @@ static int print_bank_table(const RvtH *rvth)
 		// rvth_open() has already trimmed the title.
 		printf("- Title:      %.64s\n", entry->game_title);
 
-		// TODO: Print encryption status for Wii.
+		// Wii encryption status.
+		if (entry->type == RVTH_BankType_Wii_SL ||
+		    entry->type == RVTH_BankType_Wii_DL)
+		{
+			const char *crypto_type;
+			const char *sig_type;
+
+			switch (entry->crypto_type) {
+				default:
+				case RVTH_CryptoType_Unknown:
+					crypto_type = "Unknown";
+					break;
+				case RVTH_CryptoType_None:
+					crypto_type = "None";
+					break;
+				case RVTH_CryptoType_Debug:
+					crypto_type = "Debug";
+					break;
+				case RVTH_CryptoType_Retail:
+					crypto_type = "Retail";
+					break;
+				case RVTH_CryptoType_Korean:
+					crypto_type = "Korean";
+					break;
+			}
+
+			switch (entry->sig_type) {
+				default:
+				case RVTH_SigType_Unknown:
+					sig_type = "Unknown";
+					break;
+				case RVTH_SigType_Debug:
+					sig_type = "Debug";
+					break;
+				case RVTH_SigType_Retail:
+					sig_type = "Retail";
+					break;
+			}
+
+			printf("- Encryption: %s\n", crypto_type);
+			printf("- Signature:  %s\n", sig_type);
+		}
+
 		printf("\n");
 	}
 

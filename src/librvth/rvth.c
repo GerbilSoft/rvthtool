@@ -137,6 +137,62 @@ static time_t rvth_parse_timestamp(const char *nhcd_timestamp)
 }
 
 /**
+ * Find the game partition in a Wii disc image.
+ * @param f_img		[in] RefFile*
+ * @param lba_start	[in] Starting LBA. (Should be 0 for standalone disc images.)
+ * @return Game partition LBA (relative to start of f_img), or 0 on error.
+ */
+uint32_t rvth_find_GamePartition(RefFile *f_img, uint32_t lba_start)
+{
+	// Assuming this is a valid Wii disc image.
+	RVL_VolumeGroupTable vgtbl;
+	RVL_PartitionTableEntry ptbl[16];
+	uint64_t addr;
+	unsigned int ptcount, i;
+	int ret;
+	size_t size;
+
+	// Get the volume group table.
+	addr = ((int64_t)lba_start * RVTH_BLOCK_SIZE) + RVL_VolumeGroupTable_ADDRESS;
+	ret = ref_seeko(f_img, addr, SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		return 0;
+	}
+	size = ref_read(&vgtbl, 1, sizeof(vgtbl), f_img);
+	if (size != sizeof(vgtbl)) {
+		// Read error.
+		return 0;
+	}
+
+	// Game partition is always in volume group 0.
+	// Read up to 16 partitions for VG0.
+	// NOTE: Addresses are rshifted by 2.
+	ptcount = be32_to_cpu(vgtbl.vg[0].count);
+	addr = ((int64_t)lba_start * RVTH_BLOCK_SIZE) + ((int64_t)be32_to_cpu(vgtbl.vg[0].addr) << 2);
+	ret = ref_seeko(f_img, addr, SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		return 0;
+	}
+	size = ref_read(ptbl, 1, sizeof(ptbl), f_img);
+	if (size != sizeof(ptbl)) {
+		// Read error.
+		return 0;
+	}
+
+	for (i = 0; i < ptcount; i++) {
+		if (be32_to_cpu(ptbl[i].type == 0)) {
+			// Found the game partition.
+			return lba_start + (be32_to_cpu(ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
+		}
+	}
+
+	// No game partition found...
+	return 0;
+}
+
+/**
  * Initialize an RVT-H bank entry from an opened disk or disc image.
  * @param entry			[out] RvtH_BankEntry
  * @param f_img			[in] RefFile*
@@ -153,6 +209,8 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	GCN_DiscHeader discHeader;
 	int ret;
 	size_t size;
+
+	// TODO: Handle lba_start == 0 && lba_len == 0.
 
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
@@ -203,33 +261,114 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 			// Wii disc image.
 			// TODO: Detect SL vs. DL.
 			// TODO: Actual disc image size?
-			entry->type = RVTH_BankType_Wii_SL;
+			type = RVTH_BankType_Wii_SL;
 			entry->is_deleted = true;
 		} else if (discHeader.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
 			// GameCube disc image.
 			// TODO: Actual disc image size?
-			entry->type = RVTH_BankType_GCN;
+			type = RVTH_BankType_GCN;
 			entry->is_deleted = true;
 		} else {
 			// Probably actually empty...
 		}
+		entry->type = type;
 	}
 
-	if (entry->type != RVTH_BankType_Empty) {
-		// Copy the game ID.
-		memcpy(entry->id6, discHeader.id6, 6);
+	if (type == RVTH_BankType_Empty) {
+		// We're done here.
+		return 0;
+	}
 
-		// Read the disc title.
-		memcpy(entry->game_title, discHeader.game_title, 64);
-		// Remove excess spaces.
-		trim_title(entry->game_title, 64);
+	// Copy the game ID.
+	memcpy(entry->id6, discHeader.id6, 6);
 
-		// Parse the timestamp.
-		if (nhcd_timestamp) {
-			entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
+	// Read the disc title.
+	memcpy(entry->game_title, discHeader.game_title, 64);
+	// Remove excess spaces.
+	trim_title(entry->game_title, 64);
+
+	// Parse the timestamp.
+	if (nhcd_timestamp) {
+		entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
+	}
+
+	// Check encryption status.
+	if (type == RVTH_BankType_Wii_SL || type == RVTH_BankType_Wii_DL) {
+		uint32_t game_lba;	// LBA of the Game Partition.
+
+		if (discHeader.hash_verify != 0 && discHeader.disc_noCrypt != 0) {
+			// Unencrypted.
+			// TODO: I haven't seen any images where only one of these
+			// is zero or non-zero, but that may show up...
+			entry->crypto_type = RVTH_CryptoType_None;
 		}
 
-		// TODO: Check encryption status.
+		// Find the game partition.
+		// TODO: Error checking.
+		game_lba = rvth_find_GamePartition(f_img, lba_start);
+		if (game_lba != 0) {
+			// Found the game partition.
+			static const char issuer_retail[] = "Root-CA00000001-XS00000003";
+			static const char issuer_debug[]  = "Root-CA00000002-XS00000006";
+
+			// Read the ticket.
+			RVL_Ticket ticket;
+			ref_seeko(f_img, (int64_t)game_lba * RVTH_BLOCK_SIZE, SEEK_SET);
+			ref_read(&ticket, 1, sizeof(ticket), f_img);
+
+			// Check the signature issuer.
+			// This indicates debug vs. retail.
+			if (!memcmp(ticket.signature_issuer, issuer_retail, sizeof(issuer_retail))) {
+				// Retail certificate.
+				entry->sig_type = RVTH_SigType_Retail;
+			} else if (!memcmp(ticket.signature_issuer, issuer_debug, sizeof(issuer_debug))) {
+				// Debug certificate.
+				entry->sig_type = RVTH_SigType_Debug;
+			} else {
+				// Unknown certificate.
+				entry->sig_type = RVTH_SigType_Unknown;
+			}
+
+			// TODO: Check for invalid and/or fakesigned tickets.
+
+			// If encrypted, set the crypto type.
+			// NOTE: Retail + unencrypted is usually an error.
+			if (entry->crypto_type != RVTH_CryptoType_None) {
+				switch (entry->sig_type) {
+					case RVTH_SigType_Retail:
+						// Retail may be either Common Key or Korean Key.
+						switch (ticket.common_key_index) {
+							case 0:
+								entry->crypto_type = RVTH_CryptoType_Retail;
+								break;
+							case 1:
+								entry->crypto_type = RVTH_CryptoType_Korean;
+								break;
+							default:
+								entry->crypto_type = RVTH_CryptoType_Unknown;
+								break;
+						}
+						break;
+
+					case RVTH_SigType_Debug:
+						// There's only one debug key.
+						if (ticket.common_key_index == 0) {
+							entry->crypto_type = RVTH_CryptoType_Debug;
+						} else {
+							entry->crypto_type = RVTH_CryptoType_Unknown;
+						}
+						break;
+
+					default:
+						// Should not happen...
+						entry->crypto_type = RVTH_CryptoType_Unknown;
+						break;
+				}
+			}
+		}
+	} else {
+		// GameCube is unencrypted.
+		entry->crypto_type = RVTH_CryptoType_None;
 	}
 
 	// We're done here.
