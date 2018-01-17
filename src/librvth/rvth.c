@@ -60,10 +60,10 @@ static void trim_title(char *title, int size)
 
 /**
  * Parse an RVT-H timestamp.
- * @param nhcd_entry NHCD bank entry.
+ * @param nhcd_timestamp Pointer to NHCD timestamp string.
  * @return Timestamp, or -1 if invalid.
  */
-static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
+static time_t rvth_parse_timestamp(const char *nhcd_timestamp)
 {
 	// Date format: "YYYYMMDD"
 	// Time format: "HHMMSS"
@@ -74,12 +74,12 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 
 	// Convert the date to an unsigned integer.
 	for (i = 0; i < 8; i++) {
-		if (unlikely(!isdigit(nhcd_entry->mdate[i]))) {
+		if (unlikely(!isdigit(nhcd_timestamp[i]))) {
 			// Invalid digit.
 			return -1;
 		}
 		ymd *= 10;
-		ymd += (nhcd_entry->mdate[i] & 0xF);
+		ymd += (nhcd_timestamp[i] & 0xF);
 	}
 
 	// Sanity checks:
@@ -91,13 +91,13 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 	}
 
 	// Convert the time to an unsigned integer.
-	for (i = 0; i < 6; i++) {
-		if (unlikely(!isdigit(nhcd_entry->mtime[i]))) {
+	for (i = 8; i < 14; i++) {
+		if (unlikely(!isdigit(nhcd_timestamp[i]))) {
 			// Invalid digit.
 			return -1;
 		}
 		hms *= 10;
-		hms += (nhcd_entry->mtime[i] & 0xF);
+		hms += (nhcd_timestamp[i] & 0xF);
 	}
 
 	// Sanity checks:
@@ -126,6 +126,106 @@ static time_t rvth_parse_timestamp(const NHCD_BankEntry *nhcd_entry)
 
 	// If conversion fails, this will return -1.
 	return timegm(&ymdtime);
+}
+
+/**
+ * Initialize an RVT-H bank entry from an opened disk or disc image.
+ * @param entry			[out] RvtH_BankEntry
+ * @param f_img			[in] RefFile*
+ * @param type			[in] Bank type. (See RvtH_BankType_e.)
+ * @param lba_start		[in] Starting LBA. (Should be 0 for standalone disc images.)
+ * @param lba_len		[in] Ending LBA. (If 0, and lba_start is 0, uses the file size.)
+ * @param nhcd_timestamp	[in] Timestamp string pointer from the bank table.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
+	uint8_t type, uint32_t lba_start, uint32_t lba_len,
+	const char *nhcd_timestamp)
+{
+	GCN_DiscHeader discHeader;
+	int ret;
+	size_t size;
+
+	// Initialize the standard properties.
+	memset(entry, 0, sizeof(*entry));
+	entry->f_img = ref_dup(f_img);
+	entry->lba_start = lba_start;
+	entry->lba_len = lba_len;
+	entry->type = type;
+	entry->timestamp = -1;	// Default to "no timestamp".
+
+	assert(entry->type < RVTH_BankType_MAX);
+	if (type == RVTH_BankType_Unknown ||
+	    type >= RVTH_BankType_MAX)
+	{
+		// Unknown entry type.
+		// Don't bother reading anything else.
+		return 0;
+	}
+
+	// Read the GCN disc header.
+	// TODO: For non-deleted banks, verify the magic number?
+	errno = 0;
+	ret = ref_seeko(f_img, (int64_t)lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		errno = err;
+		// TODO: Mark the bank as invalid?
+		return -err;
+	}
+	size = ref_read(&discHeader, 1, sizeof(discHeader), f_img);
+	if (size != sizeof(discHeader)) {
+		// Short read.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		errno = err;
+		// TODO: Mark the bank as invalid?
+		return -err;
+	}
+
+	// If the entry type is Empty, check for GCN/Wii magic.
+	if (type == RVTH_BankType_Empty) {
+		if (discHeader.magic_wii == cpu_to_be32(WII_MAGIC)) {
+			// Wii disc image.
+			// TODO: Detect SL vs. DL.
+			// TODO: Actual disc image size?
+			entry->type = RVTH_BankType_Wii_SL;
+			entry->is_deleted = true;
+		} else if (discHeader.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
+			// GameCube disc image.
+			// TODO: Actual disc image size?
+			entry->type = RVTH_BankType_GCN;
+			entry->is_deleted = true;
+		} else {
+			// Probably actually empty...
+		}
+	}
+
+	if (entry->type != RVTH_BankType_Empty) {
+		// Copy the game ID.
+		memcpy(entry->id6, discHeader.id6, 6);
+
+		// Read the disc title.
+		memcpy(entry->game_title, discHeader.game_title, 64);
+		// Remove excess spaces.
+		trim_title(entry->game_title, 64);
+
+		// Parse the timestamp.
+		if (nhcd_timestamp) {
+			entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
+		}
+
+		// TODO: Check encryption status.
+	}
+
+	// We're done here.
+	return 0;
 }
 
 /**
@@ -209,10 +309,11 @@ RvtH *rvth_open(const char *filename, int *pErr)
 
 	rvth->f_img = f_img;
 	rvth_entry = rvth->entries;
-	addr = (uint32_t)(NHCD_BANKTABLE_ADDRESS + 512);
+	addr = (uint32_t)(NHCD_BANKTABLE_ADDRESS + NHCD_BLOCK_SIZE);
 	for (i = 0; i < ARRAY_SIZE(rvth->entries); i++, rvth_entry++, addr += 512) {
 		NHCD_BankEntry nhcd_entry;
-		GCN_DiscHeader discHeader;
+		uint32_t lba_start = 0, lba_len = 0;
+		uint8_t type = RVTH_BankType_Unknown;
 
 		if (i > 0 && (rvth_entry-1)->type == RVTH_BankType_Wii_DL) {
 			// Second bank for a dual-layer Wii image.
@@ -251,109 +352,42 @@ RvtH *rvth_open(const char *filename, int *pErr)
 		switch (be32_to_cpu(nhcd_entry.type)) {
 			default:
 				// Unknown bank type...
-				rvth_entry->type = RVTH_BankType_Unknown;
+				type = RVTH_BankType_Unknown;
 				break;
 			case 0:
 				// "Empty" bank. May have a deleted image.
-				rvth_entry->type = RVTH_BankType_Empty;
+				type = RVTH_BankType_Empty;
 				break;
 			case NHCD_BankType_GCN:
 				// GameCube
-				rvth_entry->type = RVTH_BankType_GCN;
+				type = RVTH_BankType_GCN;
 				break;
 			case NHCD_BankType_Wii_SL:
 				// Wii (single-layer)
-				rvth_entry->type = RVTH_BankType_Wii_SL;
+				type = RVTH_BankType_Wii_SL;
 				break;
 			case NHCD_BankType_Wii_DL:
 				// Wii (dual-layer)
 				// TODO: Cannot start in Bank 8.
-				rvth_entry->type = RVTH_BankType_Wii_DL;
+				type = RVTH_BankType_Wii_DL;
 				break;
 		}
 
 		// For valid types, use the listed LBAs if they're non-zero.
 		if (rvth_entry->type >= RVTH_BankType_GCN) {
-			rvth_entry->lba_start = be32_to_cpu(nhcd_entry.lba_start);
-			rvth_entry->lba_len = be32_to_cpu(nhcd_entry.lba_len);
+			lba_start = be32_to_cpu(nhcd_entry.lba_start);
+			lba_len = be32_to_cpu(nhcd_entry.lba_len);
 		}
 
-		if (rvth_entry->lba_start == 0 || rvth_entry->lba_len == 0) {
+		if (lba_start == 0 || lba_len == 0) {
 			// Invalid LBAs. Use the default values.
-			rvth_entry->lba_start = NHCD_BANK_1_START_LBA + (NHCD_BANK_SIZE_LBA * i);
-			rvth_entry->lba_len = NHCD_BANK_SIZE_LBA;
+			lba_start = NHCD_BANK_1_START_LBA + (NHCD_BANK_SIZE_LBA * i);
+			lba_len = NHCD_BANK_SIZE_LBA;
 		}
 
-		if (rvth_entry->type == RVTH_BankType_Unknown) {
-			// Unknown entry type.
-			// Don't bother reading anything else.
-
-			// Duplicate the file handle.
-			rvth_entry->f_img = ref_dup(f_img);
-			continue;
-		}
-
-		// Read the GCN disc header.
-		// TODO: For non-deleted banks, verify the magic number?
-		errno = 0;
-		ret = ref_seeko(f_img, (int64_t)rvth_entry->lba_start * 512, SEEK_SET);
-		if (ret != 0) {
-			// Seek error.
-			int err = errno;
-			if (err == 0) {
-				err = EIO;
-			}
-			rvth_close(rvth);
-			errno = err;
-			return NULL;
-		}
-		size = ref_read(&discHeader, 1, sizeof(discHeader), f_img);
-		if (size != sizeof(discHeader)) {
-			// Short read.
-			int err = errno;
-			if (err == 0) {
-				err = EIO;
-			}
-			rvth_close(rvth);
-			errno = err;
-			return NULL;
-		}
-
-		// If the entry type is Empty, check for GCN/Wii magic.
-		if (rvth_entry->type == RVTH_BankType_Empty) {
-			if (discHeader.magic_wii == cpu_to_be32(WII_MAGIC)) {
-				// Wii disc image.
-				// TODO: Detect SL vs. DL.
-				// TODO: Actual disc image size?
-				rvth_entry->type = RVTH_BankType_Wii_SL;
-				rvth_entry->is_deleted = true;
-			} else if (discHeader.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
-				// GameCube disc image.
-				// TODO: Actual disc image size?
-				rvth_entry->type = RVTH_BankType_GCN;
-				rvth_entry->is_deleted = true;
-			} else {
-				// Probably actually empty...
-				rvth_entry->timestamp = -1;
-				continue;
-			}
-		}
-
-		// Copy the game ID.
-		memcpy(rvth_entry->id6, discHeader.id6, 6);
-
-		// Read the disc title.
-		memcpy(rvth_entry->game_title, discHeader.game_title, 64);
-		// Remove excess spaces.
-		trim_title(rvth_entry->game_title, 64);
-
-		// Parse the timestamp.
-		rvth_entry->timestamp = rvth_parse_timestamp(&nhcd_entry);
-
-		// TODO: Check encryption status.
-
-		// Duplicate the file handle.
-		rvth_entry->f_img = ref_dup(f_img);
+		// Initialize the bank entry.
+		rvth_init_BankEntry(rvth_entry, f_img, type,
+			lba_start, lba_len, nhcd_entry.timestamp);
 	}
 
 	// RVT-H image loaded.

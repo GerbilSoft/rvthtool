@@ -63,8 +63,7 @@ typedef struct PACKED _NHCD_BankTable_Header {
 typedef struct PACKED _NHCD_BankEntry {
 	uint32_t type;		// [0x000] Type. See NHCD_BankType_e.
 	char all_zero[14];	// [0x004] All ASCII zeroes. ('0')
-	char mdate[8];		// [0x012] Date stamp, in ASCII. ('20180112')
-	char mtime[6];		// [0x01A] Time stamp, in ASCII. ('222720')
+	char timestamp[14];	// [0x012] Full timestamp, in ASCII. ('20180112222720')
 	uint32_t lba_start;	// [0x020] Starting LBA. (512-byte sectors)
 	uint32_t lba_len;	// [0x024] Length, in 512-byte sectors.
 	uint8_t unk[472];	// [0x028] Unknown
