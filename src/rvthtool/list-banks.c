@@ -31,7 +31,6 @@
  */
 int print_bank(const RvtH *rvth, unsigned int bank)
 {
-	struct tm timestamp;
 	const char *s_type;
 	const RvtH_BankEntry *entry;
 	int ret = 0;
@@ -106,6 +105,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// Print the timestamp.
 	// TODO: Reentrant gmtime() if available.
 	if (entry->timestamp != -1) {
+		struct tm timestamp;
 		timestamp = *gmtime(&entry->timestamp);
 		printf("- Timestamp:  %04d/%02d/%02d %02d:%02d:%02d\n",
 			timestamp.tm_year + 1900, timestamp.tm_mon + 1, timestamp.tm_mday,
