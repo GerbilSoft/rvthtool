@@ -1,8 +1,16 @@
 PROJECT(rvthtool)
 
-# Sources and headers.
-SET(rvthtool_SRCS main.c)
-SET(rvthtool_H)
+# Sources.
+SET(rvthtool_SRCS
+	main.c
+	list-banks.c
+	extract.c
+	)
+# Headers.
+SET(rvthtool_H
+	list-banks.h
+	extract.h
+	)
 
 #########################
 # Build the executable. #
