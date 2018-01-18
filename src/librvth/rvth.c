@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #if defined(_WIN32)
 # include <windows.h>
@@ -952,13 +953,14 @@ static int rvth_make_writable(RvtH *rvth)
 /**
  * Delete a bank on an RVT-H device.
  * @param rvth	[in] RVT-H device.
+ * @param bank	[in] Bank number. (0-7)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_delete(RvtH *rvth, unsigned int bank)
 {
 	int ret;
 	size_t size;
-	uint8_t buf[RVTH_BLOCK_SIZE];
+	NHCD_BankEntry nhcd_entry;
 
 	if (!rvth) {
 		errno = EINVAL;
@@ -976,14 +978,14 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	}
 
 	// Is the bank deleted?
-	RvtH_BankEntry *entry = &rvth->entries[bank];
-	if (entry->is_deleted) {
+	RvtH_BankEntry *rvth_entry = &rvth->entries[bank];
+	if (rvth_entry->is_deleted) {
 		// Bank is already deleted.
 		return RVTH_ERROR_BANK_IS_DELETED;
 	}
 
 	// Check the bank type.
-	switch (entry->type) {
+	switch (rvth_entry->type) {
 		case RVTH_BankType_GCN:
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -1006,8 +1008,8 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	}
 
 	// Clear the bank data on disk.
-	memset(buf, 0, sizeof(buf));
-	ret = ref_seeko(entry->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	memset(&nhcd_entry, 0, sizeof(nhcd_entry));
+	ret = ref_seeko(rvth_entry->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -1015,8 +1017,8 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 		}
 		return -errno;
 	}
-	size = ref_write(buf, 1, sizeof(buf), entry->f_img);
-	if (size != sizeof(buf)) {
+	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth_entry->f_img);
+	if (size != sizeof(nhcd_entry)) {
 		// Write error.
 		if (errno = 0) {
 			errno = EIO;
@@ -1024,7 +1026,119 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 		return -errno;
 	}
 
-	// Bank is deleted.
-	entry->is_deleted = true;
+	// Bank has been deleted.
+	rvth_entry->is_deleted = true;
+	return 0;
+}
+
+/**
+ * Undelete a bank on an RVT-H device.
+ * @param rvth	[in] RVT-H device.
+ * @param bank	[in] Bank number. (0-7)
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_undelete(RvtH *rvth, unsigned int bank)
+{
+	int ret;
+	size_t size;
+	NHCD_BankEntry nhcd_entry;
+	time_t now;
+	struct tm tm_now;
+
+	// Timestamp buffer.
+	// We can't snprintf() directly to nhcd_entry.timestamp because
+	// gcc will complain about buffer overflows, and will crash at
+	// runtime on Gentoo Hardened.
+	char tsbuf[16];
+
+	if (!rvth) {
+		errno = EINVAL;
+		return -EINVAL;
+	} else if (bank >= rvth->banks) {
+		errno = ERANGE;
+		return -ERANGE;
+	}
+
+	// Make the RVT-H object writable.
+	ret = rvth_make_writable(rvth);
+	if (ret != 0) {
+		// Could not make the RVT-H object writable.
+		return ret;
+	}
+
+	// Is the bank deleted?
+	RvtH_BankEntry *rvth_entry = &rvth->entries[bank];
+	if (!rvth_entry->is_deleted) {
+		// Bank is not deleted.
+		return RVTH_ERROR_BANK_NOT_DELETED;
+	}
+
+	// Create a new nhcd_entry.
+	memset(&nhcd_entry, 0, sizeof(nhcd_entry));
+
+	// Check the bank type.
+	switch (rvth_entry->type) {
+		// These bank types can be undeleted.
+		case RVTH_BankType_GCN:
+			nhcd_entry.type = cpu_to_be32(NHCD_BankType_GCN);
+			break;
+		case RVTH_BankType_Wii_SL:
+			nhcd_entry.type = cpu_to_be32(NHCD_BankType_Wii_SL);
+			break;
+		case RVTH_BankType_Wii_DL:
+			nhcd_entry.type = cpu_to_be32(NHCD_BankType_Wii_DL);
+			break;
+
+		case RVTH_BankType_Unknown:
+		default:
+			// Unknown bank status...
+			return RVTH_ERROR_BANK_UNKNOWN;
+
+		case RVTH_BankType_Empty:
+			// Bank is empty.
+			return RVTH_ERROR_BANK_EMPTY;
+
+		case RVTH_BankType_Wii_DL_Bank2:
+			// Second bank of a dual-layer Wii disc image.
+			// TODO: Automatically select the first bank?
+			return RVTH_ERROR_BANK_DL_2;
+	}
+
+	// ASCII zero bytes.
+	memset(nhcd_entry.all_zero, '0', sizeof(nhcd_entry.all_zero));
+
+	// Timestamp.
+	// TODO: Use localtime_r().
+	now = time(NULL);
+	tm_now = *localtime(&now);
+	snprintf(tsbuf, sizeof(tsbuf), "%04d%02d%02d%02d%02d%02d",
+		tm_now.tm_year+1900, tm_now.tm_mon+1, tm_now.tm_mday,
+		tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec);
+	memcpy(nhcd_entry.timestamp, tsbuf, sizeof(nhcd_entry.timestamp));
+
+	// LBA start and length.
+	nhcd_entry.lba_start = cpu_to_be32(rvth_entry->lba_start);
+	nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
+
+	// Write the bank table entry.
+	ret = ref_seeko(rvth_entry->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		if (errno == 0) {
+			errno = EIO;
+		}
+		return -errno;
+	}
+	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth_entry->f_img);
+	if (size != sizeof(nhcd_entry)) {
+		// Write error.
+		if (errno = 0) {
+			errno = EIO;
+		}
+		return -errno;
+	}
+
+	// Bank has been undeleted.
+	rvth_entry->is_deleted = false;
 	return 0;
 }

@@ -35,6 +35,14 @@ extern "C" {
  */
 int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank);
 
+/**
+ * 'undelete' command.
+ * @param rvth_filename	RVT-H device or disk image filename.
+ * @param s_bank	Bank number (as a string).
+ * @return 0 on success; non-zero on error.
+ */
+int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank);
+
 #ifdef __cplusplus
 }
 #endif

@@ -85,3 +85,63 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	rvth_close(rvth);
 	return ret;
 }
+
+/**
+ * 'undelete' command.
+ * @param rvth_filename	RVT-H device or disk image filename.
+ * @param s_bank	Bank number (as a string).
+ * @return 0 on success; non-zero on error.
+ */
+int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
+{
+	RvtH *rvth;
+	TCHAR *endptr;
+	unsigned int bank;
+	int ret;
+
+	// Open the disk image.
+	rvth = rvth_open(rvth_filename, &ret);
+	if (!rvth) {
+		fputs("*** ERROR opening RVT-H device '", stderr);
+		_fputts(rvth_filename, stderr);
+		fputs("': ", stderr);
+		if (ret < 0) {
+			fprintf(stderr, "%s\n", strerror(-ret));
+		} else {
+			fprintf(stderr, "RVT-H error %d\n", ret);
+		}
+		return ret;
+	}
+
+	// Validate the bank number.
+	bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
+	if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+		fputs("*** ERROR: Invalid bank number '", stderr);
+		_fputts(s_bank, stderr);
+		fputs("'.\n", stderr);
+		rvth_close(rvth);
+		return -EINVAL;
+	}
+
+	// Print the bank information.
+	// TODO: Make sure the bank type is valid before printing the newline.
+	print_bank(rvth, bank);
+	fputs("\n", stdout);
+
+	// Undelete the bank.
+	ret = rvth_undelete(rvth, bank);
+	if (ret == 0) {
+		printf("Bank %u undeleted.\n", bank+1);
+	} else {
+		// TODO: Delete the gcm file?
+		fputs("*** ERROR: rvth_undelete() failed: ", stderr);
+		if (ret < 0) {
+			fprintf(stderr, "%s\n", strerror(-ret));
+		} else {
+			fprintf(stderr, "RVT-H error %d\n", ret);
+		}
+	}
+
+	rvth_close(rvth);
+	return ret;
+}

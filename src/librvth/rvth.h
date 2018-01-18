@@ -45,6 +45,7 @@ typedef enum {
 	RVTH_ERROR_BANK_DL_2		= 4,	// Selected bank is the second bank of a DL image.
 	RVTH_ERROR_NOT_A_DEVICE		= 5,	// Attempting to write to an RVT-H disk image.
 	RVTH_ERROR_BANK_IS_DELETED	= 6,	// Attempting to delete a bank that's already deleted.
+	RVTH_ERROR_BANK_NOT_DELETED	= 7,	// Attempting to undelete a bank that isn't deleted.
 } RvtH_Errors;
 
 // RVT-H struct.
@@ -148,9 +149,18 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 /**
  * Delete a bank on an RVT-H device.
  * @param rvth	[in] RVT-H device.
+ * @param bank	[in] Bank number. (0-7)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_delete(RvtH *rvth, unsigned int bank);
+
+/**
+ * Undelete a bank on an RVT-H device.
+ * @param rvth	[in] RVT-H device.
+ * @param bank	[in] Bank number. (0-7)
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_undelete(RvtH *rvth, unsigned int bank);
 
 #ifdef __cplusplus
 }

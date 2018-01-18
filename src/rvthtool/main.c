@@ -74,6 +74,9 @@ int CDECL _tmain(int argc, TCHAR *argv[])
 			"delete " DEVICE_NAME_EXAMPLE " bank#\n"
 			"- Delete the specified bank number from the specified RVT-H device.\n"
 			"\n"
+			"undelete " DEVICE_NAME_EXAMPLE " bank#\n"
+			"- Undelete the specified bank number from the specified RVT-H device.\n"
+			"\n"
 			, stdout);
 		return EXIT_FAILURE;
 	}
@@ -97,10 +100,17 @@ int CDECL _tmain(int argc, TCHAR *argv[])
 	} else if (!_tcscmp(argv[1], _T("delete"))) {
 		// Delete a bank.
 		if (argc < 4) {
-			fputs("*** ERROR: Missing parameters for 'extract'.\n", stderr);
+			fputs("*** ERROR: Missing parameters for 'delete'.\n", stderr);
 			return EXIT_FAILURE;
 		}
 		ret = delete_bank(argv[2], argv[3]);
+	} else if (!_tcscmp(argv[1], _T("undelete"))) {
+		// Delete a bank.
+		if (argc < 4) {
+			fputs("*** ERROR: Missing parameters for 'undelete'.\n", stderr);
+			return EXIT_FAILURE;
+		}
+		ret = undelete_bank(argv[2], argv[3]);
 	} else {
 		// TODO: If it's a filename, handle it as "list".
 		fputs("*** ERROR: Unrecognized command: '", stderr);
