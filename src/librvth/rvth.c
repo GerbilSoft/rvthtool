@@ -150,12 +150,23 @@ static time_t rvth_parse_timestamp(const char *nhcd_timestamp)
 uint32_t rvth_find_GamePartition(RefFile *f_img, uint32_t lba_start)
 {
 	// Assuming this is a valid Wii disc image.
-	RVL_VolumeGroupTable vgtbl;
-	RVL_PartitionTableEntry ptbl[16];
 	uint64_t addr;
 	unsigned int ptcount, i;
 	int ret;
 	size_t size;
+
+	// Volume group and partition table.
+	// NOTE: Only reading the first partition table,
+	// which we're assuming is stored directly after
+	// the volume group table.
+	// FIXME: Handle other cases when using direct device access on Windows.
+	union {
+		uint8_t u8[RVTH_BLOCK_SIZE];
+		struct {
+			RVL_VolumeGroupTable vgtbl;
+			RVL_PartitionTableEntry ptbl[16];
+		};
+	} pt;
 
 	// Get the volume group table.
 	addr = ((int64_t)lba_start * RVTH_BLOCK_SIZE) + RVL_VolumeGroupTable_ADDRESS;
@@ -164,32 +175,24 @@ uint32_t rvth_find_GamePartition(RefFile *f_img, uint32_t lba_start)
 		// Seek error.
 		return 0;
 	}
-	size = ref_read(&vgtbl, 1, sizeof(vgtbl), f_img);
-	if (size != sizeof(vgtbl)) {
+	size = ref_read(&pt, 1, sizeof(pt), f_img);
+	if (size != sizeof(pt)) {
 		// Read error.
 		return 0;
 	}
 
 	// Game partition is always in volume group 0.
-	// Read up to 16 partitions for VG0.
-	// NOTE: Addresses are rshifted by 2.
-	ptcount = be32_to_cpu(vgtbl.vg[0].count);
-	addr = ((int64_t)lba_start * RVTH_BLOCK_SIZE) + ((int64_t)be32_to_cpu(vgtbl.vg[0].addr) << 2);
-	ret = ref_seeko(f_img, addr, SEEK_SET);
-	if (ret != 0) {
-		// Seek error.
-		return 0;
-	}
-	size = ref_read(ptbl, 1, sizeof(ptbl), f_img);
-	if (size != sizeof(ptbl)) {
-		// Read error.
+	addr = ((int64_t)be32_to_cpu(pt.vgtbl.vg[0].addr) << 2);
+	if (addr != (RVL_VolumeGroupTable_ADDRESS + sizeof(pt.vgtbl))) {
+		// Partition table offset isn't supported right now.
 		return 0;
 	}
 
+	ptcount = be32_to_cpu(pt.vgtbl.vg[0].count);
 	for (i = 0; i < ptcount; i++) {
-		if (be32_to_cpu(ptbl[i].type == 0)) {
+		if (be32_to_cpu(pt.ptbl[i].type == 0)) {
 			// Found the game partition.
-			return lba_start + (be32_to_cpu(ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
+			return lba_start + (be32_to_cpu(pt.ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
 		}
 	}
 
@@ -211,9 +214,15 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp)
 {
-	GCN_DiscHeader discHeader;
 	int ret;
 	size_t size;
+
+	// Sector buffer.
+	union {
+		uint8_t u8[RVTH_BLOCK_SIZE];
+		GCN_DiscHeader gcn;
+		RVL_Ticket ticket;
+	} sector_buf;
 
 	// TODO: Handle lba_start == 0 && lba_len == 0.
 
@@ -248,8 +257,8 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		// TODO: Mark the bank as invalid?
 		return -err;
 	}
-	size = ref_read(&discHeader, 1, sizeof(discHeader), f_img);
-	if (size != sizeof(discHeader)) {
+	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
+	if (size != sizeof(sector_buf.u8)) {
 		// Short read.
 		int err = errno;
 		if (err == 0) {
@@ -262,13 +271,13 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// If the entry type is Empty, check for GCN/Wii magic.
 	if (type == RVTH_BankType_Empty) {
-		if (discHeader.magic_wii == cpu_to_be32(WII_MAGIC)) {
+		if (sector_buf.gcn.magic_wii == cpu_to_be32(WII_MAGIC)) {
 			// Wii disc image.
 			// TODO: Detect SL vs. DL.
 			// TODO: Actual disc image size?
 			type = RVTH_BankType_Wii_SL;
 			entry->is_deleted = true;
-		} else if (discHeader.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
+		} else if (sector_buf.gcn.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
 			// GameCube disc image.
 			// TODO: Actual disc image size?
 			type = RVTH_BankType_GCN;
@@ -310,10 +319,10 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	}
 
 	// Copy the game ID.
-	memcpy(entry->id6, discHeader.id6, 6);
+	memcpy(entry->id6, sector_buf.gcn.id6, 6);
 
 	// Read the disc title.
-	memcpy(entry->game_title, discHeader.game_title, 64);
+	memcpy(entry->game_title, sector_buf.gcn.game_title, 64);
 	// Remove excess spaces.
 	trim_title(entry->game_title, 64);
 
@@ -326,7 +335,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	if (type == RVTH_BankType_Wii_SL || type == RVTH_BankType_Wii_DL) {
 		uint32_t game_lba;	// LBA of the Game Partition.
 
-		if (discHeader.hash_verify != 0 && discHeader.disc_noCrypt != 0) {
+		if (sector_buf.gcn.hash_verify != 0 && sector_buf.gcn.disc_noCrypt != 0) {
 			// Unencrypted.
 			// TODO: I haven't seen any images where only one of these
 			// is zero or non-zero, but that may show up...
@@ -342,16 +351,15 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 			static const char issuer_debug[]  = "Root-CA00000002-XS00000006";
 
 			// Read the ticket.
-			RVL_Ticket ticket;
 			ref_seeko(f_img, (int64_t)game_lba * RVTH_BLOCK_SIZE, SEEK_SET);
-			ref_read(&ticket, 1, sizeof(ticket), f_img);
+			ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
 
 			// Check the signature issuer.
 			// This indicates debug vs. retail.
-			if (!memcmp(ticket.signature_issuer, issuer_retail, sizeof(issuer_retail))) {
+			if (!memcmp(sector_buf.ticket.signature_issuer, issuer_retail, sizeof(issuer_retail))) {
 				// Retail certificate.
 				entry->sig_type = RVTH_SigType_Retail;
-			} else if (!memcmp(ticket.signature_issuer, issuer_debug, sizeof(issuer_debug))) {
+			} else if (!memcmp(sector_buf.ticket.signature_issuer, issuer_debug, sizeof(issuer_debug))) {
 				// Debug certificate.
 				entry->sig_type = RVTH_SigType_Debug;
 			} else {
@@ -367,7 +375,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 				switch (entry->sig_type) {
 					case RVTH_SigType_Retail:
 						// Retail may be either Common Key or Korean Key.
-						switch (ticket.common_key_index) {
+						switch (sector_buf.ticket.common_key_index) {
 							case 0:
 								entry->crypto_type = RVTH_CryptoType_Retail;
 								break;
@@ -382,7 +390,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 					case RVTH_SigType_Debug:
 						// There's only one debug key.
-						if (ticket.common_key_index == 0) {
+						if (sector_buf.ticket.common_key_index == 0) {
 							entry->crypto_type = RVTH_CryptoType_Debug;
 						} else {
 							entry->crypto_type = RVTH_CryptoType_Unknown;
