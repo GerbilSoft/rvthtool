@@ -1,0 +1,22 @@
+language: c
+
+# Compiler selection.
+compiler:
+  - clang
+  - gcc
+
+# Use Ubuntu 14.04 as the build environment.
+sudo: required
+dist: trusty
+
+# Build dependencies.
+addons:
+  apt:
+    packages:
+      - cmake
+
+# Run the build script.
+script: ./travis.sh
+
+notifications:
+  irc: "ircs://irc.badnik.zone:6697/#GensGS"
