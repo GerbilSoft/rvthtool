@@ -105,5 +105,5 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	}
 
 	rvth_close(rvth);
-	return 0;
+	return ret;
 }
