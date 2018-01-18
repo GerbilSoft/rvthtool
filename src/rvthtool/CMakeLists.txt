@@ -5,11 +5,13 @@ SET(rvthtool_SRCS
 	main.c
 	list-banks.c
 	extract.c
+	undelete.c
 	)
 # Headers.
 SET(rvthtool_H
 	list-banks.h
 	extract.h
+	undelete.h
 	)
 
 #########################

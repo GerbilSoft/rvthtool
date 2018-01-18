@@ -25,6 +25,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef _WIN32
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <unistd.h>
+#endif /* !_WIN32 */
+
+// NOTE: Some functions don't check for NULL, since they should
+// loudly crash if NULL is passed.
+
 /**
  * Open a file as a reference-counted file.
  * The file is opened as a binary file in read-only mode.
@@ -139,4 +148,34 @@ int ref_make_writable(RefFile *f)
 	// TODO: Check for errors.
 	fseeko(f->file, pos, SEEK_SET);
 	return ret;
+}
+
+/**
+ * Check if a file is a device file.
+ * @param f RefFile*.
+ * @return True if this is a device file; false if it isn't.
+ */
+bool ref_is_device(RefFile *f)
+{
+#ifdef _WIN32
+	// Windows: Check the beginning of the filename.
+	if (!f->filename) {
+		// No filename...
+		return false;
+	}
+
+	return !strncasecmp(f->filename, _T("\\\\.\\PhysicalDrive"), 17);
+#else /* !_WIN32 */
+	// Other: Use fstat().
+	struct stat buf;
+	int ret = fstat(fileno(f->file), &buf);
+	if (ret != 0) {
+		// fstat() failed.
+		return false;
+	}
+
+	// NOTE: FreeBSD dropped "block" devices, so we need to
+	// check for both block and character devices.
+	return !!(S_ISBLK(buf.st_mode) | S_ISCHR(buf.st_mode));
+#endif
 }

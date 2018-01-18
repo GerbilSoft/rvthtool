@@ -1,6 +1,6 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
- * tcharx.h: TCHAR support for Windows and Linux.                          *
+ * RVT-H Tool                                                              *
+ * undelete.h: Delete or undelete a bank in an RVT-H disk image.           *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,42 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_TCHAR_H__
-#define __RVTHTOOL_LIBRVTH_TCHAR_H__
+#ifndef __RVTHTOOL_RVTHTOOL_UNDELETE_H__
+#define __RVTHTOOL_RVTHTOOL_UNDELETE_H__
 
-#ifdef _WIN32
+#include "librvth/tcharx.h"
 
-// Windows: Use the SDK tchar.h.
-#include <tchar.h>
-
-#else /* !_WIN32 */
-
-// Other systems: Define TCHAR and related macros.
-typedef char TCHAR;
-#define _T(x) x
-#define _tmain main
-
-// ctype.h
-#define _istalpha(c) isalpha(c)
-
-// stdio.h
-#define _fputts(s, stream) fputs(s, stream)
-
-#define _tfopen(filename, mode) fopen((filename), (mode))
-
-#define _tprintf printf
-#define _ftprintf fprintf
-#define _sntprintf snprintf
-
-// stdlib.h
-#define _tcscmp(s1, s2)			strcmp((s1), (s2))
-#define _tcsicmp(s1, s2)		strcasecmp((s1), (s2))
-#define _tcsnicmp(s1, s2)		strncasecmp((s1), (s2), (n))
-#define _tcstoul(nptr, endptr, base)	strtoul((nptr), (endptr), (base))
-
-// string.h
-#define _tcsdup(s) strdup(s)
-
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_TCHAR_H__ */
+/**
+ * 'delete' command.
+ * @param rvth_filename	RVT-H device or disk image filename.
+ * @param s_bank	Bank number (as a string).
+ * @return 0 on success; non-zero on error.
+ */
+int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __RVTHTOOL_RVTHTOOL_UNDELETE_H__ */

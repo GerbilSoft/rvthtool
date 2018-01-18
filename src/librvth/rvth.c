@@ -215,6 +215,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	size_t size;
 
 	// TODO: Handle lba_start == 0 && lba_len == 0.
+	// TODO: If lba_len == 0, initialize based on type.
 
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
@@ -894,5 +895,111 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 	fflush(f_extract);
 	fclose(f_extract);
 	free(buf);
+	return 0;
+}
+
+/**
+ * Make an RVT-H object writable.
+ * @param rvth	[in] RVT-H disk image.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+static int rvth_make_writable(RvtH *rvth)
+{
+	if (ref_is_writable(rvth->f_img)) {
+		// RVT-H is already writable.
+		return 0;
+	}
+
+	// TODO: Allow making a disc image file writable.
+	// (Single bank)
+
+	// Make sure this is a device file.
+	if (!ref_is_device(rvth->f_img)) {
+		// This is not a device file.
+		// Cannot make it writable.
+		return RVTH_ERROR_NOT_A_DEVICE;
+	}
+
+	// Make this writable.
+	return ref_make_writable(rvth->f_img);
+}
+
+/**
+ * Delete a bank on an RVT-H device.
+ * @param rvth	[in] RVT-H device.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_delete(RvtH *rvth, unsigned int bank)
+{
+	int ret;
+	size_t size;
+	uint8_t buf[RVTH_BLOCK_SIZE];
+
+	if (!rvth) {
+		errno = EINVAL;
+		return -EINVAL;
+	} else if (bank >= rvth->banks) {
+		errno = ERANGE;
+		return -ERANGE;
+	}
+
+	// Make the RVT-H object writable.
+	ret = rvth_make_writable(rvth);
+	if (ret != 0) {
+		// Could not make the RVT-H object writable.
+		return ret;
+	}
+
+	// Is the bank deleted?
+	RvtH_BankEntry *entry = &rvth->entries[bank];
+	if (entry->is_deleted) {
+		// Bank is already deleted.
+		return RVTH_ERROR_BANK_IS_DELETED;
+	}
+
+	// Check the bank type.
+	switch (entry->type) {
+		case RVTH_BankType_GCN:
+		case RVTH_BankType_Wii_SL:
+		case RVTH_BankType_Wii_DL:
+			// Bank can be deleted.
+			break;
+
+		case RVTH_BankType_Unknown:
+		default:
+			// Unknown bank status...
+			return RVTH_ERROR_BANK_UNKNOWN;
+
+		case RVTH_BankType_Empty:
+			// Bank is empty.
+			return RVTH_ERROR_BANK_EMPTY;
+
+		case RVTH_BankType_Wii_DL_Bank2:
+			// Second bank of a dual-layer Wii disc image.
+			// TODO: Automatically select the first bank?
+			return RVTH_ERROR_BANK_DL_2;
+	}
+
+	// Clear the bank data on disk.
+	memset(buf, 0, sizeof(buf));
+	ret = ref_seeko(entry->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		if (errno == 0) {
+			errno = EIO;
+		}
+		return -errno;
+	}
+	size = ref_write(buf, 1, sizeof(buf), entry->f_img);
+	if (size != sizeof(buf)) {
+		// Write error.
+		if (errno = 0) {
+			errno = EIO;
+		}
+		return -errno;
+	}
+
+	// Bank is deleted.
+	entry->is_deleted = true;
 	return 0;
 }

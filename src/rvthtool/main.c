@@ -29,11 +29,19 @@
 
 #include "list-banks.h"
 #include "extract.h"
+#include "undelete.h"
 
 #ifdef _MSC_VER
 # define CDECL __cdecl
 #else
 # define CDECL
+#endif
+
+#ifdef _WIN32
+# define DEVICE_NAME_EXAMPLE "\\\\.\\PhysicalDriveN"
+#else
+// TODO: Non-Linux systems.
+# define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
 
 int CDECL _tmain(int argc, TCHAR *argv[])
@@ -63,6 +71,9 @@ int CDECL _tmain(int argc, TCHAR *argv[])
 			"extract rvth.img bank# disc.gcm\n"
 			"- Extract the specified bank number from rvth.img to disc.gcm.\n"
 			"\n"
+			"delete " DEVICE_NAME_EXAMPLE " bank#\n"
+			"- Delete the specified bank number from the specified RVT-H device.\n"
+			"\n"
 			, stdout);
 		return EXIT_FAILURE;
 	}
@@ -77,12 +88,19 @@ int CDECL _tmain(int argc, TCHAR *argv[])
 		}
 		ret = list_banks(argv[2]);
 	} else if (!_tcscmp(argv[1], _T("extract"))) {
-		// Extract banks.
-		if (argc < 4) {
+		// Extract a bank.
+		if (argc < 5) {
 			fputs("*** ERROR: Missing parameters for 'extract'.\n", stderr);
 			return EXIT_FAILURE;
 		}
 		ret = extract(argv[2], argv[3], argv[4]);
+	} else if (!_tcscmp(argv[1], _T("delete"))) {
+		// Delete a bank.
+		if (argc < 4) {
+			fputs("*** ERROR: Missing parameters for 'extract'.\n", stderr);
+			return EXIT_FAILURE;
+		}
+		ret = delete_bank(argv[2], argv[3]);
 	} else {
 		// TODO: If it's a filename, handle it as "list".
 		fputs("*** ERROR: Unrecognized command: '", stderr);

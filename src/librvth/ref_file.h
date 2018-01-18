@@ -66,6 +66,13 @@ RefFile *ref_dup(RefFile *f);
  */
 int ref_make_writable(RefFile *f);
 
+/**
+ * Check if a file is a device file.
+ * @param f RefFile*.
+ * @return True if this is a device file; false if it isn't.
+ */
+bool ref_is_device(RefFile *f);
+
 /** Convenience wrappers for stdio functions. **/
 
 static inline size_t ref_read(void *ptr, size_t size, size_t nmemb, RefFile *stream)

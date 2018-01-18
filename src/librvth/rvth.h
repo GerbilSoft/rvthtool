@@ -43,6 +43,8 @@ typedef enum {
 	RVTH_ERROR_BANK_UNKNOWN		= 2,	// Selected bank has an unknown status.
 	RVTH_ERROR_BANK_EMPTY		= 3,	// Selected bank is empty.
 	RVTH_ERROR_BANK_DL_2		= 4,	// Selected bank is the second bank of a DL image.
+	RVTH_ERROR_NOT_A_DEVICE		= 5,	// Attempting to write to an RVT-H disk image.
+	RVTH_ERROR_BANK_IS_DELETED	= 6,	// Attempting to delete a bank that's already deleted.
 } RvtH_Errors;
 
 // RVT-H struct.
@@ -142,6 +144,13 @@ typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_tota
  * @return 0 on success; negative POSIX error code on error.
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
+
+/**
+ * Delete a bank on an RVT-H device.
+ * @param rvth	[in] RVT-H device.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_delete(RvtH *rvth, unsigned int bank);
 
 #ifdef __cplusplus
 }
