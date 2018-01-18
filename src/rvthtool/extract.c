@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "extract.h"
+#include "list-banks.h"
 #include "librvth/rvth.h"
 
 #include <errno.h>
@@ -78,6 +79,11 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		rvth_close(rvth);
 		return -EINVAL;
 	}
+
+	// Print the bank information.
+	// TODO: Make sure the bank type is valid before printing the newline.
+	print_bank(rvth, bank);
+	fputs("\n", stdout);
 
 	printf("Extracting Bank %u into '", bank+1);
 	_fputts(gcm_filename, stdout);
