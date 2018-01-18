@@ -101,7 +101,7 @@ typedef struct _NHCD_BankTable {
 
 // Wii SL disc image size.
 // NOTE: The RVT-R size matches the DVD-R specification.
-#define NHCD_BANK_WII_SL_SIZE_LBA		0x8C1200U
+#define NHCD_BANK_WII_SL_SIZE_RETAIL_LBA	0x8C1200U
 #define NHCD_BANK_WII_SL_SIZE_RVTR_LBA		0x8C4A00U
 #define NHCD_BANK_WII_SL_SIZE_NOCRYPTO_LBA	0x800000U
 

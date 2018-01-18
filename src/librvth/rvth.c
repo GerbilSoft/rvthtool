@@ -215,7 +215,6 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	size_t size;
 
 	// TODO: Handle lba_start == 0 && lba_len == 0.
-	// TODO: If lba_len == 0, initialize based on type.
 
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
@@ -277,6 +276,31 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 			// Probably actually empty...
 		}
 		entry->type = type;
+	}
+
+	if (lba_len == 0) {
+		// Use the default LBA length based on bank type.
+		switch (type) {
+			default:
+			case RVTH_BankType_Empty:
+			case RVTH_BankType_Unknown:
+			case RVTH_BankType_Wii_SL:
+			case RVTH_BankType_Wii_DL_Bank2:
+				// Full bank.
+				lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
+				break;
+
+			case RVTH_BankType_Wii_DL:
+				// Dual-layer bank.
+				lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
+				break;
+
+			case RVTH_BankType_GCN:
+				// GameCube disc image.
+				lba_len = NHCD_BANK_GCN_DL_SIZE_NR_LBA;
+				break;
+		}
+		entry->lba_len = lba_len;
 	}
 
 	if (type == RVTH_BankType_Empty) {
@@ -562,9 +586,10 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 		}
 
 		if (lba_start == 0 || lba_len == 0) {
-			// Invalid LBAs. Use the default values.
+			// Invalid LBAs. Use the default starting offset.
+			// Bank size will be determined by rvth_init_BankEntry().
 			lba_start = NHCD_BANK_1_START_LBA + (NHCD_BANK_SIZE_LBA * i);
-			lba_len = NHCD_BANK_SIZE_LBA;
+			lba_len = 0;
 		}
 
 		// Initialize the bank entry.
