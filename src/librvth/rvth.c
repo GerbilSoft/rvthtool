@@ -1060,7 +1060,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth_entry->f_img);
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
-		if (errno = 0) {
+		if (errno == 0) {
 			errno = EIO;
 		}
 		return -errno;
@@ -1174,7 +1174,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth_entry->f_img);
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
-		if (errno = 0) {
+		if (errno == 0) {
 			errno = EIO;
 		}
 		return -errno;
