@@ -90,21 +90,31 @@ typedef struct _NHCD_BankTable {
 
 /** Byte values. **/
 
-// Bank table address.
-#define NHCD_BANKTABLE_ADDRESS	0x60000000ULL
-// Bank 1 starting address.
-#define NHCD_BANK_1_START	0x60001200ULL
-// Maximum bank size.
-#define NHCD_BANK_SIZE		0x118940000ULL
-
 /** LBA values. **/
 
 // Bank table address.
-#define NHCD_BANKTABLE_ADDRESS_LBA	0x300000U
+#define NHCD_BANKTABLE_ADDRESS_LBA		0x300000U
 // Bank 1 starting address.
-#define NHCD_BANK_1_START_LBA		0x300009U
+#define NHCD_BANK_1_START_LBA			0x300009U
 // Maximum bank size.
-#define NHCD_BANK_SIZE_LBA		0x8C4A00U
+#define NHCD_BANK_SIZE_LBA			0x8C4A00U
+
+// Wii SL disc image size.
+// NOTE: The RVT-R size matches the DVD-R specification.
+#define NHCD_BANK_WII_SL_SIZE_LBA		0x8C1200U
+#define NHCD_BANK_WII_SL_SIZE_RVTR_LBA		0x8C4A00U
+#define NHCD_BANK_WII_SL_SIZE_NOCRYPTO_LBA	0x800000U
+
+// Wii DL disc image size.
+// NOTE: The RVT-R size matches the DVD-R specification.
+#define NHCD_BANK_WII_DL_SIZE_RETAIL_LBA	0xFDA700U
+#define NHCD_BANK_WII_DL_SIZE_RVTR_LBA		0xFE9F00U	/* VERIFY */
+#define NHCD_BANK_WII_DL_SIZE_NOCRYPTO_LBA	0xEE0000U
+
+// GameCube disc image size.
+// TODO: NR size?
+#define NHCD_BANK_GCN_DL_SIZE_RETAIL_LBA	0x2B82C0U
+#define NHCD_BANK_GCN_DL_SIZE_NR_LBA		0x2B82C0U	/* VERIFY */
 
 // Block size.
 #define NHCD_BLOCK_SIZE		512

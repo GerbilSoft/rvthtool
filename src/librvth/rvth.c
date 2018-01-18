@@ -394,7 +394,7 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 	RvtH_BankEntry *rvth_entry;
 	int ret;
 	unsigned int i;
-	uint32_t addr;
+	int64_t addr;
 	size_t size;
 
 	// Open the disk image.
@@ -418,7 +418,7 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 
 	// Check the bank table header.
 	errno = 0;
-	ret = ref_seeko(f_img, NHCD_BANKTABLE_ADDRESS, SEEK_SET);
+	ret = ref_seeko(f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (pErr) {
@@ -490,7 +490,7 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 
 	rvth->f_img = f_img;
 	rvth_entry = rvth->entries;
-	addr = (uint32_t)(NHCD_BANKTABLE_ADDRESS + NHCD_BLOCK_SIZE);
+	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
 	for (i = 0; i < rvth->banks; i++, rvth_entry++, addr += 512) {
 		NHCD_BankEntry nhcd_entry;
 		uint32_t lba_start = 0, lba_len = 0;

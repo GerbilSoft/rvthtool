@@ -42,6 +42,9 @@ extern "C" {
 
 #define RVTH_BLOCK_SIZE 512
 
+// Convert LBA values to bytes.
+#define LBA_TO_BYTES(x) ((int64_t)(x) * RVTH_BLOCK_SIZE)
+
 typedef enum {
 	RVTH_ERROR_SUCCESS		= 0,
 	RVTH_ERROR_NHCD_TABLE_MAGIC	= 1,	// NHCD bank table has the wrong magic.
