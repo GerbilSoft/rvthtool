@@ -31,9 +31,6 @@ SET(librvth_H
 ######################
 
 ADD_LIBRARY(rvth STATIC ${librvth_SRCS} ${librvth_H})
-IF(NOT MSVC)
-	TARGET_COMPILE_FEATURES(rvth PUBLIC c_std_99)
-ENDIF(NOT MSVC)
 
 # Include paths:
 # - Public: Current source and binary directories.
