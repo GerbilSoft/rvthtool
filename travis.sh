@@ -5,7 +5,7 @@ cd "${TRAVIS_BUILD_DIR}/build"
 cmake --version
 cmake .. \
 	-DCMAKE_INSTALL_PREFIX=/usr \
-	-DCMAKE_BUILD_TYPE=Release
+	-DCMAKE_BUILD_TYPE=Release \
 	|| exit 1
 # Build everything.
 make -k || RET=1
