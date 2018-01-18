@@ -253,11 +253,15 @@ static int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR 
 		return -EINVAL;
 	}
 
-	printf("Extracting Bank %u into Bank%u.gcm...\n", bank+1, bank+1);
+	printf("Extracting Bank %u into '", bank+1);
+	_fputts(gcm_filename, stdout);
+	fputs("'...\n", stdout);
 	ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
 	printf("\n");
 	if (ret == 0) {
-		printf("Bank %u extracted to '%s' successfully.\n\n", bank+1, gcm_filename);
+		printf("Bank %u extracted to '", bank+1);
+		_fputts(gcm_filename, stdout);
+		fputs("' successfully.\n\n", stdout);
 	} else {
 		// TODO: Delete the gcm file?
 		fputs("*** ERROR: rvth_extract() failed: ", stderr);
