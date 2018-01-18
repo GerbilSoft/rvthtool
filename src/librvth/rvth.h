@@ -48,7 +48,9 @@ extern "C" {
 typedef enum {
 	RVTH_ERROR_SUCCESS		= 0,
 	RVTH_ERROR_NHCD_TABLE_MAGIC	= 1,	// NHCD bank table has the wrong magic.
-	RVTH_ERROR_BANK_EMPTY		= 2,	// Selected bank is empty.
+	RVTH_ERROR_BANK_UNKNOWN		= 2,	// Selected bank has an unknown status.
+	RVTH_ERROR_BANK_EMPTY		= 3,	// Selected bank is empty.
+	RVTH_ERROR_BANK_DL_2		= 4,	// Selected bank is the second bank of a DL image.
 } RvtH_Errors;
 
 // RVT-H struct.

@@ -718,10 +718,28 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 		return -ERANGE;
 	}
 
-	// Check if the bank is empty.
+	// Check if the bank can be extracted.
 	entry = &rvth->entries[bank];
-	if (entry->type == RVTH_BankType_Empty) {
-		return RVTH_ERROR_BANK_EMPTY;
+	switch (entry->type) {
+		case RVTH_BankType_GCN:
+		case RVTH_BankType_Wii_SL:
+		case RVTH_BankType_Wii_DL:
+			// Bank can be extracted.
+			break;
+
+		case RVTH_BankType_Unknown:
+		default:
+			// Unknown bank status...
+			return RVTH_ERROR_BANK_UNKNOWN;
+
+		case RVTH_BankType_Empty:
+			// Bank is empty.
+			return RVTH_ERROR_BANK_EMPTY;
+
+		case RVTH_BankType_Wii_DL_Bank2:
+			// Second bank of a dual-layer Wii disc image.
+			// TODO: Automatically select the first bank?
+			return RVTH_ERROR_BANK_DL_2;
 	}
 
 	// Seek to the start of the disc image in the RVT-H.
