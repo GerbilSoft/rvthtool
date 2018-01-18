@@ -27,6 +27,8 @@ This is an open-source tool for managing RVT-H Reader consoles.
   in a fakesigned image.
   * Support for both CISO and WBFS formats for converting retail to debug
     and vice-versa, but not encrypted to unencrypted.
+* RVT-H device scanning to determine which device names are associated with
+  connected RVT-H Readers.
 
 A future version will also add a GUI.
 
@@ -37,10 +39,12 @@ The following commands assume `/dev/sdb` is the RVT-H device.
 Full unencrypted RVT-H disk image dumps taken from the front-panel USB port
 are also supported.
 
-Direct device access on Windows partially works. Reading the bank tables works,
-but it cannot identify the signature types, since Windows requires direct
-device reads to be aligned on block boundaries. Writes appear to work, but they
-don't actually go through. (Tested on Windows XP in VirtualBox.)
+Direct device access on Windows is possible by specifying `\\.\PhysicalDriveN`,
+where N is the physical disk number. Disk Management will show the physical disk
+number in the bottom pane.
+
+**WARNING:** Disk Management will prompt to initialize the RVT-H device. DO NOT
+ALLOW IT TO INITIALIZE THE DRIVE; this may cause data loss.
 
 List disc images: `sudo ./rvthtool list /dev/sdb`
 
