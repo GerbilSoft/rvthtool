@@ -38,10 +38,15 @@ typedef char TCHAR;
 
 // stdio.h
 #define _fputts(s, stream) fputs(s, stream)
+
 #define _tfopen(filename, mode) fopen((filename), (mode))
+
+#define _tprintf printf
+#define _ftprintf fprintf
 #define _sntprintf snprintf
 
 // stdlib.h
+#define _tcscmp(s1, s2) strcmp(s1, s2)
 #define _tcstoul(nptr, endptr, base) strtoul(nptr, endptr, base)
 
 #endif

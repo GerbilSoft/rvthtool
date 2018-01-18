@@ -184,9 +184,96 @@ static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
 	return true;
 }
 
-int CDECL _tmain(int argc, TCHAR *argv[])
+/**
+ * 'list-banks' command.
+ * @param rvth_filename RVT-H device or disk image filename.
+ * @return 0 on success; non-zero on error.
+ */
+static int list_banks(const TCHAR *rvth_filename)
 {
 	RvtH *rvth;
+	int ret;
+
+	// Open the disk image.
+	rvth = rvth_open(rvth_filename, &ret);
+	if (!rvth) {
+		fputs("*** ERROR opening RVT-H device '", stderr);
+		_fputts(rvth_filename, stderr);
+		fputs("': ", stderr);
+		if (ret < 0) {
+			fprintf(stderr, "%s\n", strerror(-ret));
+		} else {
+			fprintf(stderr, "RVT-H error %d\n", ret);
+		}
+		return ret;
+	}
+
+	// Print the bank table.
+	printf("RVT-H Bank Table:\n\n");
+	print_bank_table(rvth);
+	rvth_close(rvth);
+	return 0;
+}
+
+/**
+ * 'extract' command.
+ * @param rvth_filename	RVT-H device or disk image filename.
+ * @param s_bank	Bank number (as a string).
+ * @param gcm_filename	Filename for the extracted GCM image.
+ * @return 0 on success; non-zero on error.
+ */
+static int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename)
+{
+	RvtH *rvth;
+	TCHAR *endptr;
+	unsigned int bank;
+	int ret;
+
+	// Open the disk image.
+	rvth = rvth_open(rvth_filename, &ret);
+	if (!rvth) {
+		fputs("*** ERROR opening RVT-H device '", stderr);
+		_fputts(rvth_filename, stderr);
+		fputs("': ", stderr);
+		if (ret < 0) {
+			fprintf(stderr, "%s\n", strerror(-ret));
+		} else {
+			fprintf(stderr, "RVT-H error %d\n", ret);
+		}
+		return ret;
+	}
+
+	// Validate the bank number.
+	bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
+	if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+		fputs("*** ERROR: Invalid bank number '", stderr);
+		_fputts(s_bank, stderr);
+		fputs("'.\n", stderr);
+		rvth_close(rvth);
+		return -EINVAL;
+	}
+
+	printf("Extracting Bank %u into Bank%u.gcm...\n", bank+1, bank+1);
+	ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
+	printf("\n");
+	if (ret == 0) {
+		printf("Bank %u extracted to '%s' successfully.\n\n", bank+1, gcm_filename);
+	} else {
+		// TODO: Delete the gcm file?
+		fputs("*** ERROR: rvth_extract() failed: ", stderr);
+		if (ret < 0) {
+			fprintf(stderr, "%s\n", strerror(-ret));
+		} else {
+			fprintf(stderr, "RVT-H error %d\n", ret);
+		}
+	}
+
+	rvth_close(rvth);
+	return 0;
+}
+
+int CDECL _tmain(int argc, TCHAR *argv[])
+{
 	int ret;
 
 	((void)argc);
@@ -196,62 +283,49 @@ int CDECL _tmain(int argc, TCHAR *argv[])
 		"Copyright (c) 2018 by David Korth.\n\n");
 
 	// TODO: getopt().
-	// Unicode getopt() for Windows: https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
+	// Unicode getopt() for Windows:
+	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
 
-	if (argc != 2 && argc != 3) {
-		printf("Syntax: %s diskimage.img [bank]\n"
-			"If a bank number (1-8) is specified, that image will be extracted into BankX.gcm."
-			, argv[0]);
+	if (argc == 1) {
+		fputs("Syntax: ", stdout);
+		_fputts(argv[0], stdout);
+		fputs(" [options] [command]\n"
+			"\n"
+			"Supported commands:\n"
+			"\n"
+			"list rvth.img\n"
+			"- List banks in the specified RVT-H device or disk image.\n"
+			"\n"
+			"extract rvth.img bank# disc.gcm\n"
+			"- Extract the specified bank number from rvth.img to disc.gcm.\n"
+			"\n"
+			, stdout);
 		return EXIT_FAILURE;
 	}
 
-	// Open the disk image.
-	rvth = rvth_open(argv[1], &ret);
-	if (!rvth) {
-		fprintf(stderr, "*** ERROR opening '%s': ", argv[1]);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
-		return EXIT_FAILURE;
-	}
-
-	// Print the bank table.
-	printf("RVT-H Bank Table:\n\n");
-	print_bank_table(rvth);
-
-	if (argc == 3) {
-		// Validate the bank number.
-		TCHAR gcm_filename[16];
-		TCHAR *endptr;
-
-		unsigned int bank = (unsigned int)_tcstoul(argv[2], &endptr, 10) - 1;
-		if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
-			fputs("*** ERROR: Invalid bank number '", stderr);
-			_fputts(argv[2], stderr);
-			fputs("'.\n", stderr);
-			rvth_close(rvth);
+	// Check the specified command.
+	// TODO: Better help if the command parameters are invalid.
+	if (!_tcscmp(argv[1], _T("list")) || !_tcscmp(argv[1], _T("list-banks"))) {
+		// List banks.
+		if (argc < 3) {
+			fputs("*** ERROR: RVT-H device or disk image not specified.\n", stderr);
 			return EXIT_FAILURE;
 		}
-
-		printf("Extracting Bank %u into Bank%u.gcm...\n", bank+1, bank+1);
-		_sntprintf(gcm_filename, ARRAY_SIZE(gcm_filename), _T("Bank%u.gcm"), bank+1);
-		ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
-		printf("\n");
-		if (ret == 0) {
-			printf("Bank extracted to '%s' successfully.\n\n", gcm_filename);
-		} else {
-			// TODO: Delete the gcm file?
-			fprintf(stderr, "*** ERROR: rvth_extract() failed: ");
-			if (ret < 0) {
-				fprintf(stderr, "%s\n", strerror(-ret));
-			} else {
-				fprintf(stderr, "RVT-H error %d\n", ret);
-			}
+		ret = list_banks(argv[2]);
+	} else if (!_tcscmp(argv[1], _T("extract"))) {
+		// Extract banks.
+		if (argc < 4) {
+			fputs("*** ERROR: Missing parameters for 'extract'.\n", stderr);
+			return EXIT_FAILURE;
 		}
+		ret = extract(argv[2], argv[3], argv[4]);
+	} else {
+		// TODO: If it's a filename, handle it as "list".
+		fputs("*** ERROR: Unrecognized command: '", stderr);
+		_fputts(argv[1], stderr);
+		fputs("'\n", stderr);
+		return EXIT_FAILURE;
 	}
 
-	rvth_close(rvth);
-	return EXIT_SUCCESS;
+	return ret;
 }
