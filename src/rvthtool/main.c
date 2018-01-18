@@ -32,9 +32,9 @@
 #include "undelete.h"
 
 #ifdef _MSC_VER
-# define CDECL __cdecl
+# define RVTH_CDECL __cdecl
 #else
-# define CDECL
+# define RVTH_CDECL
 #endif
 
 #ifdef _WIN32
@@ -44,7 +44,7 @@
 # define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
 
-int CDECL _tmain(int argc, TCHAR *argv[])
+int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 {
 	int ret;
 
