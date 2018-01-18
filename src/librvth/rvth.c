@@ -398,7 +398,7 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 	size_t size;
 
 	// Open the disk image.
-	f_img = ref_open(filename, _T("rb"));
+	f_img = ref_open(filename);
 	if (!f_img) {
 		// Could not open the file.
 		if (pErr) {

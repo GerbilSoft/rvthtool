@@ -49,6 +49,9 @@ typedef char TCHAR;
 #define _tcscmp(s1, s2) strcmp(s1, s2)
 #define _tcstoul(nptr, endptr, base) strtoul(nptr, endptr, base)
 
+// string.h
+#define _tcsdup(s) strdup(s)
+
 #endif
 
 #endif /* __RVTHTOOL_LIBRVTH_TCHAR_H__ */

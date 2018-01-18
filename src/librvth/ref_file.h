@@ -21,6 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_REF_FILE_H__
 #define __RVTHTOOL_LIBRVTH_REF_FILE_H__
 
+#include "common.h"
 #include "tcharx.h"
 
 #include <stdint.h>
@@ -29,15 +30,19 @@
 typedef struct _RefFile {
 	FILE *file;
 	int ref_count;
+
+	// Filename for reopening as writable.
+	TCHAR *filename;
+	bool is_writable;
 } RefFile;
 
 /**
  * Open a file as a reference-counted file.
+ * The file is opened as a binary file in read-only mode.
  * @param filename Filename.
- * @param mode Mode.
  * @return RefFile*, or NULL if an error occurred.
  */
-RefFile *ref_open(const TCHAR *filename, const TCHAR *mode);
+RefFile *ref_open(const TCHAR *filename);
 
 /**
  * Close a reference-counted file.
@@ -53,6 +58,13 @@ void ref_close(RefFile *f);
  * @return f
  */
 RefFile *ref_dup(RefFile *f);
+
+/**
+ * Reopen a file with write access.
+ * @param f RefFile*.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int ref_make_writable(RefFile *f);
 
 /** Convenience wrappers for stdio functions. **/
 
@@ -74,6 +86,18 @@ static inline int ref_seeko(RefFile *stream, int64_t offset, int whence)
 static inline int64_t ref_tello(RefFile *stream)
 {
 	return ftello(stream->file);
+}
+
+/** Convenience wrappers for various RefFile fields. **/
+
+static inline const TCHAR *ref_filename(const RefFile *f)
+{
+	return f->filename;
+}
+
+static inline bool ref_is_writable(const RefFile *f)
+{
+	return f->is_writable;
 }
 
 #endif /* __RVTHTOOL_LIBRVTH_REF_FILE_H__ */

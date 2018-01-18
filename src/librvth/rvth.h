@@ -21,20 +21,12 @@
 #ifndef __RVTHTOOL_LIBRVTH_RVTH_H__
 #define __RVTHTOOL_LIBRVTH_RVTH_H__
 
+#include "common.h"
 #include "ref_file.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <time.h>
-
-// TODO: Move to another file.
-#if defined(_MSC_VER) && _MSC_VER >= 1800
-# include <stdbool.h>
-#else
-typedef unsigned char bool;
-#define true 1
-#define false 0
-#endif
 
 #ifdef __cplusplus
 extern "C" {
