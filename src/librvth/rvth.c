@@ -406,6 +406,43 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 }
 
 /**
+ * Get a string description of an error number.
+ * - Negative: POSIX error. (strerror())
+ * - Positive; RVT-H error. (RvtH_Errors)
+ * @param err Error number.
+ * @return String description.
+ */
+const char *rvth_error(int err)
+{
+	static const char *const errtbl[] = {
+		// tr: RVTH_ERROR_SUCCESS
+		"Success",
+		// tr: RVTH_ERROR_NHCD_TABLE_MAGIC
+		"Bank table magic is incorrect",
+		// tr: RVTH_ERROR_BANK_UNKNOWN
+		"Bank status is unknown",
+		// tr: RVTH_ERROR_BANK_EMPTY
+		"Bank is empty",
+		// tr: RVTH_ERROR_BANK_DL_2
+		"Bank is second bank of a dual-layer image",
+		// tr: RVTH_ERROR_NOT_A_DEVICE
+		"Operation can only be performed on a device, not an image file",
+		// tr: RVTH_ERROR_BANK_IS_DELETED
+		"Bank is deleted",
+		// tr: RVTH_ERROR_BANK_NOT_DELETED
+		"Bank is not deleted",
+	};
+
+	if (err < 0) {
+		return strerror(-err);
+	} else if (err >= ARRAY_SIZE(errtbl)) {
+		return "(unknown)";
+	}
+
+	return errtbl[err];
+}
+
+/**
  * Open an RVT-H disk image.
  * TODO: R/W mode.
  * @param filename	[in] Filename.
@@ -949,6 +986,8 @@ static int rvth_make_writable(RvtH *rvth)
 	// Make this writable.
 	return ref_make_writable(rvth->f_img);
 }
+
+/** Writing functions. **/
 
 /**
  * Delete a bank on an RVT-H device.

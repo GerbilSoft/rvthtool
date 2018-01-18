@@ -22,7 +22,6 @@
 #include "librvth/rvth.h"
 
 #include <errno.h>
-#include <string.h>
 
 /**
  * Print information for the specified bank.
@@ -213,13 +212,7 @@ int list_banks(const TCHAR *rvth_filename)
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
-		fputs("': ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
-		return ret;
+		fprintf(stderr, "': %s\n", rvth_error(ret));
 	}
 
 	// Print the bank table.

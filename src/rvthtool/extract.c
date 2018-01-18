@@ -24,7 +24,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 
 /**
  * RVT-H progress callback.
@@ -61,12 +60,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
-		fputs("': ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
+		fprintf(stderr, "': %s\n", rvth_error(ret));
 		return ret;
 	}
 
@@ -96,12 +90,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		fputs("' successfully.\n\n", stdout);
 	} else {
 		// TODO: Delete the gcm file?
-		fputs("*** ERROR: rvth_extract() failed: ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
+		fprintf(stderr, "*** ERROR: rvth_extract() failed: %s", rvth_error(ret));
 	}
 
 	rvth_close(rvth);

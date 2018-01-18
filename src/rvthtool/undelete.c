@@ -24,7 +24,6 @@
 
 #include <errno.h>
 #include <stdlib.h>
-#include <string.h>
 
 /**
  * 'delete' command.
@@ -44,12 +43,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
-		fputs("': ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
+		fprintf(stderr, "': %s\n", rvth_error(ret));
 		return ret;
 	}
 
@@ -74,12 +68,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		printf("Bank %u deleted.\n", bank+1);
 	} else {
 		// TODO: Delete the gcm file?
-		fputs("*** ERROR: rvth_delete() failed: ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
+		fprintf(stderr, "*** ERROR: rvth_delete() failed: %s\n", rvth_error(ret));
 	}
 
 	rvth_close(rvth);
@@ -104,12 +93,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
-		fputs("': ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
+		fprintf(stderr, "': %s\n", rvth_error(ret));
 		return ret;
 	}
 
@@ -134,12 +118,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		printf("Bank %u undeleted.\n", bank+1);
 	} else {
 		// TODO: Delete the gcm file?
-		fputs("*** ERROR: rvth_undelete() failed: ", stderr);
-		if (ret < 0) {
-			fprintf(stderr, "%s\n", strerror(-ret));
-		} else {
-			fprintf(stderr, "RVT-H error %d\n", ret);
-		}
+		fprintf(stderr, "*** ERROR: rvth_undelete() failed: %s\n", rvth_error(ret));
 	}
 
 	rvth_close(rvth);

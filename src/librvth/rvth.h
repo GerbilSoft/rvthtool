@@ -98,6 +98,15 @@ typedef enum {
 /** Functions. **/
 
 /**
+ * Get a string description of an error number.
+ * - Negative: POSIX error. (strerror())
+ * - Positive; RVT-H error. (RvtH_Errors)
+ * @param err Error number.
+ * @return String description.
+ */
+const char *rvth_error(int err);
+
+/**
  * Open an RVT-H disk image.
  * TODO: R/W mode.
  * @param filename	[in] Filename.
@@ -145,6 +154,8 @@ typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_tota
  * @return 0 on success; negative POSIX error code on error.
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
+
+/** Writing functions. **/
 
 /**
  * Delete a bank on an RVT-H device.
