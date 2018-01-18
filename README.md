@@ -10,13 +10,13 @@ This is an open-source tool for managing RVT-H Reader consoles.
 * Lists "deleted" images that aren't accessible on the RVT-H but are still
   present on the HDD.
 * Extracts disc images from the RVT-H into an image file.
+* Allows deletion and undeletion of banks on an RVT-H system.
 
 ## Planned Features
 
 * Installation of GameCube and Wii disc images. Wii disc images must be
   either unencrypted or debug-encrypted in order to run correctly.
   * Support for both CISO and WBFS formats for importing.
-* Direct undeletion of disc images on the RVT-H system.
 * Automatic re-signing of retail Wii disc images to allow them to run on
   the RVT-H system. (Update partitions will be removed, since retail updates
   won't work properly on RVT-H.)
@@ -35,18 +35,27 @@ The following commands assume `/dev/sdb` is the RVT-H device.
 Full unencrypted RVT-H disk image dumps taken from the front-panel USB port
 are also supported.
 
-Direct device access on Windows is currently untested.
+Direct device access on Windows partially works. Reading the bank tables works,
+but it cannot identify the signature types, since Windows requires direct
+device reads to be aligned on block boundaries. Writes appear to work, but they
+don't actually go through. (Tested on Windows XP in VirtualBox.)
 
-List disc images: `sudo ./rvthtool /dev/sdb`
+List disc images: `sudo ./rvthtool list /dev/sdb`
 
-Extract disc image: `sudo ./rvthtool /dev/sdb 1`
+Extract disc image: `sudo ./rvthtool extract /dev/sdb 1 disc.gcm`
+* Replace `1` with the bank number.
+
+Delete a bank: `sudo ./rvthtool delete /dev/sdb 1`
+* Replace `1` with the bank number.
+
+Undelete a bank: `sudo ./rvthtool undelete /dev/sdb 1`
 * Replace `1` with the bank number.
 
 ## Encryption
 
-The RVT-H's front-panel USB interface is not encrypted. A raw dump of the
-internal HDD taken by disassembling the system and connecting the HDD
-directly to the PC may be encrypted; I have not checked this yet.
+The RVT-H's internal hard drive is not encrypted. This allows `rvthtool` to
+operate on an RVT-H system that's connected directly using USB, as well as
+disk image dumps from both the USB interface and from a direct HDD dump.
 
 Disc images on the RVT-H may or may not be encrypted:
 * GameCube: Not encrypted.
