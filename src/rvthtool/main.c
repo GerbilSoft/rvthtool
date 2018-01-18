@@ -73,9 +73,12 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			"\n"
 			"delete " DEVICE_NAME_EXAMPLE " bank#\n"
 			"- Delete the specified bank number from the specified RVT-H device.\n"
+			"  This does NOT wipe the disc image.\n"
+			"  [This command only works with RVT-H Readers, not disk images.]\n"
 			"\n"
 			"undelete " DEVICE_NAME_EXAMPLE " bank#\n"
 			"- Undelete the specified bank number from the specified RVT-H device.\n"
+			"  [This command only works with RVT-H Readers, not disk images.]\n"
 			"\n"
 			, stdout);
 		return EXIT_FAILURE;
