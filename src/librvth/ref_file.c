@@ -77,6 +77,8 @@ RefFile *ref_open(const TCHAR *filename)
 
 	// Initialize the reference count.
 	f->ref_count = 1;
+        // File is not writable initially.
+        f->is_writable = false;
 	return f;
 }
 
