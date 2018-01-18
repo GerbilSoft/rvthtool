@@ -88,8 +88,6 @@ typedef struct _NHCD_BankTable {
 } NHCD_BankTable;
 //ASSERT_STRUCT(NHCD_BankTable, 512*9);
 
-/** Byte values. **/
-
 /** LBA values. **/
 
 // Bank table address.
