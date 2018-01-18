@@ -22,10 +22,19 @@
 #define __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__
 
 #include "librvth/tcharx.h"
+#include "librvth/rvth.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Print information for the specified bank.
+ * @param rvth	[in] RVT-H disk image.
+ * @param bank	[in] Bank number. (0-7)
+ * @return 0 on success; non-zero on error.
+ */
+int print_bank(const RvtH *rvth, unsigned int bank);
 
 /**
  * 'list-banks' command.
