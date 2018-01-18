@@ -186,7 +186,7 @@ static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
 int CDECL main(int argc, char *argv[])
 {
 	RvtH *rvth;
-	int err;
+	int ret;
 
 	((void)argc);
 	((void)argv);
@@ -202,13 +202,13 @@ int CDECL main(int argc, char *argv[])
 	}
 
 	// Open the disk image.
-	rvth = rvth_open(argv[1], &err);
+	rvth = rvth_open(argv[1], &ret);
 	if (!rvth) {
 		fprintf(stderr, "*** ERROR opening '%s': ", argv[1]);
-		if (err < 0) {
-			fprintf(stderr, "%s\n", strerror(-err));
+		if (ret < 0) {
+			fprintf(stderr, "%s\n", strerror(-ret));
 		} else {
-			fprintf(stderr, "RVT-H error %d\n", err);
+			fprintf(stderr, "RVT-H error %d\n", ret);
 		}
 		return EXIT_FAILURE;
 	}
@@ -221,11 +221,11 @@ int CDECL main(int argc, char *argv[])
 		// Validate the bank number.
 		char gcm_filename[16];
 		char *endptr;
-		int ret;
 
 		unsigned int bank = (unsigned int)strtoul(argv[2], &endptr, 10) - 1;
 		if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
 			fprintf(stderr, "*** ERROR: Invalid bank number '%s'.\n", argv[2]);
+			rvth_close(rvth);
 			return EXIT_FAILURE;
 		}
 
@@ -238,7 +238,7 @@ int CDECL main(int argc, char *argv[])
 		} else {
 			// TODO: Delete the gcm file?
 			fprintf(stderr, "*** ERROR: rvth_extract() failed: ");
-			if (err < 0) {
+			if (ret < 0) {
 				fprintf(stderr, "%s\n", strerror(-ret));
 			} else {
 				fprintf(stderr, "RVT-H error %d\n", ret);
