@@ -21,6 +21,8 @@
 #ifndef __RVTHTOOL_LIBRVTH_REF_FILE_H__
 #define __RVTHTOOL_LIBRVTH_REF_FILE_H__
 
+#include "tcharx.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -35,7 +37,7 @@ typedef struct _RefFile {
  * @param mode Mode.
  * @return RefFile*, or NULL if an error occurred.
  */
-RefFile *ref_open(const char *filename, const char *mode);
+RefFile *ref_open(const TCHAR *filename, const TCHAR *mode);
 
 /**
  * Close a reference-counted file.

@@ -386,7 +386,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
  * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  * @return RvtH struct pointer if the file is a valid RvtH disk image; NULL on error. (check errno)
  */
-RvtH *rvth_open(const char *filename, int *pErr)
+RvtH *rvth_open(const TCHAR *filename, int *pErr)
 {
 	NHCD_BankTable_Header header;
 	RefFile *f_img;
@@ -398,8 +398,7 @@ RvtH *rvth_open(const char *filename, int *pErr)
 	size_t size;
 
 	// Open the disk image.
-	// TODO: Unicode filename support on Windows.
-	f_img = ref_open(filename, "rb");
+	f_img = ref_open(filename, _T("rb"));
 	if (!f_img) {
 		// Could not open the file.
 		if (pErr) {
@@ -694,7 +693,7 @@ static bool is_block_empty(const uint8_t *block, unsigned int size)
  * @param callback	[in,opt] Progress callback.
  * @return 0 on success; negative POSIX error code or positive RVT-H error code on error.
  */
-int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH_Progress_Callback callback)
+int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback)
 {
 	FILE *f_extract;
 	const RvtH_BankEntry *entry;
@@ -743,9 +742,8 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 		return -errno;
 	}
 
-	// TODO: Unicode filename support on Windows.
 	errno = 0;
-	f_extract = fopen(filename, "wb");
+	f_extract = _tfopen(filename, _T("wb"));
 	if (!f_extract) {
 		// Error opening the file.
 		int err = errno;
@@ -757,11 +755,11 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 #if defined(_WIN32)
 	// Check if the file system supports sparse files.
 	// TODO: Handle mount points?
-	if (isalpha(filename[0]) && filename[1] == ':' &&
-	    (filename[2] == '\\' || filename[2] == '/'))
+	if (_istalpha(filename[0]) && filename[1] == _T(':') &&
+	    (filename[2] == _T('\\') || filename[2] == _T('/')))
 	{
 		// Absolute pathname.
-		root_dir[0] = (wchar_t)filename[0];
+		root_dir[0] = filename[0];
 		root_dir[1] = L':';
 		root_dir[2] = L'\\';
 		root_dir[3] = 0;

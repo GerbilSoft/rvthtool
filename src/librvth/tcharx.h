@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * ref_file.c: Reference-counted FILE*.                                    *
+ * tcharx.h: TCHAR support for Windows and Linux.                          *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,65 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "ref_file.h"
+#ifndef __RVTHTOOL_LIBRVTH_TCHAR_H__
+#define __RVTHTOOL_LIBRVTH_TCHAR_H__
 
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
+#ifdef _WIN32
 
-/**
- * Open a file as a reference-counted file.
- * @param filename Filename.
- * @param mode Mode.
- * @return RefFile*, or NULL if an error occurred.
- */
-RefFile *ref_open(const TCHAR *filename, const TCHAR *mode)
-{
-	// TODO: Convert UTF-8 to UTF-16 on Windows?
-	RefFile *f = malloc(sizeof(RefFile));
-	if (!f) {
-		// Unable to allocate memory.
-		return NULL;
-	}
+// Windows: Use the SDK tchar.h.
+#include <tchar.h>
 
-	f->file = _tfopen(filename, mode);
-	if (!f->file) {
-		int err = errno;
-		free(f);
-		errno = err;
-		return NULL;
-	}
+#else /* !_WIN32 */
 
-	// Initialize the reference count.
-	f->ref_count = 1;
-	return f;
-}
+// Other systems: Define TCHAR and related macros.
+typedef char TCHAR;
+#define _T(x) x
+#define _tmain main
 
-/**
- * Close a reference-counted file.
- * Note that the file isn't actually closed until all references are removed.
- * @param f RefFile*.
- */
-void ref_close(RefFile *f)
-{
-	// TODO: Atomic decrement?
-	assert(f->ref_count > 0);
-	if (--f->ref_count <= 0) {
-		// Close the file.
-		fclose(f->file);
-		free(f);
-	}
-}
+// ctype.h
+#define _istalpha(c) isalpha(c)
 
-/**
- * Duplicate a reference-counted file.
- * This increments the reference count and returns the pointer.
- * @param f RefFile*.
- * @return f
- */
-RefFile *ref_dup(RefFile *f)
-{
-	// TODO: Atomic increment?
-	f->ref_count++;
-	return f;
-}
+// stdio.h
+#define _fputts(s, stream) fputs(s, stream)
+#define _tfopen(filename, mode) fopen((filename), (mode))
+#define _sntprintf snprintf
+
+// stdlib.h
+#define _tcstoul(nptr, endptr, base) strtoul(nptr, endptr, base)
+
+#endif
+
+#endif /* __RVTHTOOL_LIBRVTH_TCHAR_H__ */

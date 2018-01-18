@@ -23,6 +23,7 @@ SET(librvth_H
 	gcn_structs.h
 	rvth.h
 	ref_file.h
+	tcharx.h
 	)
 
 ######################

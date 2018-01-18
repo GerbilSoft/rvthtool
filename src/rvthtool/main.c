@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "librvth/common.h"
 #include "librvth/byteswap.h"
 #include "librvth/rvth.h"
 
@@ -183,7 +184,7 @@ static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
 	return true;
 }
 
-int CDECL main(int argc, char *argv[])
+int CDECL _tmain(int argc, TCHAR *argv[])
 {
 	RvtH *rvth;
 	int ret;
@@ -193,6 +194,9 @@ int CDECL main(int argc, char *argv[])
 
 	printf("RVT-H Tool v" VERSION_STRING "\n"
 		"Copyright (c) 2018 by David Korth.\n\n");
+
+	// TODO: getopt().
+	// Unicode getopt() for Windows: https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
 
 	if (argc != 2 && argc != 3) {
 		printf("Syntax: %s diskimage.img [bank]\n"
@@ -219,18 +223,20 @@ int CDECL main(int argc, char *argv[])
 
 	if (argc == 3) {
 		// Validate the bank number.
-		char gcm_filename[16];
-		char *endptr;
+		TCHAR gcm_filename[16];
+		TCHAR *endptr;
 
-		unsigned int bank = (unsigned int)strtoul(argv[2], &endptr, 10) - 1;
+		unsigned int bank = (unsigned int)_tcstoul(argv[2], &endptr, 10) - 1;
 		if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
-			fprintf(stderr, "*** ERROR: Invalid bank number '%s'.\n", argv[2]);
+			fputs("*** ERROR: Invalid bank number '", stderr);
+			_fputts(argv[2], stderr);
+			fputs("'.\n", stderr);
 			rvth_close(rvth);
 			return EXIT_FAILURE;
 		}
 
 		printf("Extracting Bank %u into Bank%u.gcm...\n", bank+1, bank+1);
-		snprintf(gcm_filename, sizeof(gcm_filename), "Bank%u.gcm", bank+1);
+		_sntprintf(gcm_filename, ARRAY_SIZE(gcm_filename), _T("Bank%u.gcm"), bank+1);
 		ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
 		printf("\n");
 		if (ret == 0) {

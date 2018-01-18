@@ -22,8 +22,7 @@ SET_WINDOWS_NO_MANIFEST(rvthtool)
 
 # FIXME: setargv isn't necessarily sorted...
 # TODO: Implement our own setargv function?
-# TODO: Use wmain and Unicode on Windows.
-SET_WINDOWS_ENTRYPOINT(rvthtool main ON)
+SET_WINDOWS_ENTRYPOINT(rvthtool wmain ON)
 
 # Include paths:
 # - Public: Current source and binary directories.

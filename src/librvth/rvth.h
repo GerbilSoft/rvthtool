@@ -104,7 +104,7 @@ typedef enum {
  * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  * @return RvtH struct pointer if the file is a valid RvtH disk image; NULL on error. (check errno)
  */
-RvtH *rvth_open(const char *filename, int *pErr);
+RvtH *rvth_open(const TCHAR *filename, int *pErr);
 
 /**
  * Close an opened RVT-H disk image.
@@ -144,7 +144,7 @@ typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_tota
  * @param callback	[in,opt] Progress callback.
  * @return 0 on success; negative POSIX error code on error.
  */
-int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH_Progress_Callback callback);
+int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
 
 #ifdef __cplusplus
 }
