@@ -961,6 +961,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	int ret;
 	size_t size;
 	NHCD_BankEntry nhcd_entry;
+	RvtH_BankEntry *rvth_entry;
 
 	if (!rvth) {
 		errno = EINVAL;
@@ -978,7 +979,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	}
 
 	// Is the bank deleted?
-	RvtH_BankEntry *rvth_entry = &rvth->entries[bank];
+	rvth_entry = &rvth->entries[bank];
 	if (rvth_entry->is_deleted) {
 		// Bank is already deleted.
 		return RVTH_ERROR_BANK_IS_DELETED;
@@ -1042,6 +1043,8 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	int ret;
 	size_t size;
 	NHCD_BankEntry nhcd_entry;
+	RvtH_BankEntry *rvth_entry;
+
 	time_t now;
 	struct tm tm_now;
 
@@ -1067,7 +1070,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	}
 
 	// Is the bank deleted?
-	RvtH_BankEntry *rvth_entry = &rvth->entries[bank];
+	rvth_entry = &rvth->entries[bank];
 	if (!rvth_entry->is_deleted) {
 		// Bank is not deleted.
 		return RVTH_ERROR_BANK_NOT_DELETED;

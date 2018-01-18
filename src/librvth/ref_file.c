@@ -164,7 +164,7 @@ bool ref_is_device(RefFile *f)
 		return false;
 	}
 
-	return !strncasecmp(f->filename, _T("\\\\.\\PhysicalDrive"), 17);
+	return !_tcsnicmp(f->filename, _T("\\\\.\\PhysicalDrive"), 17);
 #else /* !_WIN32 */
 	// Other: Use fstat().
 	struct stat buf;
