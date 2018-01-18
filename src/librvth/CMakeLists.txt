@@ -1,8 +1,10 @@
 PROJECT(librvth)
 
 # Check for C library functions.
-INCLUDE(CheckFunctionExists)
-CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
+IF(NOT WIN32)
+	INCLUDE(CheckFunctionExists)
+	CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
+ENDIF(NOT WIN32)
 
 # Write the config.h file.
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.librvth.h")

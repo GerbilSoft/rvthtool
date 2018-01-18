@@ -32,10 +32,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_FTRUNCATE
+#if defined(_WIN32)
+# include <windows.h>
+# include <io.h>
+# include <winioctl.h>
+#elif defined(HAVE_FTRUNCATE)
 # include <unistd.h>
 # include <sys/types.h>
-#endif /* HAVE_FTRUNCATE */
+#endif
 
 // RVT-H main struct.
 struct _RvtH {
@@ -692,7 +696,6 @@ static bool is_block_empty(const uint8_t *block, unsigned int size)
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH_Progress_Callback callback)
 {
-	// TODO: Windows file I/O for sparse file handling.
 	FILE *f_extract;
 	const RvtH_BankEntry *entry;
 	uint8_t *buf;
@@ -700,6 +703,13 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 	unsigned int lba_nonsparse;	// Last LBA written that wasn't sparse.
 	unsigned int sprs;		// Sparse counter.
 	int ret;
+
+#ifdef _WIN32
+	wchar_t root_dir[4];		// Root directory.
+	wchar_t *p_root_dir;		// Pointer to root_dir, or NULL if relative.
+	DWORD dwFileSystemFlags;	// Flags from GetVolumeInformation().
+	BOOL bRet;
+#endif /* _WIN32 */
 
 	if (!rvth || !filename || filename[0] == 0) {
 		errno = EINVAL;
@@ -744,7 +754,45 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const char *filename, RvtH
 		return -err;
 	}
 
-#ifdef HAVE_FTRUNCATE
+#if defined(_WIN32)
+	// Check if the file system supports sparse files.
+	// TODO: Handle mount points?
+	if (isalpha(filename[0]) && filename[1] == ':' &&
+	    (filename[2] == '\\' || filename[2] == '/'))
+	{
+		// Absolute pathname.
+		root_dir[0] = (wchar_t)filename[0];
+		root_dir[1] = L':';
+		root_dir[2] = L'\\';
+		root_dir[3] = 0;
+		p_root_dir = root_dir;
+	}
+	else
+	{
+		// Relative pathname.
+		p_root_dir = NULL;
+	}
+
+	bRet = GetVolumeInformation(p_root_dir, NULL, 0, NULL, NULL,
+		&dwFileSystemFlags, NULL, 0);
+	if (bRet != 0 && (dwFileSystemFlags & FILE_SUPPORTS_SPARSE_FILES)) {
+		// File system supports sparse files.
+		// Mark the file as sparse.
+		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(f_extract));
+		if (h_extract != NULL && h_extract != INVALID_HANDLE_VALUE) {
+			DWORD bytesReturned;
+			FILE_SET_SPARSE_BUFFER fssb;
+			fssb.SetSparse = TRUE;
+
+			// TODO: Use SetEndOfFile() if this succeeds?
+			// Note that SetEndOfFile() isn't guaranteed to fill the
+			// resulting file with zero bytes...
+			DeviceIoControl(h_extract, FSCTL_SET_SPARSE,
+				&fssb, sizeof(fssb),
+				NULL, 0, &bytesReturned, NULL);
+		}
+	}
+#elif defined(HAVE_FTRUNCATE)
 	// Set the file size.
 	// NOTE: If the underlying file system doesn't support sparse files,
 	// this may take a long time. (TODO: Check this.)
