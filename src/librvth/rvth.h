@@ -47,6 +47,7 @@ typedef enum {
 	RVTH_ERROR_NOT_A_DEVICE		= 5,	// Attempting to write to an RVT-H disk image.
 	RVTH_ERROR_BANK_IS_DELETED	= 6,	// Attempting to delete a bank that's already deleted.
 	RVTH_ERROR_BANK_NOT_DELETED	= 7,	// Attempting to undelete a bank that isn't deleted.
+	RVTH_ERROR_NOT_HDD_IMAGE	= 8,	// Attempting to modify the bank table of a non-HDD image.
 } RvtH_Errors;
 
 // RVT-H struct.

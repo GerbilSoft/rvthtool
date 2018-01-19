@@ -74,6 +74,7 @@ typedef struct PACKED _NHCD_BankEntry {
  * RVT-H bank types.
  */
 typedef enum {
+	NHCD_BankType_Empty  = 0x00000000,
 	NHCD_BankType_GCN    = 0x4743314C,	// "GC1L"
 	NHCD_BankType_Wii_SL = 0x4E4E314C,	// "NN1L"
 	NHCD_BankType_Wii_DL = 0x4E4E324C,	// "NN2L"
