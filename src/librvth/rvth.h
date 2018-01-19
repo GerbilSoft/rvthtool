@@ -37,6 +37,9 @@ extern "C" {
 
 // Convert LBA values to bytes.
 #define LBA_TO_BYTES(x) ((int64_t)(x) * RVTH_BLOCK_SIZE)
+// Convert bytes to an LBA value.
+// NOTE: Partial LBAs will be truncated!
+#define BYTES_TO_LBA(x) ((uint32_t)(x / RVTH_BLOCK_SIZE))
 
 typedef enum {
 	RVTH_ERROR_SUCCESS		= 0,
@@ -48,6 +51,7 @@ typedef enum {
 	RVTH_ERROR_BANK_IS_DELETED	= 6,	// Attempting to delete a bank that's already deleted.
 	RVTH_ERROR_BANK_NOT_DELETED	= 7,	// Attempting to undelete a bank that isn't deleted.
 	RVTH_ERROR_NOT_HDD_IMAGE	= 8,	// Attempting to modify the bank table of a non-HDD image.
+	RVTH_ERROR_NO_GAME_PARTITION	= 9,	// Game partition was not found in a Wii image.
 } RvtH_Errors;
 
 // RVT-H struct.
