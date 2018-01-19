@@ -85,8 +85,10 @@ Bank types:
 * "NN1L": Wii single-layer disc.
 * "NN2L": Wii dual-layer disc.
 
-Bank starting offsets are always the same. Length may differ depending on if
-the game is GameCube, Wii single-layer, or Wii dual-layer.
+Bank starting offsets are usually the same on all systems, assuming the
+official development tools are used. Length may differ depending on if
+the game is GameCube, Wii single-layer, or Wii dual-layer, and if the
+image is encrypted or unencrypted.
 
 Each bank is 0x8C4A00 sectors. (4,707,319,808 bytes)
 * This matches the size of RVT-R and DVD-R discs.
