@@ -6,15 +6,14 @@ front-panel USB port and an API trace of rvtwriter.exe 1.0.0.4.
 ## Test System
 
 According to rvtwriter, this RVT-H has:
-
-Bank 1: Empty
-Bank 2: THE LAST STORY / 2011.11.25 10:18:15
-Bank 3: ^ (dual-layer)
-Bank 4: THE LAST STORY / 2011.11.28 10:30:09
-Bank 5: ^ (dual-layer)
-Bank 6: Empty
-Bank 7: Empty
-Bank 8: Empty
+* Bank 1: Empty
+* Bank 2: THE LAST STORY / 2011.11.25 10:18:15
+* Bank 3: ^ (dual-layer)
+* Bank 4: THE LAST STORY / 2011.11.28 10:30:09
+* Bank 5: ^ (dual-layer)
+* Bank 6: Empty
+* Bank 7: Empty
+* Bank 8: Empty
 
 ## NHCD Bank Table
 
