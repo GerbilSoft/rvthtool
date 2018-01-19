@@ -213,6 +213,7 @@ int list_banks(const TCHAR *rvth_filename)
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
 		fprintf(stderr, "': %s\n", rvth_error(ret));
+		return ret;
 	}
 
 	// Print the bank table.
