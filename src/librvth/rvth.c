@@ -501,8 +501,14 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 	ret = ref_seeko(f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		ref_close(f_img);
+		errno = err;
 		if (pErr) {
-			*pErr = -errno;
+			*pErr = -err;
 		}
 		return NULL;
 	}
