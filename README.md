@@ -78,8 +78,8 @@ but have not been successful yet.
 
 ### Note about Debug IOS
 
-RVT-R disc images typically include debug copies of IOS. These will not
+RVT-R disc images typically include debug versions of IOS. These will not
 install on retail consoles, since they're encrypted with debug keys.
-Do NOT attempt to install them by re-encrypting them with the retail keys.
-Doing so will most likely result in a brick, especially if the 128 MB mode
-IOS WADs are used.
+Do **NOT** attempt to install them by re-encrypting them with the retail
+keys. Doing so will most likely result in a brick, especially if the 128 MB
+mode IOS WADs are used.
