@@ -3,6 +3,8 @@
 These notes were written using a full dump of an RVT-H disk using the
 front-panel USB port and an API trace of rvtwriter.exe 1.0.0.4.
 
+NOTE: Sectors (LBAs) are assumed to be 512 bytes.
+
 ## Test System
 
 According to rvtwriter, this RVT-H has:
@@ -66,7 +68,7 @@ in "writable" mode. It should be possible to extend `bank_count` to at
 least 14. Larger bank counts may work, but the counter display will be
 incorrect.
 
-$60000200: Bank 1. Each bank is 0x200 bytes.
+$60000200: Bank 1. Each bank entry is 512 bytes.
 ```c
 typedef struct _NHCD_BankEntry {
 	char type[4];		// [0x000] Type. (See below.)
