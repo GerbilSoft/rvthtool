@@ -13,6 +13,7 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURREN
 SET(librvth_SRCS
 	rvth.c
 	ref_file.c
+	reader_plain.c
 	)
 # Headers.
 SET(librvth_H
@@ -24,6 +25,8 @@ SET(librvth_H
 	rvth.h
 	ref_file.h
 	tcharx.h
+	reader.h
+	reader_plain.h
 	)
 
 ######################

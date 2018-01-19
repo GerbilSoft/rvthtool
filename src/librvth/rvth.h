@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "ref_file.h"
+#include "reader.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -54,7 +55,7 @@ typedef struct _RvtH RvtH;
 
 // Disc image and RVT-H bank entry definition.
 typedef struct RvtH_BankEntry {
-	RefFile *f_img;		// Disc image file.
+	Reader *reader;		// Disc image reader.
 	// TODO: Function pointer table for reading CISO and WBFS.
 	uint32_t lba_start;	// Starting LBA. (512-byte sectors)
 	uint32_t lba_len;	// Length, in 512-byte sectors.

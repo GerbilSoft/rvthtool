@@ -25,6 +25,9 @@
 #include "nhcd_structs.h"
 #include "gcn_structs.h"
 
+// Disc image readers.
+#include "reader_plain.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -228,7 +231,6 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
-	entry->f_img = ref_dup(f_img);
 	entry->lba_start = lba_start;
 	entry->lba_len = lba_len;
 	entry->type = type;
@@ -317,6 +319,11 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		// We're done here.
 		return 0;
 	}
+
+	// Initialize the disc image reader.
+	// NOTE: Always the plain reader for RVT-H images.
+	// TODO: Handle CISO and WBFS for standalone disc images.
+	entry->reader = reader_plain_open(f_img, lba_start, lba_len);
 
 	// Copy the game ID.
 	memcpy(entry->id6, sector_buf.gcn.id6, 6);
@@ -661,8 +668,8 @@ void rvth_close(RvtH *rvth)
 	// Close all bank entry files.
 	// RefFile has a reference count, so we have to clear the count.
 	for (i = 0; i < rvth->banks; i++) {
-		if (rvth->entries[i].f_img) {
-			ref_close(rvth->entries[i].f_img);
+		if (rvth->entries[i].reader) {
+			reader_close(rvth->entries[i].reader);
 		}
 	}
 
@@ -773,13 +780,14 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 	unsigned int lba_count, lba_progress;
 	unsigned int lba_nonsparse;	// Last LBA written that wasn't sparse.
 	unsigned int sprs;		// Sparse counter.
-	int ret;
 
 #ifdef _WIN32
 	wchar_t root_dir[4];		// Root directory.
 	wchar_t *p_root_dir;		// Pointer to root_dir, or NULL if relative.
 	DWORD dwFileSystemFlags;	// Flags from GetVolumeInformation().
 	BOOL bRet;
+#else /* !_WIN32 */
+	int ret;
 #endif /* _WIN32 */
 
 	if (!rvth || !filename || filename[0] == 0) {
@@ -812,14 +820,6 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 			// Second bank of a dual-layer Wii disc image.
 			// TODO: Automatically select the first bank?
 			return RVTH_ERROR_BANK_DL_2;
-	}
-
-	// Seek to the start of the disc image in the RVT-H.
-	errno = 0;
-	ret = ref_seeko(rvth->f_img, (int64_t)entry->lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
-	if (ret != 0) {
-		// Seek error.
-		return -errno;
 	}
 
 	// Process 1 MB at a time.
@@ -908,7 +908,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 	     lba_count -= LBA_COUNT_BUF)
 	{
 		// TODO: Error handling.
-		ref_read(buf, 1, BUF_SIZE, rvth->f_img);
+		reader_read(entry->reader, buf, lba_progress, LBA_COUNT_BUF);
 
 		// Check for empty 4 KB blocks.
 		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
@@ -931,7 +931,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 	// Process any remaining LBAs.
 	if (lba_count > 0) {
 		const unsigned int sz_left = lba_count * RVTH_BLOCK_SIZE;
-		ref_read(buf, 1, sz_left, rvth->f_img);
+		reader_read(entry->reader, buf, lba_progress, lba_count);
 
 		// Check for empty 512-byte blocks.
 		for (sprs = 0; sprs < sz_left; sprs += 512) {
@@ -1057,7 +1057,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 
 	// Clear the bank data on disk.
 	memset(&nhcd_entry, 0, sizeof(nhcd_entry));
-	ret = ref_seeko(rvth_entry->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	ret = ref_seeko(rvth->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -1065,7 +1065,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 		}
 		return -errno;
 	}
-	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth_entry->f_img);
+	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth->f_img);
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
 		if (errno == 0) {
@@ -1171,7 +1171,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
 
 	// Write the bank table entry.
-	ret = ref_seeko(rvth_entry->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	ret = ref_seeko(rvth->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -1179,7 +1179,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 		}
 		return -errno;
 	}
-	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth_entry->f_img);
+	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth->f_img);
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
 		if (errno == 0) {
