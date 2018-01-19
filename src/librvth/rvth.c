@@ -59,6 +59,20 @@ struct _RvtH {
 	RvtH_BankEntry *entries;
 };
 
+// NDDEMO header.
+// Used in early GameCube tech demos.
+// Note the lack of a GameCube magic number.
+static const uint8_t nddemo_header[64] = {
+	0x30, 0x30, 0x00, 0x45, 0x30, 0x31, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x4E, 0x44, 0x44, 0x45, 0x4D, 0x4F, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
 /**
  * Trim a game title.
  * @param title Game title.
@@ -407,8 +421,14 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 			type = RVTH_BankType_GCN;
 			entry->is_deleted = true;
 		} else {
-			// Probably actually empty...
-			// TODO: Check for GameCube NDDEMO.
+			// Check for GameCube NDDEMO.
+			if (!memcmp(&sector_buf.gcn, nddemo_header, sizeof(nddemo_header))) {
+				// NDDEMO header found.
+				type = RVTH_BankType_GCN;
+				entry->is_deleted = true;
+			} else {
+				// Probably actually empty...
+			}
 		}
 		entry->type = type;
 	}
@@ -593,13 +613,19 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		// GameCube disc image.
 		type = RVTH_BankType_GCN;
 	} else {
-		// TODO: Check for GameCube NDDEMO.
-		ref_close(f_img);
-		errno = EIO;
-		if (pErr) {
-			*pErr = -EIO;
+		// Check for GameCube NDDEMO.
+		if (!memcmp(&sector_buf.gcn, nddemo_header, sizeof(nddemo_header))) {
+			// NDDEMO header found.
+			type = RVTH_BankType_GCN;
+		} else {
+			// Not supported.
+			ref_close(f_img);
+			errno = EIO;
+			if (pErr) {
+				*pErr = -EIO;
+			}
+			return NULL;
 		}
-		return NULL;
 	}
 
 	// Allocate memory for the RvtH object
