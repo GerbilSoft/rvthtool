@@ -53,7 +53,7 @@ struct _RvtH {
 	// Number of banks.
 	// - RVT-H system or disk image: 8
 	// - Standalone disc image: 1
-	unsigned int banks;
+	unsigned int bank_count;
 
 	// BankEntry objects.
 	RvtH_BankEntry *entries;
@@ -646,7 +646,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for a single RvtH_BankEntry object.
-	rvth->banks = 1;
+	rvth->bank_count = 1;
 	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -772,7 +772,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the 8 RvtH_BankEntry objects.
-	rvth->banks = 8;
+	rvth->bank_count = 8;
 	rvth->entries = calloc(8, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -792,7 +792,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	rvth->f_img = f_img;
 	rvth_entry = rvth->entries;
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
-	for (i = 0; i < rvth->banks; i++, rvth_entry++, addr += 512) {
+	for (i = 0; i < rvth->bank_count; i++, rvth_entry++, addr += 512) {
 		NHCD_BankEntry nhcd_entry;
 		uint32_t lba_start = 0, lba_len = 0;
 		uint8_t type = RVTH_BankType_Unknown;
@@ -943,7 +943,7 @@ void rvth_close(RvtH *rvth)
 
 	// Close all bank entry files.
 	// RefFile has a reference count, so we have to clear the count.
-	for (i = 0; i < rvth->banks; i++) {
+	for (i = 0; i < rvth->bank_count; i++) {
 		if (rvth->entries[i].reader) {
 			reader_close(rvth->entries[i].reader);
 		}
@@ -972,7 +972,7 @@ unsigned int rvth_get_BankCount(const RvtH *rvth)
 		return 0;
 	}
 
-	return rvth->banks;
+	return rvth->bank_count;
 }
 
 /**
@@ -990,7 +990,7 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 			*pErr = -EINVAL;
 		}
 		return NULL;
-	} else if (bank >= rvth->banks) {
+	} else if (bank >= rvth->bank_count) {
 		errno = ERANGE;
 		if (pErr) {
 			*pErr = -EINVAL;
@@ -1069,7 +1069,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 	if (!rvth || !filename || filename[0] == 0) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank >= rvth->banks) {
+	} else if (bank >= rvth->bank_count) {
 		errno = ERANGE;
 		return -ERANGE;
 	}
@@ -1289,11 +1289,11 @@ static int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->banks < 2) {
+	} else if (rvth->bank_count < 2) {
 		// Single-bank image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= rvth->banks) {
+	} else if (bank >= rvth->bank_count) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
@@ -1403,11 +1403,11 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->banks < 2) {
+	} else if (rvth->bank_count < 2) {
 		// Single-bank image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= rvth->banks) {
+	} else if (bank >= rvth->bank_count) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
@@ -1474,11 +1474,11 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->banks < 2) {
+	} else if (rvth->bank_count < 2) {
 		// Single-bank image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= rvth->banks) {
+	} else if (bank >= rvth->bank_count) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;

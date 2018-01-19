@@ -49,7 +49,7 @@ extern "C" {
 typedef struct PACKED _NHCD_BankTable_Header {
 	uint32_t magic;		// [0x000] "NHCD"
 	uint32_t x004;		// [0x004] 0x00000001
-	uint32_t x008;		// [0x008] 0x00000008
+	uint32_t bank_count;	// [0x008] Bank count.
 	uint32_t x00C;		// [0x00C] 0x00000000
 	uint32_t x010;		// [0x010] 0x002FF000
 	uint8_t unk[492];	// [0x014] Unknown

@@ -40,12 +40,31 @@ $60000000: Control struct.
 typedef struct _NHCD_BankTable_Header {
 	char magic[4];		// [0x000] "NHCD"
 	uint32_t x004;		// [0x004] 0x00000001
-	uint32_t x008;		// [0x008] 0x00000008
+	uint32_t bank_count;	// [0x008] Bank count.
 	uint32_t x00C;		// [0x00C] 0x00000000
 	uint32_t x010;		// [0x010] 0x002FF000
 	uint8_t unk[492];	// [0x014] Unknown
 } NHCD_BankTable_Header;
 ```
+
+On all known RVT-H systems, `bank_count` is set to 8. Earlier models included
+a 40 GB HDD, which can hold up to 8 banks. Later models have an 80 GB HDD,
+possibly because the 40 GB HDD was no longer manufactured. These systems are
+still limited to 8 banks by default.
+
+By modifying `bank_count`, it is possible to get more than 8 banks on systems
+with larger HDDs. Note that the bank table size will increase by 512 bytes
+for each bank added, and this will run into the default offset for Bank 1.
+Hence, to take full advantage of extra banks, the entire disk will need to
+be repartitioned.
+
+rvthtool does not currently support non-standard partition layouts.
+
+Note that the front-panel display on the RVT-H has a 4-bit binary counter.
+This counter normally shows 1-8 for selected banks, or 15 if the drive is
+in "writable" mode. It should be possible to extend `bank_count` to at
+least 14. Larger bank counts may work, but the counter display will be
+incorrect.
 
 $60000200: Bank 1. Each bank is 0x200 bytes.
 ```c
