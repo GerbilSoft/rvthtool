@@ -37,7 +37,7 @@ A future version will also add a GUI.
 The following commands assume `/dev/sdb` is the RVT-H device.
 
 Full unencrypted RVT-H disk image dumps taken from the front-panel USB port
-are also supported.
+and by dumping the drive directly are also supported.
 
 Direct device access on Windows is possible by specifying `\\.\PhysicalDriveN`,
 where N is the physical disk number. Disk Management will show the physical disk
