@@ -41,6 +41,7 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURREN
 # Sources.
 SET(librvth_SRCS
 	rvth.c
+	rvth_write.c
 	ref_file.c
 	reader_plain.c
 	cert_store.c
