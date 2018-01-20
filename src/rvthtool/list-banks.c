@@ -34,7 +34,6 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 {
 	const RvtH_BankEntry *entry;
 	const char *s_type;
-	const char *s_region;
 	bool is_hdd;
 	int ret = 0;
 
@@ -133,29 +132,12 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	printf("- Revision:    %u\n", entry->revision);
 
 	// Region code.
-	switch (entry->region_code) {
-		case GCN_REGION_JAPAN:
-			s_region = "Japan";
-			break;
-		case GCN_REGION_USA:
-			s_region = "USA";
-			break;
-		case GCN_REGION_PAL:
-			s_region = "PAL";
-			break;
-		case GCN_REGION_FREE:
-			s_region = "Region-Free";
-			break;
-		case GCN_REGION_SOUTH_KOREA:
-			s_region = "South Korea";
-			break;
-		default:
-			s_region = NULL;
-			break;
-	}
+	static const char region_code_tbl[5][4] = {
+		"JPN", "USA", "EUR", "ALL", "KOR"
+	};
 	fputs("- Region code: ", stdout);
-	if (s_region) {
-		fputs(s_region, stdout);
+	if (entry->region_code < ARRAY_SIZE(region_code_tbl)) {
+		fputs(region_code_tbl[entry->region_code], stdout);
 	} else {
 		printf("0x%02X", entry->region_code);
 	}
