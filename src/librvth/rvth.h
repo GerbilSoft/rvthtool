@@ -53,6 +53,7 @@ typedef enum {
 	RVTH_ERROR_NOT_HDD_IMAGE	= 8,	// Attempting to modify the bank table of a non-HDD image.
 	RVTH_ERROR_NO_GAME_PARTITION	= 9,	// Game partition was not found in a Wii image.
 	RVTH_ERROR_INVALID_BANK_COUNT	= 10,	// `bank_count` field is invalid.
+	RVTH_ERROR_IS_HDD_IMAGE		= 11,	// Operation does not support HDD images.
 } RvtH_Errors;
 
 // RVT-H struct.
@@ -177,6 +178,8 @@ bool rvth_is_hdd(const RvtH *rvth);
  */
 const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr);
 
+/** Writing functions. **/
+
 /**
  * RVT-H progress callback.
  * @param lba_processed LBAs processed.
@@ -186,16 +189,34 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_total);
 
 /**
+ * Create a writable disc image object.
+ * @param filename	[in] Filename.
+ * @param lba_len	[in] LBA length. (Will NOT be allocated initially.)
+ * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ * @return RvtH on success; NULL on error. (check errno)
+ */
+RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr);
+
+/**
+ * Copy a bank from an RVT-H HDD or standalone disc image to a writable standalone disc image.
+ * @param rvth_dest	[out] Destination RvtH object.
+ * @param rvth_src	[in] Source RvtH object.
+ * @param bank_src	[in] Source bank number. (0-7)
+ * @param callback	[in,opt] Progress callback.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_src, RvtH_Progress_Callback callback);
+
+/**
  * Extract a disc image from the RVT-H disk image.
+ * Compatibility wrapper; this function calls rvth_create_gcm() and rvth_copy().
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
  * @param callback	[in,opt] Progress callback.
- * @return 0 on success; negative POSIX error code on error.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
-
-/** Writing functions. **/
 
 /**
  * Delete a bank on an RVT-H device.

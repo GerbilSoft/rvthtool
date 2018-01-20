@@ -18,27 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "config.librvth.h"
-
 #include "rvth.h"
 #include "rvth_p.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
+// Disc image readers.
+#include "reader_plain.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#if defined(_WIN32)
-# include <windows.h>
-# include <io.h>
-# include <winioctl.h>
-#elif defined(HAVE_FTRUNCATE)
-# include <unistd.h>
-# include <sys/types.h>
-#endif
+#include <time.h>
 
 /**
  * Make an RVT-H object writable.
@@ -98,42 +91,132 @@ static bool is_block_empty(const uint8_t *block, unsigned int size)
 }
 
 /**
- * Extract a disc image from the RVT-H disk image.
- * @param rvth		[in] RVT-H disk image.
- * @param bank		[in] Bank number. (0-7)
- * @param filename	[in] Destination filename.
- * @param callback	[in,opt] Progress callback.
- * @return 0 on success; negative POSIX error code or positive RVT-H error code on error.
+ * Create a writable disc image object.
+ * @param filename	[in] Filename.
+ * @param lba_len	[in] LBA length. (Will NOT be allocated initially.)
+ * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ * @return RvtH on success; NULL on error. (check errno)
  */
-int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback)
+RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 {
-	FILE *f_extract;
-	const RvtH_BankEntry *entry;
-	uint8_t *buf;
-	unsigned int lba_count, lba_progress;
-	unsigned int lba_nonsparse;	// Last LBA written that wasn't sparse.
-	unsigned int sprs;		// Sparse counter.
+	RvtH *rvth;
+	RvtH_BankEntry *entry;
+	RefFile *f_img;
 
-#ifdef _WIN32
-	wchar_t root_dir[4];		// Root directory.
-	wchar_t *p_root_dir;		// Pointer to root_dir, or NULL if relative.
-	DWORD dwFileSystemFlags;	// Flags from GetVolumeInformation().
-	BOOL bRet;
-#else /* !_WIN32 */
-	int ret;
-#endif /* _WIN32 */
-
-	if (!rvth || !filename || filename[0] == 0) {
+	if (!filename || filename[0] == 0 || lba_len == 0) {
+		// Invalid parameters.
+		if (pErr) {
+			*pErr = EINVAL;
+		}
 		errno = EINVAL;
-		return -EINVAL;
-	} else if (bank >= rvth->bank_count) {
-		errno = ERANGE;
-		return -ERANGE;
+		return NULL;
 	}
 
-	// Check if the bank can be extracted.
-	entry = &rvth->entries[bank];
-	switch (entry->type) {
+	// Allocate memory for the RvtH object
+	errno = 0;
+	rvth = malloc(sizeof(RvtH));
+	if (!rvth) {
+		// Error allocating memory.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		if (pErr) {
+			*pErr = errno;
+		}
+		return NULL;
+	}
+
+	// Allocate memory for a single RvtH_BankEntry object.
+	rvth->bank_count = 1;
+	rvth->is_hdd = false;
+	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
+	if (!rvth->entries) {
+		// Error allocating memory.
+		int err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		free(rvth);
+		errno = err;
+		if (pErr) {
+			*pErr = -err;
+		}
+		return NULL;
+	};
+
+	// Attempt to create the file.
+	f_img = ref_create(filename);
+	if (!f_img) {
+		// Error creating the file.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		free(rvth);
+		errno = err;
+		if (pErr) {
+			*pErr = -err;
+		}
+		return NULL;
+	}
+
+	// Initialize the bank entry.
+	// NOTE: Not using rvth_init_BankEntry() here.
+	rvth->f_img = f_img;
+	entry = rvth->entries;
+	entry->lba_start = 0;
+	entry->lba_len = lba_len;
+	entry->type = RVTH_BankType_Empty;
+	entry->is_deleted = false;
+
+	// Timestamp.
+	// TODO: Update on write.
+	entry->timestamp = time(NULL);
+
+	// Initialize the disc image reader.
+	entry->reader = reader_plain_open(f_img, entry->lba_start, entry->lba_len);
+
+	// We're done here.
+	return rvth;
+}
+
+/**
+ * Copy a bank from an RVT-H HDD or standalone disc image to a writable standalone disc image.
+ * @param rvth_dest	[out] Destination RvtH object.
+ * @param rvth_src	[in] Source RvtH object.
+ * @param bank_src	[in] Source bank number. (0-7)
+ * @param callback	[in,opt] Progress callback.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_src, RvtH_Progress_Callback callback)
+{
+	const RvtH_BankEntry *entry_src;
+	uint8_t *buf;
+	unsigned int lba_count;
+	unsigned int lba_buf_max;	// Highest LBA that can be written using the buffer.
+	unsigned int lba_nonsparse;	// Last LBA written that wasn't sparse.
+	unsigned int sprs;		// Sparse counter.
+	int ret;
+
+	// Destination disc image.
+	RvtH_BankEntry *entry_dest;
+
+	if (!rvth_dest || !rvth_src) {
+		errno = EINVAL;
+		return -EINVAL;
+	} else if (bank_src >= rvth_src->bank_count) {
+		errno = ERANGE;
+		return -ERANGE;
+	} else if (rvth_dest->is_hdd || rvth_dest->bank_count != 1) {
+		// Destination is not a standalone disc image.
+		// Copying to HDDs will be handled differently.
+		errno = EIO;
+		return RVTH_ERROR_IS_HDD_IMAGE;
+	}
+
+	// Check if the source bank can be extracted.
+	entry_src = &rvth_src->entries[bank_src];
+	switch (entry_src->type) {
 		case RVTH_BankType_GCN:
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -157,7 +240,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 
 	// Process 1 MB at a time.
 	#define BUF_SIZE 1048576
-	#define LBA_COUNT_BUF (BUF_SIZE / NHCD_BLOCK_SIZE)
+	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
 	errno = 0;
 	buf = malloc(BUF_SIZE);
 	if (!buf) {
@@ -165,141 +248,128 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 		return -errno;
 	}
 
-	errno = 0;
-	f_extract = _tfopen(filename, _T("wb"));
-	if (!f_extract) {
-		// Error opening the file.
-		int err = errno;
-		free(buf);
-		errno = err;
-		return -err;
-	}
-
-#if defined(_WIN32)
-	// Check if the file system supports sparse files.
-	// TODO: Handle mount points?
-	if (_istalpha(filename[0]) && filename[1] == _T(':') &&
-	    (filename[2] == _T('\\') || filename[2] == _T('/')))
-	{
-		// Absolute pathname.
-		root_dir[0] = filename[0];
-		root_dir[1] = L':';
-		root_dir[2] = L'\\';
-		root_dir[3] = 0;
-		p_root_dir = root_dir;
-	}
-	else
-	{
-		// Relative pathname.
-		p_root_dir = NULL;
-	}
-
-	bRet = GetVolumeInformation(p_root_dir, NULL, 0, NULL, NULL,
-		&dwFileSystemFlags, NULL, 0);
-	if (bRet != 0 && (dwFileSystemFlags & FILE_SUPPORTS_SPARSE_FILES)) {
-		// File system supports sparse files.
-		// Mark the file as sparse.
-		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(f_extract));
-		if (h_extract != NULL && h_extract != INVALID_HANDLE_VALUE) {
-			DWORD bytesReturned;
-			FILE_SET_SPARSE_BUFFER fssb;
-			fssb.SetSparse = TRUE;
-
-			// TODO: Use SetEndOfFile() if this succeeds?
-			// Note that SetEndOfFile() isn't guaranteed to fill the
-			// resulting file with zero bytes...
-			DeviceIoControl(h_extract, FSCTL_SET_SPARSE,
-				&fssb, sizeof(fssb),
-				NULL, 0, &bytesReturned, NULL);
-		}
-	}
-#elif defined(HAVE_FTRUNCATE)
-	// Set the file size.
-	// NOTE: If the underlying file system doesn't support sparse files,
-	// this may take a long time. (TODO: Check this.)
-	ret = ftruncate(fileno(f_extract), (int64_t)entry->lba_len * RVTH_BLOCK_SIZE);
+	// Make this a sparse file.
+	entry_dest = &rvth_dest->entries[0];
+	ret = ref_make_sparse(rvth_dest->f_img, LBA_TO_BYTES(entry_dest->lba_len));
 	if (ret != 0) {
-		// Error setting the file size.
-		// Allow all errors except for EINVAL or EFBIG,
-		// since those mean the file system doesn't support
-		// large files.
-		int err = errno;
-		if (err == EINVAL || err == EFBIG) {
-			// File is too big.
-			// TODO: Delete the file?
-			fclose(f_extract);
-			free(buf);
-			errno = err;
-			return -err;
-		}
+		// Error managing the sparse file.
+		// TODO: Delete the file?
+		free(buf);
+		return ret;
 	}
-#endif /* HAVE_FTRUNCATE */
 
-	lba_progress = 0;
+	// Copy the bank table information.
+	memcpy(entry_dest->id6, entry_src->id6, sizeof(entry_dest->id6));
+	memcpy(entry_dest->game_title, entry_src->game_title, sizeof(entry_dest->game_title));
+	entry_dest->timestamp	= entry_src->timestamp;
+	entry_dest->type	= entry_src->type;
+	entry_dest->disc_number	= entry_src->disc_number;
+	entry_dest->revision	= entry_src->revision;
+	entry_dest->region_code	= entry_src->region_code;
+	entry_dest->is_deleted	= false;
+
+	// TODO: Optimize seeking? (reader_write() seeks every time.)
+	lba_buf_max = entry_dest->lba_len & ~(LBA_COUNT_BUF-1);
 	lba_nonsparse = 0;
-	for (lba_count = entry->lba_len; lba_count >= LBA_COUNT_BUF;
-	     lba_count -= LBA_COUNT_BUF)
-	{
+	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
+		if (callback) {
+			callback(lba_count, entry_dest->lba_len);
+		}
+
 		// TODO: Error handling.
-		reader_read(entry->reader, buf, lba_progress, LBA_COUNT_BUF);
+		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);
 
 		// Check for empty 4 KB blocks.
 		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
-			if (is_block_empty(&buf[sprs], 4096)) {
-				// 4 KB block is empty.
-				fseeko(f_extract, 4096, SEEK_CUR);
-			} else {
+			if (!is_block_empty(&buf[sprs], 4096)) {
 				// 4 KB block is not empty.
-				fwrite(&buf[sprs], 1, 4096, f_extract);
-				lba_nonsparse = lba_progress + (sprs / 512) + 7;
+				lba_nonsparse = lba_count + (sprs / 512);
+				ret = reader_write(entry_dest->reader, &buf[sprs], lba_nonsparse, 8);
+				lba_nonsparse += 7;
 			}
-		}
-
-		if (callback) {
-			lba_progress += LBA_COUNT_BUF;
-			callback(lba_progress, entry->lba_len);
 		}
 	}
 
 	// Process any remaining LBAs.
-	if (lba_count > 0) {
-		const unsigned int sz_left = lba_count * RVTH_BLOCK_SIZE;
-		reader_read(entry->reader, buf, lba_progress, lba_count);
+	if (lba_count < entry_dest->lba_len) {
+		const unsigned int lba_left = entry_dest->lba_len - lba_count;
+		const unsigned int sz_left = (unsigned int)BYTES_TO_LBA(lba_left);
+
+		if (callback) {
+			callback(lba_count, entry_dest->lba_len);
+		}
+		reader_read(entry_src->reader, buf, lba_count, lba_left);
 
 		// Check for empty 512-byte blocks.
 		for (sprs = 0; sprs < sz_left; sprs += 512) {
-			if (is_block_empty(&buf[sprs], 512)) {
-				// 512-byte block is empty.
-				fseeko(f_extract, 512, SEEK_CUR);
-			} else {
+			if (!is_block_empty(&buf[sprs], 512)) {
 				// 512-byte block is not empty.
-				fwrite(&buf[sprs], 1, 512, f_extract);
-				lba_nonsparse = lba_progress + (sprs / 512) + 7;
+				lba_nonsparse = lba_count + (sprs / 512);
+				reader_write(entry_dest->reader, &buf[sprs], lba_nonsparse, 1);
 			}
-		}
-
-		if (callback) {
-			callback(entry->lba_len, entry->lba_len);
 		}
 	}
 
+	if (callback) {
+		callback(entry_dest->lba_len, entry_dest->lba_len);
+	}
+
 	// lba_nonsparse should be equal to entry->lba_len - 1.
-	if (lba_nonsparse != entry->lba_len - 1) {
+	if (lba_nonsparse != entry_dest->lba_len - 1) {
 		// Last LBA was sparse.
 		// We'll need to write an actual zero block.
 		// TODO: Maybe not needed if ftruncate() succeeded?
 		// TODO: Check for errors.
-		int64_t last_lba_pos = (int64_t)(entry->lba_len - 1) * RVTH_BLOCK_SIZE;
 		memset(buf, 0, 512);
-		fseeko(f_extract, last_lba_pos, SEEK_SET);
-		fwrite(buf, 1, 512, f_extract);
+		reader_write(entry_dest->reader, buf, entry_dest->lba_len-1, 1);
 	}
 
 	// Finished extracting the disc image.
-	fflush(f_extract);
-	fclose(f_extract);
+	// TODO: reader_flush()?
 	free(buf);
 	return 0;
+}
+
+/**
+ * Extract a disc image from the RVT-H disk image.
+ * Compatibility wrapper; this function calls rvth_create_gcm() and rvth_copy().
+ * @param rvth		[in] RVT-H disk image.
+ * @param bank		[in] Bank number. (0-7)
+ * @param filename	[in] Destination filename.
+ * @param callback	[in,opt] Progress callback.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback)
+{
+	RvtH *rvth_dest;
+	const RvtH_BankEntry *entry;
+	int ret;
+
+	if (!rvth || !filename || filename[0] == 0) {
+		errno = EINVAL;
+		return -EINVAL;
+	} else if (bank >= rvth->bank_count) {
+		// Bank number is out of range.
+		errno = ERANGE;
+		return -ERANGE;
+	}
+
+	// Create a standalone disc image.
+	entry = &rvth->entries[bank];
+	ret = 0;
+	rvth_dest = rvth_create_gcm(filename, entry->lba_len, &ret);
+	if (!rvth_dest) {
+		// Error creating the standalone disc image.
+		if (ret == 0) {
+			ret = -EIO;
+		}
+		return ret;
+	}
+
+	// Copy the bank from the source image to the destination GCM.
+	ret = rvth_copy_to_gcm(rvth_dest, rvth, bank, callback);
+	rvth_close(rvth_dest);
+	return ret;
 }
 
 /**

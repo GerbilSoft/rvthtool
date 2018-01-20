@@ -45,6 +45,15 @@ typedef struct _RefFile {
 RefFile *ref_open(const TCHAR *filename);
 
 /**
+ * Create a file as a reference-counted file.
+ * The file is opened as a binary file in read/write mode.
+ * NOTE: If the file exists, it will be truncated.
+ * @param filename Filename.
+ * @return RefFile*, or NULL if an error occurred.
+ */
+RefFile *ref_create(const TCHAR *filename);
+
+/**
  * Close a reference-counted file.
  * Note that the file isn't actually closed until all references are removed.
  * @param f RefFile*.
@@ -72,6 +81,14 @@ int ref_make_writable(RefFile *f);
  * @return True if this is a device file; false if it isn't.
  */
 bool ref_is_device(RefFile *f);
+
+/**
+ * Try to make this file a sparse file.
+ * @param f RefFile*.
+ * @param size If not zero, try to set the file to this size.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int ref_make_sparse(RefFile *f, int64_t size);
 
 /** Convenience wrappers for stdio functions. **/
 

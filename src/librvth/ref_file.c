@@ -18,14 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
+#include "config.librvth.h"
+
 #include "ref_file.h"
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+# include <io.h>
+# include <winioctl.h>
+#else /* !_WIN32 */
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <unistd.h>
@@ -42,7 +48,6 @@
  */
 RefFile *ref_open(const TCHAR *filename)
 {
-	// TODO: Convert UTF-8 to UTF-16 on Windows?
 	RefFile *f = malloc(sizeof(RefFile));
 	if (!f) {
 		// Unable to allocate memory.
@@ -79,6 +84,54 @@ RefFile *ref_open(const TCHAR *filename)
 	f->ref_count = 1;
         // File is not writable initially.
         f->is_writable = false;
+	return f;
+}
+
+/**
+ * Create a file as a reference-counted file.
+ * The file is opened as a binary file in read/write mode.
+ * NOTE: If the file exists, it will be truncated.
+ * @param filename Filename.
+ * @return RefFile*, or NULL if an error occurred.
+ */
+RefFile *ref_create(const TCHAR *filename)
+{
+	RefFile *f = malloc(sizeof(RefFile));
+	if (!f) {
+		// Unable to allocate memory.
+		return NULL;
+	}
+
+	// Save the filename.
+	f->filename = _tcsdup(filename);
+	if (!f->filename) {
+		// Could not copy the filename.
+		int err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		free(f);
+		errno = err;
+		return NULL;
+	}
+
+	f->file = _tfopen(filename, _T("wb"));
+	if (!f->file) {
+		// Could not open the file.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		free(f->filename);
+		free(f);
+		errno = err;
+		return NULL;
+	}
+
+	// Initialize the reference count.
+	f->ref_count = 1;
+        // File is writable.
+        f->is_writable = true;
 	return f;
 }
 
@@ -180,4 +233,80 @@ bool ref_is_device(RefFile *f)
 	// check for both block and character devices.
 	return !!(S_ISBLK(buf.st_mode) | S_ISCHR(buf.st_mode));
 #endif
+}
+
+/**
+ * Try to make this file a sparse file.
+ * @param f RefFile*.
+ * @param size If not zero, try to set the file to this size.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int ref_make_sparse(RefFile *f, int64_t size)
+{
+#ifdef _WIN32
+	wchar_t root_dir[4];		// Root directory.
+	wchar_t *p_root_dir;		// Pointer to root_dir, or NULL if relative.
+	DWORD dwFileSystemFlags;	// Flags from GetVolumeInformation().
+	BOOL bRet;
+
+	// Check if the file system supports sparse files.
+	// TODO: Handle mount points?
+	if (_istalpha(filename[0]) && filename[1] == _T(':') &&
+	    (filename[2] == _T('\\') || filename[2] == _T('/')))
+	{
+		// Absolute pathname.
+		root_dir[0] = filename[0];
+		root_dir[1] = L':';
+		root_dir[2] = L'\\';
+		root_dir[3] = 0;
+		p_root_dir = root_dir;
+	}
+	else
+	{
+		// Relative pathname.
+		p_root_dir = NULL;
+	}
+
+	bRet = GetVolumeInformation(p_root_dir, NULL, 0, NULL, NULL,
+		&dwFileSystemFlags, NULL, 0);
+	if (bRet != 0 && (dwFileSystemFlags & FILE_SUPPORTS_SPARSE_FILES)) {
+		// File system supports sparse files.
+		// Mark the file as sparse.
+		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(f_extract));
+		if (h_extract != NULL && h_extract != INVALID_HANDLE_VALUE) {
+			DWORD bytesReturned;
+			FILE_SET_SPARSE_BUFFER fssb;
+			fssb.SetSparse = TRUE;
+
+			// TODO: Use SetEndOfFile() if this succeeds?
+			// Note that SetEndOfFile() isn't guaranteed to fill the
+			// resulting file with zero bytes...
+			((void)size);
+			DeviceIoControl(h_extract, FSCTL_SET_SPARSE,
+				&fssb, sizeof(fssb),
+				NULL, 0, &bytesReturned, NULL);
+		}
+	}
+#elif defined(HAVE_FTRUNCATE)
+	// Set the file size.
+	// NOTE: If the underlying file system doesn't support sparse files,
+	// this may take a long time. (TODO: Check this.)
+	int ret = ftruncate(fileno(f->file), size);
+	if (ret != 0) {
+		// Error setting the file size.
+		// Allow all errors except for EINVAL or EFBIG,
+		// since those mean the file system doesn't support
+		// large files.
+		int err = errno;
+		if (err == EINVAL || err == EFBIG) {
+			// File is too big.
+			return -err;
+		} else {
+			// Ignore this error.
+			errno = 0;
+		}
+	}
+#endif /* HAVE_FTRUNCATE */
+
+	return 0;
 }
