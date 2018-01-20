@@ -82,6 +82,13 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer);
  */
 const RVL_Cert *cert_get_from_name(const char *s_issuer);
 
+/**
+ * Get the size of a certificate.
+ * @param issuer RVL_Cert_Issuer
+ * @return Certificate size, in bytes. (0 on error)
+ */
+unsigned int cert_get_size(RVL_Cert_Issuer issuer);
+
 // Signature types.
 typedef enum {
 	RVL_CERT_SIGTYPE_RSA4096	= 0x00010000,	// RSA-4096
@@ -114,8 +121,7 @@ typedef enum {
 /**
  * Signature. (Dummy; no signature)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Sig_Dummy {
 	uint32_t type;		// [0x000] Signature type. (Must be 0.)
@@ -127,8 +133,7 @@ typedef struct _RVL_Sig_Dummy {
 /**
  * Signature. (RSA-4096)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Sig_RSA4096 {
 	uint32_t type;					// [0x000] Signature type. (See Cert_SigType_e.)
@@ -141,8 +146,7 @@ typedef struct _RVL_Sig_RSA4096 {
 /**
  * Public key. (RSA-4096)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_PubKey_RSA4096 {
 	uint32_t type;			// [0x000] Key type. (See Cert_KeyType_e.)
@@ -160,8 +164,7 @@ typedef struct _RVL_PubKey_RSA4096 {
  * NOTE: Not actually used in the certificate chain.
  * We're using this to store the root key.
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Cert_RSA4096_KeyOnly {
 	RVL_Sig_Dummy sig;	// [0x000] Dummy signature.
@@ -172,8 +175,7 @@ typedef struct _RVL_Cert_RSA4096_KeyOnly {
 /**
  * Certificate. (RSA-4096)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Cert_RSA4096 {
 	RVL_Sig_RSA4096 sig;	// [0x000] Signature.
@@ -184,8 +186,7 @@ typedef struct _RVL_Cert_RSA4096 {
 /**
  * Signature. (RSA-4096)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Sig_RSA2048 {
 	uint32_t type;					// [0x000] Signature type. (See Cert_SigType_e.)
@@ -198,8 +199,7 @@ typedef struct _RVL_Sig_RSA2048 {
 /**
  * Public key. (RSA-2048)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_PubKey_RSA2048 {
 	uint32_t type;			// [0x000] Key type. (See Cert_KeyType_e.)
@@ -214,8 +214,7 @@ typedef struct _RVL_PubKey_RSA2048 {
 /**
  * Certificate. (RSA-2048)
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Cert_RSA2048 {
 	RVL_Sig_RSA2048 sig;	// [0x000] Signature.
@@ -227,8 +226,7 @@ typedef struct _RVL_Cert_RSA2048 {
  * Certificate. (RSA-4096 signature with RSA-2048 public key)
  * NOTE: Only the CA certificate uses this format.
  *
- * All fields are big-endian when loaded from a disc image.
- * When using the built-in certificates, they're in host-endian.
+ * All fields are big-endian.
  */
 typedef struct _RVL_Cert_RSA4096_RSA2048 {
 	RVL_Sig_RSA4096 sig;	// [0x000] Signature.

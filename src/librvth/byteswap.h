@@ -100,4 +100,19 @@
 	#define cpu_to_le64(x)	__swab64(x)
 #endif
 
+// Intrinsics cannot be used as constants on MSVC 2010.
+// TODO: Maybe it's fixed in later versions?
+#if SYS_BYTEORDER == SYS_LIL_ENDIAN
+# ifdef _MSC_VER
+#  define BE32_CONST(x) \
+	((uint32_t)(((x) << 24) | ((x) >> 24) | \
+		(((x) & 0x0000FF00UL) << 8) | \
+		(((x) & 0x00FF0000UL) >> 8)))
+# else /* !_MSC_VER */
+#  define BE32_CONST(x) __swab32(x)
+# endif
+#else /* SYS_BYTEORDER == SYS_BIG_ENDIAN */
+# define BE32_CONST(x) (x)
+#endif
+
 #endif /* __RVTHTOOL_LIBRVTH_BYTESWAP_H__ */

@@ -70,10 +70,20 @@ static const uint8_t sig_fixed_data_retail[16] = {
  */
 int cert_verify(const uint8_t *data, size_t size)
 {
-	const RVL_Sig_RSA2048 *sig;
-	const RVL_Cert_RSA2048 *cert;
-	uint8_t buf[RVL_CERT_SIGLENGTH_RSA2048];
+	const RVL_Cert *cert;	// Certificate header.
+
+	// Signature (pointer into `data`)
+	const uint8_t *sig;
+	unsigned int sig_len;
+	const char *s_issuer;
 	RVL_Cert_Issuer issuer;
+
+	// Parent certificate.
+	const uint8_t *pubkey_mod;
+	unsigned int pubkey_len;
+	uint32_t pubkey_exp;
+
+	uint8_t buf[RVL_CERT_SIGLENGTH_RSA4096];
 	unsigned int i;
 	int ret;	// our return value
 	int tmp_ret;	// function return values
@@ -81,20 +91,14 @@ int cert_verify(const uint8_t *data, size_t size)
 	// SHA-1 hash.
 	uint8_t sha1_hash[SHA1_HASH_LENGTH];
 
+	/** Data offsets. **/
 	// Fixed data offset.
-	// TODO: Adjust for certificate and hash types?
-	static const unsigned int sig_fixed_data_offset =
-		(unsigned int)(sizeof(buf) - sizeof(sig_fixed_data_retail)) -
-		SHA1_HASH_LENGTH;
-
+	unsigned int sig_fixed_data_offset;
 	// SHA-1 offset in the signature.
-	static const unsigned int sig_sha1_offset =
-		(unsigned int)sizeof(buf) - SHA1_HASH_LENGTH;
-
+	unsigned int sig_sha1_offset;
 	// Start offset within `data` for SHA-1 calculation.
 	// Includes sig->issuer[], which is always 64-byte aligned.
-	static const unsigned int data_sha1_offset =
-		(unsigned int)(sizeof(*sig) - sizeof(sig->issuer));
+	unsigned int data_sha1_offset;
 
 	if (!data || size <= 4) {
 		// Invalid parameters.
@@ -102,34 +106,77 @@ int cert_verify(const uint8_t *data, size_t size)
 		return -EINVAL;
 	}
 
-	// Assuming RSA-2048 signatures only for now.
-	sig = (const RVL_Sig_RSA2048*)data;
-	if (be32_to_cpu(sig->type) != RVL_CERT_SIGTYPE_RSA2048) {
-		// Unsupported signature type.
-		errno = ENOTSUP;
-		return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
+	// Determine the signature length.
+	cert = (const RVL_Cert*)data;
+	sig = &data[4];
+	switch (be32_to_cpu(cert->signature_type)) {
+		case RVL_CERT_SIGTYPE_RSA4096:
+			sig_len = 4096/8;
+			break;
+		case RVL_CERT_SIGTYPE_RSA2048:
+			sig_len = 2048/8;
+			break;
+		default:
+			// Unsupported signature type.
+			errno = ENOTSUP;
+			return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
 	}
+	s_issuer = (const char*)(sig + sig_len + 0x3C);
 
 	// Get the issuer's certificate.
-	issuer = cert_get_issuer_from_name(sig->issuer);
-	cert = (const RVL_Cert_RSA2048*)cert_get(issuer);
+	issuer = cert_get_issuer_from_name(s_issuer);
+	cert = (const RVL_Cert*)cert_get(issuer);
 	if (!cert) {
 		// Unknown issuer.
 		errno = EINVAL;
 		return SIG_ERROR_UNKNOWN_ISSUER;
 	}
 
-	// Certificate must be RSA-2048.
-	if (cert->sig.type != RVL_CERT_SIGTYPE_RSA2048 ||
-	    cert->pub.type != RVL_CERT_KEYTYPE_RSA2048)
-	{
-		// Unsupported signature type.
+	// Skip over the issuer certificate's signature.
+	switch (be32_to_cpu(cert->signature_type)) {
+		case RVL_CERT_SIGTYPE_RSA4096:
+			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_RSA4096));
+			break;
+		case RVL_CERT_SIGTYPE_RSA2048:
+			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_RSA2048));
+			break;
+		default:
+			// Unsupported signature type.
+			errno = ENOTSUP;
+			return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
+	}
+
+	// Check the issuer certificate's public key type.
+	switch (be32_to_cpu(cert->signature_type)) {
+		case RVL_CERT_KEYTYPE_RSA4096: {
+			const RVL_PubKey_RSA4096 *pubkey = (const RVL_PubKey_RSA4096*)cert;
+			pubkey_mod = pubkey->modulus;
+			pubkey_len = sizeof(pubkey->modulus);
+			pubkey_exp = be32_to_cpu(pubkey->exponent);
+			break;
+		}
+		case RVL_CERT_KEYTYPE_RSA2048: {
+			const RVL_PubKey_RSA2048 *pubkey = (const RVL_PubKey_RSA2048*)cert;
+			pubkey_mod = pubkey->modulus;
+			pubkey_len = sizeof(pubkey->modulus);
+			pubkey_exp = be32_to_cpu(pubkey->exponent);
+			break;
+		}
+		default:
+			// Unsupported signature type.
+			errno = ENOTSUP;
+			return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
+	}
+
+	if (sig_len != pubkey_len) {
+		// Key lengths differ.
+		// TODO: Better error code?
 		errno = ENOTSUP;
 		return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
 	}
 
 	// Decrypt the signature.
-	tmp_ret = rsaw_decrypt_signature(buf, cert->pub.modulus, cert->pub.exponent, sig->sig, 256);
+	tmp_ret = rsaw_decrypt_signature(buf, pubkey_mod, pubkey_exp, sig, sig_len);
 	if (tmp_ret != 0) {
 		// Unable to decrypt the signature.
 		if (tmp_ret == ENOSPC) {
@@ -138,6 +185,16 @@ int cert_verify(const uint8_t *data, size_t size)
 		}
 		return tmp_ret;
 	}
+
+	// Fixed data offset.
+	sig_fixed_data_offset = sig_len - sizeof(sig_fixed_data_retail) - SHA1_HASH_LENGTH;
+
+	// SHA-1 offset in the signature.
+	sig_sha1_offset = sig_len - SHA1_HASH_LENGTH;
+
+	// Start offset within `data` for SHA-1 calculation.
+	// Includes sig->issuer[], which is always 64-byte aligned.
+	data_sha1_offset = 4 + sig_len + 0x3C;
 
 	// Verify the signature.
 	ret = 0;

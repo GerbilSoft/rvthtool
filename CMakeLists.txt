@@ -24,6 +24,11 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CACHE INTERNAL "Put
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE INTERNAL "Put all libraries in a single directory.")
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE INTERNAL "Put all archives in a single directory.")
 
+# Enable testing.
+# TODO: INCLUDE(CTest) for more advanced testing after
+# enough tests are added.
+ENABLE_TESTING()
+
 # Check for platform-specific functionality.
 INCLUDE(cmake/platform.cmake NO_POLICY_SCOPE)
 
@@ -102,6 +107,7 @@ ADD_CUSTOM_TARGET(uninstall
 ### Subdirectories. ###
 
 # Project subdirectories.
+ADD_SUBDIRECTORY(extlib)
 ADD_SUBDIRECTORY(src)
 
 # TODO: Print build summary indicating what plugins will be built.
