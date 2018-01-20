@@ -23,6 +23,9 @@
 #include <assert.h>
 #include <errno.h>
 
+#include <windows.h>
+#include <wincrypt.h>
+
 /**
  * Calculate an SHA-1 hash.
  * @param hash	[out] SHA-1 hash buffer. (Must be SHA1_HASH_LENGTH bytes.)
@@ -32,6 +35,13 @@
  */
 int hashw_sha1(uint8_t *hash, const uint8_t *data, size_t size)
 {
+	// Reference: https://msdn.microsoft.com/en-us/library/windows/desktop/aa382380%28v=vs.85%29.aspx
+	BOOL bResult = FALSE;
+	HCRYPTPROV hProv = 0;
+	HCRYPTHASH hHash = 0;
+	DWORD cbHash;
+	BOOL bRet;
+
 	assert(hash != NULL);
 	assert(data != NULL);
 	assert(size != 0);
@@ -41,6 +51,38 @@ int hashw_sha1(uint8_t *hash, const uint8_t *data, size_t size)
 		return -EINVAL;
 	}
 
-	// TODO
-	return -ENOSYS;
+	// Open the crypto provider.
+	if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
+		// TODO: Convert GetLastError() to errno.
+		return -EIO;
+	}
+
+	// Create an SHA-1 hash.
+	if (!CryptCreateHash(hProv, CALG_SHA1, 0, 0, &hHash)) {
+		// TODO: Convert GetLastError() to errno.
+		CryptReleaseContext(hProv, 0);
+		return -EIO;
+	}
+
+	// Hash the data.
+	if (!CryptHashData(hHash, data, size, 0)) {
+		// TODO: Convert GetLastError() to errno.
+		CryptDestroyHash(hHash);
+		CryptReleaseContext(hProv, 0);
+		return -EIO;
+	}
+
+	// Get the hash value.
+	cbHash = SHA1_HASH_LENGTH;
+	bRet = CryptGetHashParam(hHash, HP_HASHVAL, hash, &cbHash, 0);
+	CryptDestroyHash(hHash);
+	CryptReleaseContext(hProv, 0);
+
+	if (!bRet) {
+		// TODO: Convert GetLastError() to errno.
+		return -EIO;
+	}
+
+	// Data hashed successfully.
+	return 0;
 }
