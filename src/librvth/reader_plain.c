@@ -67,7 +67,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// Allocate memory for the Reader object.
-	reader = malloc(sizeof(reader));
+	reader = malloc(sizeof(*reader));
 	if (!reader) {
 		// Error allocating memory.
 		if (errno == 0) {
