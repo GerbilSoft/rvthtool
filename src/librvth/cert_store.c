@@ -480,7 +480,7 @@ RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer)
 		return RVL_CERT_ISSUER_ROOT;
 	}
 
-	for (i = RVL_CERT_ISSUER_RETAIL_CA; i < RVL_CERT_ISSUER_MAX; i++) {
+	for (i = RVL_CERT_ISSUER_ROOT; i < RVL_CERT_ISSUER_MAX; i++) {
 		if (!strcmp(s_issuer, RVL_Cert_Issuers[i])) {
 			// Found a match!
 			return (RVL_Cert_Issuer)i;

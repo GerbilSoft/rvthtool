@@ -118,8 +118,13 @@ string CertVerifyTest::test_case_suffix_generator(const ::testing::TestParamInfo
 
 INSTANTIATE_TEST_CASE_P(certVerifyTest, CertVerifyTest,
 	::testing::Values(
+		//RVL_CERT_ISSUER_RETAIL_CA,	// BROKEN
 		RVL_CERT_ISSUER_RETAIL_TICKET,
-		RVL_CERT_ISSUER_RETAIL_TMD
+		RVL_CERT_ISSUER_RETAIL_TMD,
+
+		//RVL_CERT_ISSUER_DEBUG_CA,	// BROKEN
+		RVL_CERT_ISSUER_DEBUG_TICKET,
+		RVL_CERT_ISSUER_DEBUG_TMD
 	), CertVerifyTest::test_case_suffix_generator);
 } }
 

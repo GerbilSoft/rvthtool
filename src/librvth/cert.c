@@ -200,13 +200,9 @@ int cert_verify(const uint8_t *data, size_t size)
 	ret = 0;
 	if (!memcmp(buf, sig_magic_retail, sizeof(sig_magic_retail))) {
 		// Found retail magic.
-		// TODO: If root is the issuer, is it retail or debug magic?
+		// NOTE: This is also present in the root certificate and
+		// the debug certificates
 		bool has_FF = true;	// 0xFF padding
-
-		if (issuer < RVL_CERT_ISSUER_RETAIL_CA || issuer > RVL_CERT_ISSUER_RETAIL_TMD) {
-			// Wrong magic number for this issuer.
-			return SIG_ERROR_WRONG_MAGIC_NUMBER;
-		}
 
 		// Check for 0xFF padding.
 		for (i = (unsigned int)sizeof(sig_magic_retail); i < sig_fixed_data_offset; i++) {
@@ -229,6 +225,10 @@ int cert_verify(const uint8_t *data, size_t size)
 	} else if (!memcmp(buf, sig_magic_debug, sizeof(sig_magic_debug))) {
 		// Found debug magic.
 		// No FF padding; not sure what the random data is.
+		if (issuer < RVL_CERT_ISSUER_DEBUG_CA || issuer > RVL_CERT_ISSUER_DEBUG_TMD) {
+			// Wrong magic number for this issuer.
+			return SIG_ERROR_WRONG_MAGIC_NUMBER;
+		}
 	} else {
 		// Signature magic is incorrect.
 		ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
