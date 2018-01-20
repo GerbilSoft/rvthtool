@@ -31,12 +31,14 @@
 // Functions.
 static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len);
 static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len);
+static void reader_plain_flush(Reader *reader);
 static void reader_plain_close(Reader *reader);
 
 // vtable
 static const Reader_Vtbl reader_plain_vtable = {
 	reader_plain_read,
 	reader_plain_write,
+	reader_plain_flush,
 	reader_plain_close,
 };
 
@@ -129,7 +131,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
  * @param lba_len	[in] Length, in LBAs.
  * @return Number of LBAs read, or 0 on error.
  */
-uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
+static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
 	// TODO: Verify LBA bounds.
 
@@ -155,7 +157,7 @@ uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32
  * @param lba_len	[in] Length, in LBAs.
  * @return Number of LBAs read, or 0 on error.
  */
-uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
+static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
 	// TODO: Verify LBA bounds.
 
@@ -174,10 +176,19 @@ uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start,
 }
 
 /**
+ * Flush the file buffers.
+ * @param reader	[in] Reader*
+ * */
+static void reader_plain_flush(Reader *reader)
+{
+	ref_flush(reader->file);
+}
+
+/**
  * Close a disc image.
  * @param reader	[in] Reader*
  */
-void reader_plain_close(Reader *reader)
+static void reader_plain_close(Reader *reader)
 {
 	ref_close(reader->file);
 	free(reader);

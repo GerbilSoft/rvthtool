@@ -325,7 +325,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	}
 
 	// Finished extracting the disc image.
-	// TODO: reader_flush()?
+	reader_flush(entry_dest->reader);
 	free(buf);
 	return 0;
 }

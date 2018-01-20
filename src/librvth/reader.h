@@ -64,6 +64,12 @@ typedef struct _Reader_Vtbl {
 	uint32_t (*write)(struct _Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len);
 
 	/**
+	 * Flush the file buffers.
+	 * @param reader	[in] Reader*
+	 * */
+	void (*flush)(struct _Reader *reader);
+
+	/**
 	 * Close a disc image.
 	 * @param reader	[in] Reader*
 	 */
@@ -107,6 +113,15 @@ static inline uint32_t reader_read(struct _Reader *reader, void *ptr, uint32_t l
 static inline uint32_t reader_write(struct _Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
 	return reader->vtbl->write(reader, ptr, lba_start, lba_len);
+}
+
+/**
+ * Flush the file buffers.
+ * @param reader	[in] Reader*
+ * */
+static inline void reader_flush(Reader *reader)
+{
+	reader->vtbl->flush(reader);
 }
 
 /**
