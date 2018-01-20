@@ -69,6 +69,14 @@ ELSE(HAVE_GMP)
 	SET(librvth_RSA_SRCS rsaw_generic.c)
 ENDIF(HAVE_GMP)
 
+IF(HAVE_NETTLE)
+	SET(librvth_HASH_SRCS hashw_nettle.c)
+ELSEIF(WIN32)
+	SET(librvth_HASH_SRCS hashw_capi.c)
+ELSE()
+	MESSAGE(FATAL_ERROR "No hash function wrappers for this platform.")
+ENDIF()
+
 ######################
 # Build the library. #
 ######################
@@ -76,6 +84,7 @@ ENDIF(HAVE_GMP)
 ADD_LIBRARY(rvth STATIC
 	${librvth_SRCS} ${librvth_H}
 	${librvth_RSA_SRCS}
+	${librvth_HASH_SRCS}
 	)
 
 # Include paths:

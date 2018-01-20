@@ -32,10 +32,7 @@
 
 // RSA and SHA-1 wrapper functions
 #include "rsaw.h"
-// FIXME: CryptoAPI version for Windows.
-#if defined(HAVE_NETTLE)
-# include <nettle/sha1.h>
-#endif
+#include "hashw.h"
 
 /**
  * The signature consists of:
@@ -73,27 +70,26 @@ static const uint8_t sig_fixed_data_retail[16] = {
  */
 int cert_verify(const uint8_t *data, size_t size)
 {
-#if defined(HAVE_GMP) && defined(HAVE_NETTLE)
 	const RVL_Sig_RSA2048 *sig;
 	const RVL_Cert_RSA2048 *cert;
 	uint8_t buf[RVL_CERT_SIGLENGTH_RSA2048];
 	RVL_Cert_Issuer issuer;
 	unsigned int i;
-	int ret;
+	int ret;	// our return value
+	int tmp_ret;	// function return values
 
-	// SHA-1
-	struct sha1_ctx sha1;
-	uint8_t digest[SHA1_DIGEST_SIZE];
+	// SHA-1 hash.
+	uint8_t sha1_hash[SHA1_HASH_LENGTH];
 
 	// Fixed data offset.
 	// TODO: Adjust for certificate and hash types?
 	static const unsigned int sig_fixed_data_offset =
 		(unsigned int)(sizeof(buf) - sizeof(sig_fixed_data_retail)) -
-		SHA1_DIGEST_SIZE;
+		SHA1_HASH_LENGTH;
 
 	// SHA-1 offset in the signature.
 	static const unsigned int sig_sha1_offset =
-		(unsigned int)sizeof(buf) - SHA1_DIGEST_SIZE;
+		(unsigned int)sizeof(buf) - SHA1_HASH_LENGTH;
 
 	// Start offset within `data` for SHA-1 calculation.
 	// Includes sig->issuer[], which is always 64-byte aligned.
@@ -133,14 +129,14 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// Decrypt the signature.
-	ret = rsaw_decrypt_signature(buf, cert->pub.modulus, cert->pub.exponent, sig->sig, 256);
-	if (ret != 0) {
+	tmp_ret = rsaw_decrypt_signature(buf, cert->pub.modulus, cert->pub.exponent, sig->sig, 256);
+	if (tmp_ret != 0) {
 		// Unable to decrypt the signature.
-		if (ret == ENOSPC) {
+		if (tmp_ret == ENOSPC) {
 			// Wrong signature type.
-			ret = SIG_ERROR_WRONG_TYPE_DECLARATION;
+			tmp_ret = SIG_ERROR_WRONG_TYPE_DECLARATION;
 		}
-		return ret;
+		return tmp_ret;
 	}
 
 	// Verify the signature.
@@ -148,13 +144,14 @@ int cert_verify(const uint8_t *data, size_t size)
 	if (!memcmp(buf, sig_magic_retail, sizeof(sig_magic_retail))) {
 		// Found retail magic.
 		// TODO: If root is the issuer, is it retail or debug magic?
+		bool has_FF = true;	// 0xFF padding
+
 		if (issuer < RVL_CERT_ISSUER_RETAIL_CA || issuer > RVL_CERT_ISSUER_RETAIL_TMD) {
 			// Wrong magic number for this issuer.
 			return SIG_ERROR_WRONG_MAGIC_NUMBER;
 		}
 
-		// Check for FF padding.
-		bool has_FF = true;
+		// Check for 0xFF padding.
 		for (i = (unsigned int)sizeof(sig_magic_retail); i < sig_fixed_data_offset; i++) {
 			if (buf[i] != 0xFF) {
 				// Incorrect padding.
@@ -181,14 +178,14 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// Check the SHA-1 hash.
-	sha1_init(&sha1);
-	sha1_update(&sha1, size - data_sha1_offset, &data[data_sha1_offset]);
-	sha1_digest(&sha1, sizeof(digest), digest);
-
-	if (memcmp(digest, &buf[sig_sha1_offset], sizeof(digest)) != 0) {
+	tmp_ret = hashw_sha1(sha1_hash, &data[data_sha1_offset], size - data_sha1_offset);
+	if (tmp_ret != 0) {
+		// SHA-1 hash error.
+		return tmp_ret;
+	} else if (memcmp(sha1_hash, &buf[sig_sha1_offset], sizeof(sha1_hash)) != 0) {
 		// SHA-1 does not match.
 		// If strncmp() succeeds, it's fakesigned.
-		if (!strncmp((const char*)digest, (const char*)&buf[sig_sha1_offset], sizeof(digest))) {
+		if (!strncmp((const char*)sha1_hash, (const char*)&buf[sig_sha1_offset], sizeof(sha1_hash))) {
 			// Fakesigned.
 			ret |= SIG_FAIL_HASH_FAKE;
 		} else {
@@ -198,8 +195,4 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	return ret;
-#else /* !HAVE_GMP || !HAVE_NETTLE */
-	// TODO: Non-GMP/nettle version for Windows.
-	return -ENOSYS;
-#endif /* HAVE_GMP && HAVE_NETTLE */
 }
