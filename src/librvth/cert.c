@@ -140,6 +140,15 @@ int cert_verify(const uint8_t *data, size_t size)
 		case RVL_CERT_SIGTYPE_RSA2048:
 			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_RSA2048));
 			break;
+		case 0:
+			// Only valid if this is the root certificate.
+			if (issuer != RVL_CERT_ISSUER_ROOT) {
+				// Not root.
+				errno = ENOTSUP;
+				return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
+			}
+			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_Dummy));
+			break;
 		default:
 			// Unsupported signature type.
 			errno = ENOTSUP;
