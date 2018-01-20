@@ -30,9 +30,10 @@
 #include <stdio.h>
 #include <string.h>
 
-// FIXME: Non-GMP and CryptoAPI version for Windows.
-#if defined(HAVE_GMP) && defined(HAVE_NETTLE)
-# include <gmp.h>
+// RSA and SHA-1 wrapper functions
+#include "rsaw.h"
+// FIXME: CryptoAPI version for Windows.
+#if defined(HAVE_NETTLE)
 # include <nettle/sha1.h>
 #endif
 
@@ -80,8 +81,7 @@ int cert_verify(const uint8_t *data, size_t size)
 	unsigned int i;
 	int ret;
 
-	// RSA and SHA-1
-	mpz_t k, s, r;	// key, signature, result
+	// SHA-1
 	struct sha1_ctx sha1;
 	uint8_t digest[SHA1_DIGEST_SIZE];
 
@@ -133,31 +133,15 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// Decrypt the signature.
-	mpz_init(k);
-	mpz_init(s);
-	mpz_init(r);
-
-	mpz_import(k, 1, 1, sizeof(cert->pub.modulus), 1, 0, cert->pub.modulus);
-	mpz_import(s, 1, 1, sizeof(sig->sig), 1, 0, sig->sig);
-	mpz_powm_ui(r, s, cert->pub.exponent, k);
-
-	mpz_clear(k);
-	mpz_clear(s);
-
-	// Decrypted signature must not be more than 2048 bits.
-	if (mpz_sizeinbase(r, 2) > 2048) {
-		// Signature does not match the declared type.
-		mpz_clear(r);
-		errno = EIO;
-		return SIG_ERROR_WRONG_TYPE_DECLARATION;
+	ret = rsaw_decrypt_signature(buf, cert->pub.modulus, cert->pub.exponent, sig->sig, 256);
+	if (ret != 0) {
+		// Unable to decrypt the signature.
+		if (ret == ENOSPC) {
+			// Wrong signature type.
+			ret = SIG_ERROR_WRONG_TYPE_DECLARATION;
+		}
+		return ret;
 	}
-
-	// NOTE: Invalid signatures may be smaller than the buffer.
-	// Clear the buffer first to ensure that invalid signatures
-	// result in an all-zero buffer.
-	memset(buf, 0, sizeof(buf));
-	mpz_export(buf, NULL, 1, 256, 1, 0, r);
-	mpz_clear(r);
 
 	// Verify the signature.
 	ret = 0;

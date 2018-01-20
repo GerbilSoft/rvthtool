@@ -60,13 +60,23 @@ SET(librvth_H
 	reader_plain.h
 	cert_store.h
 	cert.h
+	rsaw.h
 	)
+
+IF(HAVE_GMP)
+	SET(librvth_RSA_SRCS rsaw_gmp.c)
+ELSE(HAVE_GMP)
+	SET(librvth_RSA_SRCS rsaw_generic.c)
+ENDIF(HAVE_GMP)
 
 ######################
 # Build the library. #
 ######################
 
-ADD_LIBRARY(rvth STATIC ${librvth_SRCS} ${librvth_H})
+ADD_LIBRARY(rvth STATIC
+	${librvth_SRCS} ${librvth_H}
+	${librvth_RSA_SRCS}
+	)
 
 # Include paths:
 # - Public: Current source and binary directories.
