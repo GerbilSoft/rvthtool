@@ -168,7 +168,7 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 	// Assuming this is a valid Wii disc image.
 	int64_t addr;
 	unsigned int ptcount, i;
-	size_t size;
+	uint32_t lba_size;
 
 	// Volume group and partition table.
 	// NOTE: Only reading the first partition table,
@@ -184,8 +184,8 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 	} pt;
 
 	// Get the volume group table.
-	size = reader_read(reader, &pt, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
-	if (size != 1) {
+	lba_size = reader_read(reader, &pt, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
+	if (lba_size != 1) {
 		// Read error.
 		return 0;
 	}
@@ -210,6 +210,76 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 }
 
 /**
+ * Set the region field in an RvtH_BankEntry.
+ * The reader field must have already been set.
+ * @param entry		[in,out] RvtH_BankEntry
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+static int rvth_init_BankEntry_region(RvtH_BankEntry *entry)
+{
+	uint32_t lba_size;
+	uint32_t lba_region;
+	bool is_wii = false;
+
+	// Sector buffer.
+	union {
+		uint8_t u8[RVTH_BLOCK_SIZE];
+		struct {
+			uint8_t bi2_pad[0x40];
+			GCN_Boot_Info bi2;
+		};
+		RVL_RegionSetting rvl_region;
+	} sector_buf;
+
+	assert(entry->reader != NULL);
+
+	switch (entry->type) {
+		case RVTH_BankType_Empty:
+			// Empty bank.
+			entry->region_code = 0xFF;
+			return RVTH_ERROR_BANK_EMPTY;
+		case RVTH_BankType_Unknown:
+		default:
+			// Unknown bank.
+			entry->region_code = 0xFF;
+			return RVTH_ERROR_BANK_UNKNOWN;
+		case RVTH_BankType_Wii_DL_Bank2:
+			// Second bank of a dual-layer Wii disc image.
+			// TODO: Automatically select the first bank?
+			entry->region_code = 0xFF;
+			return RVTH_ERROR_BANK_DL_2;
+
+		case RVTH_BankType_GCN:
+			// GameCube image. Read bi2.bin.
+			lba_region = BYTES_TO_LBA(GCN_Boot_Info_ADDRESS);
+			is_wii = false;
+			break;
+
+		case RVTH_BankType_Wii_SL:
+		case RVTH_BankType_Wii_DL:
+			// Wii disc image. Read the region settings.
+			lba_region = BYTES_TO_LBA(RVL_RegionSetting_ADDRESS);
+			is_wii = true;
+			break;
+	}
+
+	// Read the LBA containing the region code.
+	lba_size = reader_read(entry->reader, sector_buf.u8, lba_region, 1);
+	if (lba_size != 1) {
+		// Error reading the region code.
+		return -EIO;
+	}
+
+	// FIXME: region_code is a 32-bit value,
+	// but only the first few bits are used...
+	entry->region_code = (is_wii
+		? (uint8_t)be32_to_cpu(sector_buf.rvl_region.region_code)
+		: (uint8_t)be32_to_cpu(sector_buf.bi2.region_code)
+		);
+	return 0;
+}
+
+/**
  * Set the crypto_type and sig_type fields in an RvtH_BankEntry.
  * The reader field must have already been set.
  * @param entry		[in,out] RvtH_BankEntry
@@ -219,7 +289,7 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeader *discHeader)
 {
 	uint32_t lba_game;	// LBA of the Game Partition.
-	size_t size;
+	uint32_t lba_size;
 
 	// Sector buffer.
 	union {
@@ -283,8 +353,8 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	// Found the game partition.
 
 	// Read the ticket.
-	size = reader_read(entry->reader, sector_buf.u8, lba_game, 1);
-	if (size != 1) {
+	lba_size = reader_read(entry->reader, sector_buf.u8, lba_game, 1);
+	if (lba_size != 1) {
 		// Error reading the ticket.
 		return -EIO;
 	}
@@ -480,6 +550,9 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
 	}
 
+	// TODO: Error handling.
+	// Initialize the region code.
+	rvth_init_BankEntry_region(entry);
 	// Initialize the encryption status.
 	rvth_init_BankEntry_crypto(entry, &sector_buf.gcn);
 
@@ -688,6 +761,9 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// TODO: Get the timestamp from the file.
 	entry->timestamp = -1;
 
+	// TODO: Error handling.
+	// Initialize the region code.
+	rvth_init_BankEntry_region(entry);
 	// Initialize the encryption status.
 	rvth_init_BankEntry_crypto(entry, &sector_buf.gcn);
 

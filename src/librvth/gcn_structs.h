@@ -76,8 +76,30 @@ typedef enum {
 	GCN_REGION_JAPAN = 0,		// Japan / Taiwan
 	GCN_REGION_USA = 1,		// USA
 	GCN_REGION_PAL = 2,		// Europe / Australia
+	GCN_REGION_FREE = 3,		// Region-Free
 	GCN_REGION_SOUTH_KOREA = 4,	// South Korea
 } GCN_Region_Code;
+
+/**
+ * DVD Boot Info. (bi2.bin)
+ * Reference: http://www.gc-forever.com/wiki/index.php?title=Apploader
+ *
+ * All fields are big-endian.
+ */
+#define GCN_Boot_Info_ADDRESS 0x440
+typedef struct PACKED _GCN_Boot_Info {
+	uint32_t debug_mon_size;	// Debug monitor size. [FIXME: Listed as signed?]
+	uint32_t sim_mem_size;		// Simulated memory size. (bytes) [FIXME: Listed as signed?]
+	uint32_t arg_offset;		// Command line arguments.
+	uint32_t debug_flag;		// Debug flag. (set to 3 if using CodeWarrior on GDEV)
+	uint32_t trk_location;		// Target resident kernel location.
+	uint32_t trk_size;		// Size of TRK. [FIXME: Listed as signed?]
+	uint32_t region_code;		// Region code. (See GCN_Region_Code.)
+	uint32_t reserved1[3];
+	uint32_t dol_limit;		// Maximum total size of DOL text/data sections. (0 == unlimited)
+	uint32_t reserved2;
+} GCN_Boot_Info;
+//ASSERT_STRUCT(GCN_Boot_Info, 48);
 
 /** Wii-specific structs. **/
 

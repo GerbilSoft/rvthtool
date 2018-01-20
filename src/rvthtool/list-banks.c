@@ -20,6 +20,7 @@
 
 #include "list-banks.h"
 #include "librvth/rvth.h"
+#include "librvth/gcn_structs.h"
 
 #include <errno.h>
 
@@ -32,6 +33,7 @@
 int print_bank(const RvtH *rvth, unsigned int bank)
 {
 	const char *s_type;
+	const char *s_region;
 	const RvtH_BankEntry *entry;
 	int ret = 0;
 
@@ -105,25 +107,53 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// Print the timestamp.
 	// TODO: Reentrant gmtime() if available.
 	if (entry->timestamp != -1) {
-		struct tm timestamp;
-		timestamp = *gmtime(&entry->timestamp);
-		printf("- Timestamp:  %04d/%02d/%02d %02d:%02d:%02d\n",
+		struct tm timestamp = *gmtime(&entry->timestamp);
+		printf("- Timestamp:   %04d/%02d/%02d %02d:%02d:%02d\n",
 			timestamp.tm_year + 1900, timestamp.tm_mon + 1, timestamp.tm_mday,
 			timestamp.tm_hour, timestamp.tm_min, timestamp.tm_sec);
 	} else {
-		printf("- Timestamp:  Unknown\n");
+		printf("- Timestamp:   Unknown\n");
 	}
 
 	// LBAs.
-	printf("- LBA start:  0x%08X\n", entry->lba_start);
-	printf("- LBA length: 0x%08X\n", entry->lba_len);
+	printf("- LBA start:   0x%08X\n", entry->lba_start);
+	printf("- LBA length:  0x%08X\n", entry->lba_len);
 
 	// Game ID.
-	printf("- Game ID:    %.6s\n", entry->id6);
+	printf("- Game ID:     %.6s\n", entry->id6);
 
 	// Game title.
 	// rvth_open() has already trimmed the title.
-	printf("- Title:      %.64s\n", entry->game_title);
+	printf("- Title:       %.64s\n", entry->game_title);
+
+	// Region code.
+	switch (entry->region_code) {
+		case GCN_REGION_JAPAN:
+			s_region = "Japan";
+			break;
+		case GCN_REGION_USA:
+			s_region = "USA";
+			break;
+		case GCN_REGION_PAL:
+			s_region = "PAL";
+			break;
+		case GCN_REGION_FREE:
+			s_region = "Region-Free";
+			break;
+		case GCN_REGION_SOUTH_KOREA:
+			s_region = "South Korea";
+			break;
+		default:
+			s_region = NULL;
+			break;
+	}
+	fputs("- Region code: ", stdout);
+	if (s_region) {
+		fputs(s_region, stdout);
+	} else {
+		printf("0x%02X", entry->region_code);
+	}
+	putchar('\n');
 
 	// Wii encryption status.
 	if (entry->type == RVTH_BankType_Wii_SL ||
@@ -164,8 +194,8 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 				break;
 		}
 
-		printf("- Encryption: %s\n", crypto_type);
-		printf("- Signature:  %s\n", sig_type);
+		printf("- Encryption:  %s\n", crypto_type);
+		printf("- Signature:   %s\n", sig_type);
 	}
 
 	return 0;
