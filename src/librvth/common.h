@@ -114,12 +114,14 @@
 
 // TODO: Move to our own stdboolx.h file.
 // TODO: Move to another file.
-#if defined(_MSC_VER) && _MSC_VER >= 1800
-# include <stdbool.h>
-#else
+#ifndef __cplusplus
+# if defined(_MSC_VER) && _MSC_VER >= 1800
+#  include <stdbool.h>
+# else
 typedef unsigned char bool;
-#define true 1
-#define false 0
-#endif
+#  define true 1
+#  define false 0
+# endif
+#endif /* __cplusplus */
 
 #endif /* __RVTHTOOL_LIBRVTH_COMMON_H__ */
