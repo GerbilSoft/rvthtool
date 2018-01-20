@@ -24,57 +24,58 @@
 #include "librvth/cert_store.h"
 #include "librvth/cert.h"
 
+// C includes. (C++ namespace)
+#include <cassert>
+
+// C++ includes.
+#include <string>
+using std::string;
+
 #if defined(_MSC_VER) && _MSC_VER < 1700
 # define final sealed
 #endif
 
 namespace LibRvth { namespace Tests {
 
-// Parameters for CtrKeyScrambler tests.
-struct CertVerifyTest_mode
-{
-	RVL_Cert_Issuer cert_id;	// Certificate being tested.
-	RVL_Cert_Issuer parent_id;	// Parent certificate.
-
-	CertVerifyTest_mode(RVL_Cert_Issuer cert_id, RVL_Cert_Issuer parent_id)
-		: cert_id(cert_id)
-		, parent_id(parent_id)
-	{ }
-};
-
-class CertVerifyTest : public ::testing::TestWithParam<CertVerifyTest_mode>
+class CertVerifyTest : public ::testing::TestWithParam<RVL_Cert_Issuer>
 {
 	protected:
 		CertVerifyTest() { }
 
-		void SetUp(void) final;
-		void TearDown(void) final;
+	public:
+		/** Test case parameters. **/
+
+		/**
+		 * Test case suffix generator.
+		 * @param info Test parameter information.
+		 * @return Test case suffix.
+		 */
+		static string test_case_suffix_generator(const ::testing::TestParamInfo<RVL_Cert_Issuer> &info);
 };
 
 /**
- * SetUp() function.
- * Run before each test.
+ * Formatting function for ImageDecoderTest.
  */
-void CertVerifyTest::SetUp(void)
-{ }
-
-/**
- * TearDown() function.
- * Run after each test.
- */
-void CertVerifyTest::TearDown(void)
-{ }
+inline ::std::ostream& operator<<(::std::ostream& os, const RVL_Cert_Issuer &cert_id)
+{
+	assert(cert_id > RVL_CERT_ISSUER_UNKNOWN);
+	assert(cert_id < RVL_CERT_ISSUER_MAX);
+	if (cert_id > RVL_CERT_ISSUER_UNKNOWN && cert_id < RVL_CERT_ISSUER_MAX) {
+		return os << RVL_Cert_Issuers[cert_id];
+	}
+	return os << "(unknown)";
+};
 
 /**
  * Run a certificate verification test.
  */
 TEST_P(CertVerifyTest, certVerifyTest)
 {
-	const CertVerifyTest_mode &mode = GetParam();
+	const RVL_Cert_Issuer cert_id = GetParam();
 
 	// Get the certificate.
-	const RVL_Cert *const cert = cert_get(mode.cert_id);
-	const unsigned int cert_size = cert_get_size(mode.cert_id);
+	const RVL_Cert *const cert = cert_get(cert_id);
+	const unsigned int cert_size = cert_get_size(cert_id);
 	ASSERT_TRUE(cert != nullptr);
 	ASSERT_NE(0U, cert_size);
 
@@ -82,13 +83,44 @@ TEST_P(CertVerifyTest, certVerifyTest)
 	ASSERT_EQ(0, cert_verify(reinterpret_cast<const uint8_t*>(cert), cert_size));
 }
 
+/**
+ * Test case suffix generator.
+ * @param info Test parameter information.
+ * @return Test case suffix.
+ */
+string CertVerifyTest::test_case_suffix_generator(const ::testing::TestParamInfo<RVL_Cert_Issuer> &info)
+{
+	string suffix;
+	const RVL_Cert_Issuer cert_id = info.param;
+
+	// TODO: Print the user-friendly name instead of the certificate name?
+	assert(cert_id > RVL_CERT_ISSUER_UNKNOWN);
+	assert(cert_id < RVL_CERT_ISSUER_MAX);
+	if (cert_id > RVL_CERT_ISSUER_UNKNOWN && cert_id < RVL_CERT_ISSUER_MAX) {
+		suffix = RVL_Cert_Issuers[cert_id];
+	} else {
+		suffix = "unknown";
+	}
+
+	// Replace all non-alphanumeric characters with '_'.
+	// See gtest-param-util.h::IsValidParamName().
+	for (int i = (int)suffix.size()-1; i >= 0; i--) {
+		char chr = suffix[i];
+		if (!isalnum(chr) && chr != '_') {
+			suffix[i] = '_';
+		}
+	}
+
+	return suffix;
+}
+
 /** Certificate verification tests. **/
 
 INSTANTIATE_TEST_CASE_P(certVerifyTest, CertVerifyTest,
 	::testing::Values(
-		CertVerifyTest_mode(RVL_CERT_ISSUER_RETAIL_TICKET, RVL_CERT_ISSUER_RETAIL_CA),
-		CertVerifyTest_mode(RVL_CERT_ISSUER_RETAIL_TMD, RVL_CERT_ISSUER_RETAIL_CA)
-	));
+		RVL_CERT_ISSUER_RETAIL_TICKET,
+		RVL_CERT_ISSUER_RETAIL_TMD
+	), CertVerifyTest::test_case_suffix_generator);
 } }
 
 #ifdef _MSC_VER
