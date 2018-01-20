@@ -399,9 +399,15 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	ret = cert_verify((const uint8_t*)&header.ticket, sizeof(header.ticket));
 	if (ret != 0) {
 		// Signature verification error.
-		entry->ticket.sig_status = (ret & SIG_FAIL_HASH_FAKE
-			? RVTH_SigStatus_Fake
-			: RVTH_SigStatus_Invalid);
+		if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
+			// Invalid signature.
+			entry->ticket.sig_status = (ret & SIG_FAIL_HASH_FAKE
+				? RVTH_SigStatus_Fake
+				: RVTH_SigStatus_Invalid);
+		} else {
+			// Other error.
+			entry->ticket.sig_status = RVTH_SigStatus_Unknown;
+		}
 	} else {
 		// Signature is valid.
 		entry->ticket.sig_status = RVTH_SigStatus_OK;
@@ -432,9 +438,15 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 		ret = cert_verify(header.tmd, tmd_size);
 		if (ret != 0) {
 			// Signature verification error.
-			entry->tmd.sig_status = (ret & SIG_FAIL_HASH_FAKE
-				? RVTH_SigStatus_Fake
-				: RVTH_SigStatus_Invalid);
+			if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
+				// Invalid signature.
+				entry->tmd.sig_status = (ret & SIG_FAIL_HASH_FAKE
+					? RVTH_SigStatus_Fake
+					: RVTH_SigStatus_Invalid);
+			} else {
+				// Other error.
+				entry->tmd.sig_status = RVTH_SigStatus_Unknown;
+			}
 		} else {
 			// Signature is valid.
 			entry->tmd.sig_status = RVTH_SigStatus_OK;

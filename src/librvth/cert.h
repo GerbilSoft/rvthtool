@@ -37,6 +37,9 @@ typedef enum {
 	// Signature is valid.
 	SIG_STATUS_OK = 0,
 
+	// Signature error mask.
+	SIG_ERROR_MASK = (0xFF),
+
 	// Signature is invalid.
 	// Check SIG_FAIL_MASK for the exact error.
 	SIG_ERROR_INVALID = 1,
