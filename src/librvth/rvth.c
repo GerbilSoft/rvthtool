@@ -25,6 +25,7 @@
 #include "nhcd_structs.h"
 #include "gcn_structs.h"
 #include "cert_store.h"
+#include "cert.h"
 
 // Disc image readers.
 #include "reader_plain.h"
@@ -316,7 +317,9 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 {
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
+	uint32_t tmd_size;
 	RVL_Cert_Issuer issuer;
+	int ret;
 
 	// Partition header.
 	RVL_PartitionHeader header;
@@ -391,9 +394,21 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 			// Unknown issuer, or not valid for ticket.
 			break;
 	}
-	// TODO: Validate the signature.
+
+	// Validate the signature.
+	ret = cert_verify((const uint8_t*)&header.ticket, sizeof(header.ticket));
+	if (ret != 0) {
+		// Signature verification error.
+		entry->ticket.sig_status = (ret & SIG_FAIL_HASH_FAKE
+			? RVTH_SigStatus_Fake
+			: RVTH_SigStatus_Invalid);
+	} else {
+		// Signature is valid.
+		entry->ticket.sig_status = RVTH_SigStatus_OK;
+	}
 
 	// Check the TMD signature issuer.
+	// TODO: Verify header.tmd_offset?
 	tmd = (const RVL_TMD_Header*)header.tmd;
 	issuer = cert_get_issuer_from_name(tmd->signature_issuer);
 	switch (issuer) {
@@ -409,7 +424,22 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 			// Unknown issuer, or not valid for TMD.
 			break;
 	}
-	// TODO: Validate the signature.
+
+	// Check the TMD size.
+	tmd_size = be32_to_cpu(header.tmd_size);
+	if (tmd_size <= sizeof(header.tmd)) {
+		// TMD is not too big. We can validate the signature.
+		ret = cert_verify(header.tmd, tmd_size);
+		if (ret != 0) {
+			// Signature verification error.
+			entry->tmd.sig_status = (ret & SIG_FAIL_HASH_FAKE
+				? RVTH_SigStatus_Fake
+				: RVTH_SigStatus_Invalid);
+		} else {
+			// Signature is valid.
+			entry->tmd.sig_status = RVTH_SigStatus_OK;
+		}
+	}
 
 	// If encrypted, check the crypto type.
 	// NOTE: Retail + unencrypted is usually an error.

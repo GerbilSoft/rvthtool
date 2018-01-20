@@ -62,8 +62,7 @@ typedef struct _RvtH RvtH;
 // Wii signature information.
 typedef struct _RvtH_SigInfo {
 	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)
-	bool sig_valid;		// True if the signature is valid.
-	bool sig_fake;		// True if the signature is fakesigned.
+	uint8_t sig_status;	// Signature status. (See RvtH_SigStatus_e.)
 } RvtH_SigInfo;
 
 // Disc image and RVT-H bank entry definition.
@@ -106,6 +105,8 @@ typedef enum {
 	RVTH_CryptoType_Debug	= 2,	// RVT-R encryption.
 	RVTH_CryptoType_Retail	= 3,	// Retail encryption.
 	RVTH_CryptoType_Korean	= 4,	// Korean retail encryption.
+
+	RVTH_CryptoType_MAX
 } RvtH_CryptoType_e;
 
 // Signature types.
@@ -113,7 +114,19 @@ typedef enum {
 	RVTH_SigType_Unknown	= 0,	// Unknown signature.
 	RVTH_SigType_Debug	= 1,	// Debug signature.
 	RVTH_SigType_Retail	= 2,	// Retail signature.
+
+	RVTH_SigType_MAX
 } RvtH_SigType_e;
+
+// Signature status.
+typedef enum {
+	RVTH_SigStatus_Unknown	= 0,	// Unknown signature status.
+	RVTH_SigStatus_OK	= 1,	// Valid
+	RVTH_SigStatus_Invalid	= 2,	// Invalid
+	RVTH_SigStatus_Fake	= 3,	// Fakesigned
+
+	RVTH_SigStatus_MAX
+} RVTH_SigStatus_e;
 
 /** Functions. **/
 
