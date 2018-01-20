@@ -1,5 +1,5 @@
 /***************************************************************************
- * ROM Properties Page shell extension. (libromdata)                       *
+ * RVT-H Tool (librvth)                                                    *
  * hashw_nettle.c: Cryptographic hash wrapper functions. (nettle version)  *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *

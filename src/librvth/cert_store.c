@@ -1,5 +1,5 @@
 /***************************************************************************
- * ROM Properties Page shell extension. (libromdata)                       *
+ * RVT-H Tool (librvth)                                                    *
  * cert_store.c: Certificate store.                                        *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *

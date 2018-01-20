@@ -1,5 +1,5 @@
 /***************************************************************************
- * ROM Properties Page shell extension. (libromdata)                       *
+ * RVT-H Tool (librvth)                                                    *
  * rsaw_generic.c: RSA encryption wrapper functions. (generic version)     *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *

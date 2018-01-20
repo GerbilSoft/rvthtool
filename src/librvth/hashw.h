@@ -1,5 +1,5 @@
 /***************************************************************************
- * ROM Properties Page shell extension. (libromdata)                       *
+ * RVT-H Tool (librvth)                                                    *
  * hashw.h: Cryptographic hash wrapper functions.                          *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
