@@ -213,6 +213,28 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 }
 
 /**
+ * Initialize the GCN Disc Header fields in an RvtH_BankEntry.
+ * The reader field must have already been set.
+ * @param entry		[in,out] RvtH_BankEntry
+ * @param discHeader	[in] GCN_DiscHeader
+ */
+static void rvth_init_BankEntry_gcn(RvtH_BankEntry *entry, GCN_DiscHeader *discHeader)
+{
+	// Copy the game ID.
+	memcpy(entry->id6, discHeader->id6, 6);
+
+	// Disc number and revision.
+	entry->disc_number = discHeader->disc_number;
+	entry->revision    = discHeader->revision;
+
+	// Read the disc title.
+	// TODO: Convert from Shift-JIS to UTF-8?
+	memcpy(entry->game_title, discHeader->game_title, 64);
+	// Remove excess spaces.
+	trim_title(entry->game_title, 64);
+}
+
+/**
  * Set the region field in an RvtH_BankEntry.
  * The reader field must have already been set.
  * @param entry		[in,out] RvtH_BankEntry
@@ -540,18 +562,13 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	// NOTE: Always the plain reader for RVT-H HDD images.
 	entry->reader = reader_plain_open(f_img, lba_start, lba_len);
 
-	// Copy the game ID.
-	memcpy(entry->id6, sector_buf.gcn.id6, 6);
-
-	// Read the disc title.
-	memcpy(entry->game_title, sector_buf.gcn.game_title, 64);
-	// Remove excess spaces.
-	trim_title(entry->game_title, 64);
-
 	// Parse the timestamp.
 	if (nhcd_timestamp) {
 		entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
 	}
+
+	// Initialize fields from the disc header.
+	rvth_init_BankEntry_gcn(entry, &sector_buf.gcn);
 
 	// TODO: Error handling.
 	// Initialize the region code.
@@ -755,17 +772,12 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// TODO: Handle CISO and WBFS for standalone disc images.
 	entry->reader = reader_plain_open(f_img, entry->lba_start, entry->lba_len);
 
-	// Copy the game ID.
-	memcpy(entry->id6, sector_buf.gcn.id6, 6);
-
-	// Read the disc title.
-	memcpy(entry->game_title, sector_buf.gcn.game_title, 64);
-	// Remove excess spaces.
-	trim_title(entry->game_title, 64);
-
 	// Timestamp.
 	// TODO: Get the timestamp from the file.
 	entry->timestamp = -1;
+
+	// Initialize fields from the disc header.
+	rvth_init_BankEntry_gcn(entry, &sector_buf.gcn);
 
 	// TODO: Error handling.
 	// Initialize the region code.

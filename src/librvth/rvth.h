@@ -69,6 +69,8 @@ typedef struct RvtH_BankEntry {
 	char game_title[65];	// Game title. (from GCN header)
 	time_t timestamp;	// Timestamp. (no timezone information)
 	uint8_t type;		// Bank type. (See RvtH_BankType_e.)
+	uint8_t disc_number;	// Disc number.
+	uint8_t revision;	// Revision.
 	uint8_t region_code;	// Region code. (See GCN_Region_Code.)
 	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
 	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)

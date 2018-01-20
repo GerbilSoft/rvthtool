@@ -129,6 +129,8 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// Game title.
 	// rvth_open() has already trimmed the title.
 	printf("- Title:       %.64s\n", entry->game_title);
+	printf("- Disc #:      %u\n", entry->disc_number);
+	printf("- Revision:    %u\n", entry->revision);
 
 	// Region code.
 	switch (entry->region_code) {
