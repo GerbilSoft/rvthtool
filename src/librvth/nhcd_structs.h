@@ -94,7 +94,7 @@ typedef struct _NHCD_BankTable {
 // Bank table address.
 #define NHCD_BANKTABLE_ADDRESS_LBA		0x300000U
 // Bank 1 starting address.
-#define NHCD_BANK_1_START_LBA			0x300009U
+#define NHCD_BANK_1_START_LBA(bank_count)	(NHCD_BANKTABLE_ADDRESS_LBA + 1U + (bank_count))
 // Maximum bank size.
 #define NHCD_BANK_SIZE_LBA			0x8C4A00U
 

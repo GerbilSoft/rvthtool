@@ -32,9 +32,10 @@
  */
 int print_bank(const RvtH *rvth, unsigned int bank)
 {
+	const RvtH_BankEntry *entry;
 	const char *s_type;
 	const char *s_region;
-	const RvtH_BankEntry *entry;
+	bool is_hdd;
 	int ret = 0;
 
 	const unsigned int bank_count = rvth_get_BankCount(rvth);
@@ -43,6 +44,9 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 		return -ERANGE;
 	}
 
+	// Check if this is an HDD image.
+	is_hdd = rvth_is_hdd(rvth);
+
 	// TODO: Check the error code.
 	entry = rvth_get_BankEntry(rvth, bank, &ret);
 	if (!entry) {
@@ -50,10 +54,10 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 			// Error...
 			return ret;
 		}
-		if (bank_count == 1) {
-			fputs("Disc image: ", stdout);
-		} else {
+		if (is_hdd) {
 			printf("Bank %u: ", bank+1);
+		} else {
+			fputs("Disc image: ", stdout);
 		}
 		fputs("Empty\n", stdout);
 		return 0;
@@ -91,10 +95,10 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 			break;
 	}
 
-	if (bank_count == 1) {
-		fputs("Disc image: ", stdout);
-	} else {
+	if (is_hdd) {
 		printf("Bank %u: ", bank+1);
+	} else {
+		fputs("Disc image: ", stdout);
 	}
 	printf("%s%s\n", s_type, (entry->is_deleted ? " [DELETED]" : ""));
 	if (entry->type <= RVTH_BankType_Unknown ||

@@ -52,6 +52,7 @@ typedef enum {
 	RVTH_ERROR_BANK_NOT_DELETED	= 7,	// Attempting to undelete a bank that isn't deleted.
 	RVTH_ERROR_NOT_HDD_IMAGE	= 8,	// Attempting to modify the bank table of a non-HDD image.
 	RVTH_ERROR_NO_GAME_PARTITION	= 9,	// Game partition was not found in a Wii image.
+	RVTH_ERROR_INVALID_BANK_COUNT	= 10,	// `bank_count` field is invalid.
 } RvtH_Errors;
 
 // RVT-H struct.
@@ -134,6 +135,13 @@ void rvth_close(RvtH *rvth);
  * @return Number of banks.
  */
 unsigned int rvth_get_BankCount(const RvtH *rvth);
+
+/**
+ * Is this RVT-H object an HDD image or a standalone disc image?
+ * @param rvth RVT-H object.
+ * @return True if the RVT-H object is an HDD image; false if it's a standalone disc image.
+ */
+bool rvth_is_hdd(const RvtH *rvth);
 
 /**
  * Get a bank table entry.

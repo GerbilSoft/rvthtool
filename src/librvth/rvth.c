@@ -55,6 +55,9 @@ struct _RvtH {
 	// - Standalone disc image: 1
 	unsigned int bank_count;
 
+	// Is this an HDD image?
+	bool is_hdd;
+
 	// BankEntry objects.
 	RvtH_BankEntry *entries;
 };
@@ -590,6 +593,8 @@ const char *rvth_error(int err)
 		"RVT-H object is not an HDD image",
 		// tr: RVTH_ERROR_NO_GAME_PARTITION
 		"Wii game partition not found",
+		// tr: RVTH_ERROR_INVALID_BANK_COUNT
+		"RVT-H bank count field is invalid",
 	};
 
 	if (err < 0) {
@@ -720,6 +725,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Allocate memory for a single RvtH_BankEntry object.
 	rvth->bank_count = 1;
+	rvth->is_hdd = false;
 	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -847,8 +853,26 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		return NULL;
 	}
 
+	// Get the bank count.
+	rvth->bank_count = be32_to_cpu(nhcd_header.bank_count);
+	if (rvth->bank_count < 8 || rvth->bank_count > 32) {
+		// Bank count is either too small or too large.
+		// RVT-H systems are set to 8 banks at the factory,
+		// but we're supporting up to 32 in case the user
+		// has modified it.
+		// TODO: More extensive "extra bank" testing.
+		free(rvth);
+		ref_close(f_img);
+		errno = EIO;
+		if (pErr) {
+			*pErr = RVTH_ERROR_INVALID_BANK_COUNT;
+		}
+		return NULL;
+	}
+
 	// Allocate memory for the 8 RvtH_BankEntry objects.
 	rvth->bank_count = 8;
+	rvth->is_hdd = true;
 	rvth->entries = calloc(8, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -940,7 +964,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (lba_start == 0 || lba_len == 0) {
 			// Invalid LBAs. Use the default starting offset.
 			// Bank size will be determined by rvth_init_BankEntry().
-			lba_start = NHCD_BANK_1_START_LBA + (NHCD_BANK_SIZE_LBA * i);
+			lba_start = NHCD_BANK_1_START_LBA(rvth->bank_count) + (NHCD_BANK_SIZE_LBA * i);
 			lba_len = 0;
 		}
 
@@ -1034,6 +1058,20 @@ void rvth_close(RvtH *rvth)
 	}
 
 	free(rvth);
+}
+
+/**
+ * Is this RVT-H object an HDD image or a standalone disc image?
+ * @param rvth RVT-H object.
+ * @return True if the RVT-H object is an HDD image; false if it's a standalone disc image.
+ */
+bool rvth_is_hdd(const RvtH *rvth)
+{
+	if (!rvth) {
+		errno = EINVAL;
+		return false;
+	}
+	return rvth->is_hdd;
 }
 
 /**
@@ -1365,8 +1403,8 @@ static int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->bank_count < 2) {
-		// Single-bank image. No bank table.
+	} else if (!rvth->is_hdd) {
+		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
 	} else if (bank >= rvth->bank_count) {
@@ -1479,8 +1517,8 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->bank_count < 2) {
-		// Single-bank image. No bank table.
+	} else if (rvth->is_hdd) {
+		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
 	} else if (bank >= rvth->bank_count) {
@@ -1550,8 +1588,8 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->bank_count < 2) {
-		// Single-bank image. No bank table.
+	} else if (rvth->is_hdd) {
+		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
 	} else if (bank >= rvth->bank_count) {
