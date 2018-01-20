@@ -14,6 +14,7 @@ SET(librvth_SRCS
 	rvth.c
 	ref_file.c
 	reader_plain.c
+	cert_store.c
 	)
 # Headers.
 SET(librvth_H
@@ -27,6 +28,7 @@ SET(librvth_H
 	tcharx.h
 	reader.h
 	reader_plain.h
+	cert_store.h
 	)
 
 ######################
