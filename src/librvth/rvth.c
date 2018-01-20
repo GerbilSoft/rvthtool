@@ -443,6 +443,9 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// If encrypted, check the crypto type.
 	// NOTE: Retail + unencrypted is usually an error.
+	// FIXME: Common key index seems to have wacky values in homebrew WADs.
+	// - USB Loader GX UNEO Forwarder v5.1: 0x06
+	// - Nintendont forwarder: 0xB7
 	if (entry->crypto_type != RVTH_CryptoType_None) {
 		switch (entry->ticket.sig_type) {
 			case RVTH_SigType_Retail:
