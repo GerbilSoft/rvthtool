@@ -105,17 +105,47 @@ typedef enum {
 #pragma pack(1)
 
 /**
- * RSA-4096 public key.
+ * Signature. (Dummy; no signature)
+ *
+ * All fields are big-endian when loaded from a disc image.
+ * When using the built-in certificates, they're in host-endian.
+ */
+typedef struct _RVL_Sig_Dummy {
+	uint32_t signature_type;	// [0x000] Signature type. (Must be 0.)
+	uint8_t padding1[0x3C];		// [0x004] Padding.
+	char issuer[64];		// [0x040] Issuer.
+} RVL_Sig_Dummy;
+//ASSERT_STRUCT(RVL_Sig_Dummy, 0x080);
+
+/**
+ * Signature. (RSA-4096)
+ *
+ * All fields are big-endian when loaded from a disc image.
+ * When using the built-in certificates, they're in host-endian.
+ */
+typedef struct _RVL_Sig_RSA4096 {
+	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
+	uint8_t signature[RVL_CERT_SIGLENGTH_RSA4096];	// [0x004] Signature.
+	uint8_t padding1[0x3C];				// [0x204] Padding.
+	char issuer[64];				// [0x240] Issuer.
+} RVL_Sig_RSA4096;
+//ASSERT_STRUCT(RVL_Sig_RSA4096, 0x280);
+
+/**
+ * Public key. (RSA-4096)
  *
  * All fields are big-endian when loaded from a disc image.
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_PubKey_RSA4096 {
-	uint32_t unknown;	// Unknown...
-	uint8_t modulus[512];
-	uint32_t pub_exponent;
+	uint32_t key_type;		// [0x000] Key type. (See Cert_KeyType_e.)
+	char child_cert_identity[64];	// [0x004] Child certificate identity.
+	uint32_t unknown;		// [0x044] // Unknown...
+	uint8_t modulus[512];		// [0x048] Modulus.
+	uint32_t exponent;		// [0x248] Public exponent.
+	uint8_t padding2[0x34];		// [0x24C]
 } RVL_PubKey_RSA4096;
-//ASSERT_STRUCT(RVL_PubKey_RSA4096, 516);
+//ASSERT_STRUCT(RVL_PubKey_RSA4096, 0x280);
 
 /**
  * Certificate. (RSA-4096, no signature)
@@ -127,13 +157,8 @@ typedef struct _RVL_PubKey_RSA4096 {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Cert_RSA4096_KeyOnly {
-	uint32_t signature_type;	// [0x000] Signature type. (Should be 0 for root.)
-	uint8_t padding1[0x3C];		// [0x004] Padding.
-	char issuer[64];		// [0x040] Issuer.
-	uint32_t key_type;		// [0x080] Key type. (See Cert_KeyType_e.)
-	char child_cert_identity[64];	// [0x084] Child certificate identity.
-	RVL_PubKey_RSA4096 public_key;	// [0x0C4] Public key.
-	uint8_t padding2[0x34];
+	RVL_Sig_Dummy sig;	// [0x000] Dummy signature.
+	RVL_PubKey_RSA4096 pub;	// [0x040] Public key.
 } RVL_Cert_RSA4096_KeyOnly;
 //ASSERT_STRUCT(RVL_Cert_RSA4096_KeyOnly, 0x300);
 
@@ -144,29 +169,40 @@ typedef struct _RVL_Cert_RSA4096_KeyOnly {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Cert_RSA4096 {
-	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
-	uint8_t signature[RVL_CERT_SIGLENGTH_RSA4096];	// [0x004] Signature.
-	uint8_t padding1[0x3C];				// [0x204] Padding.
-	char issuer[64];				// [0x240] Issuer.
-	uint32_t key_type;				// [0x280] Key type. (See Cert_KeyType_e.)
-	char child_cert_identity[64];			// [0x284] Child certificate identity.
-	RVL_PubKey_RSA4096 public_key;			// [0x2C4] Public key.
-	uint8_t padding2[0x34];
+	RVL_Sig_RSA4096 sig;	// [0x000] Signature.
+	RVL_PubKey_RSA4096 pub;	// [0x280] Public key.
 } RVL_Cert_RSA4096;
 //ASSERT_STRUCT(RVL_Cert_RSA4096, 0x500);
 
 /**
- * RSA-2048 public key.
+ * Signature. (RSA-4096)
+ *
+ * All fields are big-endian when loaded from a disc image.
+ * When using the built-in certificates, they're in host-endian.
+ */
+typedef struct _RVL_Sig_RSA2048 {
+	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
+	uint8_t signature[RVL_CERT_SIGLENGTH_RSA2048];	// [0x004] Signature.
+	uint8_t padding1[0x3C];				// [0x104] Padding.
+	char issuer[64];				// [0x140] Issuer.
+} RVL_Sig_RSA2048;
+//ASSERT_STRUCT(RVL_Sig_RSA4096, 0x180);
+
+/**
+ * Public key. (RSA-2048)
  *
  * All fields are big-endian when loaded from a disc image.
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_PubKey_RSA2048 {
-	uint32_t unknown;	// Unknown...
-	uint8_t modulus[256];
-	uint32_t pub_exponent;
+	uint32_t key_type;		// [0x000] Key type. (See Cert_KeyType_e.)
+	char child_cert_identity[64];	// [0x004] Child certificate identity.
+	uint32_t unknown;		// [0x044] // Unknown...
+	uint8_t modulus[256];		// [0x048] Modulus.
+	uint32_t exponent;		// [0x148] Public exponent.
+	uint8_t padding2[0x34];		// [0x14C]
 } RVL_PubKey_RSA2048;
-//ASSERT_STRUCT(RVL_PubKey_RSA2048, 260);
+//ASSERT_STRUCT(RVL_PubKey_RSA2048, 0x180);
 
 /**
  * Certificate. (RSA-2048)
@@ -175,14 +211,8 @@ typedef struct _RVL_PubKey_RSA2048 {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Cert_RSA2048 {
-	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
-	uint8_t signature[RVL_CERT_SIGLENGTH_RSA2048];	// [0x004] Signature.
-	uint8_t padding1[0x3C];				// [0x104] Padding.
-	char issuer[64];				// [0x140] Issuer.
-	uint32_t key_type;				// [0x180] Key type. (See Cert_KeyType_e.)
-	char child_cert_identity[64];			// [0x184] Child certificate identity.
-	RVL_PubKey_RSA2048 public_key;			// [0x1C4] Public key.
-	uint8_t padding2[0x34];
+	RVL_Sig_RSA2048 sig;	// [0x000] Signature.
+	RVL_PubKey_RSA2048 pub;	// [0x180] Public key.
 } RVL_Cert_RSA2048;
 //ASSERT_STRUCT(RVL_Cert_RSA2048, 0x300);
 
@@ -194,14 +224,8 @@ typedef struct _RVL_Cert_RSA2048 {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Cert_RSA4096_RSA2048 {
-	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
-	uint8_t signature[RVL_CERT_SIGLENGTH_RSA4096];	// [0x004] Signature.
-	uint8_t padding1[0x3C];				// [0x204] Padding.
-	char issuer[64];				// [0x240] Issuer.
-	uint32_t key_type;				// [0x280] Key type. (See Cert_KeyType_e.)
-	char child_cert_identity[64];			// [0x284] Child certificate identity.
-	RVL_PubKey_RSA2048 public_key;			// [0x2C4] Public key.
-	uint8_t padding2[0x34];
+	RVL_Sig_RSA4096 sig;	// [0x000] Signature.
+	RVL_PubKey_RSA2048 pub;	// [0x280] Public key.
 } RVL_Cert_RSA4096_RSA2048;
 //ASSERT_STRUCT(RVL_Cert_RSA4096_RSA2048, 0x400);
 
