@@ -13,6 +13,8 @@ This is an open-source tool for managing RVT-H Reader consoles.
   present on the HDD.
 * Extracts disc images from the RVT-H into an image file.
 * Allows deletion and undeletion of banks on an RVT-H system.
+* Signature verification for all Wii disc images. Indicates if the signature
+  is valid, invalid, or fakesigned. (Game partition only at the moment.)
 
 ## Planned Features
 
