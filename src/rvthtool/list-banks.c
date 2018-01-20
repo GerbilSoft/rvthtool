@@ -148,7 +148,8 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	    entry->type == RVTH_BankType_Wii_DL)
 	{
 		const char *crypto_type;
-		const char *sig_type;
+		const char *ticket_sig_type;
+		const char *tmd_sig_type;
 
 		switch (entry->crypto_type) {
 			default:
@@ -169,21 +170,39 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 				break;
 		}
 
-		switch (entry->sig_type) {
+		// TODO: Signature validation.
+
+		// Ticket signature.
+		switch (entry->ticket.sig_type) {
 			default:
 			case RVTH_SigType_Unknown:
-				sig_type = "Unknown";
+				ticket_sig_type = "Unknown";
 				break;
 			case RVTH_SigType_Debug:
-				sig_type = "Debug";
+				ticket_sig_type = "Debug";
 				break;
 			case RVTH_SigType_Retail:
-				sig_type = "Retail";
+				ticket_sig_type = "Retail";
+				break;
+		}
+
+		// TMD signature.
+		switch (entry->tmd.sig_type) {
+			default:
+			case RVTH_SigType_Unknown:
+				tmd_sig_type = "Unknown";
+				break;
+			case RVTH_SigType_Debug:
+				tmd_sig_type = "Debug";
+				break;
+			case RVTH_SigType_Retail:
+				tmd_sig_type = "Retail";
 				break;
 		}
 
 		printf("- Encryption:  %s\n", crypto_type);
-		printf("- Signature:   %s\n", sig_type);
+		printf("- Ticket Signature: %s\n", ticket_sig_type);
+		printf("- TMD Signature:    %s\n", tmd_sig_type);
 	}
 
 	return 0;

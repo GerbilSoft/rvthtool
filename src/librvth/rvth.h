@@ -59,6 +59,13 @@ typedef enum {
 struct _RvtH;
 typedef struct _RvtH RvtH;
 
+// Wii signature information.
+typedef struct _RvtH_SigInfo {
+	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)
+	bool sig_valid;		// True if the signature is valid.
+	bool sig_fake;		// True if the signature is fakesigned.
+} RvtH_SigInfo;
+
 // Disc image and RVT-H bank entry definition.
 typedef struct RvtH_BankEntry {
 	Reader *reader;		// Disc image reader.
@@ -72,9 +79,12 @@ typedef struct RvtH_BankEntry {
 	uint8_t disc_number;	// Disc number.
 	uint8_t revision;	// Revision.
 	uint8_t region_code;	// Region code. (See GCN_Region_Code.)
-	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
-	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)
 	bool is_deleted;	// If true, this entry was deleted.
+
+	// Wii-specific
+	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
+	RvtH_SigInfo ticket;	// Ticket encryption/signature.
+	RvtH_SigInfo tmd;	// TMD encryption/signature.
 } RvtH_BankEntry;
 
 // RVT-H bank types.

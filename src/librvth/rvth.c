@@ -24,6 +24,7 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 #include "gcn_structs.h"
+#include "cert_store.h"
 
 // Disc image readers.
 #include "reader_plain.h"
@@ -315,42 +316,34 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 {
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
+	RVL_Cert_Issuer issuer;
 
-	// Sector buffer.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		RVL_Ticket ticket;
-	} sector_buf;
-
-	// Certificate issuers.
-	static const char issuer_retail[] = "Root-CA00000001-XS00000003";
-	static const char issuer_debug[]  = "Root-CA00000002-XS00000006";
+	// Partition header.
+	RVL_PartitionHeader header;
+	const RVL_TMD_Header *tmd;
 
 	assert(entry->reader != NULL);
+
+	// Clear the ticket/TMD crypto information initially.
+	memset(&entry->ticket, 0, sizeof(entry->ticket));
+	memset(&entry->tmd, 0, sizeof(entry->tmd));
 
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
 			// Empty bank.
-			entry->crypto_type = RVTH_CryptoType_Unknown;
-			entry->sig_type = RVTH_SigType_Unknown;
 			return RVTH_ERROR_BANK_EMPTY;
 		case RVTH_BankType_Unknown:
 		default:
 			// Unknown bank.
-			entry->crypto_type = RVTH_CryptoType_Unknown;
-			entry->sig_type = RVTH_SigType_Unknown;
 			return RVTH_ERROR_BANK_UNKNOWN;
 		case RVTH_BankType_GCN:
 			// GameCube image. No encryption.
-			entry->crypto_type = RVTH_CryptoType_None;
 			// TODO: Technically no signature either...
-			entry->sig_type = RVTH_SigType_Unknown;
+			entry->crypto_type = RVTH_CryptoType_None;
 			return 0;
 		case RVTH_BankType_Wii_DL_Bank2:
 			// Second bank of a dual-layer Wii disc image.
 			// TODO: Automatically select the first bank?
-			entry->crypto_type = RVTH_CryptoType_Unknown;
-			entry->sig_type = RVTH_SigType_Unknown;
 			return RVTH_ERROR_BANK_DL_2;
 
 		case RVTH_BankType_Wii_SL:
@@ -376,36 +369,55 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Found the game partition.
-
-	// Read the ticket.
-	lba_size = reader_read(entry->reader, sector_buf.u8, lba_game, 1);
-	if (lba_size != 1) {
-		// Error reading the ticket.
+	// Read the partition header.
+	lba_size = reader_read(entry->reader, &header, lba_game, BYTES_TO_LBA(sizeof(header)));
+	if (lba_size != BYTES_TO_LBA(sizeof(header))) {
+		// Error reading the partition header.
 		return -EIO;
 	}
 
-	// Check the signature issuer.
-	// This indicates debug vs. retail.
-	if (!memcmp(sector_buf.ticket.signature_issuer, issuer_retail, sizeof(issuer_retail))) {
-		// Retail certificate.
-		entry->sig_type = RVTH_SigType_Retail;
-	} else if (!memcmp(sector_buf.ticket.signature_issuer, issuer_debug, sizeof(issuer_debug))) {
-		// Debug certificate.
-		entry->sig_type = RVTH_SigType_Debug;
-	} else {
-		// Unknown certificate.
-		entry->sig_type = RVTH_SigType_Unknown;
+	// Check the ticket signature issuer.
+	issuer = cert_get_issuer_from_name(header.ticket.signature_issuer);
+	switch (issuer) {
+		case RVL_CERT_ISSUER_RETAIL_TICKET:
+			// Retail certificate.
+			entry->ticket.sig_type = RVTH_SigType_Retail;
+			break;
+		case RVL_CERT_ISSUER_DEBUG_TICKET:
+			// Debug certificate.
+			entry->ticket.sig_type = RVTH_SigType_Debug;
+			break;
+		default:
+			// Unknown issuer, or not valid for ticket.
+			break;
 	}
+	// TODO: Validate the signature.
 
-	// TODO: Check for invalid and/or fakesigned tickets.
+	// Check the TMD signature issuer.
+	tmd = (const RVL_TMD_Header*)header.tmd;
+	issuer = cert_get_issuer_from_name(tmd->signature_issuer);
+	switch (issuer) {
+		case RVL_CERT_ISSUER_RETAIL_TMD:
+			// Retail certificate.
+			entry->tmd.sig_type = RVTH_SigType_Retail;
+			break;
+		case RVL_CERT_ISSUER_DEBUG_TMD:
+			// Debug certificate.
+			entry->tmd.sig_type = RVTH_SigType_Debug;
+			break;
+		default:
+			// Unknown issuer, or not valid for TMD.
+			break;
+	}
+	// TODO: Validate the signature.
 
-	// If encrypted, set the crypto type.
+	// If encrypted, check the crypto type.
 	// NOTE: Retail + unencrypted is usually an error.
 	if (entry->crypto_type != RVTH_CryptoType_None) {
-		switch (entry->sig_type) {
+		switch (entry->ticket.sig_type) {
 			case RVTH_SigType_Retail:
 				// Retail may be either Common Key or Korean Key.
-				switch (sector_buf.ticket.common_key_index) {
+				switch (header.ticket.common_key_index) {
 					case 0:
 						entry->crypto_type = RVTH_CryptoType_Retail;
 						break;
@@ -420,7 +432,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 			case RVTH_SigType_Debug:
 				// There's only one debug key.
-				if (sector_buf.ticket.common_key_index == 0) {
+				if (header.ticket.common_key_index == 0) {
 					entry->crypto_type = RVTH_CryptoType_Debug;
 				} else {
 					entry->crypto_type = RVTH_CryptoType_Unknown;
