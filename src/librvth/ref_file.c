@@ -29,6 +29,7 @@
 #include <string.h>
 
 #ifdef _WIN32
+# include <windows.h>
 # include <io.h>
 # include <winioctl.h>
 #else /* !_WIN32 */
@@ -251,11 +252,11 @@ int ref_make_sparse(RefFile *f, int64_t size)
 
 	// Check if the file system supports sparse files.
 	// TODO: Handle mount points?
-	if (_istalpha(filename[0]) && filename[1] == _T(':') &&
-	    (filename[2] == _T('\\') || filename[2] == _T('/')))
+	if (_istalpha(f->filename[0]) && f->filename[1] == _T(':') &&
+	    (f->filename[2] == _T('\\') || f->filename[2] == _T('/')))
 	{
 		// Absolute pathname.
-		root_dir[0] = filename[0];
+		root_dir[0] = f->filename[0];
 		root_dir[1] = L':';
 		root_dir[2] = L'\\';
 		root_dir[3] = 0;
@@ -272,7 +273,7 @@ int ref_make_sparse(RefFile *f, int64_t size)
 	if (bRet != 0 && (dwFileSystemFlags & FILE_SUPPORTS_SPARSE_FILES)) {
 		// File system supports sparse files.
 		// Mark the file as sparse.
-		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(f_extract));
+		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(f->file));
 		if (h_extract != NULL && h_extract != INVALID_HANDLE_VALUE) {
 			DWORD bytesReturned;
 			FILE_SET_SPARSE_BUFFER fssb;
