@@ -44,6 +44,7 @@
 # define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
 
+#include "librvth/cert.h"
 int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 {
 	int ret;

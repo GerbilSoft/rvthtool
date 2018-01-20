@@ -3,6 +3,7 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
 LIST(APPEND CMAKE_MODULE_PATH
 	"${CMAKE_SOURCE_DIR}/cmake/macros"
+	"${CMAKE_SOURCE_DIR}/cmake/modules"
 	)
 
 # If no build type is set, default to "Debug".
