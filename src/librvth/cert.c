@@ -156,7 +156,7 @@ int cert_verify(const uint8_t *data, size_t size)
 			if (buf[i] != 0xFF) {
 				// Incorrect padding.
 				has_FF = false;
-				ret = SIG_FAIL_BASE_ERROR;
+				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
 				break;
 			}
 		}
@@ -166,7 +166,7 @@ int cert_verify(const uint8_t *data, size_t size)
 			    sig_fixed_data_retail, sizeof(sig_fixed_data_retail)) != 0)
 			{
 				// Fixed data is incorrect.
-				ret = SIG_FAIL_BASE_ERROR;
+				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
 			}
 		}
 	} else if (!memcmp(buf, sig_magic_debug, sizeof(sig_magic_debug))) {
@@ -174,7 +174,7 @@ int cert_verify(const uint8_t *data, size_t size)
 		// No FF padding; not sure what the random data is.
 	} else {
 		// Signature magic is incorrect.
-		ret = SIG_FAIL_BASE_ERROR;
+		ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
 	}
 
 	// Check the SHA-1 hash.
@@ -187,10 +187,10 @@ int cert_verify(const uint8_t *data, size_t size)
 		// If strncmp() succeeds, it's fakesigned.
 		if (!strncmp((const char*)sha1_hash, (const char*)&buf[sig_sha1_offset], sizeof(sha1_hash))) {
 			// Fakesigned.
-			ret |= SIG_FAIL_HASH_FAKE;
+			ret |= SIG_FAIL_HASH_FAKE | SIG_ERROR_INVALID;
 		} else {
 			// Not fakesigned.
-			ret |= SIG_FAIL_HASH_ERROR;
+			ret |= SIG_FAIL_HASH_ERROR | SIG_ERROR_INVALID;
 		}
 	}
 
