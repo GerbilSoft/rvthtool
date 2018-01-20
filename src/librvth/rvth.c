@@ -587,9 +587,9 @@ const char *rvth_error(int err)
 		// tr: RVTH_ERROR_BANK_NOT_DELETED
 		"Bank is not deleted",
 		// tr: RVTH_ERROR_NOT_HDD_IMAGE
-		"RVT-H object is not an HDD image"
+		"RVT-H object is not an HDD image",
 		// tr: RVTH_ERROR_NO_GAME_PARTITION
-		"Wii game partition not found"
+		"Wii game partition not found",
 	};
 
 	if (err < 0) {
