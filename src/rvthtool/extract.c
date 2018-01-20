@@ -77,13 +77,13 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	// Print the bank information.
 	// TODO: Make sure the bank type is valid before printing the newline.
 	print_bank(rvth, bank);
-	fputs("\n", stdout);
+	putchar('\n');
 
 	printf("Extracting Bank %u into '", bank+1);
 	_fputts(gcm_filename, stdout);
 	fputs("'...\n", stdout);
 	ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
-	printf("\n");
+	putchar('\n');
 	if (ret == 0) {
 		printf("Bank %u extracted to '", bank+1);
 		_fputts(gcm_filename, stdout);

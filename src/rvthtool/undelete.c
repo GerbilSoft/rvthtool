@@ -60,7 +60,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	// Print the bank information.
 	// TODO: Make sure the bank type is valid before printing the newline.
 	print_bank(rvth, bank);
-	fputs("\n", stdout);
+	putchar('\n');
 
 	// Delete the bank.
 	ret = rvth_delete(rvth, bank);
@@ -110,7 +110,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	// Print the bank information.
 	// TODO: Make sure the bank type is valid before printing the newline.
 	print_bank(rvth, bank);
-	fputs("\n", stdout);
+	putchar('\n');
 
 	// Undelete the bank.
 	ret = rvth_undelete(rvth, bank);

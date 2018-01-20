@@ -220,7 +220,7 @@ static int print_bank_table(const RvtH *rvth)
 		// Nothing is printed for the second bank of dual-layer Wii discs,
 		// so don't print a newline in that case..
 		if (entry && entry->type != RVTH_BankType_Wii_DL_Bank2) {
-			fputs("\n", stdout);
+			putchar('\n');
 		}
 	}
 
