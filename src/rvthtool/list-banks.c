@@ -37,6 +37,11 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	bool is_hdd;
 	int ret = 0;
 
+	// Region codes.
+	static const char region_code_tbl[5][4] = {
+		"JPN", "USA", "EUR", "ALL", "KOR"
+	};
+
 	const unsigned int bank_count = rvth_get_BankCount(rvth);
 	if (bank >= bank_count) {
 		// Out of range...
@@ -132,9 +137,6 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	printf("- Revision:    %u\n", entry->revision);
 
 	// Region code.
-	static const char region_code_tbl[5][4] = {
-		"JPN", "USA", "EUR", "ALL", "KOR"
-	};
 	fputs("- Region code: ", stdout);
 	if (entry->region_code < ARRAY_SIZE(region_code_tbl)) {
 		fputs(region_code_tbl[entry->region_code], stdout);
