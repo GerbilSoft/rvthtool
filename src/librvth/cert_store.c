@@ -520,3 +520,17 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer)
 	}
 	return certs[issuer];
 }
+
+/**
+ * Get a standard certificate by issuer name.
+ * @param s_issuer Issuer name.
+ * @return RVL_Cert*, or NULL if invalid.
+ */
+const RVL_Cert *cert_get_from_name(const char *s_issuer)
+{
+	RVL_Cert_Issuer issuer = cert_get_issuer_from_name(s_issuer);
+	if (issuer == RVL_CERT_ISSUER_UNKNOWN) {
+		return NULL;
+	}
+	return cert_get(issuer);
+}

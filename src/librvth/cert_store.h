@@ -75,6 +75,13 @@ typedef struct _RVL_Cert {
  */
 const RVL_Cert *cert_get(RVL_Cert_Issuer issuer);
 
+/**
+ * Get a standard certificate by issuer name.
+ * @param s_issuer Issuer name.
+ * @return RVL_Cert*, or NULL if invalid.
+ */
+const RVL_Cert *cert_get_from_name(const char *s_issuer);
+
 // Signature types.
 typedef enum {
 	RVL_CERT_SIGTYPE_RSA4096	= 0x00010000,	// RSA-4096
@@ -87,7 +94,7 @@ typedef enum {
 	RVL_CERT_SIGLENGTH_RSA4096	= 512,		// RSA-4096
 	RVL_CERT_SIGLENGTH_RSA2048	= 256,		// RSA-2048
 	RVL_CERT_SIGLENGTH_ECC		= 64,		// Elliptic Curve
-} Cert_SigLength_e;
+} RVL_Cert_SigLength_e;
 
 // Key types.
 typedef enum {
@@ -95,7 +102,7 @@ typedef enum {
 	RVL_CERT_KEYTYPE_RSA2048	= 1,
 } RVL_Cert_KeyType_e;
 
-// Key lengths.
+// Key lengths. [DEPRECATED]
 typedef enum {
 	// Length = Modulus + Public Exponent + (pad to 0x40)
 	RVL_CERT_KEYLENGTH_RSA4096	= 0x200 + 0x4 + 0x38,
@@ -111,9 +118,9 @@ typedef enum {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Sig_Dummy {
-	uint32_t signature_type;	// [0x000] Signature type. (Must be 0.)
-	uint8_t padding1[0x3C];		// [0x004] Padding.
-	char issuer[64];		// [0x040] Issuer.
+	uint32_t type;		// [0x000] Signature type. (Must be 0.)
+	uint8_t padding1[0x3C];	// [0x004] Padding.
+	char issuer[64];	// [0x040] Issuer.
 } RVL_Sig_Dummy;
 //ASSERT_STRUCT(RVL_Sig_Dummy, 0x080);
 
@@ -124,8 +131,8 @@ typedef struct _RVL_Sig_Dummy {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Sig_RSA4096 {
-	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
-	uint8_t signature[RVL_CERT_SIGLENGTH_RSA4096];	// [0x004] Signature.
+	uint32_t type;					// [0x000] Signature type. (See Cert_SigType_e.)
+	uint8_t sig[RVL_CERT_SIGLENGTH_RSA4096];	// [0x004] Signature.
 	uint8_t padding1[0x3C];				// [0x204] Padding.
 	char issuer[64];				// [0x240] Issuer.
 } RVL_Sig_RSA4096;
@@ -138,7 +145,7 @@ typedef struct _RVL_Sig_RSA4096 {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_PubKey_RSA4096 {
-	uint32_t key_type;		// [0x000] Key type. (See Cert_KeyType_e.)
+	uint32_t type;			// [0x000] Key type. (See Cert_KeyType_e.)
 	char child_cert_identity[64];	// [0x004] Child certificate identity.
 	uint32_t unknown;		// [0x044] // Unknown...
 	uint8_t modulus[512];		// [0x048] Modulus.
@@ -181,8 +188,8 @@ typedef struct _RVL_Cert_RSA4096 {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_Sig_RSA2048 {
-	uint32_t signature_type;			// [0x000] Signature type. (See Cert_SigType_e.)
-	uint8_t signature[RVL_CERT_SIGLENGTH_RSA2048];	// [0x004] Signature.
+	uint32_t type;					// [0x000] Signature type. (See Cert_SigType_e.)
+	uint8_t sig[RVL_CERT_SIGLENGTH_RSA2048];	// [0x004] Signature.
 	uint8_t padding1[0x3C];				// [0x104] Padding.
 	char issuer[64];				// [0x140] Issuer.
 } RVL_Sig_RSA2048;
@@ -195,7 +202,7 @@ typedef struct _RVL_Sig_RSA2048 {
  * When using the built-in certificates, they're in host-endian.
  */
 typedef struct _RVL_PubKey_RSA2048 {
-	uint32_t key_type;		// [0x000] Key type. (See Cert_KeyType_e.)
+	uint32_t type;			// [0x000] Key type. (See Cert_KeyType_e.)
 	char child_cert_identity[64];	// [0x004] Child certificate identity.
 	uint32_t unknown;		// [0x044] // Unknown...
 	uint8_t modulus[256];		// [0x048] Modulus.
