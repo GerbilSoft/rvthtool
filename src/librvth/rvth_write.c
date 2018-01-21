@@ -408,8 +408,13 @@ static int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 	// Create a new NHCD bank entry.
 	memset(&nhcd_entry, 0, sizeof(nhcd_entry));
 
-	// Check the bank type.
+	// If the bank entry is deleted, then it should be
+	// all zeroes, so skip all of this.
 	rvth_entry = &rvth->entries[bank];
+	if (rvth_entry->is_deleted)
+		goto skip_creating_bank_entry;
+
+	// Check the bank type.
 	switch (rvth_entry->type) {
 		// These bank entries can be written.
 		case RVTH_BankType_Empty:
@@ -466,6 +471,7 @@ static int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 		nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
 	}
 
+skip_creating_bank_entry:
 	// Write the bank entry.
 	ret = ref_seeko(rvth->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
