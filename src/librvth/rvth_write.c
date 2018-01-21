@@ -502,7 +502,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->is_hdd) {
+	} else if (!rvth->is_hdd) {
 		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
@@ -573,7 +573,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (rvth->is_hdd) {
+	} else if (!rvth->is_hdd) {
 		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
