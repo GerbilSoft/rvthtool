@@ -33,6 +33,7 @@
 extern "C" {
 #endif
 
+#define RVTH_BANK_COUNT 8	/* Standard RVT-H HDD bank count. */
 #define RVTH_BLOCK_SIZE 512
 
 // Convert LBA values to bytes.

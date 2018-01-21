@@ -912,9 +912,8 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the 8 RvtH_BankEntry objects.
-	rvth->bank_count = 8;
 	rvth->is_hdd = true;
-	rvth->entries = calloc(8, sizeof(RvtH_BankEntry));
+	rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
 		int err = errno;

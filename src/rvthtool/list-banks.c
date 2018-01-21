@@ -269,7 +269,21 @@ int list_banks(const TCHAR *rvth_filename)
 	}
 
 	// Print the bank table.
-	printf("RVT-H Bank Table:\n\n");
+	if (rvth_is_hdd(rvth)) {
+		// HDD image and/or device.
+		const unsigned int bank_count = rvth_get_BankCount(rvth);
+		fputs("RVT-H Bank Table: [", stdout);
+		if (bank_count > RVTH_BANK_COUNT) {
+			// Bank table is larger than standard.
+			fputs("EXTENDED: ", stdout);
+		} else if (bank_count < RVTH_BANK_COUNT) {
+			// Bank table is smaller than standard.
+			fputs("SHRUNKEN: ", stdout);
+		}
+		printf("%u bank%s]\n", bank_count, (bank_count != 1 ? "s" : ""));
+	}
+
+	putchar('\n');
 	print_bank_table(rvth);
 	rvth_close(rvth);
 	return 0;
