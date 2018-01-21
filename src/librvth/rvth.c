@@ -508,7 +508,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	// Read the GCN disc header.
 	// TODO: For non-deleted banks, verify the magic number?
 	errno = 0;
-	ret = ref_seeko(f_img, (int64_t)lba_start * NHCD_BLOCK_SIZE, SEEK_SET);
+	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		int err = errno;
@@ -1004,7 +1004,10 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (lba_start == 0 || lba_len == 0) {
 			// Invalid LBAs. Use the default starting offset.
 			// Bank size will be determined by rvth_init_BankEntry().
-			lba_start = NHCD_BANK_1_START_LBA(rvth->bank_count) + (NHCD_BANK_SIZE_LBA * i);
+			// NOTE: Assuming the default bank count, since Bank 1
+			// will eventually be relocated before the bank table header
+			// when extending the bank table.
+			lba_start = NHCD_BANK_1_START_LBA(NHCD_BANK_COUNT) + (NHCD_BANK_SIZE_LBA * i);
 			lba_len = 0;
 		}
 
