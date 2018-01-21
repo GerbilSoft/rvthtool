@@ -63,7 +63,11 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 		} else {
 			fputs("Disc image: ", stdout);
 		}
-		fputs("Empty\n", stdout);
+		if (ret == RVTH_ERROR_BANK_EMPTY) {
+			fputs("Empty\n", stdout);
+		} else {
+			fputs("Unknown\n", stdout);
+		}
 		return 0;
 	} else if (entry->type == RVTH_BankType_Wii_DL_Bank2) {
 		// Bank 2 for DL images.
