@@ -54,7 +54,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// TODO: Check the error code.
 	entry = rvth_get_BankEntry(rvth, bank, &ret);
 	if (!entry) {
-		if (ret != 0) {
+		if (ret != 0 && ret != RVTH_ERROR_BANK_EMPTY) {
 			// Error...
 			return ret;
 		}
