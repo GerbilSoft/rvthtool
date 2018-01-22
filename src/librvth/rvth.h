@@ -44,17 +44,24 @@ extern "C" {
 
 typedef enum {
 	RVTH_ERROR_SUCCESS		= 0,
-	RVTH_ERROR_NHCD_TABLE_MAGIC	= 1,	// NHCD bank table has the wrong magic.
-	RVTH_ERROR_BANK_UNKNOWN		= 2,	// Selected bank has an unknown status.
-	RVTH_ERROR_BANK_EMPTY		= 3,	// Selected bank is empty.
-	RVTH_ERROR_BANK_DL_2		= 4,	// Selected bank is the second bank of a DL image.
-	RVTH_ERROR_NOT_A_DEVICE		= 5,	// Attempting to write to an RVT-H disk image.
-	RVTH_ERROR_BANK_IS_DELETED	= 6,	// Attempting to delete a bank that's already deleted.
-	RVTH_ERROR_BANK_NOT_DELETED	= 7,	// Attempting to undelete a bank that isn't deleted.
-	RVTH_ERROR_NOT_HDD_IMAGE	= 8,	// Attempting to modify the bank table of a non-HDD image.
-	RVTH_ERROR_NO_GAME_PARTITION	= 9,	// Game partition was not found in a Wii image.
-	RVTH_ERROR_INVALID_BANK_COUNT	= 10,	// `bank_count` field is invalid.
-	RVTH_ERROR_IS_HDD_IMAGE		= 11,	// Operation does not support HDD images.
+	RVTH_ERROR_UNRECOGNIZED_FILE	= 1,	// Unrecognized file format.
+	RVTH_ERROR_NHCD_TABLE_MAGIC	= 2,	// NHCD bank table has the wrong magic.
+	RVTH_ERROR_NO_BANKS		= 3,	// No banks.
+	RVTH_ERROR_BANK_UNKNOWN		= 4,	// Selected bank has an unknown status.
+	RVTH_ERROR_BANK_EMPTY		= 5,	// Selected bank is empty.
+	RVTH_ERROR_BANK_DL_2		= 6,	// Selected bank is the second bank of a DL image.
+	RVTH_ERROR_NOT_A_DEVICE		= 7,	// Attempting to write to an RVT-H disk image.
+	RVTH_ERROR_BANK_IS_DELETED	= 8,	// Attempting to delete a bank that's already deleted.
+	RVTH_ERROR_BANK_NOT_DELETED	= 9,	// Attempting to undelete a bank that isn't deleted.
+	RVTH_ERROR_NOT_HDD_IMAGE	= 10,	// Attempting to modify the bank table of a non-HDD image.
+	RVTH_ERROR_NO_GAME_PARTITION	= 11,	// Game partition was not found in a Wii image.
+	RVTH_ERROR_INVALID_BANK_COUNT	= 12,	// `bank_count` field is invalid.
+	RVTH_ERROR_IS_HDD_IMAGE		= 13,	// Operation does not support HDD images.
+	RVTH_ERROR_IS_RETAIL_CRYPTO	= 14,	// Cannot import a retail-encrypted Wii game.
+	RVTH_ERROR_IMAGE_TOO_BIG	= 15,	// Source image does not fit in an RVT-H bank.
+	RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED	= 16,	// Destination bank is not empty or deleted.
+
+	RVTH_ERROR_MAX
 } RvtH_Errors;
 
 // RVT-H struct.
@@ -218,6 +225,29 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
+
+/**
+ * Copy a bank from an RVT-H HDD or standalone disc image to an RVT-H system.
+ * @param rvth_dest	[out] Destination RvtH object.
+ * @param bank_dest	[out] Destination bank number. (0-7)
+ * @param rvth_src	[in] Source RvtH object.
+ * @param bank_src	[in] Source bank number. (0-7)
+ * @param callback	[in,opt] Progress callback.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_src,
+	unsigned int bank_src, RvtH_Progress_Callback callback);
+
+/**
+ * Import a disc image into an RVT-H disk image.
+ * Compatibility wrapper; this function calls rvth_open() and rvth_copy_to_hdd().
+ * @param rvth		[in] RVT-H disk image.
+ * @param bank		[in] Bank number. (0-7)
+ * @param filename	[in] Source GCM filename.
+ * @param callback	[in,opt] Progress callback.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
 
 /**
  * Delete a bank on an RVT-H device.

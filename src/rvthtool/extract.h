@@ -36,6 +36,15 @@ extern "C" {
  */
 int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename);
 
+/**
+ * 'import' command.
+ * @param rvth_filename	RVT-H device or disk image filename.
+ * @param s_bank	Bank number (as a string).
+ * @param gcm_filename	Filename of the GCM image to import.
+ * @return 0 on success; non-zero on error.
+ */
+int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename);
+
 #ifdef __cplusplus
 }
 #endif

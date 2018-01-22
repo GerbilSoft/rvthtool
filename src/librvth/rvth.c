@@ -618,11 +618,19 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
  */
 const char *rvth_error(int err)
 {
-	static const char *const errtbl[] = {
+	// TODO: Update functions to only return POSIX error codes
+	// for system-level issues. For anything weird encountered
+	// within an RVT-H HDD or GCN/Wii disc image, an
+	// RvtH_Errors code should be retured instead.
+	static const char *const errtbl[RVTH_ERROR_MAX] = {
 		// tr: RVTH_ERROR_SUCCESS
 		"Success",
+		// tr: RVTH_ERROR_UNRECOGNIZED_FILE
+		"Unrecognized file format",
 		// tr: RVTH_ERROR_NHCD_TABLE_MAGIC
 		"Bank table magic is incorrect",
+		// tr: RVTH_ERROR_NO_BANKS
+		"No banks found",
 		// tr: RVTH_ERROR_BANK_UNKNOWN
 		"Bank status is unknown",
 		// tr: RVTH_ERROR_BANK_EMPTY
@@ -641,6 +649,14 @@ const char *rvth_error(int err)
 		"Wii game partition not found",
 		// tr: RVTH_ERROR_INVALID_BANK_COUNT
 		"RVT-H bank count field is invalid",
+		// tr: RVTH_ERROR_IS_HDD_IMAGE
+		"Operation cannot be performed on devices or HDD images",
+		// tr: RVTH_ERROR_IS_RETAIL_CRYPTO
+		"Cannot import a retail-encrypted Wii game",
+		// tr: RVTH_ERROR_IMAGE_TOO_BIG
+		"Source image does not fit in an RVT-H bank",
+		// tr: RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED
+		"Destination bank is not empty or deleted",
 	};
 
 	if (err < 0) {
