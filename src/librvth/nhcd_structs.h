@@ -93,10 +93,34 @@ typedef struct _NHCD_BankTable {
 
 // Bank table address.
 #define NHCD_BANKTABLE_ADDRESS_LBA		0x300000U
-// Bank 1 starting address.
-#define NHCD_BANK_1_START_LBA(bank_count)	(NHCD_BANKTABLE_ADDRESS_LBA + 1U + (bank_count))
 // Maximum bank size.
 #define NHCD_BANK_SIZE_LBA			0x8C4A00U
+
+// Bank 1 size for extended bank tables.
+#define NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA	0x2C0000U
+
+/**
+ * Get the default bank starting address.
+ *
+ * For `bank_count <= 8`, this always starts after the
+ * bank table header and 8 bank entries. (0x300009U)
+ *
+ * For `bank_count > 8`, the same is true for banks 2 and higher.
+ * Bank 1 is relocated to (NHCD_BANKTABLE_ADDRESS_LBA - NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA)
+ * and will only support GCN images.
+ *
+ * @param bank Bank number. (0-7)
+ * @param bank_count Bank count.
+ * @return Bank starting address, in LBAs.
+ */
+#define NHCD_BANK_START_LBA(bank, bank_count) \
+	((bank) > 0 \
+		? (NHCD_BANKTABLE_ADDRESS_LBA + 9U + (NHCD_BANK_SIZE_LBA * (bank))) \
+		: ((bank_count <= 8) \
+			? (NHCD_BANKTABLE_ADDRESS_LBA + 9U) \
+			: (NHCD_BANKTABLE_ADDRESS_LBA - NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA) \
+		) \
+	)
 
 // Wii SL disc image size.
 // NOTE: The RVT-R size matches the DVD-R specification.
@@ -112,8 +136,8 @@ typedef struct _NHCD_BankTable {
 
 // GameCube disc image size.
 // TODO: NR size?
-#define NHCD_BANK_GCN_DL_SIZE_RETAIL_LBA	0x2B82C0U
-#define NHCD_BANK_GCN_DL_SIZE_NR_LBA		0x2B82C0U	/* VERIFY */
+#define NHCD_BANK_GCN_SIZE_RETAIL_LBA		0x2B82C0U
+#define NHCD_BANK_GCN_SIZE_NR_LBA		0x2B82C0U	/* VERIFY */
 
 // Block size.
 #define NHCD_BLOCK_SIZE		512

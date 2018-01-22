@@ -558,26 +558,34 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	}
 
 	if (lba_len == 0) {
-		// Use the default LBA length based on bank type.
-		switch (type) {
-			default:
-			case RVTH_BankType_Empty:
-			case RVTH_BankType_Unknown:
-			case RVTH_BankType_Wii_SL:
-			case RVTH_BankType_Wii_DL_Bank2:
-				// Full bank.
-				lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
-				break;
+		if (lba_start < NHCD_BANKTABLE_ADDRESS_LBA) {
+			// Bank starts before the bank table.
+			// This is a relocated Bank 1 on a device with
+			// an extended bank table, so it can only support
+			// GCN disc images.
+			lba_len = NHCD_BANK_GCN_SIZE_NR_LBA;
+		} else {
+			// Use the default LBA length based on bank type.
+			switch (type) {
+				default:
+				case RVTH_BankType_Empty:
+				case RVTH_BankType_Unknown:
+				case RVTH_BankType_Wii_SL:
+				case RVTH_BankType_Wii_DL_Bank2:
+					// Full bank.
+					lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
+					break;
 
-			case RVTH_BankType_Wii_DL:
-				// Dual-layer bank.
-				lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
-				break;
+				case RVTH_BankType_Wii_DL:
+					// Dual-layer bank.
+					lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
+					break;
 
-			case RVTH_BankType_GCN:
-				// GameCube disc image.
-				lba_len = NHCD_BANK_GCN_DL_SIZE_NR_LBA;
-				break;
+				case RVTH_BankType_GCN:
+					// GameCube disc image.
+					lba_len = NHCD_BANK_GCN_SIZE_NR_LBA;
+					break;
+			}
 		}
 		entry->lba_len = lba_len;
 	}
@@ -1020,10 +1028,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (lba_start == 0 || lba_len == 0) {
 			// Invalid LBAs. Use the default starting offset.
 			// Bank size will be determined by rvth_init_BankEntry().
-			// NOTE: Assuming the default bank count, since Bank 1
-			// will eventually be relocated before the bank table header
-			// when extending the bank table.
-			lba_start = NHCD_BANK_1_START_LBA(NHCD_BANK_COUNT) + (NHCD_BANK_SIZE_LBA * i);
+			lba_start = NHCD_BANK_START_LBA(i, rvth->bank_count);
 			lba_len = 0;
 		}
 
@@ -1153,7 +1158,7 @@ unsigned int rvth_get_BankCount(const RvtH *rvth)
  * @param rvth	[in] RVT-H disk image.
  * @param bank	[in] Bank number. (0-7)
  * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- * @return Bank table entry, or NULL if out of range or empty.
+ * @return Bank table entry, or NULL if out of range.
  */
 const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr)
 {
@@ -1167,14 +1172,6 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 		errno = ERANGE;
 		if (pErr) {
 			*pErr = -EINVAL;
-		}
-		return NULL;
-	}
-
-	// Check if the bank is empty.
-	if (rvth->entries[bank].type == RVTH_BankType_Empty) {
-		if (pErr) {
-			*pErr = RVTH_ERROR_BANK_EMPTY;
 		}
 		return NULL;
 	}

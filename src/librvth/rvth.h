@@ -182,7 +182,7 @@ bool rvth_is_hdd(const RvtH *rvth);
  * @param rvth	[in] RVT-H disk image.
  * @param bank	[in] Bank number. (0-7)
  * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- * @return Bank table entry, or NULL if out of range or empty.
+ * @return Bank table entry.
  */
 const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr);
 
