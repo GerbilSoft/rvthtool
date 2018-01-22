@@ -582,7 +582,17 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	// TODO: Dual-layer Wii support.
 	if (entry_src->lba_len > NHCD_BANK_SIZE_LBA) {
 		return RVTH_ERROR_IMAGE_TOO_BIG;
-	}
+	} else if (bank_dest == 0) {
+		// Special handling for bank 1 if the bank table is extended.
+		// TODO: entry_dest->lba_len should be the full bank size
+		// if the bank is empty or deleted.
+		// TODO: Add a separate field, lba_max_len?
+		if (rvth_get_BankCount(rvth_dest) > 8) {
+			// Image cannot be larger than NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA.
+			if (entry_src->lba_len > NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA) {
+				return RVTH_ERROR_IMAGE_TOO_BIG;
+			}
+		}
 
 	// Destination bank must be either empty or deleted.
 	entry_dest = &rvth_dest->entries[bank_dest];

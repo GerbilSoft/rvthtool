@@ -563,7 +563,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 			// This is a relocated Bank 1 on a device with
 			// an extended bank table, so it can only support
 			// GCN disc images.
-			lba_len = NHCD_BANK_GCN_SIZE_NR_LBA;
+			lba_len = NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA;
 		} else {
 			// Use the default LBA length based on bank type.
 			switch (type) {
