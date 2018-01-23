@@ -593,6 +593,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 				return RVTH_ERROR_IMAGE_TOO_BIG;
 			}
 		}
+	}
 
 	// Destination bank must be either empty or deleted.
 	entry_dest = &rvth_dest->entries[bank_dest];
