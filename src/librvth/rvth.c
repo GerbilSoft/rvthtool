@@ -738,7 +738,6 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		if (err == 0) {
 			err = EIO;
 		}
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -767,7 +766,6 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 			type = RVTH_BankType_GCN;
 		} else {
 			// Not supported.
-			ref_close(f_img);
 			errno = EIO;
 			if (pErr) {
 				*pErr = -EIO;
@@ -785,7 +783,6 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -804,7 +801,6 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 			err = ENOMEM;
 		}
 		free(rvth);
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -867,7 +863,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (err == 0) {
 			err = EIO;
 		}
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -882,7 +877,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (err == 0) {
 			err = EIO;
 		}
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -893,7 +887,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	// Check the magic number.
 	if (nhcd_header.magic != be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
 		// Incorrect magic number.
-		ref_close(f_img);
 		if (pErr) {
 			*pErr = RVTH_ERROR_NHCD_TABLE_MAGIC;
 		}
@@ -910,7 +903,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -927,7 +919,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		// has modified it.
 		// TODO: More extensive "extra bank" testing.
 		free(rvth);
-		ref_close(f_img);
 		errno = EIO;
 		if (pErr) {
 			*pErr = RVTH_ERROR_INVALID_BANK_COUNT;
@@ -945,7 +936,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 			err = ENOMEM;
 		}
 		free(rvth);
-		ref_close(f_img);
 		errno = err;
 		if (pErr) {
 			*pErr = -err;
@@ -953,7 +943,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		return NULL;
 	};
 
-	rvth->f_img = f_img;
+	rvth->f_img = ref_dup(f_img);
 	rvth_entry = rvth->entries;
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
 	for (i = 0; i < rvth->bank_count; i++, rvth_entry++, addr += 512) {
@@ -1050,7 +1040,8 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 RvtH *rvth_open(const TCHAR *filename, int *pErr)
 {
 	RefFile *f_img;
-	int ret;
+	RvtH *rvth = NULL;
+	int ret = 0;
 	int64_t len;
 
 	// Open the disk image.
@@ -1070,28 +1061,31 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 		if (errno == 0) {
 			errno = EIO;
 		}
-		if (pErr) {
-			*pErr = -errno;
-		}
-		return NULL;
+		ret = -errno;
+		goto end;
 	}
 	len = ref_tello(f_img);
 	if (len == 0) {
 		// File is empty.
 		errno = EIO;
-		if (pErr) {
-			*pErr = -EIO;
-		}
-		return NULL;
 	} else if (len <= 2*LBA_TO_BYTES(NHCD_BANK_SIZE_LBA)) {
 		// Two banks or less.
 		// This is most likely a standalone disc image.
-		return rvth_open_gcm(f_img, pErr);
+		rvth = rvth_open_gcm(f_img, pErr);
 	} else {
 		// More than two banks.
 		// This is most likely an RVT-H HDD image.
-		return rvth_open_hdd(f_img, pErr);
+		rvth = rvth_open_hdd(f_img, pErr);
 	}
+
+end:
+	if (pErr) {
+		*pErr = -errno;
+	}
+	// If the RvtH object was opened, it will have
+	// called ref_dup() to increment the reference count.
+	ref_close(f_img);
+	return rvth;
 }
 
 /**
