@@ -43,11 +43,12 @@
 
 /**
  * Open a file as a reference-counted file.
- * The file is opened as a binary file in read-only mode.
+ * The file is opened as a binary file using the specified mode.
  * @param filename Filename.
+ * @param mode Mode.
  * @return RefFile*, or NULL if an error occurred.
  */
-RefFile *ref_open(const TCHAR *filename)
+static RefFile *ref_open_int(const TCHAR *filename, const TCHAR *mode)
 {
 	RefFile *f = malloc(sizeof(RefFile));
 	if (!f) {
@@ -68,7 +69,7 @@ RefFile *ref_open(const TCHAR *filename)
 		return NULL;
 	}
 
-	f->file = _tfopen(filename, _T("rb"));
+	f->file = _tfopen(filename, mode);
 	if (!f->file) {
 		// Could not open the file.
 		int err = errno;
@@ -83,9 +84,21 @@ RefFile *ref_open(const TCHAR *filename)
 
 	// Initialize the reference count.
 	f->ref_count = 1;
-        // File is not writable initially.
-        f->is_writable = false;
+        // File writability depends on the mode.
+	// NOTE: Only checking the first character.
+        f->is_writable = (mode[0] == _T('w'));
 	return f;
+}
+
+/**
+ * Open a file as a reference-counted file.
+ * The file is opened as a binary file in read-only mode.
+ * @param filename Filename.
+ * @return RefFile*, or NULL if an error occurred.
+ */
+RefFile *ref_open(const TCHAR *filename)
+{
+	return ref_open_int(filename, _T("rb"));
 }
 
 /**
@@ -97,43 +110,7 @@ RefFile *ref_open(const TCHAR *filename)
  */
 RefFile *ref_create(const TCHAR *filename)
 {
-	RefFile *f = malloc(sizeof(RefFile));
-	if (!f) {
-		// Unable to allocate memory.
-		return NULL;
-	}
-
-	// Save the filename.
-	f->filename = _tcsdup(filename);
-	if (!f->filename) {
-		// Could not copy the filename.
-		int err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		free(f);
-		errno = err;
-		return NULL;
-	}
-
-	f->file = _tfopen(filename, _T("wb"));
-	if (!f->file) {
-		// Could not open the file.
-		int err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		free(f->filename);
-		free(f);
-		errno = err;
-		return NULL;
-	}
-
-	// Initialize the reference count.
-	f->ref_count = 1;
-        // File is writable.
-        f->is_writable = true;
-	return f;
+	return ref_open_int(filename, _T("wb"));
 }
 
 /**
