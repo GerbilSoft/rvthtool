@@ -48,7 +48,9 @@ HashCtx_SHA1 *hashw_sha1_new(void)
 	}
 
 	// Open the crypto provider.
-	if (!CryptAcquireContext(&sha1->hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
+	if (!CryptAcquireContext(&sha1->hProv, NULL, NULL,
+	    PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT))
+	{
 		// TODO: Convert GetLastError() to errno?
 		free(sha1);
 		errno = EIO;
