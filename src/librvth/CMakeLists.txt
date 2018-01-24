@@ -48,6 +48,7 @@ SET(librvth_SRCS
 	reader_plain.c
 	cert_store.c
 	cert.c
+	hashw.c
 	)
 # Headers.
 SET(librvth_H
@@ -64,6 +65,7 @@ SET(librvth_H
 	reader_plain.h
 	cert_store.h
 	cert.h
+	hashw.h
 	rsaw.h
 	)
 
