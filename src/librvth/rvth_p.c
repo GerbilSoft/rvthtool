@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "rvth_p.h"
+#include "rvth_time.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -154,35 +155,23 @@ int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 			return RVTH_ERROR_BANK_DL_2;
 	}
 
-	if (rvth_entry->type != RVTH_BankType_Empty &&
-	    !rvth_entry->is_deleted)
+	if (rvth_entry->type == RVTH_BankType_Empty ||
+	    rvth_entry->is_deleted)
 	{
-		// Non-empty/non-deleted bank.
-		time_t now;
-		struct tm tm_now;
-
-		// Timestamp buffer.
-		// We can't snprintf() directly to nhcd_entry.timestamp because
-		// gcc will complain about buffer overflows, and will crash at
-		// runtime on Gentoo Hardened.
-		char tsbuf[16];
-
-		// ASCII zero bytes.
-		memset(nhcd_entry.all_zero, '0', sizeof(nhcd_entry.all_zero));
-
-		// Timestamp.
-		// TODO: Use localtime_r().
-		now = time(NULL);
-		tm_now = *localtime(&now);
-		snprintf(tsbuf, sizeof(tsbuf), "%04d%02d%02d%02d%02d%02d",
-			tm_now.tm_year+1900, tm_now.tm_mon+1, tm_now.tm_mday,
-			tm_now.tm_hour, tm_now.tm_min, tm_now.tm_sec);
-		memcpy(nhcd_entry.timestamp, tsbuf, sizeof(nhcd_entry.timestamp));
-
-		// LBA start and length.
-		nhcd_entry.lba_start = cpu_to_be32(rvth_entry->lba_start);
-		nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
+		// Bank is either empty or deleted.
+		// Don't bother doing anything with it.
+		goto skip_creating_bank_entry;
 	}
+
+	// ASCII zero bytes.
+	memset(nhcd_entry.all_zero, '0', sizeof(nhcd_entry.all_zero));
+
+	// Timestamp.
+	rvth_timestamp_create(nhcd_entry.timestamp, sizeof(nhcd_entry.timestamp), time(NULL));
+
+	// LBA start and length.
+	nhcd_entry.lba_start = cpu_to_be32(rvth_entry->lba_start);
+	nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
 
 skip_creating_bank_entry:
 	// Write the bank entry.

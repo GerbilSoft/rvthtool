@@ -44,6 +44,7 @@ SET(librvth_SRCS
 	rvth_p.c
 	rvth_write.c
 	rvth_extract.c
+	rvth_time.c
 	ref_file.c
 	reader_plain.c
 	cert_store.c
@@ -59,6 +60,7 @@ SET(librvth_H
 	gcn_structs.h
 	rvth.h
 	rvth_p.h
+	rvth_time.h
 	ref_file.h
 	tcharx.h
 	reader.h

@@ -20,6 +20,7 @@
 
 #include "rvth.h"
 #include "rvth_p.h"
+#include "rvth_time.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -63,76 +64,6 @@ static void trim_title(char *title, int size)
 			break;
 		title[size] = 0;
 	}
-}
-
-/**
- * Parse an RVT-H timestamp.
- * @param nhcd_timestamp Pointer to NHCD timestamp string.
- * @return Timestamp, or -1 if invalid.
- */
-static time_t rvth_parse_timestamp(const char *nhcd_timestamp)
-{
-	// Date format: "YYYYMMDD"
-	// Time format: "HHMMSS"
-	unsigned int ymd = 0;
-	unsigned int hms = 0;
-	unsigned int i;
-	struct tm ymdtime;
-
-	// Convert the date to an unsigned integer.
-	for (i = 0; i < 8; i++) {
-		if (unlikely(!isdigit(nhcd_timestamp[i]))) {
-			// Invalid digit.
-			return -1;
-		}
-		ymd *= 10;
-		ymd += (nhcd_timestamp[i] & 0xF);
-	}
-
-	// Sanity checks:
-	// - Must be higher than 19000101.
-	// - Must be lower than 99991231.
-	if (unlikely(ymd < 19000101 || ymd > 99991231)) {
-		// Invalid date.
-		return -1;
-	}
-
-	// Convert the time to an unsigned integer.
-	for (i = 8; i < 14; i++) {
-		if (unlikely(!isdigit(nhcd_timestamp[i]))) {
-			// Invalid digit.
-			return -1;
-		}
-		hms *= 10;
-		hms += (nhcd_timestamp[i] & 0xF);
-	}
-
-	// Sanity checks:
-	// - Must be lower than 235959.
-	if (unlikely(hms > 235959)) {
-		// Invalid time.
-		return -1;
-	}
-
-	// Convert to Unix time.
-	// NOTE: struct tm has some oddities:
-	// - tm_year: year - 1900
-	// - tm_mon: 0 == January
-	ymdtime.tm_year = (ymd / 10000) - 1900;
-	ymdtime.tm_mon  = ((ymd / 100) % 100) - 1;
-	ymdtime.tm_mday = ymd % 100;
-
-	ymdtime.tm_hour = (hms / 10000);
-	ymdtime.tm_min  = (hms / 100) % 100;
-	ymdtime.tm_sec  = hms % 100;
-
-	// tm_wday and tm_yday are output variables.
-	ymdtime.tm_wday = 0;
-	ymdtime.tm_yday = 0;
-	ymdtime.tm_isdst = 0;
-
-	// If conversion fails, this will return -1.
-	return timegm(&ymdtime);
 }
 
 /**
@@ -601,7 +532,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Parse the timestamp.
 	if (nhcd_timestamp) {
-		entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
+		entry->timestamp = rvth_timestamp_parse(nhcd_timestamp);
 	}
 
 	// Initialize fields from the disc header.
