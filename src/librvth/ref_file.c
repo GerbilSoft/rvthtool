@@ -50,7 +50,9 @@
  */
 static RefFile *ref_open_int(const TCHAR *filename, const TCHAR *mode)
 {
-	RefFile *f = malloc(sizeof(RefFile));
+	int err = 0;
+
+	RefFile *f = calloc(1, sizeof(RefFile));
 	if (!f) {
 		// Unable to allocate memory.
 		return NULL;
@@ -60,26 +62,21 @@ static RefFile *ref_open_int(const TCHAR *filename, const TCHAR *mode)
 	f->filename = _tcsdup(filename);
 	if (!f->filename) {
 		// Could not copy the filename.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		free(f);
-		errno = err;
-		return NULL;
+		goto fail;
 	}
 
 	f->file = _tfopen(filename, mode);
 	if (!f->file) {
 		// Could not open the file.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		free(f->filename);
-		free(f);
-		errno = err;
-		return NULL;
+		goto fail;
 	}
 
 	// Initialize the reference count.
@@ -88,6 +85,20 @@ static RefFile *ref_open_int(const TCHAR *filename, const TCHAR *mode)
 	// NOTE: Only checking the first character.
         f->is_writable = (mode[0] == _T('w'));
 	return f;
+
+fail:
+	// Failed to open the file.
+	if (f->file) {
+		fclose(f->file);
+	}
+	if (f->filename) {
+		free(f->filename);
+	}
+	free(f);
+	if (err != 0) {
+		errno = err;
+	}
+	return NULL;
 }
 
 /**

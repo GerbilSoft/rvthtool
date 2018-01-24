@@ -42,31 +42,27 @@
  */
 RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 {
-	RvtH *rvth;
+	RvtH *rvth = NULL;
+	RefFile *f_img = NULL;
 	RvtH_BankEntry *entry;
-	RefFile *f_img;
+	int err = 0;	// errno setting
 
 	if (!filename || filename[0] == 0 || lba_len == 0) {
 		// Invalid parameters.
-		if (pErr) {
-			*pErr = EINVAL;
-		}
-		errno = EINVAL;
-		return NULL;
+		err = EINVAL;
+		goto fail;
 	}
 
 	// Allocate memory for the RvtH object
 	errno = 0;
-	rvth = malloc(sizeof(RvtH));
+	rvth = calloc(1, sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
-		if (errno == 0) {
+		err = errno;
+		if (err == 0) {
 			errno = ENOMEM;
 		}
-		if (pErr) {
-			*pErr = errno;
-		}
-		return NULL;
+		goto fail;
 	}
 
 	// Allocate memory for a single RvtH_BankEntry object.
@@ -75,37 +71,27 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		free(rvth);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		goto fail;
 	};
 
 	// Attempt to create the file.
 	f_img = ref_create(filename);
 	if (!f_img) {
 		// Error creating the file.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		free(rvth);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		goto fail;
 	}
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	rvth->f_img = f_img;
+	rvth->f_img = ref_dup(f_img);
 	entry = rvth->entries;
 	entry->lba_start = 0;
 	entry->lba_len = lba_len;
@@ -118,9 +104,31 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 
 	// Initialize the disc image reader.
 	entry->reader = reader_plain_open(f_img, entry->lba_start, entry->lba_len);
+	if (!entry->reader) {
+		// Error creating the disc image reader.
+		err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		goto fail;
+	}
 
 	// We're done here.
+	ref_close(f_img);
 	return rvth;
+
+fail:
+	// Failed to create a GCM file.
+	// TODO: Delete it in case it was partially created?
+	rvth_close(rvth);
+	if (f_img) {
+		ref_close(f_img);
+	}
+	if (pErr) {
+		*pErr = -err;
+	}
+	errno = err;
+	return NULL;
 }
 
 /**

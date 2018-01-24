@@ -60,6 +60,7 @@ static const Reader_Vtbl reader_plain_vtable = {
 Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
 	Reader *reader;
+	int err = 0;
 
 	// Validate parameters.
 	if (!file || (lba_start > 0 && lba_len == 0)) {
@@ -82,13 +83,11 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	reader->file = ref_dup(file);
 	if (!reader->file) {
 		// Error duplicating the file.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		free(reader);
-		errno = err;
-		return NULL;
+		goto fail;
 	}
 
 	// Set the vtable.
@@ -98,17 +97,14 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
 		int64_t offset;
-		int ret = ref_seeko(file, 0, SEEK_END);
-		if (ret != 0) {
+		int err = ref_seeko(file, 0, SEEK_END);
+		if (err != 0) {
 			// Seek error.
-			int err = errno;
+			err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			ref_close(reader->file);
-			free(reader);
-			errno = err;
-			return NULL;
+			goto fail;
 		}
 		offset = ref_tello(file);
 
@@ -121,6 +117,15 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 
 	// Reader initialized.
 	return reader;
+
+fail:
+	// Failed to initialize the reader.
+	if (reader->file) {
+		ref_close(reader->file);
+	}
+	free(reader);
+	errno = err;
+	return NULL;
 }
 
 /**

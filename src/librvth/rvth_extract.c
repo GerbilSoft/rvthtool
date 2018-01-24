@@ -44,13 +44,15 @@
 int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_src, RvtH_Progress_Callback callback)
 {
 	const RvtH_BankEntry *entry_src;
-	uint8_t *buf;
+	uint8_t *buf = NULL;
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
 	uint32_t lba_buf_max;	// Highest LBA that can be written using the buffer.
 	uint32_t lba_nonsparse;	// Last LBA written that wasn't sparse.
 	unsigned int sprs;		// Sparse counter.
-	int ret;
+
+	int ret = 0;	// errno or RvtH_Errors
+	int err = 0;	// errno setting
 
 	// Destination disc image.
 	RvtH_BankEntry *entry_dest;
@@ -80,26 +82,33 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		case RVTH_BankType_Unknown:
 		default:
 			// Unknown bank status...
+			errno = EIO;
 			return RVTH_ERROR_BANK_UNKNOWN;
 
 		case RVTH_BankType_Empty:
 			// Bank is empty.
+			errno = ENOENT;
 			return RVTH_ERROR_BANK_EMPTY;
 
 		case RVTH_BankType_Wii_DL_Bank2:
 			// Second bank of a dual-layer Wii disc image.
 			// TODO: Automatically select the first bank?
+			errno = EIO;
 			return RVTH_ERROR_BANK_DL_2;
 	}
 
 	// Process 1 MB at a time.
 	#define BUF_SIZE 1048576
 	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
-	errno = 0;
 	buf = malloc(BUF_SIZE);
 	if (!buf) {
 		// Error allocating memory.
-		return -errno;
+		err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		ret = -err;
+		goto end;
 	}
 
 	// Make this a sparse file.
@@ -108,8 +117,12 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	if (ret != 0) {
 		// Error managing the sparse file.
 		// TODO: Delete the file?
-		free(buf);
-		return ret;
+		err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		ret = -err;
+		goto end;
 	}
 
 	// Copy the bank table information.
@@ -147,7 +160,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 			if (!rvth_is_block_empty(&buf[sprs], 4096)) {
 				// 4 KB block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
-				ret = reader_write(entry_dest->reader, &buf[sprs], lba_nonsparse, 8);
+				reader_write(entry_dest->reader, &buf[sprs], lba_nonsparse, 8);
 				lba_nonsparse += 7;
 			}
 		}
@@ -189,8 +202,13 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 
 	// Finished extracting the disc image.
 	reader_flush(entry_dest->reader);
+
+end:
 	free(buf);
-	return 0;
+	if (err != 0) {
+		errno = err;
+	}
+	return ret;
 }
 
 /**
@@ -250,8 +268,10 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	const RvtH_BankEntry *entry_src;
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
-	uint8_t *buf;
-	int ret;
+	uint8_t *buf = NULL;
+
+	int ret = 0;	// errno or RvtH_Errors
+	int err = 0;	// errno setting
 
 	// Destination disc image.
 	RvtH_BankEntry *entry_dest;
@@ -296,21 +316,25 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 		case RVTH_BankType_Unknown:
 		default:
 			// Unknown bank status...
+			errno = EIO;
 			return RVTH_ERROR_BANK_UNKNOWN;
 
 		case RVTH_BankType_Empty:
 			// Bank is empty.
+			errno = ENOENT;
 			return RVTH_ERROR_BANK_EMPTY;
 
 		case RVTH_BankType_Wii_DL_Bank2:
 			// Second bank of a dual-layer Wii disc image.
 			// TODO: Automatically select the first bank?
+			errno = EIO;
 			return RVTH_ERROR_BANK_DL_2;
 	}
 
 	// Source image length cannot be larger than a single bank.
 	// TODO: Dual-layer Wii support.
 	if (entry_src->lba_len > NHCD_BANK_SIZE_LBA) {
+		errno = ENOSPC;
 		return RVTH_ERROR_IMAGE_TOO_BIG;
 	} else if (bank_dest == 0) {
 		// Special handling for bank 1 if the bank table is extended.
@@ -320,6 +344,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 		if (rvth_get_BankCount(rvth_dest) > 8) {
 			// Image cannot be larger than NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA.
 			if (entry_src->lba_len > NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA) {
+				errno = ENOSPC;
 				return RVTH_ERROR_IMAGE_TOO_BIG;
 			}
 		}
@@ -330,6 +355,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	if (entry_dest->type != RVTH_BankType_Empty &&
 	    !entry_dest->is_deleted)
 	{
+		errno = EEXIST;
 		return RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED;
 	}
 
@@ -337,7 +363,12 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	ret = rvth_make_writable(rvth_dest);
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
-		return ret;
+		if (ret < 0) {
+			err = -ret;
+		} else {
+			err = EROFS;
+		}
+		goto end;
 	}
 
 	// If no reader is set up for the destination bank, set one up now.
@@ -346,18 +377,26 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 			entry_dest->lba_start, entry_dest->lba_len);
 		if (!entry_dest->reader) {
 			// Cannot create a reader...
-			return -errno;
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			goto end;
 		}
 	}
 
 	// Process 1 MB at a time.
 	#define BUF_SIZE 1048576
 	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
-	errno = 0;
 	buf = malloc(BUF_SIZE);
 	if (!buf) {
 		// Error allocating memory.
-		return -errno;
+		err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		ret = -err;
+		goto end;
 	}
 
 	// Copy the bank table information.
@@ -411,8 +450,13 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	rvth_write_BankEntry(rvth_dest, bank_dest);
 
 	// Finished importing the disc image.
+
+end:
 	free(buf);
-	return 0;
+	if (err != 0) {
+		errno = err;
+	}
+	return ret;
 }
 
 /**
