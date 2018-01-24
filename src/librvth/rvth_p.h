@@ -43,4 +43,27 @@ struct _RvtH {
 	RvtH_BankEntry *entries;
 };
 
+/**
+ * Make an RVT-H object writable.
+ * @param rvth	[in] RVT-H disk image.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_make_writable(RvtH *rvth);
+
+/**
+ * Check if a block is empty.
+ * @param block Block.
+ * @param size Block size. (Must be a multiple of 64 bytes.)
+ * @return True if the block is all zeroes; false if not.
+ */
+bool rvth_is_block_empty(const uint8_t *block, unsigned int size);
+
+/**
+ * Write a bank table entry to disk.
+ * @param rvth	[in] RvtH device.
+ * @param bank	[in] Bank number. (0-7)
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_write_BankEntry(RvtH *rvth, unsigned int bank);
+
 #endif /* __RVTHTOOL_LIBRVTH_RVTH_P_H__ */
