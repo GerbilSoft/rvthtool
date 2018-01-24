@@ -46,6 +46,7 @@ typedef enum {
 	RVL_CERT_ISSUER_DEBUG_CA,
 	RVL_CERT_ISSUER_DEBUG_TICKET,
 	RVL_CERT_ISSUER_DEBUG_TMD,
+	RVL_CERT_ISSUER_DEBUG_DEV,
 
 	RVL_CERT_ISSUER_MAX
 } RVL_Cert_Issuer;
@@ -107,14 +108,8 @@ typedef enum {
 typedef enum {
 	RVL_CERT_KEYTYPE_RSA4096	= 0,
 	RVL_CERT_KEYTYPE_RSA2048	= 1,
+	RVL_CERT_KEYTYPE_ECC		= 2,
 } RVL_Cert_KeyType_e;
-
-// Key lengths. [DEPRECATED]
-typedef enum {
-	// Length = Modulus + Public Exponent + (pad to 0x40)
-	RVL_CERT_KEYLENGTH_RSA4096	= 0x200 + 0x4 + 0x38,
-	RVL_CERT_KEYLENGTH_RSA2048	= 0x100 + 0x4 + 0x38,
-} RVL_Cert_KeyLength_e;
 
 #pragma pack(1)
 
@@ -232,6 +227,32 @@ typedef struct _RVL_Cert_RSA4096_RSA2048 {
 	RVL_Sig_RSA4096 sig;	// [0x000] Signature.
 	RVL_PubKey_RSA2048 pub;	// [0x280] Public key.
 } RVL_Cert_RSA4096_RSA2048;
+//ASSERT_STRUCT(RVL_Cert_RSA4096_RSA2048, 0x400);
+
+/**
+ * Public key. (ECC)
+ *
+ * All fields are big-endian.
+ */
+typedef struct _RVL_PubKey_ECC {
+	uint32_t type;			// [0x000] Key type. (See Cert_KeyType_e.)
+	char child_cert_identity[64];	// [0x004] Child certificate identity.
+	uint32_t unknown;		// [0x044] // Unknown...
+	uint8_t modulus[0x3C];		// [0x048] Modulus.
+	uint8_t padding1[0x3C];		// [0x084]
+} RVL_PubKey_ECC;
+//ASSERT_STRUCT(RVL_PubKey_ECC, 0x180);
+
+/**
+ * Certificate. (RSA-2048 signature with ECC public key)
+ * NOTE: Only the development debug certificate uses this format.
+ *
+ * All fields are big-endian.
+ */
+typedef struct _RVL_Cert_RSA2048_ECC {
+	RVL_Sig_RSA2048 sig;	// [0x000] Signature.
+	RVL_PubKey_ECC pub;	// [0x280] Public key.
+} RVL_Cert_RSA2048_ECC;
 //ASSERT_STRUCT(RVL_Cert_RSA4096_RSA2048, 0x400);
 
 #pragma pack()
