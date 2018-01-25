@@ -725,7 +725,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	rvth->f_img = f_img;
+	rvth->f_img = ref_dup(f_img);
 	entry = rvth->entries;
 	entry->lba_start = 0;
 	entry->lba_len = BYTES_TO_LBA(len);
