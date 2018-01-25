@@ -189,7 +189,7 @@ typedef struct _RVL_Sig_RSA2048 {
 	uint8_t padding1[0x3C];				// [0x104] Padding.
 	char issuer[64];				// [0x140] Issuer.
 } RVL_Sig_RSA2048;
-//ASSERT_STRUCT(RVL_Sig_RSA4096, 0x180);
+//ASSERT_STRUCT(RVL_Sig_RSA2048, 0x180);
 
 /**
  * Public key. (RSA-2048)
@@ -251,9 +251,9 @@ typedef struct _RVL_PubKey_ECC {
  */
 typedef struct _RVL_Cert_RSA2048_ECC {
 	RVL_Sig_RSA2048 sig;	// [0x000] Signature.
-	RVL_PubKey_ECC pub;	// [0x280] Public key.
+	RVL_PubKey_ECC pub;	// [0x180] Public key.
 } RVL_Cert_RSA2048_ECC;
-//ASSERT_STRUCT(RVL_Cert_RSA4096_RSA2048, 0x400);
+//ASSERT_STRUCT(RVL_Cert_RSA2048_ECC, 0x240);
 
 #pragma pack()
 
