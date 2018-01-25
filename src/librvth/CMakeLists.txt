@@ -69,6 +69,7 @@ SET(librvth_H
 	cert.h
 	hashw.h
 	rsaw.h
+	aesw.h
 	)
 
 IF(HAVE_GMP)
@@ -85,6 +86,14 @@ ELSE()
 	MESSAGE(FATAL_ERROR "No hash function wrappers for this platform.")
 ENDIF()
 
+IF(HAVE_NETTLE)
+	SET(librvth_AES_SRCS aesw_nettle.c)
+ELSEIF(WIN32)
+	SET(librvth_AES_SRCS aesw_capi.c)
+ELSE()
+	MESSAGE(FATAL_ERROR "No AES function wrappers for this platform.")
+ENDIF()
+
 ######################
 # Build the library. #
 ######################
@@ -93,6 +102,7 @@ ADD_LIBRARY(rvth STATIC
 	${librvth_SRCS} ${librvth_H}
 	${librvth_RSA_SRCS}
 	${librvth_HASH_SRCS}
+	${librvth_AES_SRCS}
 	)
 
 # Include paths:
