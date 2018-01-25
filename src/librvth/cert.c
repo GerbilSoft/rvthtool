@@ -35,6 +35,9 @@
 #include "hashw.h"
 
 /**
+ * The signature is stored in PKCS #1 format.
+ * Reference: https://tools.ietf.org/html/rfc3447
+ *
  * The signature consists of:
  * - Magic number: 0x00,0x01,0xFF
  * - 36 bytes at the end of the signature:
@@ -44,11 +47,14 @@
  */
 
 // Magic number at the start of the signature.
-static const uint8_t sig_magic_retail[3] = {0x00,0x01,0xFF};
-static const uint8_t sig_magic_debug[2]  = {0x00,0x02};
+static const uint8_t pkcs1_magic[3] = {0x00,0x01,0xFF};
+// FIXME: Signatures in RVT-H prototypes may start with this
+// and contain random data instead of 0xFF padding. They also
+// don't have the SHA-1 identifier.
+static const uint8_t pkcs1_magic_debug[2]  = {0x00,0x02};
 
-// Fixed data at the end of the signature. (Retail only!)
-static const uint8_t sig_fixed_data_retail[16] = {
+// DER identifier for SHA-1 hashes.
+static const uint8_t pkcs1_der_sha1[16] = {
 	0x00,0x30,0x21,0x30,0x09,0x06,0x05,0x2B,
 	0x0E,0x03,0x02,0x1A,0x05,0x00,0x04,0x14
 };
@@ -92,8 +98,8 @@ int cert_verify(const uint8_t *data, size_t size)
 	uint8_t sha1_hash[SHA1_HASH_LENGTH];
 
 	/** Data offsets. **/
-	// Fixed data offset.
-	unsigned int sig_fixed_data_offset;
+	// DER identifier offset.
+	unsigned int sig_der_offset;
 	// SHA-1 offset in the signature.
 	unsigned int sig_sha1_offset;
 	// Start offset within `data` for SHA-1 calculation.
@@ -196,7 +202,7 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// Fixed data offset.
-	sig_fixed_data_offset = sig_len - sizeof(sig_fixed_data_retail) - SHA1_HASH_LENGTH;
+	sig_der_offset = sig_len - sizeof(pkcs1_der_sha1) - SHA1_HASH_LENGTH;
 
 	// SHA-1 offset in the signature.
 	sig_sha1_offset = sig_len - SHA1_HASH_LENGTH;
@@ -207,14 +213,14 @@ int cert_verify(const uint8_t *data, size_t size)
 
 	// Verify the signature.
 	ret = 0;
-	if (!memcmp(buf, sig_magic_retail, sizeof(sig_magic_retail))) {
-		// Found retail magic.
+	if (!memcmp(buf, pkcs1_magic, sizeof(pkcs1_magic))) {
+		// Found PKCS #1 magic.
 		// NOTE: This is also present in the root certificate and
 		// the debug certificates
 		bool has_FF = true;	// 0xFF padding
 
 		// Check for 0xFF padding.
-		for (i = (unsigned int)sizeof(sig_magic_retail); i < sig_fixed_data_offset; i++) {
+		for (i = (unsigned int)sizeof(pkcs1_magic); i < sig_der_offset; i++) {
 			if (buf[i] != 0xFF) {
 				// Incorrect padding.
 				has_FF = false;
@@ -224,14 +230,14 @@ int cert_verify(const uint8_t *data, size_t size)
 		}
 		if (has_FF) {
 			// Check the fixed data.
-			if (memcmp(&buf[sig_fixed_data_offset],
-			    sig_fixed_data_retail, sizeof(sig_fixed_data_retail)) != 0)
+			if (memcmp(&buf[sig_der_offset],
+			    pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0)
 			{
 				// Fixed data is incorrect.
 				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
 			}
 		}
-	} else if (!memcmp(buf, sig_magic_debug, sizeof(sig_magic_debug))) {
+	} else if (!memcmp(buf, pkcs1_magic_debug, sizeof(pkcs1_magic_debug))) {
 		// Found debug magic.
 		// No FF padding; not sure what the random data is.
 		if (issuer < RVL_CERT_ISSUER_DEBUG_CA || issuer > RVL_CERT_ISSUER_DEBUG_TMD) {
