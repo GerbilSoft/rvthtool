@@ -128,7 +128,7 @@ size_t aesw_encrypt(AesCtx *aesw, uint8_t *pData, size_t size)
 		AES_BLOCK_SIZE, aesw->iv, size, pData, pData);
 #else /* !HAVE_NETTLE_3 */
 	aes_set_encrypt_key(&aesw->ctx, sizeof(aesw->key), aesw->key);
-	cbc_encrypt(&aesw->ctx, (nettle_cipher_func*)aes_encrypt,
+	cbc_encrypt(&aesw->ctx, (nettle_crypt_func*)aes_encrypt,
 		AES_BLOCK_SIZE, aesw->iv, size, pData, pData);
 #endif /* HAVE_NETTLE_3 */
 
@@ -157,7 +157,7 @@ size_t aesw_decrypt(AesCtx *aesw, uint8_t *pData, size_t size)
 		AES_BLOCK_SIZE, aesw->iv, size, pData, pData);
 #else /* !HAVE_NETTLE_3 */
 	aes_set_decrypt_key(&aesw->ctx, sizeof(aesw->key), aesw->key);
-	cbc_decrypt(&aesw->ctx, (nettle_cipher_func*)aes_decrypt,
+	cbc_decrypt(&aesw->ctx, (nettle_crypt_func*)aes_decrypt,
 		AES_BLOCK_SIZE, aesw->iv, size, pData, pData);
 #endif /* HAVE_NETTLE_3 */
 
