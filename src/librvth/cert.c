@@ -48,10 +48,6 @@
 
 // Magic number at the start of the signature.
 static const uint8_t pkcs1_magic[3] = {0x00,0x01,0xFF};
-// FIXME: Signatures in RVT-H prototypes may start with this
-// and contain random data instead of 0xFF padding. They also
-// don't have the SHA-1 identifier.
-static const uint8_t pkcs1_magic_debug[2]  = {0x00,0x02};
 
 // DER identifier for SHA-1 hashes.
 static const uint8_t pkcs1_der_sha1[16] = {
@@ -237,16 +233,14 @@ int cert_verify(const uint8_t *data, size_t size)
 				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
 			}
 		}
-	} else if (!memcmp(buf, pkcs1_magic_debug, sizeof(pkcs1_magic_debug))) {
-		// Found debug magic.
-		// No FF padding; not sure what the random data is.
-		if (issuer < RVL_CERT_ISSUER_DEBUG_CA || issuer > RVL_CERT_ISSUER_DEBUG_TMD) {
-			// Wrong magic number for this issuer.
-			return SIG_ERROR_WRONG_MAGIC_NUMBER;
-		}
 	} else {
-		// Signature magic is incorrect.
-		ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
+		// Some RVL development tools are known to create broken signatures.
+		// If the issuer is debug, allow it.
+		// Reference: https://github.com/iversonjimmy/acer_cloud_wifi_copy/blob/master/sw_x/gvm_core/internal/csl/src/cslrsa.c#L165
+		if (issuer < RVL_CERT_ISSUER_DEBUG_CA || issuer > RVL_CERT_ISSUER_DEBUG_DEV) {
+			// Invalid PKCS#1 header.
+			ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
+		}
 	}
 
 	// Check the SHA-1 hash.

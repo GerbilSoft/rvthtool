@@ -53,9 +53,6 @@ typedef enum {
 	// Signature does not match the declared type.
 	SIG_ERROR_WRONG_TYPE_DECLARATION = 4,
 
-	// Signature's magic number does not match the issuer.
-	SIG_ERROR_WRONG_MAGIC_NUMBER = 5,
-
 	// The following values indicate the signature was
 	// processed, but is not valid or is fakesigned.
 	SIG_FAIL_MASK		= (0xFF << 8),
