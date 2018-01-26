@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * cert.h: Certificate management.                                         *
+ * cert.c: Certificate management.                                         *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -36,23 +36,26 @@
 
 /**
  * The signature is stored in PKCS #1 format.
- * Reference: https://tools.ietf.org/html/rfc3447
+ * References:
+ * - https://tools.ietf.org/html/rfc3447
+ * - https://tools.ietf.org/html/rfc2313
  *
  * The signature consists of:
- * - Magic number: 0x00,0x01,0xFF
+ * - PKCS#1 header: 0x00,0x01,0xFF
+ *   - 0x01 is the block type. May be 0x02 or 0x00 also.
+ *   - 0xFF is the first padding byte.
+ *     - For block type 0, this is 0x00.
+ *     - For block type 2, this is pseudorandom.
  * - 36 bytes at the end of the signature:
- *   - 16 bytes: Fixed
+ *   - 1 byte: 0x00
+ *   - 15 bytes: DER SHA-1 identifier.
  *   - 20 bytes: SHA-1 of the rest of the contents.
- * All other bytes are 0xFF.
  */
 
-// Magic number at the start of the signature.
-static const uint8_t pkcs1_magic[3] = {0x00,0x01,0xFF};
-
 // DER identifier for SHA-1 hashes.
-static const uint8_t pkcs1_der_sha1[16] = {
-	0x00,0x30,0x21,0x30,0x09,0x06,0x05,0x2B,
-	0x0E,0x03,0x02,0x1A,0x05,0x00,0x04,0x14
+static const uint8_t pkcs1_der_sha1[15] = {
+	0x30,0x21,0x30,0x09,0x06,0x05,0x2B,0x0E,
+	0x03,0x02,0x1A,0x05,0x00,0x04,0x14
 };
 
 /**
@@ -197,8 +200,8 @@ int cert_verify(const uint8_t *data, size_t size)
 		return tmp_ret;
 	}
 
-	// Fixed data offset.
-	sig_der_offset = sig_len - sizeof(pkcs1_der_sha1) - SHA1_HASH_LENGTH;
+	// DER separator offset.
+	sig_der_offset = sig_len - 1 - sizeof(pkcs1_der_sha1) - SHA1_HASH_LENGTH;
 
 	// SHA-1 offset in the signature.
 	sig_sha1_offset = sig_len - SHA1_HASH_LENGTH;
@@ -207,39 +210,63 @@ int cert_verify(const uint8_t *data, size_t size)
 	// Includes sig->issuer[], which is always 64-byte aligned.
 	data_sha1_offset = 4 + sig_len + 0x3C;
 
+	// Check for the PKCS#1 magic number.
+	// Reference: https://tools.ietf.org/html/rfc2313
+	// Format: 00 || BT || PS || 00 || D
+	// BT can be one of the following:
+	// - 00: Private key - padding (PS) is 00
+	// - 01: Private key - padding (PS) is FF
+	// - 02: Public key - padding is pseudorandom
+	// PS is the padding string.
+	// Padding is followed by a 0x00 byte, then the data.
+	// Last one seems to match some RVT-H prototypes. (TODO ignore previous commit)
 	// Verify the signature.
 	ret = 0;
-	if (!memcmp(buf, pkcs1_magic, sizeof(pkcs1_magic))) {
-		// Found PKCS #1 magic.
-		// NOTE: This is also present in the root certificate and
-		// the debug certificates
-		bool has_FF = true;	// 0xFF padding
+	if (buf[0] == 0x00 && buf[1] <= 0x02) {
+		// Padding depends on the block type.
+		if (buf[1] < 0x02) {
+			// Block type 0x00 or 0x01.
+			// Check the padding.
+			static const uint8_t padding[2] = {0x00, 0xFF};
+			const uint8_t ps = padding[buf[1]];
 
-		// Check for 0xFF padding.
-		for (i = (unsigned int)sizeof(pkcs1_magic); i < sig_der_offset; i++) {
-			if (buf[i] != 0xFF) {
-				// Incorrect padding.
-				has_FF = false;
-				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
-				break;
+			for (i = 2; i < sig_der_offset-1; i++) {
+				if (buf[i] != ps) {
+					// Incorrect padding.
+					ret = SIG_FAIL_PADDING_ERROR | SIG_ERROR_INVALID;
+					break;
+				}
 			}
-		}
-		if (has_FF) {
-			// Check the fixed data.
-			if (memcmp(&buf[sig_der_offset],
-			    pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0)
-			{
-				// Fixed data is incorrect.
-				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
-			}
+		} else {
+			// Block type 0x02.
+			// This has pseudorandom data, so we can't check it.
 		}
 	} else {
-		// Some RVL development tools are known to create broken signatures.
-		// If the issuer is debug, allow it.
-		// Reference: https://github.com/iversonjimmy/acer_cloud_wifi_copy/blob/master/sw_x/gvm_core/internal/csl/src/cslrsa.c#L165
-		if (issuer < RVL_CERT_ISSUER_DEBUG_CA || issuer > RVL_CERT_ISSUER_DEBUG_DEV) {
-			// Invalid PKCS#1 header.
-			ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
+		// Invalid block type.
+		ret = SIG_FAIL_HEADER_ERROR | SIG_ERROR_INVALID;
+	}
+
+	// NOTE: If block type is 0x02, the DER identifier is missing.
+	// This might be specific to the debug issuer, though.
+	// Reference: https://github.com/iversonjimmy/acer_cloud_wifi_copy/blob/master/sw_x/gvm_core/internal/csl/src/cslrsa.c#L165
+	if (buf[1] == 0x02) {
+		// There's still a 0x00 byte before the SHA-1 hash, though.
+		if (buf[sig_sha1_offset-1] != 0x00) {
+			// Missing 0x00 byte.
+			ret |= SIG_FAIL_NO_SEPARATOR_ERROR | SIG_ERROR_INVALID;
+		}
+	} else {
+		// Check for the 0x00 byte before the DER identifier.
+		if (buf[sig_der_offset] != 0x00) {
+			// Missing 0x00 byte.
+			ret |= SIG_FAIL_NO_SEPARATOR_ERROR | SIG_ERROR_INVALID;
+		}
+
+		// Check the DER identifier.
+		if (memcmp(&buf[sig_der_offset+1], pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0)
+		{
+			// Incorrect or missing DER identifier.
+			ret |= SIG_FAIL_DER_TYPE_ERROR | SIG_ERROR_INVALID;
 		}
 	}
 

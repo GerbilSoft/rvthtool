@@ -55,16 +55,25 @@ typedef enum {
 
 	// The following values indicate the signature was
 	// processed, but is not valid or is fakesigned.
-	SIG_FAIL_MASK		= (0xFF << 8),
+	SIG_FAIL_MASK                   = (0xFF << 8),
 
-	// Signature base data is incorrect.
-	SIG_FAIL_BASE_ERROR	= (1 << (0+8)),
+	// PKCS#1 header is incorrect.
+	SIG_FAIL_HEADER_ERROR           = (1 << (0+8)),
+
+	// Padding is incorrect.
+	SIG_FAIL_PADDING_ERROR          = (1 << (1+8)),
+
+	// Missing 0x00 byte between padding and data.
+	SIG_FAIL_NO_SEPARATOR_ERROR     = (1 << (2+8)),
+
+	// DER type is incorrect.
+	SIG_FAIL_DER_TYPE_ERROR         = (1 << (3+8)),
 
 	// Hash is incorrect.
-	SIG_FAIL_HASH_ERROR	= (1 << (1+8)),
+	SIG_FAIL_HASH_ERROR             = (1 << (4+8)),
 
 	// Hash is fakesigned. (starts with 0x00)
-	SIG_FAIL_HASH_FAKE	= (1 << (2+8)),
+	SIG_FAIL_HASH_FAKE              = (1 << (5+8)),
 } Sig_Status;
 
 /**
