@@ -40,6 +40,21 @@ extern "C" {
 int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 	uint32_t exponent, const uint8_t *sig, size_t size);
 
+/**
+ * Encrypt data using an RSA public key.
+ * @param buf			[out] Output buffer.
+ * @param buf_size		[in] Size of `buf`.
+ * @param modulus		[in] Public key modulus.
+ * @param modulus_size		[in] Size of `modulus`, in bytes.
+ * @param exponent		[in] Public key exponent.
+ * @param cleartext		[in] Cleartext.
+ * @param cleartext_size	[in] Size of `cleartext`, in bytes.
+ */
+int rsaw_encrypt(uint8_t *buf, size_t buf_size,
+	const uint8_t *modulus, size_t modulus_size,
+	uint32_t exponent,
+	const uint8_t *cleartext, size_t cleartext_size);
+
 #ifdef __cplusplus
 }
 #endif

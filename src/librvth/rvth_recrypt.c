@@ -26,6 +26,7 @@
 #include "gcn_structs.h"
 #include "cert.h"
 #include "aesw.h"
+#include "rsaw.h"
 
 #include "common.h"
 #include "byteswap.h"
@@ -33,7 +34,220 @@
 #include <assert.h>
 #include <errno.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
+
+// Sector buffer. (1 LBA)
+typedef union {
+	uint8_t u8[RVTH_BLOCK_SIZE];
+	GCN_DiscHeader gcn;
+	struct {
+		RVL_VolumeGroupTable vgtbl;
+		RVL_PartitionTableEntry ptbl[15];
+	};
+} sbuf1_t;
+
+// Sector buffer. (2 LBAs)
+typedef union {
+	uint8_t u8[RVTH_BLOCK_SIZE*2];
+	GCN_DiscHeader gcn;
+	struct {
+		RVL_VolumeGroupTable vgtbl;
+		RVL_PartitionTableEntry ptbl[31];
+	};
+} sbuf2_t;
+
+// ID
+static const uint32_t id_exp = 0x00010001;
+static const uint8_t id_pub[256] = {
+	0xB5,0xBC,0x70,0x4C,0x75,0x3D,0xCF,0x02,0x67,0x04,0x1A,0xAB,0xC3,0xC8,0x20,0xD6,
+	0x51,0xE8,0xE2,0xCC,0x6A,0x08,0xCF,0x70,0xEE,0xCF,0x45,0x20,0x27,0xCC,0x81,0x77,
+	0x98,0xBB,0x22,0x82,0x61,0xA4,0x1B,0x52,0x19,0xC0,0x3F,0x50,0xAF,0xCE,0x6E,0xAB,
+	0x22,0xF8,0xC2,0x23,0xC0,0xCF,0x18,0x82,0x72,0xDD,0xFC,0xF9,0xB9,0x7C,0x73,0x1E,
+	0xBF,0xAB,0xDF,0x49,0x1F,0xCC,0x73,0x53,0xDF,0xB9,0x01,0xDA,0x13,0x5C,0x11,0x9E,
+	0xA0,0x1E,0x7B,0xFA,0x61,0x2F,0x50,0xB1,0xDA,0x98,0x8F,0xB5,0x29,0x60,0x30,0x44,
+	0x80,0x01,0x20,0xE1,0x03,0x24,0xFB,0xBA,0xDC,0x07,0xA0,0xBB,0x57,0x6F,0x37,0x38,
+	0xD2,0xD2,0x44,0x81,0x5C,0xE5,0xF4,0xF6,0xDC,0x68,0x58,0x19,0x3D,0x8B,0xD8,0xEC,
+	0x5D,0x8F,0x46,0x11,0x46,0x0E,0x2C,0xDA,0x00,0x47,0x0B,0xD7,0x24,0x70,0x7E,0x5B,
+	0x6E,0xEF,0x7B,0xF0,0x3C,0x5A,0x55,0xD4,0x42,0xA2,0x03,0x88,0x0C,0x2C,0xB2,0xEB,
+	0x98,0x96,0x15,0xAD,0xEE,0x99,0xAD,0x9D,0x1B,0xD6,0x16,0xF8,0x70,0x55,0xF1,0x43,
+	0x12,0x5B,0x2B,0x51,0x1C,0x09,0x05,0xBC,0xD3,0xEA,0xD9,0x35,0xEA,0x20,0x54,0x1D,
+	0x86,0xF2,0xC1,0xD1,0x60,0xEE,0x66,0x39,0xA2,0x75,0xCB,0x65,0xEC,0x53,0x24,0x5C,
+	0x8F,0x06,0x25,0xD9,0xC1,0x88,0x03,0xEC,0xC3,0x0A,0xC2,0x72,0x49,0x4C,0x45,0xEF,
+	0xAB,0x2F,0x66,0xA1,0x3C,0xDC,0x28,0x39,0xFD,0x64,0x33,0xDF,0x72,0x43,0xD9,0x65,
+	0x2B,0xDF,0x94,0x14,0x0A,0x7B,0xE0,0xBA,0x40,0x29,0xC5,0x23,0x30,0x2C,0x14,0xC1
+};
+
+/**
+ * @param id ID buffer.
+ * @param size Size of `id`. (Must be >= 256 bytes.)
+ * @param gcn GameCube disc header.
+ * @param extra Extra string.
+ */
+static int rvth_create_id(uint8_t *id, size_t size, const GCN_DiscHeader *gcn, const char *extra)
+{
+	// Leaving 16 bytes for the PKCS#1 header.
+	static const uint8_t id_hdr[] = {0x1B,0x1F,0x1D,0x01,0x1D,0x06,0x06,0x05,0x53,0x49};
+	uint8_t buf[256-16];
+	unsigned int i;
+
+	char ts[64];
+	struct tm tmbuf_utc;
+	struct tm tmbuf_local;
+	int tzoffset;
+	const char *tzsign;
+	char tzval[16];
+	time_t now = time(NULL);
+
+	assert(size >= 256);
+	if (size < 256) {
+		return -EINVAL;
+	}
+
+	// Clear the buffer.
+	memset(buf, 0xFF, sizeof(buf));
+
+	// TODO: gmtime_r(), localtime_r()
+	tmbuf_utc = *gmtime(&now);
+	tmbuf_local = *localtime(&now);
+
+	// Timezone offset.
+	tzoffset = ((tmbuf_local.tm_hour * 60) + (tmbuf_local.tm_min)) -
+		   ((tmbuf_utc.tm_hour * 60) + (tmbuf_utc.tm_min));
+	tzsign = (tzoffset < 0 ? "-" : "");
+	tzoffset = abs(tzoffset);
+	snprintf(tzval, sizeof(tzval), "%s%02d%02d", tzsign,
+		tzoffset / 60, tzoffset % 60);
+
+	// ID, extra data and timestamp.
+	memcpy(buf, id_hdr, sizeof(id_hdr));
+	for (i = 0; i < sizeof(id_hdr); i++) {
+		buf[i] ^= 0x69;
+	}
+	strftime(ts, sizeof(ts), "%Y/%m/%d %H:%M:%S", &tmbuf_local);
+	if (extra) {
+		snprintf((char*)&buf[sizeof(id_hdr)], 0x40-sizeof(id_hdr),
+			 "%s, %s %s", extra, ts, tzval);
+	} else {
+		snprintf((char*)&buf[sizeof(id_hdr)], 0x40-sizeof(id_hdr),
+			 "%s %s", ts, tzval);
+	}
+
+	// Disc header.
+	memcpy(&buf[0x40], gcn, 0x68);
+
+	// Encrypt it!
+	return rsaw_encrypt(id, size, id_pub, sizeof(id_pub), id_exp, buf, sizeof(buf));
+}
+
+int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
+{
+	RvtH_BankEntry *entry;
+	bool is_wii = false;
+	unsigned int lba_size;
+
+	int ret = 0;	// errno or RvtH_Errors
+	int err = 0;	// errno setting
+
+	// Sector buffer.
+	sbuf1_t sbuf;
+	GCN_DiscHeader gcn;
+
+	if (bank >= rvth->bank_count) {
+		// Bank number is out of range.
+		errno = ERANGE;
+		return -ERANGE;
+	}
+
+	// Check the bank type.
+	entry = &rvth->entries[bank];
+	switch (entry->type) {
+		case RVTH_BankType_GCN:
+			is_wii = false;
+			break;
+
+		case RVTH_BankType_Wii_SL:
+		case RVTH_BankType_Wii_DL:
+			is_wii = true;
+			break;
+
+		case RVTH_BankType_Unknown:
+		default:
+			// Unknown bank status...
+			return RVTH_ERROR_BANK_UNKNOWN;
+
+		case RVTH_BankType_Empty:
+			// Bank is empty.
+			return RVTH_ERROR_BANK_EMPTY;
+
+		case RVTH_BankType_Wii_DL_Bank2:
+			// Second bank of a dual-layer Wii disc image.
+			// TODO: Automatically select the first bank?
+			return RVTH_ERROR_BANK_DL_2;
+	}
+
+	// Make the RVT-H object writable.
+	ret = rvth_make_writable(rvth);
+	if (ret != 0) {
+		// Could not make the RVT-H object writable.
+		if (ret < 0) {
+			err = -ret;
+		} else {
+			err = EROFS;
+		}
+		goto end;
+	}
+
+	// Read the disc header.
+	errno = 0;
+	lba_size = reader_read(entry->reader, &sbuf.u8, 0, 1);
+	if (lba_size != 1) {
+		// Unable to read the disc header.
+		err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		ret = -err;
+		goto end;
+	}
+
+	memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
+	if (!is_wii) {
+		// GCN. Write at 0x480.
+		errno = 0;
+		lba_size = reader_read(entry->reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+		if (lba_size != 1) {
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			ret = -err;
+			goto end;
+		}
+		rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
+		errno = 0;
+		lba_size = reader_write(entry->reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+		if (lba_size != 1) {
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			ret = -err;
+			goto end;
+		}
+	} else {
+		// Wii. Write before H3 tables.
+		// TODO: Get partitions.
+		//uint8_t sig[256];
+		memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
+	}
+
+end:
+	if (err != 0) {
+		errno = err;
+	}
+	return ret;
+}
 
 static inline uint32_t toNext64(uint32_t n)
 {
@@ -159,7 +373,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 	RvtH_BankEntry *entry;
 	Reader *reader;
 	uint32_t lba_size;
-	unsigned int i, j;
+	unsigned int i, j, j_orig;
 
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
@@ -172,20 +386,17 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 
 	// Sector buffer.
 	// TODO: Dynamic allocation?
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE*2];
-		GCN_DiscHeader gcn;
-		struct {
-			RVL_VolumeGroupTable vgtbl;
-			RVL_PartitionTableEntry ptbl[31];
-		};
-	} sector_buf;
+	sbuf2_t sbuf;
+	GCN_DiscHeader gcn;
 
 	// Partitions to re-encrypt.
 	// NOTE: This only contains the LBA starting address.
 	// The actual partition length is in the partition header.
 	// TODO: Unencrypted partitions will need special handling.
 	uint32_t pt_lba[31];
+	char ptid_orig[31][8];
+	char ptid_adj[31][8];
+	char ptid_buf[24];
 	unsigned int pt_count = 0;
 
 	// Partitions to zero out. (update partitions)
@@ -252,10 +463,24 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 		goto end;
 	}
 
-	// Get the volume group and partition tables.
+	// Get the GCN disc header.
 	reader = entry->reader;
 	errno = 0;
-	lba_size = reader_read(reader, &sector_buf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
+	lba_size = reader_read(reader, &sbuf.u8, 0, 1);
+	if (lba_size != 1) {
+		// Read error.
+		err = errno;
+		if (err == 0) {
+			errno = EIO;
+		}
+		ret = -err;
+		goto end;
+	}
+	memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
+
+	// Get the volume group and partition tables.
+	errno = 0;
+	lba_size = reader_read(reader, &sbuf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
 	if (lba_size != 2) {
 		// Read error.
 		err = errno;
@@ -267,17 +492,17 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 	}
 
 	// All volume group tables must be within the two sectors.
-	for (i = 0; i < ARRAY_SIZE(sector_buf.vgtbl.vg); i++) {
+	for (i = 0; i < ARRAY_SIZE(sbuf.vgtbl.vg); i++) {
 		int64_t addr;
 		RVL_PartitionTableEntry *pte_start, *pte;
 
-		uint32_t count = be32_to_cpu(sector_buf.vgtbl.vg[i].count);
+		uint32_t count = be32_to_cpu(sbuf.vgtbl.vg[i].count);
 		if (count == 0)
 			continue;
 
-		addr = (int64_t)be32_to_cpu(sector_buf.vgtbl.vg[i].addr) << 2;
+		addr = (int64_t)be32_to_cpu(sbuf.vgtbl.vg[i].addr) << 2;
 		addr -= RVL_VolumeGroupTable_ADDRESS;
-		if (addr + (count * sizeof(RVL_PartitionTableEntry)) > sizeof(sector_buf.u8)) {
+		if (addr + (count * sizeof(RVL_PartitionTableEntry)) > sizeof(sbuf.u8)) {
 			// Out of bounds.
 			err = EIO;
 			ret = RVTH_ERROR_PARTITION_TABLE_CORRUPTED;
@@ -285,14 +510,17 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 		}
 
 		// Process the partition table.
-		pte_start = (RVL_PartitionTableEntry*)&sector_buf.u8[addr];
+		pte_start = (RVL_PartitionTableEntry*)&sbuf.u8[addr];
 		pte = pte_start;
-		for (j = 0; j < count; j++, pte++) {
+		for (j = 0, j_orig = 0; j < count; j++, j_orig++, pte++) {
 			uint32_t lba_start = (uint32_t)((int64_t)be32_to_cpu(pte->addr) / (RVTH_BLOCK_SIZE/4));
 
 			if (be32_to_cpu(pte->type) != 1) {
 				// Standard partition.
-				pt_lba[pt_count++] = lba_start;
+				pt_lba[pt_count] = lba_start;
+				snprintf(ptid_orig[pt_count], sizeof(ptid_orig[pt_count]), "%up%u", i, j_orig);
+				snprintf(ptid_adj[pt_count], sizeof(ptid_adj[pt_count]), "%up%u", i, j);
+				pt_count++;
 			} else {
 				// Update partition.
 				upd_lba[upd_count++] = lba_start;
@@ -306,12 +534,12 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 		}
 
 		// Update the partition count.
-		sector_buf.vgtbl.vg[i].count = cpu_to_be32(count);
+		sbuf.vgtbl.vg[i].count = cpu_to_be32(count);
 	}
 
 	// Write the updated volume group and partition tables.
 	errno = 0;
-	lba_size = reader_write(reader, &sector_buf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
+	lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
 	if (lba_size != 2) {
 		// Read error.
 		err = errno;
@@ -444,11 +672,13 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 		hdr_new.data_offset = hdr_orig.data_offset;
 		hdr_new.data_size = hdr_orig.data_size;
 
-		// TODO: Special identifier.
+		// Write the identifier.
+		snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptid_orig[i], ptid_adj[i]);
+		rvth_create_id(&hdr_new.data[sizeof(hdr_new.data)-256], 256, &gcn, ptid_buf);
 
 		// Write the new partition header.
 		errno = 0;
-		lba_size = reader_write(reader, &hdr_new, pt_lba[i], BYTES_TO_LBA(sizeof(hdr_orig.u8)));
+		lba_size = reader_write(reader, &hdr_new, pt_lba[i], BYTES_TO_LBA(sizeof(hdr_new.u8)));
 		if (lba_size != BYTES_TO_LBA(sizeof(hdr_new))) {
 			// Write error.
 			err = errno;

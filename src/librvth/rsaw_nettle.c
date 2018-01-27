@@ -19,11 +19,19 @@
  ***************************************************************************/
 
 #include "rsaw.h"
+
 #include <gmp.h>
+#include <nettle/rsa.h>
+#include <nettle/yarrow.h>
 
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+// Size of the buffer for random number generation.
+#define RANDOM_BUFFER_SIZE 1024
 
 /**
  * Decrypt an RSA signature.
@@ -38,7 +46,7 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 	uint32_t exponent, const uint8_t *sig, size_t size)
 {
 	// F(x) = x^e mod n
-	mpz_t n, x, f;	// Modulus, signature, result
+	mpz_t n, x, f;	// modulus, signature, result
 
 	assert(buf != NULL);
 	assert(modulus != NULL);
@@ -78,4 +86,171 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 	mpz_clear(f);
 
 	return 0;
+}
+
+/**
+ * Initialize a yarrow random number context.
+ * This seeds the context with data from /dev/urandom.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+static int init_random(struct yarrow256_ctx *yarrow)
+{
+	size_t size;
+	size_t total_read = 0;
+	size_t buf_remain = RANDOM_BUFFER_SIZE;
+	uint8_t *buf = NULL;
+	FILE *f = NULL;
+
+	int err = 0;
+
+	// TODO: Windows equivalent.
+	// Based on simple_random() from nettle-3.4/examples/io.c.
+	yarrow256_init(yarrow, 0, NULL);
+
+	errno = 0;
+	buf = malloc(buf_remain);
+	if (!buf) {
+		err = errno;
+		if (err == 0) {
+			err = ENOMEM;
+		}
+		goto end;
+	}
+
+	errno = 0;
+	f = fopen("/dev/urandom", "rb");
+	if (!f) {
+		err = errno;
+		if (err == 0) {
+			err = ENOENT;
+		}
+		goto end;
+	}
+
+	// Read up to the length of the buffer.
+	do {
+		errno = 0;
+		size = fread(&buf[total_read], 1, buf_remain, f);
+		if (size == 0) {
+			// Read error.
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			break;
+		}
+		total_read += size;
+		buf_remain -= size;
+	} while (total_read < RANDOM_BUFFER_SIZE);
+
+	if (size < 128) {
+		// Not enough random data read...
+		err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		goto end;
+	}
+
+	// Seed the random number generator.
+	yarrow256_seed(yarrow, size, buf);
+
+end:
+	free(buf);
+	if (f) {
+		fclose(f);
+	}
+	if (err != 0) {
+		errno = err;
+	}
+	return -err;
+}
+
+/**
+ * Encrypt data using an RSA public key.
+ * @param buf			[out] Output buffer.
+ * @param buf_size		[in] Size of `buf`.
+ * @param modulus		[in] Public key modulus.
+ * @param modulus_size		[in] Size of `modulus`, in bytes.
+ * @param exponent		[in] Public key exponent.
+ * @param cleartext		[in] Cleartext.
+ * @param cleartext_size	[in] Size of `cleartext`, in bytes.
+ */
+int rsaw_encrypt(uint8_t *buf, size_t buf_size,
+	const uint8_t *modulus, size_t modulus_size,
+	uint32_t exponent,
+	const uint8_t *cleartext, size_t cleartext_size)
+{
+	struct rsa_public_key key;
+	struct yarrow256_ctx yarrow;
+
+	mpz_t ciphertext;
+	int ret = 0;
+
+	assert(buf != NULL);
+	assert(buf_size != 0);
+	assert(buf_size >= modulus_size);
+	assert(modulus != NULL);
+	assert(modulus_size == 256 || modulus_size == 512);
+	assert(exponent != 0);
+	assert(cleartext != NULL);
+	assert(cleartext_size != 0);
+
+	if (!buf || buf_size == 0 || buf_size < modulus_size ||
+	    !modulus || (modulus_size != 256 && modulus_size != 512) ||
+	    exponent == 0 || !cleartext || cleartext_size == 0)
+	{
+		// Invalid parameters.
+		return -EINVAL;
+	}
+
+	// Initialize the RSA public key and ciphertext.
+	rsa_public_key_init(&key);
+	mpz_init(ciphertext);
+
+	// Initialize the random number generator.
+	ret = init_random(&yarrow);
+	if (ret != 0) {
+		// Error initializing the random number generator.
+		goto end;
+	}
+
+	// Import the public key.
+	mpz_import(key.n, 1, 1, modulus_size, 1, 0, modulus);
+	mpz_set_ui(key.e, exponent);
+	if (!rsa_public_key_prepare(&key)) {
+		// Error importing the public key.
+		ret = -EIO;
+		goto end;
+	}
+
+	// Encrypt the data.
+	if (!rsa_encrypt(&key, &yarrow, (nettle_random_func*)yarrow256_random,
+	    cleartext_size, cleartext, ciphertext))
+	{
+		// Error encrypting the data.
+		ret = -EIO;
+		goto end;
+	}
+
+	// Encrypted data must not be more than (buf_size*8) bits.
+	if (mpz_sizeinbase(ciphertext, 2) > (buf_size*8)) {
+		// Encrypted data is too big.
+		ret = -ENOSPC;
+		goto end;
+	}
+
+	// NOTE: Invalid signatures may be smaller than the buffer.
+	// Clear the buffer first to ensure that invalid signatures
+	// result in an all-zero buffer.
+	memset(buf, 0, buf_size);
+	mpz_export(buf, NULL, 1, buf_size, 1, 0, ciphertext);
+
+end:
+	rsa_public_key_clear(&key);
+	mpz_clear(ciphertext);
+	if (ret != 0) {
+		errno = -ret;
+	}
+	return ret;
 }
