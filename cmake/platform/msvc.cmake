@@ -7,11 +7,12 @@ ENDIF()
 # - MSVC "logo" messages
 # - C4355: 'this' used in base member initializer list (used for Qt Dpointer pattern)
 # - MSVCRT "deprecated" functions
+# - std::tr1 deprecation
 # Increase some warnings to errors:
 # - C4013: function undefined; this is allowed in C, but will
 #   probably cause a linker error.
 SET(RP_C_FLAGS_COMMON "/nologo /wd4355 /wd4482 /we4013 -D_CRT_SECURE_NO_WARNINGS -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE")
-SET(RP_CXX_FLAGS_COMMON "${RP_C_FLAGS_COMMON}")
+SET(RP_CXX_FLAGS_COMMON "${RP_C_FLAGS_COMMON} -D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
 # NOTE: /TSAWARE is automatically set for Windows 2000 and later. (as of at least Visual Studio .NET 2003)
 # NOTE 2: /TSAWARE is not applicable for DLLs.
 SET(RP_EXE_LINKER_FLAGS_COMMON "/NOLOGO /DYNAMICBASE /NXCOMPAT /LARGEADDRESSAWARE")
@@ -84,15 +85,6 @@ IF(NOT CMAKE_SIZEOF_VOID_P)
 		SET(CMAKE_SIZEOF_VOID_P 4)
 	ENDIF()
 ENDIF(NOT CMAKE_SIZEOF_VOID_P)
-
-# Use stdcall on i386.
-# Applies to unexported functions only.
-# Exported functions must have explicit calling conventions.
-IF(arch MATCHES "^(i.|x)86$|^x86_64$|^amd64$|^ia64$" AND NOT CMAKE_CL_64)
-	SET(RP_C_FLAGS_COMMON   "${RP_C_FLAGS_COMMON} /Gz")
-	SET(RP_CXX_FLAGS_COMMON "${RP_CXX_FLAGS_COMMON} /Gz")
-ENDIF()
-UNSET(arch)
 
 # TODO: Code coverage checking for MSVC?
 IF(ENABLE_COVERAGE)
