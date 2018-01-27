@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_extract.c: RVT-H extract, import, and post-processing functions.   *
+ * rvth_extract.c: RVT-H extract and import functions.                     *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -20,6 +20,7 @@
 
 #include "rvth.h"
 #include "rvth_p.h"
+#include "rvth_recrypt.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -133,6 +134,9 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	entry_dest->revision	= entry_src->revision;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
+	entry_dest->crypto_type	= entry_src->crypto_type;
+	entry_dest->ticket	= entry_src->ticket;
+	entry_dest->tmd		= entry_src->tmd;
 
 	// Timestamp.
 	if (entry_src->timestamp >= 0) {
@@ -235,7 +239,11 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 		return -ERANGE;
 	}
 
+	// TODO: If re-encryption is needed, validate parts of the partitions,
+	// e.g. certificate chain length, before copying.
+
 	// Create a standalone disc image.
+	// TODO: Handle conversion of unencrypted to encrypted.
 	entry = &rvth->entries[bank];
 	ret = 0;
 	rvth_dest = rvth_create_gcm(filename, entry->lba_len, &ret);
@@ -249,6 +257,14 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 
 	// Copy the bank from the source image to the destination GCM.
 	ret = rvth_copy_to_gcm(rvth_dest, rvth, bank, callback);
+	if (ret == 0) {
+		// TODO: Parameter for specifying post-processing method.
+		// For now, convert debug-encrypted to retail.
+		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth_dest, 0, NULL);
+		if (entry && entry->crypto_type == RVTH_CryptoType_Debug) {
+			ret = rvth_recrypt_partitions(rvth_dest, 0, RVL_KEY_RETAIL);
+		}
+	}
 	rvth_close(rvth_dest);
 	return ret;
 }

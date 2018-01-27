@@ -32,6 +32,16 @@ extern "C" {
 
 // NOTE: Wii games typically use RSA-2048 signatures and keys.
 
+// Encryption keys. (AES-128)
+typedef enum {
+	RVL_KEY_RETAIL	= 0,	// Retail common key
+	RVL_KEY_KOREAN	= 1,	// Korean common key
+	RVL_KEY_DEBUG	= 2,	// Debug common key
+
+	RVL_KEY_MAX
+} RVL_AES_Keys_e;
+extern const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16];
+
 // Certificate issuers.
 typedef enum {
 	RVL_CERT_ISSUER_UNKNOWN		= 0,

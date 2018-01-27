@@ -24,6 +24,7 @@
 #include "common.h"
 #include "ref_file.h"
 #include "reader.h"
+#include "cert_store.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -60,6 +61,11 @@ typedef enum {
 	RVTH_ERROR_IS_RETAIL_CRYPTO	= 14,	// Cannot import a retail-encrypted Wii game.
 	RVTH_ERROR_IMAGE_TOO_BIG	= 15,	// Source image does not fit in an RVT-H bank.
 	RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED	= 16,	// Destination bank is not empty or deleted.
+	RVTH_ERROR_NOT_WII_IMAGE	= 17,	// Wii-specific operation was requested on a non-Wii image.
+	RVTH_ERROR_IS_UNENCRYPTED	= 18,	// Image is unencrypted.
+	RVTH_ERROR_IS_ENCRYPTED		= 19,	// Image is encrypted.
+	RVTH_ERROR_PARTITION_TABLE_CORRUPTED	= 20,	// Wii partition table is corrupted.
+	RVTH_ERROR_PARTITION_HEADER_CORRUPTED	= 21,	// At least one Wii partition header is corrupted.
 
 	RVTH_ERROR_MAX
 } RvtH_Errors;
@@ -186,15 +192,32 @@ bool rvth_is_hdd(const RvtH *rvth);
  */
 const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr);
 
-/** Writing functions. **/
+/** rvth_write.c **/
 
 /**
  * RVT-H progress callback.
- * @param lba_processed LBAs processed.
- * @param lba_total LBAs total.
+ * @param data Callback data.
  * @return True to continue; false to abort.
  */
 typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_total);
+
+/**
+ * Delete a bank on an RVT-H device.
+ * @param rvth	[in] RVT-H device.
+ * @param bank	[in] Bank number. (0-7)
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_delete(RvtH *rvth, unsigned int bank);
+
+/**
+ * Undelete a bank on an RVT-H device.
+ * @param rvth	[in] RVT-H device.
+ * @param bank	[in] Bank number. (0-7)
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_undelete(RvtH *rvth, unsigned int bank);
+
+/** rvth_extract.c **/
 
 /**
  * Create a writable disc image object.
@@ -248,22 +271,6 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
-
-/**
- * Delete a bank on an RVT-H device.
- * @param rvth	[in] RVT-H device.
- * @param bank	[in] Bank number. (0-7)
- * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- */
-int rvth_delete(RvtH *rvth, unsigned int bank);
-
-/**
- * Undelete a bank on an RVT-H device.
- * @param rvth	[in] RVT-H device.
- * @param bank	[in] Bank number. (0-7)
- * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- */
-int rvth_undelete(RvtH *rvth, unsigned int bank);
 
 #ifdef __cplusplus
 }

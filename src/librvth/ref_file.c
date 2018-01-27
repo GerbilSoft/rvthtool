@@ -121,7 +121,7 @@ RefFile *ref_open(const TCHAR *filename)
  */
 RefFile *ref_create(const TCHAR *filename)
 {
-	return ref_open_int(filename, _T("wb"));
+	return ref_open_int(filename, _T("wb+"));
 }
 
 /**

@@ -87,7 +87,7 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 		uint8_t u8[RVTH_BLOCK_SIZE];
 		struct {
 			RVL_VolumeGroupTable vgtbl;
-			RVL_PartitionTableEntry ptbl[16];
+			RVL_PartitionTableEntry ptbl[15];
 		};
 	} pt;
 
@@ -283,7 +283,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Check the ticket signature issuer.
-	issuer = cert_get_issuer_from_name(header.ticket.signature_issuer);
+	issuer = cert_get_issuer_from_name(header.ticket.issuer);
 	switch (issuer) {
 		case RVL_CERT_ISSUER_RETAIL_TICKET:
 			// Retail certificate.
@@ -318,8 +318,8 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Check the TMD signature issuer.
 	// TODO: Verify header.tmd_offset?
-	tmd = (const RVL_TMD_Header*)header.tmd;
-	issuer = cert_get_issuer_from_name(tmd->signature_issuer);
+	tmd = (const RVL_TMD_Header*)header.data;
+	issuer = cert_get_issuer_from_name(tmd->issuer);
 	switch (issuer) {
 		case RVL_CERT_ISSUER_RETAIL_TMD:
 			// Retail certificate.
@@ -336,9 +336,9 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Check the TMD size.
 	tmd_size = be32_to_cpu(header.tmd_size);
-	if (tmd_size <= sizeof(header.tmd)) {
+	if (tmd_size <= sizeof(header.data)) {
 		// TMD is not too big. We can validate the signature.
-		ret = cert_verify(header.tmd, tmd_size);
+		ret = cert_verify(header.data, tmd_size);
 		if (ret != 0) {
 			// Signature verification error.
 			if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
@@ -595,7 +595,18 @@ const char *rvth_error(int err)
 		"Source image does not fit in an RVT-H bank",
 		// tr: RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED
 		"Destination bank is not empty or deleted",
+		// tr: RVTH_ERROR_NOT_WII_IMAGE
+		"Wii-specific operation was requested on a non-Wii image",
+		// tr: RVTH_ERROR_IS_UNENCRYPTED
+		"Image is unencrypted",
+		// tr: RVTH_ERROR_IS_ENCRYPTED
+		"Image is encrypted",
+		// tr: RVTH_ERROR_PARTITION_TABLE_CORRUPTED
+		"Wii partition table is corrupted",
+		// tr: RVTH_ERROR_PARTITION_HEADER_CORRUPTED
+		"At least one Wii partition header is corrupted",
 	};
+	// TODO: static_assert()
 
 	if (err < 0) {
 		return strerror(-err);
