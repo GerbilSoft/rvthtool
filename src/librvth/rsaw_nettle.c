@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rsaw_gmp.c: RSA encryption wrapper functions. (libgmp version)          *
+ * rsaw_nettle.c: RSA encryption wrapper functions. (Nettle/GMP version)   *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -37,7 +37,8 @@
 int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 	uint32_t exponent, const uint8_t *sig, size_t size)
 {
-	mpz_t k, s, r;	// key, signature, result
+	// F(x) = x^e mod n
+	mpz_t n, x, f;	// Modulus, signature, result
 
 	assert(buf != NULL);
 	assert(modulus != NULL);
@@ -50,21 +51,21 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 		return -EINVAL;
 	}
 
-	mpz_init(k);
-	mpz_init(s);
-	mpz_init(r);
+	mpz_init(n);
+	mpz_init(x);
+	mpz_init(f);
 
-	mpz_import(k, 1, 1, size, 1, 0, modulus);
-	mpz_import(s, 1, 1, size, 1, 0, sig);
-	mpz_powm_ui(r, s, exponent, k);
+	mpz_import(n, 1, 1, size, 1, 0, modulus);
+	mpz_import(x, 1, 1, size, 1, 0, sig);
+	mpz_powm_ui(f, x, exponent, n);
 
-	mpz_clear(k);
-	mpz_clear(s);
+	mpz_clear(n);
+	mpz_clear(x);
 
 	// Decrypted signature must not be more than (size*8) bits.
-	if (mpz_sizeinbase(r, 2) > (size*8)) {
+	if (mpz_sizeinbase(f, 2) > (size*8)) {
 		// Decrypted signature is too big.
-		mpz_clear(r);
+		mpz_clear(f);
 		errno = ENOSPC;
 		return -ENOSPC;
 	}
@@ -73,8 +74,8 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 	// Clear the buffer first to ensure that invalid signatures
 	// result in an all-zero buffer.
 	memset(buf, 0, size);
-	mpz_export(buf, NULL, 1, size, 1, 0, r);
-	mpz_clear(r);
+	mpz_export(buf, NULL, 1, size, 1, 0, f);
+	mpz_clear(f);
 
 	return 0;
 }
