@@ -22,6 +22,7 @@
 
 #include "cert.h"
 #include "cert_store.h"
+#include "hashw.h"
 
 #include "common.h"
 #include "byteswap.h"
@@ -130,6 +131,11 @@ int cert_verify(const uint8_t *data, size_t size)
 
 	// Get the issuer's certificate.
 	issuer = cert_get_issuer_from_name(s_issuer);
+	if (issuer == RVL_CERT_ISSUER_UNKNOWN) {
+		// Unknown issuer.
+		errno = EINVAL;
+		return SIG_ERROR_UNKNOWN_ISSUER;
+	}
 	cert = (const RVL_Cert*)cert_get(issuer);
 	if (!cert) {
 		// Unknown issuer.
@@ -288,4 +294,113 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	return ret;
+}
+
+/**
+ * Fakesign a ticket.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_ticket(RVL_Ticket *ticket)
+{
+	uint32_t *fake;
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!ticket) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the signature and padding.
+	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(ticket->signature, 0, sizeof(ticket->signature));
+	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
+
+	// Using 0x25C for brute-forcing the SHA-1 hash.
+	// This area is part of the content access permissions.
+	// Disc partitions only have one content, so the rest is unused.
+	// (Wiimm's ISO Tools uses 0x24C.)
+	// NOTE: Brute-forcing is done using HOST-endian.
+	fake = (uint32_t*)&ticket->content_access_perm[0x3A];
+	*fake = 0;
+	do {
+		// Calculate the SHA-1 of the ticket.
+		// If the first byte is 0, we're done.
+		hashw_sha1_update(sha1, (const uint8_t*)&ticket->issuer,
+			sizeof(*ticket) - offsetof(RVL_Ticket, issuer));
+		hashw_sha1_finish(sha1, digest);
+	} while (digest[0] != 0 && ++(*fake) != 0);
+
+	// TODO: If the first byte of the hash is not 0, failed.
+	hashw_sha1_free(sha1);
+	return 0;
+}
+
+/**
+ * Fakesign a TMD.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_tmd(uint8_t *tmd, size_t size)
+{
+	RVL_TMD_Header *tmdHeader = (RVL_TMD_Header*)tmd;
+	uint32_t *fake;
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!tmd || size < sizeof(RVL_TMD_Header)) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the signature and padding.
+	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(tmdHeader->signature, 0, sizeof(tmdHeader->signature));
+	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
+
+	// Using 0x19C for brute-forcing the SHA-1 hash.
+	// This area is "reserved" and is otherwise unused.
+	// (Wiimm's ISO Tools uses 0x19A.)
+	// NOTE: Brute-forcing is done using HOST-endian.
+	fake = (uint32_t*)&tmdHeader->reserved[2];
+	*fake = 0;
+	do {
+		// Calculate the SHA-1 of the TMD.
+		// If the first byte is 0, we're done.
+		hashw_sha1_update(sha1, &tmd[offsetof(RVL_TMD_Header, issuer)],
+			size - offsetof(RVL_TMD_Header, issuer));
+		hashw_sha1_finish(sha1, digest);
+	} while (digest[0] != 0 && ++(*fake) != 0);
+
+	// TODO: If the first byte of the hash is not 0, failed.
+	hashw_sha1_free(sha1);
+	return 0;
 }

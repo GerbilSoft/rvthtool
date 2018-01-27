@@ -21,9 +21,11 @@
 #ifndef __RVTHTOOL_LIBRVTH_CERT_H__
 #define __RVTHTOOL_LIBRVTH_CERT_H__
 
-#include "common.h"
 #include <stdint.h>
 #include <stddef.h>
+
+#include "common.h"
+#include "gcn_structs.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,6 +94,29 @@ typedef enum {
  * @return Signature status. (Sig_Status if positive; if negative, POSIX error code.)
  */
 int cert_verify(const uint8_t *data, size_t size);
+
+/**
+ * Fakesign a ticket.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_ticket(RVL_Ticket *ticket);
+
+/**
+ * Fakesign a TMD.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_tmd(uint8_t *tmd, size_t size);
 
 #ifdef __cplusplus
 }
