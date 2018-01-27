@@ -127,11 +127,35 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		}
 		ret = undelete_bank(argv[2], argv[3]);
 	} else {
-		// TODO: If it's a filename, handle it as "list".
-		fputs("*** ERROR: Unrecognized command: '", stderr);
-		_fputts(argv[1], stderr);
-		fputs("'\n", stderr);
-		return EXIT_FAILURE;
+		// If the "command" contains a slash or dot (or backslash on Windows),
+		// assume it's a filename and handle it as 'list'.
+		const TCHAR *p = argv[1];
+		bool isFilename = false;
+		while (*p != 0) {
+			if (*p == _T('/') || *p == _T('.')) {
+				// Probably a filename.
+				isFilename = true;
+				break;
+			}
+#ifdef _WIN32
+			else if (*p == '\\') {
+				// Probably a filename on Windows.
+				isFilename = true;
+				break;
+			}
+#endif /* _WIN32 */
+		}
+
+		if (isFilename) {
+			// Probably a filename.
+			ret = list_banks(argv[1]);
+		} else {
+			// Not a filename.
+			fputs("*** ERROR: Unrecognized command: '", stderr);
+			_fputts(argv[1], stderr);
+			fputs("'\n", stderr);
+			ret = EXIT_FAILURE;
+		}
 	}
 
 	return ret;
