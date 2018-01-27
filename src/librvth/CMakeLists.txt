@@ -6,12 +6,13 @@ IF(NOT WIN32)
 	CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
 ENDIF(NOT WIN32)
 
-# Find GMP and nettle.
+# Find GMP. (Uses a bundled copy of MPIR on Windows.)
+FIND_PACKAGE(GMP REQUIRED)
+SET(HAVE_GMP 1)
+
+# Find nettle.
 # FIXME: Windows equivalent.
 IF(NOT WIN32)
-	FIND_PACKAGE(GMP REQUIRED)
-	SET(HAVE_GMP 1)
-
 	FIND_PACKAGE(Nettle REQUIRED)
 	SET(HAVE_NETTLE 1)
 	# Check if this is Nettle 3.x.
@@ -75,7 +76,7 @@ SET(librvth_H
 IF(HAVE_GMP)
 	SET(librvth_RSA_SRCS rsaw_gmp.c)
 ELSE(HAVE_GMP)
-	SET(librvth_RSA_SRCS rsaw_generic.c)
+	MESSAGE(FATAL_ERROR "No RSA function wrappers for this platform.")
 ENDIF(HAVE_GMP)
 
 IF(HAVE_NETTLE)
@@ -124,11 +125,16 @@ IF(TARGET git_version)
 ENDIF(TARGET git_version)
 
 # GMP
-# TODO: Detect nettle.
 IF(HAVE_GMP)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${GMP_INCLUDE_DIR})
-	TARGET_LINK_LIBRARIES(rvth ${GMP_LIBRARIES} -lnettle)
+	TARGET_LINK_LIBRARIES(rvth ${GMP_LIBRARIES})
 ENDIF(HAVE_GMP)
+
+# Nettle
+IF(HAVE_NETTLE)
+	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${NETTLE_INCLUDE_DIRS})
+	TARGET_LINK_LIBRARIES(rvth ${NETTLE_LIBRARIES})
+ENDIF(HAVE_NETTLE)
 
 # Unix: Add -fpic/-fPIC in order to use this static library in plugins.
 IF(UNIX AND NOT APPLE)
