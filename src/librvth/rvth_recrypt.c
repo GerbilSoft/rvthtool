@@ -64,6 +64,28 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	// TODO: Pass in an aesw context for less overhead.
 	AesCtx *aesw;
 
+	// Check the 'from' key.
+	if (!strncmp(ticket->issuer,
+	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
+	{
+		// Retail. Use RVL_KEY_RETAIL unless the Korean key is selected.
+		fromKey = (ticket->common_key_index != 1
+			? RVL_KEY_RETAIL
+			: RVL_KEY_KOREAN);
+	}
+	else if (!strncmp(ticket->issuer,
+		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET], sizeof(ticket->issuer)))
+	{
+		// Debug. Use RVL_KEY_DEBUG.
+		fromKey = RVL_KEY_DEBUG;
+	}
+	else
+	{
+		// Unknown issuer.
+		errno = EIO;
+		return RVTH_ERROR_ISSUER_UNKNOWN;
+	}
+
 	// TODO: Determine the 'from' key by checking the
 	// original issuer and key index.
 	fromKey = RVL_KEY_DEBUG;
@@ -348,8 +370,16 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 
 		// Copy in the ticket.
 		memcpy(&hdr_new.ticket, &hdr_orig.ticket, sizeof(hdr_new.ticket));
-		// Recrypt the key. (This also updates the issuer.)
-		rvth_recrypt_ticket(&hdr_new.ticket, toKey);
+		// Recrypt the ticket. (This also updates the issuer.)
+		ret = rvth_recrypt_ticket(&hdr_new.ticket, toKey);
+		if (ret != 0) {
+			// Error recrypting the ticket.
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			goto end;
+		}
 		// Fakesign the ticket.
 		// TODO: Error checking.
 		cert_fakesign_ticket(&hdr_new.ticket);
@@ -430,17 +460,42 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 		}
 	}
 
-	// TODO: Update the bank entry.
+	// Update the bank entry.
+	switch (toKey) {
+		case RVL_KEY_RETAIL:
+			entry->crypto_type = RVTH_CryptoType_Retail;
+			entry->ticket.sig_type = RVTH_SigType_Retail;
+			entry->ticket.sig_status = RVTH_SigStatus_Fake;
+			entry->tmd.sig_type = RVTH_SigType_Retail;
+			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			break;
+		case RVL_KEY_KOREAN:
+			entry->crypto_type = RVTH_CryptoType_Korean;
+			entry->ticket.sig_type = RVTH_SigType_Retail;
+			entry->ticket.sig_status = RVTH_SigStatus_Fake;
+			entry->tmd.sig_type = RVTH_SigType_Retail;
+			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			break;
+		case RVL_KEY_DEBUG:
+			// TODO: Real signing.
+			entry->crypto_type = RVTH_CryptoType_Debug;
+			entry->ticket.sig_type = RVTH_SigType_Debug;
+			entry->ticket.sig_status = RVTH_SigStatus_Fake;
+			entry->tmd.sig_type = RVTH_SigType_Debug;
+			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			break;
+		default:
+			// Should not happen...
+			assert(false);
+			break;
+	}
 
-	// https://github.com/mirror/wiimms-iso-tools/blob/master/src/libwbfs/file-formats.h
+	// If this is an HDD, write the bank table entry.
+	if (rvth->is_hdd) {
+		// TODO: Check for errors.
+		rvth_write_BankEntry(rvth, bank);
+	}
 
-	// Fakesign notes:
-	// - wiimm's iso tools has a slightly incorrect ticket layout.
-	//   It uses the u32 at 0x24C (content_access_perm[0x2A]).
-	//   We can probably use the final u8 values in this field.
-	//   This would also be a unique identifier for what created
-	//   the fake signature.
-	// - For TMD, it uses the u32 at 0x19A. ("reserved")
 	// Finished processing the disc image.
 	reader_flush(reader);
 

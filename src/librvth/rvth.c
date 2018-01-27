@@ -605,6 +605,8 @@ const char *rvth_error(int err)
 		"Wii partition table is corrupted",
 		// tr: RVTH_ERROR_PARTITION_HEADER_CORRUPTED
 		"At least one Wii partition header is corrupted",
+		// tr: RVTH_ERROR_ISSUER_UNKNOWN
+		"Certificate has an unknown issuer",
 	};
 	// TODO: static_assert()
 

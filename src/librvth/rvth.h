@@ -66,6 +66,7 @@ typedef enum {
 	RVTH_ERROR_IS_ENCRYPTED		= 19,	// Image is encrypted.
 	RVTH_ERROR_PARTITION_TABLE_CORRUPTED	= 20,	// Wii partition table is corrupted.
 	RVTH_ERROR_PARTITION_HEADER_CORRUPTED	= 21,	// At least one Wii partition header is corrupted.
+	RVTH_ERROR_ISSUER_UNKNOWN	= 22,	// Certificate has an unknown issuer.
 
 	RVTH_ERROR_MAX
 } RvtH_Errors;
