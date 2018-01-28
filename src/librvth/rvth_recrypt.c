@@ -412,7 +412,6 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 
 	// TODO: Determine the 'from' key by checking the
 	// original issuer and key index.
-	fromKey = RVL_KEY_DEBUG;
 	if (fromKey == toKey) {
 		// No recryption needed.
 		return 0;

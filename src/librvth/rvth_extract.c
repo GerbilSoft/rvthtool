@@ -453,6 +453,9 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	entry_dest->revision	= entry_src->revision;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
+	entry_dest->crypto_type	= entry_src->crypto_type;
+	entry_dest->ticket	= entry_src->ticket;
+	entry_dest->tmd		= entry_src->tmd;
 
 	// Timestamp.
 	if (entry_src->timestamp >= 0) {
@@ -581,7 +584,7 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 	if (ret == 0) {
 		// TODO: Parameter for specifying post-processing method.
 		// For now, convert retail-encrypted to debug.
-		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, 0, NULL);
+		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, bank, NULL);
 		if (entry &&
 			(entry->crypto_type == RVTH_CryptoType_Retail ||
 			 entry->crypto_type == RVTH_CryptoType_Korean))
