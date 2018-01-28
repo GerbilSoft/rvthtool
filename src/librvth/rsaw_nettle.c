@@ -176,6 +176,7 @@ end:
  * @param exponent		[in] Public key exponent.
  * @param cleartext		[in] Cleartext.
  * @param cleartext_size	[in] Size of `cleartext`, in bytes.
+ * @return 0 on success; negative POSIX error code on error.
  */
 int rsaw_encrypt(uint8_t *buf, size_t buf_size,
 	const uint8_t *modulus, size_t modulus_size,
@@ -251,6 +252,80 @@ int rsaw_encrypt(uint8_t *buf, size_t buf_size,
 end:
 	rsa_public_key_clear(&key);
 	mpz_clear(ciphertext);
+	if (ret != 0) {
+		errno = -ret;
+	}
+	return ret;
+}
+
+/**
+ * Create an RSA signature using an RSA private key.
+ * NOTE: This function only supports RSA-2048 keys.
+ * @param buf			[out] Output buffer.
+ * @param buf_size		[in] Size of `buf`.
+ * @param priv_key_data		[in] RSA2048PrivateKey struct.
+ * @param exponent		[in] Public key exponent.
+ * @param sha1			[in] SHA-1 hash. (Must be 20 bytes.)
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
+	const RSA2048PrivateKey *priv_key_data,
+	uint32_t exponent, const uint8_t *sha1)
+{
+	struct rsa_private_key key;
+	mpz_t signature;
+	int ret = 0;
+
+	assert(buf != NULL);
+	assert(buf_size != 0);
+	assert(buf_size >= 256);
+	assert(priv_key_data != NULL);
+	assert(exponent != 0);
+	assert(sha1 != NULL);
+
+	if (!buf || buf_size == 0 || buf_size < 256 || exponent == 0 || !sha1) {
+		// Invalid parameters.
+		errno = EIO;
+		return -EINVAL;
+	}
+
+	// Initialize the RSA private key.
+	rsa_private_key_init(&key);
+	mpz_import(key.p, 1, 1, sizeof(priv_key_data->p), 1, 0, priv_key_data->p);
+	mpz_import(key.q, 1, 1, sizeof(priv_key_data->q), 1, 0, priv_key_data->q);
+	mpz_import(key.a, 1, 1, sizeof(priv_key_data->a), 1, 0, priv_key_data->a);
+	mpz_import(key.b, 1, 1, sizeof(priv_key_data->b), 1, 0, priv_key_data->b);
+	mpz_import(key.c, 1, 1, sizeof(priv_key_data->c), 1, 0, priv_key_data->c);
+	if (!rsa_private_key_prepare(&key)) {
+		// Error importing the private key.
+		errno = EIO;
+		return -EIO;
+	}
+
+	// Create the signature.
+	mpz_init(signature);
+	if (!rsa_sha1_sign_digest(&key, sha1, signature)) {
+		// Error signing the SHA-1 hash.
+		ret = -EIO;
+		goto end;
+	}
+
+	// Encrypted data must not be more than (buf_size*8) bits.
+	if (mpz_sizeinbase(signature, 2) > (buf_size*8)) {
+		// Encrypted data is too big.
+		ret = -ENOSPC;
+		goto end;
+	}
+
+	// NOTE: Invalid signatures may be smaller than the buffer.
+	// Clear the buffer first to ensure that invalid signatures
+	// result in an all-zero buffer.
+	memset(buf, 0, buf_size);
+	mpz_export(buf, NULL, 1, buf_size, 1, 0, signature);
+
+end:
+	rsa_private_key_clear(&key);
+	mpz_clear(signature);
 	if (ret != 0) {
 		errno = -ret;
 	}

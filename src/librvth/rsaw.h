@@ -49,11 +49,40 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
  * @param exponent		[in] Public key exponent.
  * @param cleartext		[in] Cleartext.
  * @param cleartext_size	[in] Size of `cleartext`, in bytes.
+ * @return 0 on success; negative POSIX error code on error.
  */
 int rsaw_encrypt(uint8_t *buf, size_t buf_size,
 	const uint8_t *modulus, size_t modulus_size,
 	uint32_t exponent,
 	const uint8_t *cleartext, size_t cleartext_size);
+
+/** Private key stuff. **/
+
+// These private keys consist of p, q, a, b, and c.
+// Technically, only p and q are important, but calculating
+// a, b, and c is a pain.
+
+typedef struct _RSA2048PrivateKey {
+	uint8_t p[128];
+	uint8_t q[128];
+	uint8_t a[128];
+	uint8_t b[128];
+	uint8_t c[128];
+} RSA2048PrivateKey;
+
+/**
+ * Create an RSA signature using an RSA private key.
+ * NOTE: This function only supports RSA-2048 keys.
+ * @param buf			[out] Output buffer.
+ * @param buf_size		[in] Size of `buf`.
+ * @param priv_key_data		[in] RSA2048PrivateKey struct.
+ * @param exponent		[in] Public key exponent.
+ * @param sha1			[in] SHA-1 hash. (Must be 20 bytes.)
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
+	const RSA2048PrivateKey *priv_key_data,
+	uint32_t exponent, const uint8_t *sha1);
 
 #ifdef __cplusplus
 }

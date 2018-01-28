@@ -50,6 +50,7 @@ SET(librvth_SRCS
 	cert_store.c
 	cert.c
 	hashw.c
+	priv_key_store.c
 	)
 # Headers.
 SET(librvth_H
@@ -71,6 +72,7 @@ SET(librvth_H
 	hashw.h
 	rsaw.h
 	aesw.h
+	priv_key_store.h
 	)
 
 IF(HAVE_GMP AND HAVE_NETTLE)
