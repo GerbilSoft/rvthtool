@@ -37,6 +37,10 @@ static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
 	printf("\r%4u MB / %4u MB processed...",
 		lba_processed / MEGABYTE,
 		lba_total / MEGABYTE);
+	if (lba_processed == lba_total) {
+		// Finished processing.
+		putchar('\n');
+	}
 	fflush(stdout);
 	return true;
 }
@@ -83,7 +87,6 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	_fputts(gcm_filename, stdout);
 	fputs("'...\n", stdout);
 	ret = rvth_extract(rvth, bank, gcm_filename, progress_callback);
-	putchar('\n');
 	if (ret == 0) {
 		printf("Bank %u extracted to '", bank+1);
 		_fputts(gcm_filename, stdout);
@@ -144,7 +147,6 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	_fputts(gcm_filename, stdout);
 	printf("' into Bank %u...\n", bank+1);
 	ret = rvth_import(rvth, bank, gcm_filename, progress_callback);
-	putchar('\n');
 	if (ret == 0) {
 		fputc('\'', stdout);
 		_fputts(gcm_filename, stdout);
