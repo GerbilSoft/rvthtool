@@ -607,6 +607,17 @@ const char *rvth_error(int err)
 		"At least one Wii partition header is corrupted",
 		// tr: RVTH_ERROR_ISSUER_UNKNOWN
 		"Certificate has an unknown issuer",
+
+		// 'import' command: Dual-Layer errors.
+
+		// tr: RVTH_ERROR_IMPORT_DL_EXT_NO_BANK1
+		"Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.",
+		// tr: RVTH_ERROR_IMPORT_DL_LAST_BANK
+		"Cannot use the last bank for a Dual-Layer image",
+		// tr: RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED
+		"The second bank for the Dual-Layer image is not empty or deleted",
+		// tr: RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS
+		"The two banks are not contiguous",
 	};
 	// TODO: static_assert()
 

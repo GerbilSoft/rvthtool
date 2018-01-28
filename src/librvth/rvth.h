@@ -68,6 +68,12 @@ typedef enum {
 	RVTH_ERROR_PARTITION_HEADER_CORRUPTED	= 21,	// At least one Wii partition header is corrupted.
 	RVTH_ERROR_ISSUER_UNKNOWN	= 22,	// Certificate has an unknown issuer.
 
+	// 'import' command: Dual-Layer errors.
+	RVTH_ERROR_IMPORT_DL_EXT_NO_BANK1	= 23,	// Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.
+	RVTH_ERROR_IMPORT_DL_LAST_BANK	= 24,	// Cannot use the last bank for a Dual-Layer image.
+	RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED	= 25,	// The second bank for the Dual-Layer image is not empty or deleted.
+	RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS	= 26,	// The two banks are not contiguous.
+
 	RVTH_ERROR_MAX
 } RvtH_Errors;
 

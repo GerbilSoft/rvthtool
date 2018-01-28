@@ -329,6 +329,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 	// Destination disc image.
 	RvtH_BankEntry *entry_dest;
+	unsigned int bank_count_dest;
 
 	if (!rvth_dest || !rvth_src) {
 		errno = EINVAL;
@@ -348,15 +349,9 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	entry_src = &rvth_src->entries[bank_src];
 	switch (entry_src->type) {
 		case RVTH_BankType_GCN:
-			// Bank can be imported.
-			break;
-
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
 			// Bank can be imported.
-			// NOTE: If the bank is encrypted using either the
-			// Retail or Korean keys, it will need to be recrypted
-			// afterwards. Otherwise, it won't work.
 			break;
 
 		case RVTH_BankType_Unknown:
@@ -377,9 +372,72 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 			return RVTH_ERROR_BANK_DL_2;
 	}
 
+	// Get the bank count of the destination RVTH device.
+	bank_count_dest = rvth_get_BankCount(rvth_dest);
+	// Destination bank entry.
+	entry_dest = &rvth_dest->entries[bank_dest];
+
 	// Source image length cannot be larger than a single bank.
-	// TODO: Dual-layer Wii support.
-	if (entry_src->lba_len > NHCD_BANK_SIZE_LBA) {
+	if (entry_src->type == RVTH_BankType_Wii_DL) {
+		// Special cases for DL:
+		// - Destination bank must not be the last bank.
+		// - For extended bank tables, destination bank must not be the first bank.
+		// - Both the selected bank and the next bank must be empty or deleted.
+		const RvtH_BankEntry *entry_dest2;
+
+		if (bank_count_dest > 8) {
+			// Extended bank table.
+			if (bank_dest == 0) {
+				// Cannot use bank 0.
+				errno = EINVAL;
+				return RVTH_ERROR_IMPORT_DL_EXT_NO_BANK1;
+			}
+		}
+
+		// Cannot use the last bank for DL images.
+		if (bank_dest == bank_count_dest-1) {
+			errno = EINVAL;
+			return RVTH_ERROR_IMPORT_DL_LAST_BANK;
+		}
+
+		// Check that the first bank is empty or deleted.
+		// NOTE: Checked below, but we should check this before
+		// checking the second bank.
+		if (entry_dest->type != RVTH_BankType_Empty &&
+		    !entry_dest->is_deleted)
+		{
+			errno = EEXIST;
+			return RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED;
+		}
+
+		// Check that the second bank is empty or deleted.
+		entry_dest2 = &rvth_dest->entries[bank_dest+1];
+		if (entry_dest2->type != RVTH_BankType_Empty &&
+		    !entry_dest2->is_deleted)
+		{
+			errno = EEXIST;
+			return RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED;
+		}
+
+		// Verify that the two banks are contiguous.
+		// FIXME: This should always be the case except for bank 1 on
+		// devices with non-extended bank tables. lba_len is reduced
+		// if the bank originally had a GameCube image, so we can't
+		// check this right now.
+		/*if (entry_dest->lba_start + entry_dest->lba_len != entry_dest2->lba_start) {
+			// Not contiguous.
+			errno = EIO;
+			return RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS;
+		}*/
+
+		// Verify that the image fits in two banks.
+		if (entry_src->lba_len > NHCD_BANK_SIZE_LBA*2) {
+			// Image is too big.
+			errno = ENOSPC;
+			return RVTH_ERROR_IMAGE_TOO_BIG;
+		}
+	} else if (entry_src->lba_len > NHCD_BANK_SIZE_LBA) {
+		// Single-layer image is too big for this bank.
 		errno = ENOSPC;
 		return RVTH_ERROR_IMAGE_TOO_BIG;
 	} else if (bank_dest == 0) {
@@ -387,7 +445,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 		// TODO: entry_dest->lba_len should be the full bank size
 		// if the bank is empty or deleted.
 		// TODO: Add a separate field, lba_max_len?
-		if (rvth_get_BankCount(rvth_dest) > 8) {
+		if (bank_count_dest > 8) {
 			// Image cannot be larger than NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA.
 			if (entry_src->lba_len > NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA) {
 				errno = ENOSPC;
@@ -397,7 +455,6 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	// Destination bank must be either empty or deleted.
-	entry_dest = &rvth_dest->entries[bank_dest];
 	if (entry_dest->type != RVTH_BankType_Empty &&
 	    !entry_dest->is_deleted)
 	{
@@ -572,7 +629,7 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 		return RVTH_ERROR_IS_HDD_IMAGE;
 	} else if (rvth_src->bank_count == 0) {
 		// Unrecognized file format.
-		// TODO :Distinguish between unrecognized and no banks.
+		// TODO: Distinguish between unrecognized and no banks.
 		errno = EINVAL;
 		return RVTH_ERROR_NO_BANKS;
 	}
