@@ -195,12 +195,40 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 
 /** rvth_write.c **/
 
+// Progress callback type.
+typedef enum {
+	RVTH_PROGRESS_UNKNOWN	= 0,
+	RVTH_PROGRESS_EXTRACT,		// Extract image
+	RVTH_PROGRESS_IMPORT,		// Import image
+	RVTH_PROGRESS_RECRYPT,		// Recrypt image
+} RvtH_Progress_Type;
+
+// Progress callback status.
+typedef struct _RvtH_Progress_State {
+	RvtH_Progress_Type type;
+
+	// RvtH objects.
+	const RvtH *rvth;	// Primary RvtH.
+	const RvtH *rvth_gcm;	// GCM being extracted or imported, if not NULL.
+
+	// Bank numbers.
+	unsigned int bank_rvth;	// Bank number in `rvth`.
+	unsigned int bank_gcm;	// Bank number in `rvth_gcm`. (UINT_MAX if none)
+
+	// Progress.
+	// If RVTH_PROGRESS_RECRYPT and lba_total == 0,
+	// we're only changing the ticket and TMD.
+	// Otherwise, we're encrypting/decrypting.
+	uint32_t lba_processed;
+	uint32_t lba_total;
+} RvtH_Progress_State;
+
 /**
  * RVT-H progress callback.
  * @param data Callback data.
  * @return True to continue; false to abort.
  */
-typedef bool (*RvtH_Progress_Callback)(uint32_t lba_processed, uint32_t lba_total);
+typedef bool (*RvtH_Progress_Callback)(const RvtH_Progress_State *state);
 
 /**
  * Delete a bank on an RVT-H device.

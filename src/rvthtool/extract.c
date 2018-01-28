@@ -22,22 +22,46 @@
 #include "list-banks.h"
 #include "librvth/rvth.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 
 /**
  * RVT-H progress callback.
- * @param lba_processed LBAs processed.
- * @param lba_total LBAs total.
+ * @param state RvtH_Progress_State
  * @return True to continue; false to abort.
  */
-static bool progress_callback(uint32_t lba_processed, uint32_t lba_total)
+static bool progress_callback(const RvtH_Progress_State *state)
 {
 	#define MEGABYTE (1048576 / RVTH_BLOCK_SIZE)
-	printf("\r%4u MB / %4u MB processed...",
-		lba_processed / MEGABYTE,
-		lba_total / MEGABYTE);
-	if (lba_processed == lba_total) {
+	switch (state->type) {
+		case RVTH_PROGRESS_EXTRACT:
+			printf("\rExtracting: %4u MB / %4u MB copied...",
+				state->lba_processed / MEGABYTE,
+				state->lba_total / MEGABYTE);
+			break;
+		case RVTH_PROGRESS_IMPORT:
+			printf("\rImporting: %4u MB / %4u MB copied...",
+				state->lba_processed / MEGABYTE,
+				state->lba_total / MEGABYTE);
+			break;
+		case RVTH_PROGRESS_RECRYPT:
+			if (state->lba_total == 0) {
+				// TODO: Encryption types?
+				printf("\rRecrypting the ticket(s) and TMD(s)...");
+			} else {
+				printf("\rRecrypting: %4u MB / %4u MB processed...",
+					state->lba_processed / MEGABYTE,
+					state->lba_total / MEGABYTE);
+			}
+			break;
+		default:
+			// FIXME
+			assert(false);
+			return false;
+	}
+
+	if (state->lba_processed == state->lba_total) {
 		// Finished processing.
 		putchar('\n');
 	}

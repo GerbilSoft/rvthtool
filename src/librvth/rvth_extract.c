@@ -52,6 +52,9 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	uint32_t lba_nonsparse;	// Last LBA written that wasn't sparse.
 	unsigned int sprs;		// Sparse counter.
 
+	// Callback state.
+	RvtH_Progress_State state;
+
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
 
@@ -148,12 +151,24 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	// Number of LBAs to copy.
 	lba_copy_len = entry_src->lba_len;
 
+	if (callback) {
+		// Initialize the callback state.
+		state.type = RVTH_PROGRESS_EXTRACT;
+		state.rvth = rvth_src;
+		state.rvth_gcm = rvth_dest;
+		state.bank_rvth = bank_src;
+		state.bank_gcm = 0;
+		state.lba_processed = 0;
+		state.lba_total = lba_copy_len;
+	}
+
 	// TODO: Optimize seeking? (reader_write() seeks every time.)
 	lba_buf_max = entry_dest->lba_len & ~(LBA_COUNT_BUF-1);
 	lba_nonsparse = 0;
 	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
 		if (callback) {
-			callback(lba_count, lba_copy_len);
+			state.lba_processed = lba_count;
+			callback(&state);
 		}
 
 		// TODO: Error handling.
@@ -176,7 +191,8 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		const unsigned int sz_left = (unsigned int)BYTES_TO_LBA(lba_left);
 
 		if (callback) {
-			callback(lba_count, lba_copy_len);
+			state.lba_processed = lba_count;
+			callback(&state);
 		}
 		reader_read(entry_src->reader, buf, lba_count, lba_left);
 
@@ -191,7 +207,8 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	}
 
 	if (callback) {
-		callback(lba_copy_len, lba_copy_len);
+		state.lba_processed = lba_copy_len;
+		callback(&state);
 	}
 
 	// lba_nonsparse should be equal to lba_copy_len-1.
@@ -285,6 +302,9 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
 	uint8_t *buf = NULL;
+
+	// Callback state.
+	RvtH_Progress_State state;
 
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
@@ -435,11 +455,23 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	// There's no point in wiping the rest of the bank.
 	lba_copy_len = entry_src->lba_len;
 
+	if (callback) {
+		// Initialize the callback state.
+		state.type = RVTH_PROGRESS_IMPORT;
+		state.rvth = rvth_dest;
+		state.rvth_gcm = rvth_src;
+		state.bank_rvth = bank_dest;
+		state.bank_gcm = bank_src;
+		state.lba_processed = 0;
+		state.lba_total = lba_copy_len;
+	}
+
 	// TODO: Special indicator.
 	// TODO: Optimize seeking? (reader_write() seeks every time.)
 	for (lba_count = 0; lba_count < lba_copy_len; lba_count += LBA_COUNT_BUF) {
 		if (callback) {
-			callback(lba_count, lba_copy_len);
+			state.lba_processed = lba_count;
+			callback(&state);
 		}
 
 		// TODO: Error handling.
@@ -455,7 +487,8 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	if (callback) {
-		callback(lba_copy_len, lba_copy_len);
+		state.lba_processed = lba_count;
+		callback(&state);
 	}
 
 	// Flush the buffers.
