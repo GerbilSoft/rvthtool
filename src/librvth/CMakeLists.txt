@@ -6,13 +6,15 @@ IF(NOT WIN32)
 	CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
 ENDIF(NOT WIN32)
 
-# Find GMP. (Uses a bundled copy of MPIR on Windows.)
-FIND_PACKAGE(GMP REQUIRED)
-SET(HAVE_GMP 1)
-
 # Find nettle.
 FIND_PACKAGE(Nettle REQUIRED)
 SET(HAVE_NETTLE 1)
+IF(NOT WIN32)
+	# Find GMP.
+	# On Windows, we're using nettle's mini-GMP.
+	FIND_PACKAGE(GMP REQUIRED)
+	SET(HAVE_GMP 1)
+ENDIF(NOT WIN32)
 
 # Check if this is Nettle 3.x.
 # Nettle 3.1 added version.h, which isn't available
@@ -75,7 +77,7 @@ SET(librvth_H
 	priv_key_store.h
 	)
 
-IF(HAVE_GMP AND HAVE_NETTLE)
+IF(HAVE_NETTLE)
 	SET(librvth_RSA_SRCS rsaw_nettle.c)
 	SET(librvth_HASH_SRCS hashw_nettle.c)
 ELSE()

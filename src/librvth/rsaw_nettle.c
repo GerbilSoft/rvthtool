@@ -20,9 +20,13 @@
 
 #include "rsaw.h"
 
-#include <gmp.h>
 #include <nettle/rsa.h>
 #include <nettle/yarrow.h>
+
+// NOTE: Using mini-GMP on Windows.
+#ifndef NETTLE_USE_MINI_GMP
+# include <gmp.h>
+#endif
 
 #include <assert.h>
 #include <errno.h>
