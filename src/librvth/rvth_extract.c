@@ -220,7 +220,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 
 	if (callback) {
 		bool bRet;
-		state.lba_processed = lba_count;
+		state.lba_processed = lba_copy_len;
 		bRet = callback(&state);
 		if (!bRet) {
 			// Stop processing.
@@ -512,7 +512,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 	if (callback) {
 		bool bRet;
-		state.lba_processed = lba_count;
+		state.lba_processed = lba_copy_len;
 		bRet = callback(&state);
 		if (!bRet) {
 			// Stop processing.
