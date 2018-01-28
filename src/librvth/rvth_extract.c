@@ -167,8 +167,14 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	lba_nonsparse = 0;
 	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
 		if (callback) {
+			bool bRet;
 			state.lba_processed = lba_count;
-			callback(&state);
+			bRet = callback(&state);
+			if (!bRet) {
+				// Stop processing.
+				err = ECANCELED;
+				goto end;
+			}
 		}
 
 		// TODO: Error handling.
@@ -191,8 +197,14 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		const unsigned int sz_left = (unsigned int)BYTES_TO_LBA(lba_left);
 
 		if (callback) {
+			bool bRet;
 			state.lba_processed = lba_count;
-			callback(&state);
+			bRet = callback(&state);
+			if (!bRet) {
+				// Stop processing.
+				err = ECANCELED;
+				goto end;
+			}
 		}
 		reader_read(entry_src->reader, buf, lba_count, lba_left);
 
@@ -207,8 +219,14 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	}
 
 	if (callback) {
-		state.lba_processed = lba_copy_len;
-		callback(&state);
+		bool bRet;
+		state.lba_processed = lba_count;
+		bRet = callback(&state);
+		if (!bRet) {
+			// Stop processing.
+			err = ECANCELED;
+			goto end;
+		}
 	}
 
 	// lba_nonsparse should be equal to lba_copy_len-1.
@@ -470,8 +488,14 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	// TODO: Optimize seeking? (reader_write() seeks every time.)
 	for (lba_count = 0; lba_count < lba_copy_len; lba_count += LBA_COUNT_BUF) {
 		if (callback) {
+			bool bRet;
 			state.lba_processed = lba_count;
-			callback(&state);
+			bRet = callback(&state);
+			if (!bRet) {
+				// Stop processing.
+				err = ECANCELED;
+				goto end;
+			}
 		}
 
 		// TODO: Error handling.
@@ -487,8 +511,14 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	if (callback) {
+		bool bRet;
 		state.lba_processed = lba_count;
-		callback(&state);
+		bRet = callback(&state);
+		if (!bRet) {
+			// Stop processing.
+			err = ECANCELED;
+			goto end;
+		}
 	}
 
 	// Flush the buffers.
