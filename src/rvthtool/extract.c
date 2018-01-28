@@ -46,9 +46,11 @@ static bool progress_callback(const RvtH_Progress_State *state)
 				state->lba_total / MEGABYTE);
 			break;
 		case RVTH_PROGRESS_RECRYPT:
-			if (state->lba_total == 0) {
+			if (state->lba_total <= 1) {
 				// TODO: Encryption types?
-				printf("\rRecrypting the ticket(s) and TMD(s)...");
+				if (state->lba_processed == 0) {
+					printf("\rRecrypting the ticket(s) and TMD(s)...");
+				}
 			} else {
 				printf("\rRecrypting: %4u MB / %4u MB processed...",
 					state->lba_processed / MEGABYTE,

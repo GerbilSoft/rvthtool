@@ -216,8 +216,9 @@ typedef struct _RvtH_Progress_State {
 	unsigned int bank_gcm;	// Bank number in `rvth_gcm`. (UINT_MAX if none)
 
 	// Progress.
-	// If RVTH_PROGRESS_RECRYPT and lba_total == 0,
+	// If RVTH_PROGRESS_RECRYPT and lba_total == 1,
 	// we're only changing the ticket and TMD.
+	// (lba_processed == 0 when starting, == 1 when done.)
 	// Otherwise, we're encrypting/decrypting.
 	uint32_t lba_processed;
 	uint32_t lba_total;

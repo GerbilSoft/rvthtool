@@ -473,12 +473,14 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
  * NOTE 2: Any partitions that are already encrypted with the specified key
  * will be left as-is.
  *
- * @param rvth	[in] RVT-H disk image.
- * @param bank	[in] Bank number. (0-7)
- * @param toKey	[in] Key to use for re-encryption.
+ * @param rvth		[in] RVT-H disk image.
+ * @param bank		[in] Bank number. (0-7)
+ * @param toKey		[in] Key to use for re-encryption.
+ * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
+int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
+	RVL_AES_Keys_e toKey, RvtH_Progress_Callback callback)
 {
 	RvtH_BankEntry *entry;
 	Reader *reader;
@@ -506,6 +508,9 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 	const pt_entry_t *ptbl_entry;
 	int pt_count = 0;
 	char ptid_buf[24];
+
+	// Callback state.
+	RvtH_Progress_State state;
 
 	if (!rvth || toKey < RVL_KEY_RETAIL || toKey >= RVL_KEY_MAX) {
 		errno = EINVAL;
@@ -562,6 +567,21 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 			err = EROFS;
 		}
 		goto end;
+	}
+
+	if (callback) {
+		// Initialize the callback state.
+		state.type = RVTH_PROGRESS_RECRYPT;
+		state.rvth = rvth;
+		state.rvth_gcm = NULL;
+		state.bank_rvth = bank;
+		state.bank_gcm = ~0;
+		// (0,1) because we're only recrypting the ticket(s) and TMD(s).
+		// lba_processed == 0 indicates we're starting.
+		// lba_processed == 1 indicates we're done.
+		state.lba_processed = 0;
+		state.lba_total = 1;
+		callback(&state);
 	}
 
 	// Get the GCN disc header.
@@ -774,6 +794,11 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey)
 
 	// Finished processing the disc image.
 	reader_flush(reader);
+
+	if (callback) {
+		state.lba_processed = 1;
+		callback(&state);
+	}
 
 end:
 	if (err != 0) {

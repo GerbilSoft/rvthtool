@@ -297,7 +297,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 		// For now, convert debug-encrypted to retail.
 		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth_dest, 0, NULL);
 		if (entry && entry->crypto_type == RVTH_CryptoType_Debug) {
-			ret = rvth_recrypt_partitions(rvth_dest, 0, RVL_KEY_RETAIL);
+			ret = rvth_recrypt_partitions(rvth_dest, 0, RVL_KEY_RETAIL, callback);
 		}
 	}
 	rvth_close(rvth_dest);

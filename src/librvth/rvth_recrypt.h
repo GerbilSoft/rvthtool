@@ -21,6 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_RVTH_RECRYPT_H__
 #define __RVTHTOOL_LIBRVTH_RVTH_RECRYPT_H__
 
+#include "rvth.h"
 #include "cert_store.h"
 
 #ifdef __cplusplus
@@ -42,12 +43,14 @@ struct _RvtH;
  * NOTE 2: If the disc image is already encrypted using the specified key,
  * the function will return immediately with a success code (0).
  *
- * @param rvth	[in] RVT-H disk image.
- * @param bank	[in] Bank number. (0-7)
- * @param toKey	[in] Key to use for re-encryption.
+ * @param rvth		[in] RVT-H disk image.
+ * @param bank		[in] Bank number. (0-7)
+ * @param toKey		[in] Key to use for re-encryption.
+ * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_recrypt_partitions(struct _RvtH *rvth, unsigned int bank, RVL_AES_Keys_e toKey);
+int rvth_recrypt_partitions(struct _RvtH *rvth, unsigned int bank,
+	RVL_AES_Keys_e toKey, RvtH_Progress_Callback callback);
 
 #ifdef __cplusplus
 }
