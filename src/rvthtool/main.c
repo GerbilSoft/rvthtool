@@ -129,9 +129,9 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'list'.
-		const TCHAR *p = argv[1];
+		const TCHAR *p;
 		bool isFilename = false;
-		while (*p != 0) {
+		for (p = argv[1]; *p != 0; p++) {
 			if (*p == _T('/') || *p == _T('.')) {
 				// Probably a filename.
 				isFilename = true;
