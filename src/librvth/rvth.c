@@ -221,16 +221,18 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
 	uint32_t tmd_size;
+	uint32_t ios_tid_lo;
 	RVL_Cert_Issuer issuer;
 	int ret;
 
 	// Partition header.
 	RVL_PartitionHeader header;
-	const RVL_TMD_Header *tmd;
+	const RVL_TMD_Header *tmdHeader;
 
 	assert(entry->reader != NULL);
 
 	// Clear the ticket/TMD crypto information initially.
+	entry->ios_version = 0;
 	memset(&entry->ticket, 0, sizeof(entry->ticket));
 	memset(&entry->tmd, 0, sizeof(entry->tmd));
 
@@ -318,8 +320,8 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Check the TMD signature issuer.
 	// TODO: Verify header.tmd_offset?
-	tmd = (const RVL_TMD_Header*)header.data;
-	issuer = cert_get_issuer_from_name(tmd->issuer);
+	tmdHeader = (const RVL_TMD_Header*)header.data;
+	issuer = cert_get_issuer_from_name(tmdHeader->issuer);
 	switch (issuer) {
 		case RVL_CERT_ISSUER_RETAIL_TMD:
 			// Retail certificate.
@@ -353,6 +355,14 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 		} else {
 			// Signature is valid.
 			entry->tmd.sig_status = RVTH_SigStatus_OK;
+		}
+	}
+
+	// Get the required IOS version.
+	if (be32_to_cpu(tmdHeader->sys_version.hi) == 1) {
+		ios_tid_lo = be32_to_cpu(tmdHeader->sys_version.lo);
+		if (ios_tid_lo < 256) {
+			entry->ios_version = (uint8_t)ios_tid_lo;
 		}
 	}
 

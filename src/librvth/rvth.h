@@ -104,6 +104,7 @@ typedef struct RvtH_BankEntry {
 
 	// Wii-specific
 	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
+	uint8_t ios_version;	// IOS version. (0 == ERROR)
 	RvtH_SigInfo ticket;	// Ticket encryption/signature.
 	RvtH_SigInfo tmd;	// TMD encryption/signature.
 } RvtH_BankEntry;
