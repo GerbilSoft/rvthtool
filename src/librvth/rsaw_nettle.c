@@ -264,13 +264,12 @@ end:
  * @param buf			[out] Output buffer.
  * @param buf_size		[in] Size of `buf`.
  * @param priv_key_data		[in] RSA2048PrivateKey struct.
- * @param exponent		[in] Public key exponent.
  * @param sha1			[in] SHA-1 hash. (Must be 20 bytes.)
  * @return 0 on success; negative POSIX error code on error.
  */
 int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 	const RSA2048PrivateKey *priv_key_data,
-	uint32_t exponent, const uint8_t *sha1)
+	const uint8_t *sha1)
 {
 	struct rsa_private_key key;
 	mpz_t signature;
@@ -280,10 +279,9 @@ int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 	assert(buf_size != 0);
 	assert(buf_size >= 256);
 	assert(priv_key_data != NULL);
-	assert(exponent != 0);
 	assert(sha1 != NULL);
 
-	if (!buf || buf_size == 0 || buf_size < 256 || exponent == 0 || !sha1) {
+	if (!buf || buf_size == 0 || buf_size < 256 || !sha1) {
 		// Invalid parameters.
 		errno = EIO;
 		return -EINVAL;

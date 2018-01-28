@@ -351,6 +351,52 @@ int cert_fakesign_ticket(RVL_Ticket *ticket)
 }
 
 /**
+ * Sign a ticket with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
+{
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!ticket) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the padding.
+	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
+
+	// Calculate the SHA-1 hash.
+	hashw_sha1_update(sha1, (const uint8_t*)&ticket->issuer,
+		sizeof(*ticket) - offsetof(RVL_Ticket, issuer));
+	hashw_sha1_finish(sha1, digest);
+
+	// Sign the ticket.
+	// TODO: Check for errors.
+	rsaw_sha1_sign(ticket->signature, sizeof(ticket->signature), key, digest);
+
+	hashw_sha1_free(sha1);
+	return 0;
+}
+
+/**
  * Fakesign a TMD.
  *
  * NOTE: If changing the encryption type, the issuer must be
@@ -401,6 +447,54 @@ int cert_fakesign_tmd(uint8_t *tmd, size_t size)
 	} while (digest[0] != 0 && ++(*fake) != 0);
 
 	// TODO: If the first byte of the hash is not 0, failed.
+	hashw_sha1_free(sha1);
+	return 0;
+}
+
+/**
+ * Sign a TMD with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key)
+{
+	RVL_TMD_Header *tmdHeader = (RVL_TMD_Header*)tmd;
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!tmd || size < sizeof(RVL_TMD_Header)) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the padding.
+	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
+
+	// Calculate the SHA-1 hash.
+	hashw_sha1_update(sha1, &tmd[offsetof(RVL_TMD_Header, issuer)],
+		size - offsetof(RVL_TMD_Header, issuer));
+	hashw_sha1_finish(sha1, digest);
+
+	// Sign the TMD.
+	// TODO: Check for errors.
+	rsaw_sha1_sign(tmdHeader->signature, sizeof(tmdHeader->signature), key, digest);
+
 	hashw_sha1_free(sha1);
 	return 0;
 }

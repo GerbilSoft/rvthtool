@@ -27,6 +27,7 @@
 #include "cert.h"
 #include "aesw.h"
 #include "rsaw.h"
+#include "priv_key_store.h"
 
 #include "common.h"
 #include "byteswap.h"
@@ -673,9 +674,17 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			}
 			goto end;
 		}
-		// Fakesign the ticket.
+		// Sign the ticket.
 		// TODO: Error checking.
-		cert_fakesign_ticket(&hdr_new.ticket);
+		if (likely(toKey != RVL_KEY_DEBUG)) {
+			// Retail: Fakesign the ticket.
+			// Dolphin and cIOSes ignore the signature anyway.
+			cert_fakesign_ticket(&hdr_new.ticket);
+		} else {
+			// Debug: Use the real signing keys.
+			// Debug IOS requires a valid signature.
+			cert_realsign_ticket(&hdr_new.ticket, &rvth_privkey_debug_ticket);
+		}
 
 		// Starting position.
 		data_pos = toNext64(offsetof(RVL_PartitionHeader, data));
@@ -694,9 +703,17 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		// Change the issuer.
 		tmdHeader = (RVL_TMD_Header*)&hdr_new.u8[data_pos];
 		strncpy(tmdHeader->issuer, issuer_TMD, sizeof(tmdHeader->issuer));
-		// Fakesign the TMD.
+		// Sign the TMD.
 		// TODO: Error checking.
-		cert_fakesign_tmd(&hdr_new.u8[data_pos], tmd_size);
+		if (likely(toKey != RVL_KEY_DEBUG)) {
+			// Retail: Fakesign the TMD.
+			// Dolphin and cIOSes ignore the signature anyway.
+			cert_fakesign_tmd(&hdr_new.u8[data_pos], tmd_size);
+		} else {
+			// Debug: Use the real signing keys.
+			// Debug IOS requires a valid signature.
+			cert_realsign_tmd(&hdr_new.u8[data_pos], tmd_size, &rvth_privkey_debug_tmd);
+		}
 
 		// TMD parameters.
 		hdr_new.tmd_size = hdr_orig.tmd_size;

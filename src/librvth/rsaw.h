@@ -68,6 +68,9 @@ typedef struct _RSA2048PrivateKey {
 	uint8_t a[128];
 	uint8_t b[128];
 	uint8_t c[128];
+
+	// Exponent. (Same as the public key.)
+	uint32_t exponent;
 } RSA2048PrivateKey;
 
 /**
@@ -76,13 +79,12 @@ typedef struct _RSA2048PrivateKey {
  * @param buf			[out] Output buffer.
  * @param buf_size		[in] Size of `buf`.
  * @param priv_key_data		[in] RSA2048PrivateKey struct.
- * @param exponent		[in] Public key exponent.
  * @param sha1			[in] SHA-1 hash. (Must be 20 bytes.)
  * @return 0 on success; negative POSIX error code on error.
  */
 int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 	const RSA2048PrivateKey *priv_key_data,
-	uint32_t exponent, const uint8_t *sha1);
+	const uint8_t *sha1);
 
 #ifdef __cplusplus
 }

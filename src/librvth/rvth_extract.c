@@ -582,12 +582,13 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 	// NOTE: `bank` parameter starts at 0, not 1.
 	ret = rvth_copy_to_hdd(rvth, bank, rvth_src, 0, callback);
 	if (ret == 0) {
-		// TODO: Parameter for specifying post-processing method.
-		// For now, convert retail-encrypted to debug.
+		// Must convert to debug realsigned for use on RVT-H.
 		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, bank, NULL);
 		if (entry &&
 			(entry->crypto_type == RVTH_CryptoType_Retail ||
-			 entry->crypto_type == RVTH_CryptoType_Korean))
+			 entry->crypto_type == RVTH_CryptoType_Korean ||
+		         entry->ticket.sig_status != RVTH_SigStatus_OK ||
+			 entry->ticket.sig_status != RVTH_SigStatus_OK))
 		{
 			// Retail or Korean encryption.
 			// Convert to Debug.

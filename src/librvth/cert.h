@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "gcn_structs.h"
+#include "rsaw.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,6 +108,18 @@ int cert_verify(const uint8_t *data, size_t size);
 int cert_fakesign_ticket(RVL_Ticket *ticket);
 
 /**
+ * Sign a ticket with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key);
+
+/**
  * Fakesign a TMD.
  *
  * NOTE: If changing the encryption type, the issuer must be
@@ -117,6 +130,19 @@ int cert_fakesign_ticket(RVL_Ticket *ticket);
  * @return 0 on success; negative POSIX error code on error.
  */
 int cert_fakesign_tmd(uint8_t *tmd, size_t size);
+
+/**
+ * Sign a TMD with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key);
 
 #ifdef __cplusplus
 }
