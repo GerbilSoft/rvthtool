@@ -353,18 +353,10 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
-			// Bank can only be imported if it's
-			// either unencrypted or Debug crypto.
-			// TODO: Encryption conversion.
-			if (entry_src->crypto_type != RVTH_CryptoType_None &&
-			    entry_src->crypto_type != RVTH_CryptoType_Debug)
-			{
-				// Cannot import this image.
-				errno = EIO;
-				return RVTH_ERROR_IS_RETAIL_CRYPTO;
-			}
-
 			// Bank can be imported.
+			// NOTE: If the bank is encrypted using either the
+			// Retail or Korean keys, it will need to be recrypted
+			// afterwards. Otherwise, it won't work.
 			break;
 
 		case RVTH_BankType_Unknown:
@@ -586,6 +578,19 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 	// TODO: HDD to HDD?
 	// NOTE: `bank` parameter starts at 0, not 1.
 	ret = rvth_copy_to_hdd(rvth, bank, rvth_src, 0, callback);
+	if (ret == 0) {
+		// TODO: Parameter for specifying post-processing method.
+		// For now, convert retail-encrypted to debug.
+		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, 0, NULL);
+		if (entry &&
+			(entry->crypto_type == RVTH_CryptoType_Retail ||
+			 entry->crypto_type == RVTH_CryptoType_Korean))
+		{
+			// Retail or Korean encryption.
+			// Convert to Debug.
+			ret = rvth_recrypt_partitions(rvth, bank, RVL_KEY_DEBUG, callback);
+		}
+	}
 	rvth_close(rvth_src);
 	return ret;
 }
