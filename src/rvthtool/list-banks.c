@@ -192,7 +192,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 
 		// IOS version.
 		// TODO: If 0, print an error message.
-		printf("- IOS Version: %u\n", entry->ios_version);
+		printf("- IOS version: %u\n", entry->ios_version);
 
 		// Encryption type.
 		// TODO: static_assert() implementation.
