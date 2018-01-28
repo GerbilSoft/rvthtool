@@ -56,6 +56,7 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
 
 	if (!buf || !modulus || exponent == 0 || !sig || (size != 256 && size != 512)) {
 		// Invalid parameters.
+		errno = EINVAL;
 		return -EINVAL;
 	}
 
@@ -201,6 +202,7 @@ int rsaw_encrypt(uint8_t *buf, size_t buf_size,
 	    exponent == 0 || !cleartext || cleartext_size == 0)
 	{
 		// Invalid parameters.
+		errno = EINVAL;
 		return -EINVAL;
 	}
 
