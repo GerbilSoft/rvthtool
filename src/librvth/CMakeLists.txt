@@ -51,7 +51,6 @@ SET(librvth_SRCS
 	reader_plain.c
 	cert_store.c
 	cert.c
-	hashw.c
 	priv_key_store.c
 	)
 # Headers.
@@ -71,7 +70,6 @@ SET(librvth_H
 	reader_plain.h
 	cert_store.h
 	cert.h
-	hashw.h
 	rsaw.h
 	aesw.h
 	priv_key_store.h
@@ -79,7 +77,6 @@ SET(librvth_H
 
 IF(HAVE_NETTLE)
 	SET(librvth_RSA_SRCS rsaw_nettle.c)
-	SET(librvth_HASH_SRCS hashw_nettle.c)
 ELSE()
 	MESSAGE(FATAL_ERROR "No hash function wrappers for this platform.")
 ENDIF()
@@ -97,7 +94,6 @@ ENDIF()
 ADD_LIBRARY(rvth STATIC
 	${librvth_SRCS} ${librvth_H}
 	${librvth_RSA_SRCS}
-	${librvth_HASH_SRCS}
 	${librvth_AES_SRCS}
 	)
 

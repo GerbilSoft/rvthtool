@@ -22,7 +22,6 @@
 
 #include "cert.h"
 #include "cert_store.h"
-#include "hashw.h"
 
 #include "common.h"
 #include "byteswap.h"
@@ -31,9 +30,9 @@
 #include <stdio.h>
 #include <string.h>
 
-// RSA and SHA-1 wrapper functions
+// RSA and SHA-1 functions
 #include "rsaw.h"
-#include "hashw.h"
+#include <nettle/sha1.h>
 
 /**
  * The signature is stored in PKCS #1 format.
@@ -95,7 +94,8 @@ int cert_verify(const uint8_t *data, size_t size)
 	int tmp_ret;	// function return values
 
 	// SHA-1 hash.
-	uint8_t sha1_hash[SHA1_HASH_LENGTH];
+	struct sha1_ctx sha1;
+	uint8_t digest[SHA1_DIGEST_SIZE];
 
 	/** Data offsets. **/
 	// DER identifier offset.
@@ -207,10 +207,10 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// DER separator offset.
-	sig_der_offset = sig_len - 1 - sizeof(pkcs1_der_sha1) - SHA1_HASH_LENGTH;
+	sig_der_offset = sig_len - 1 - sizeof(pkcs1_der_sha1) - SHA1_DIGEST_SIZE;
 
 	// SHA-1 offset in the signature.
-	sig_sha1_offset = sig_len - SHA1_HASH_LENGTH;
+	sig_sha1_offset = sig_len - SHA1_DIGEST_SIZE;
 
 	// Start offset within `data` for SHA-1 calculation.
 	// Includes sig->issuer[], which is always 64-byte aligned.
@@ -277,14 +277,13 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// Check the SHA-1 hash.
-	tmp_ret = hashw_sha1(sha1_hash, &data[data_sha1_offset], size - data_sha1_offset);
-	if (tmp_ret != 0) {
-		// SHA-1 hash error.
-		return tmp_ret;
-	} else if (memcmp(sha1_hash, &buf[sig_sha1_offset], sizeof(sha1_hash)) != 0) {
+	sha1_init(&sha1);
+	sha1_update(&sha1, size - data_sha1_offset, &data[data_sha1_offset]);
+	sha1_digest(&sha1, sizeof(digest), digest);
+	if (memcmp(digest, &buf[sig_sha1_offset], sizeof(digest)) != 0) {
 		// SHA-1 does not match.
 		// If strncmp() succeeds, it's fakesigned.
-		if (!strncmp((const char*)sha1_hash, (const char*)&buf[sig_sha1_offset], sizeof(sha1_hash))) {
+		if (!strncmp((const char*)digest, (const char*)&buf[sig_sha1_offset], sizeof(digest))) {
 			// Fakesigned.
 			ret |= SIG_FAIL_HASH_FAKE | SIG_ERROR_INVALID;
 		} else {
@@ -307,22 +306,13 @@ int cert_verify(const uint8_t *data, size_t size)
  */
 int cert_fakesign_ticket(RVL_Ticket *ticket)
 {
+	struct sha1_ctx sha1;
+	uint8_t digest[SHA1_DIGEST_SIZE];
 	uint32_t *fake;
-	HashCtx_SHA1 *sha1 = NULL;
-	uint8_t digest[SHA1_HASH_LENGTH];
 
 	if (!ticket) {
 		errno = EINVAL;
 		return -EINVAL;
-	}
-
-	sha1 = hashw_sha1_new();
-	if (!sha1) {
-		// Error initializing an SHA-1 context.
-		if (errno == 0) {
-			errno = ENOMEM;
-		}
-		return -errno;
 	}
 
 	// Zero out the signature and padding.
@@ -337,16 +327,16 @@ int cert_fakesign_ticket(RVL_Ticket *ticket)
 	// NOTE: Brute-forcing is done using HOST-endian.
 	fake = (uint32_t*)&ticket->content_access_perm[0x3A];
 	*fake = 0;
+	sha1_init(&sha1);
 	do {
 		// Calculate the SHA-1 of the ticket.
 		// If the first byte is 0, we're done.
-		hashw_sha1_update(sha1, (const uint8_t*)&ticket->issuer,
-			sizeof(*ticket) - offsetof(RVL_Ticket, issuer));
-		hashw_sha1_finish(sha1, digest);
+		sha1_update(&sha1, sizeof(*ticket) - offsetof(RVL_Ticket, issuer),
+			(const uint8_t*)&ticket->issuer);
+		sha1_digest(&sha1, sizeof(digest), digest);
 	} while (digest[0] != 0 && ++(*fake) != 0);
 
 	// TODO: If the first byte of the hash is not 0, failed.
-	hashw_sha1_free(sha1);
 	return 0;
 }
 
@@ -362,21 +352,12 @@ int cert_fakesign_ticket(RVL_Ticket *ticket)
  */
 int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
 {
-	HashCtx_SHA1 *sha1 = NULL;
-	uint8_t digest[SHA1_HASH_LENGTH];
+	struct sha1_ctx sha1;
+	uint8_t digest[SHA1_DIGEST_SIZE];
 
 	if (!ticket) {
 		errno = EINVAL;
 		return -EINVAL;
-	}
-
-	sha1 = hashw_sha1_new();
-	if (!sha1) {
-		// Error initializing an SHA-1 context.
-		if (errno == 0) {
-			errno = ENOMEM;
-		}
-		return -errno;
 	}
 
 	// Zero out the padding.
@@ -384,15 +365,14 @@ int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
 	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
 
 	// Calculate the SHA-1 hash.
-	hashw_sha1_update(sha1, (const uint8_t*)&ticket->issuer,
-		sizeof(*ticket) - offsetof(RVL_Ticket, issuer));
-	hashw_sha1_finish(sha1, digest);
+	sha1_init(&sha1);
+	sha1_update(&sha1, sizeof(*ticket) - offsetof(RVL_Ticket, issuer),
+		(const uint8_t*)&ticket->issuer);
+	sha1_digest(&sha1, sizeof(digest), digest);
 
 	// Sign the ticket.
 	// TODO: Check for errors.
 	rsaw_sha1_sign(ticket->signature, sizeof(ticket->signature), key, digest);
-
-	hashw_sha1_free(sha1);
 	return 0;
 }
 
@@ -408,23 +388,14 @@ int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
  */
 int cert_fakesign_tmd(uint8_t *tmd, size_t size)
 {
-	RVL_TMD_Header *tmdHeader = (RVL_TMD_Header*)tmd;
+	struct sha1_ctx sha1;
+	uint8_t digest[SHA1_DIGEST_SIZE];
+	RVL_TMD_Header *const tmdHeader = (RVL_TMD_Header*)tmd;
 	uint32_t *fake;
-	HashCtx_SHA1 *sha1 = NULL;
-	uint8_t digest[SHA1_HASH_LENGTH];
 
 	if (!tmd || size < sizeof(RVL_TMD_Header)) {
 		errno = EINVAL;
 		return -EINVAL;
-	}
-
-	sha1 = hashw_sha1_new();
-	if (!sha1) {
-		// Error initializing an SHA-1 context.
-		if (errno == 0) {
-			errno = ENOMEM;
-		}
-		return -errno;
 	}
 
 	// Zero out the signature and padding.
@@ -438,16 +409,16 @@ int cert_fakesign_tmd(uint8_t *tmd, size_t size)
 	// NOTE: Brute-forcing is done using HOST-endian.
 	fake = (uint32_t*)&tmdHeader->reserved[2];
 	*fake = 0;
+	sha1_init(&sha1);
 	do {
 		// Calculate the SHA-1 of the TMD.
 		// If the first byte is 0, we're done.
-		hashw_sha1_update(sha1, &tmd[offsetof(RVL_TMD_Header, issuer)],
-			size - offsetof(RVL_TMD_Header, issuer));
-		hashw_sha1_finish(sha1, digest);
+		sha1_update(&sha1, size - offsetof(RVL_TMD_Header, issuer),
+			&tmd[offsetof(RVL_TMD_Header, issuer)]);
+		sha1_digest(&sha1, sizeof(digest), digest);
 	} while (digest[0] != 0 && ++(*fake) != 0);
 
 	// TODO: If the first byte of the hash is not 0, failed.
-	hashw_sha1_free(sha1);
 	return 0;
 }
 
@@ -464,22 +435,13 @@ int cert_fakesign_tmd(uint8_t *tmd, size_t size)
  */
 int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key)
 {
-	RVL_TMD_Header *tmdHeader = (RVL_TMD_Header*)tmd;
-	HashCtx_SHA1 *sha1 = NULL;
-	uint8_t digest[SHA1_HASH_LENGTH];
+	struct sha1_ctx sha1;
+	uint8_t digest[SHA1_DIGEST_SIZE];
+	RVL_TMD_Header *const tmdHeader = (RVL_TMD_Header*)tmd;
 
 	if (!tmd || size < sizeof(RVL_TMD_Header)) {
 		errno = EINVAL;
 		return -EINVAL;
-	}
-
-	sha1 = hashw_sha1_new();
-	if (!sha1) {
-		// Error initializing an SHA-1 context.
-		if (errno == 0) {
-			errno = ENOMEM;
-		}
-		return -errno;
 	}
 
 	// Zero out the padding.
@@ -487,14 +449,13 @@ int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key)
 	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
 
 	// Calculate the SHA-1 hash.
-	hashw_sha1_update(sha1, &tmd[offsetof(RVL_TMD_Header, issuer)],
-		size - offsetof(RVL_TMD_Header, issuer));
-	hashw_sha1_finish(sha1, digest);
+	sha1_init(&sha1);
+	sha1_update(&sha1, size - offsetof(RVL_TMD_Header, issuer),
+		&tmd[offsetof(RVL_TMD_Header, issuer)]);
+	sha1_digest(&sha1, sizeof(digest), digest);
 
 	// Sign the TMD.
 	// TODO: Check for errors.
 	rsaw_sha1_sign(tmdHeader->signature, sizeof(tmdHeader->signature), key, digest);
-
-	hashw_sha1_free(sha1);
 	return 0;
 }
