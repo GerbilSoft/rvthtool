@@ -21,6 +21,7 @@
 
 #include "reader_plain.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -138,10 +139,18 @@ fail:
  */
 static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
-	// TODO: Verify LBA bounds.
+	// LBA bounds checking.
+	// TODO: Check for overflow?
+	lba_start += reader->lba_start;
+	assert(lba_start + lba_len <= reader->lba_start + reader->lba_len);
+	if (lba_start + lba_len > reader->lba_start + reader->lba_len) {
+		// Out of range.
+		errno = EIO;
+		return 0;
+	}
 
 	// Seek to lba_start.
-	int ret = ref_seeko(reader->file, LBA_TO_BYTES(reader->lba_start + lba_start), SEEK_SET);
+	int ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -164,10 +173,18 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
  */
 static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
-	// TODO: Verify LBA bounds.
+	// LBA bounds checking.
+	// TODO: Check for overflow?
+	lba_start += reader->lba_start;
+	assert(lba_start + lba_len <= reader->lba_start + reader->lba_len);
+	if (lba_start + lba_len > reader->lba_start + reader->lba_len) {
+		// Out of range.
+		errno = EIO;
+		return 0;
+	}
 
 	// Seek to lba_start.
-	int ret = ref_seeko(reader->file, LBA_TO_BYTES(reader->lba_start + lba_start), SEEK_SET);
+	int ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {

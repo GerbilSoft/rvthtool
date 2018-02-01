@@ -319,6 +319,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	const RvtH_BankEntry *entry_src;
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
+	uint32_t lba_buf_max;	// Highest LBA that can be written using the buffer.
 	uint8_t *buf = NULL;
 
 	// Callback state.
@@ -539,7 +540,8 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 	// TODO: Special indicator.
 	// TODO: Optimize seeking? (reader_write() seeks every time.)
-	for (lba_count = 0; lba_count < lba_copy_len; lba_count += LBA_COUNT_BUF) {
+	lba_buf_max = entry_dest->lba_len & ~(LBA_COUNT_BUF-1);
+	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
 		if (callback) {
 			bool bRet;
 			state.lba_processed = lba_count;
