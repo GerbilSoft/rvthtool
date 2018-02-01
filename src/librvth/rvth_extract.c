@@ -292,14 +292,17 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, Rvt
 
 	// Copy the bank from the source image to the destination GCM.
 	ret = rvth_copy_to_gcm(rvth_dest, rvth, bank, callback);
+	// TODO: Use getopt_long() to allow the user to select a recryption key.
+#if 0
 	if (ret == 0) {
-		// TODO: Parameter for specifying post-processing method.
+		// TODO: Parameter for specifying recryption key.
 		// For now, convert debug-encrypted to retail.
 		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth_dest, 0, NULL);
 		if (entry && entry->crypto_type == RVTH_CryptoType_Debug) {
 			ret = rvth_recrypt_partitions(rvth_dest, 0, RVL_KEY_RETAIL, callback);
 		}
 	}
+#endif
 	rvth_close(rvth_dest);
 	return ret;
 }
