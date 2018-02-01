@@ -15,15 +15,16 @@ This is an open-source tool for managing RVT-H Reader consoles.
 * Allows deletion and undeletion of banks on an RVT-H system.
 * Signature verification for all Wii disc images. Indicates if the signature
   is valid, invalid, or fakesigned. (Game partition only at the moment.)
-
-## Planned Features
-
 * Installation of GameCube and Wii disc images. Wii disc images must be
   either unencrypted or debug-encrypted in order to run correctly.
-  * Support for both CISO and WBFS formats for importing.
 * Automatic re-signing of retail Wii disc images to allow them to run on
   the RVT-H system. (Update partitions will be removed, since retail updates
   won't work properly on RVT-H.)
+  * NOTE: Currently broken on Windows due to `/dev/urandom` not existing.
+
+## Planned Features
+
+* Support for both CISO and WBFS formats for importing.
 * Standalone disc image re-signing to convert e.g. retail to debug, debug
   to retail, unencrypted to debug, etc. Conversion to retail will result
   in a fakesigned image.
@@ -58,6 +59,11 @@ Delete a bank: `sudo ./rvthtool delete /dev/sdb 1`
 
 Undelete a bank: `sudo ./rvthtool undelete /dev/sdb 1`
 * Replace `1` with the bank number.
+
+Import a GameCube or Wii game: `sudo ./rvthtool import /dev/sdb 1 disc.gcm`
+* Replace `1` with the bank number.
+* If the game is retail-encrypted, it will be converted to debug encryption
+  and signed using the debug keys.
 
 ## Encryption
 
