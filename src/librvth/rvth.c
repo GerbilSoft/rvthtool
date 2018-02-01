@@ -421,9 +421,11 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp)
 {
+	size_t size;
+	uint32_t reader_lba_len;
+
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
-	size_t size;
 
 	// Sector buffer.
 	union {
@@ -497,47 +499,55 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		entry->type = type;
 	}
 
-	if (lba_len == 0) {
-		if (lba_start < NHCD_BANKTABLE_ADDRESS_LBA) {
-			// Bank starts before the bank table.
-			// This is a relocated Bank 1 on a device with
-			// an extended bank table, so it can only support
-			// GCN disc images.
-			lba_len = NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA;
-		} else {
-			// Use the default LBA length based on bank type.
-			switch (type) {
-				default:
-				case RVTH_BankType_Empty:
-				case RVTH_BankType_Unknown:
-				case RVTH_BankType_Wii_SL:
-				case RVTH_BankType_Wii_DL_Bank2:
-					// Full bank.
-					lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
-					break;
+	// Determine the maximum LBA length for the Reader:
+	// - GCN or Wii SL: Full bank size.
+	// - Wii DL: Dual-layer bank size.
+	// - First bank in extended bank table: Smaller bank size.
+	if (lba_start < NHCD_BANKTABLE_ADDRESS_LBA) {
+		// Bank starts before the bank table.
+		// This is a relocated Bank 1 on a device with
+		// an extended bank table, so it can only support
+		// GCN disc images.
+		reader_lba_len = NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA;
+	} else {
+		// Use the default LBA length based on bank type.
+		switch (type) {
+			default:
+			case RVTH_BankType_Empty:
+			case RVTH_BankType_Unknown:
+			case RVTH_BankType_GCN:
+			case RVTH_BankType_Wii_SL:
+			case RVTH_BankType_Wii_DL_Bank2:
+				// Full bank.
+				reader_lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
+				break;
 
-				case RVTH_BankType_Wii_DL:
-					// Dual-layer bank.
-					lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
-					break;
-
-				case RVTH_BankType_GCN:
-					// GameCube disc image.
-					lba_len = NHCD_BANK_GCN_SIZE_NR_LBA;
-					break;
-			}
+			case RVTH_BankType_Wii_DL:
+				// Dual-layer bank.
+				reader_lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
+				break;
 		}
-		entry->lba_len = lba_len;
 	}
+
+	if (lba_len == 0) {
+		// Empty bank. Assume the length matches the bank,
+		// except for GameCube.
+		lba_len = (type == RVTH_BankType_GCN)
+			? NHCD_BANK_GCN_SIZE_NR_LBA
+			: reader_lba_len;
+	}
+
+	// Set the bank entry's LBA length.
+	entry->lba_len = lba_len;
+
+	// Initialize the disc image reader.
+	// NOTE: Always the plain reader for RVT-H HDD images.
+	entry->reader = reader_plain_open(f_img, lba_start, reader_lba_len);
 
 	if (type == RVTH_BankType_Empty) {
 		// We're done here.
 		return 0;
 	}
-
-	// Initialize the disc image reader.
-	// NOTE: Always the plain reader for RVT-H HDD images.
-	entry->reader = reader_plain_open(f_img, lba_start, lba_len);
 
 	// Parse the timestamp.
 	if (nhcd_timestamp) {
