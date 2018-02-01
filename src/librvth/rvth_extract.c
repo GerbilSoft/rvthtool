@@ -646,9 +646,9 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 			(entry->crypto_type == RVTH_CryptoType_Retail ||
 			 entry->crypto_type == RVTH_CryptoType_Korean ||
 		         entry->ticket.sig_status != RVTH_SigStatus_OK ||
-			 entry->ticket.sig_status != RVTH_SigStatus_OK))
+			 entry->tmd.sig_status != RVTH_SigStatus_OK))
 		{
-			// Retail or Korean encryption.
+			// Retail or Korean encryption, or invalid signature.
 			// Convert to Debug.
 			ret = rvth_recrypt_partitions(rvth, bank, RVL_KEY_DEBUG, callback);
 		}
