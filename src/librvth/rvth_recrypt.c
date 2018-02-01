@@ -338,16 +338,20 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 			ret = -err;
 			goto end;
 		}
-		rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
-		errno = 0;
-		lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
-		if (lba_size != 1) {
-			err = errno;
-			if (err == 0) {
-				err = EIO;
+
+		// Only if this area is empty!
+		if (rvth_is_block_empty(&sbuf.u8[0x80], 256)) {
+			rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
+			errno = 0;
+			lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+			if (lba_size != 1) {
+				err = errno;
+				if (err == 0) {
+					err = EIO;
+				}
+				ret = -err;
+				goto end;
 			}
-			ret = -err;
-			goto end;
 		}
 	} else {
 		// Wii. Write at the end of the partition header.
@@ -398,9 +402,9 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 				goto end;
 			}
 
-			// TODO: Verify that the end of the partition header is blank.
-			// It might not be for games with lots of partitions, e.g. Brawl,
-			// or if the image was previously imported.
+			// Only if this area is empty!
+			if (!rvth_is_block_empty(&id_buf[256], 256))
+				continue;
 
 			// Write the identifier.
 			snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptbl_entry->id_orig, ptbl_entry->id);
@@ -822,8 +826,11 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		hdr_new.data_size = hdr_orig.data_size;
 
 		// Write the identifier.
-		snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptbl_entry->id_orig, ptbl_entry->id);
-		rvth_create_id(&hdr_new.data[sizeof(hdr_new.data)-256], 256, &gcn, ptid_buf);
+		// (Only if this area is empty!)
+		if (rvth_is_block_empty(&hdr_new.data[sizeof(hdr_new.data)-256], 256)) {
+			snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptbl_entry->id_orig, ptbl_entry->id);
+			rvth_create_id(&hdr_new.data[sizeof(hdr_new.data)-256], 256, &gcn, ptid_buf);
+		}
 
 		// Write the new partition header.
 		errno = 0;
