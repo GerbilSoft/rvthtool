@@ -17,8 +17,8 @@ IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	SET(CMAKE_CREATE_CONSOLE_EXE "-Wl,--subsystem,console:5.02")
 ELSE()
 	# 32-bit, Unicode Windows only.
-	SET(CMAKE_CREATE_WIN32_EXE "-Wl,--subsystem,windows:5.00")
-	SET(CMAKE_CREATE_CONSOLE_EXE "-Wl,--subsystem,console:5.00")
+	SET(CMAKE_CREATE_WIN32_EXE "-Wl,--subsystem,windows:5.01")
+	SET(CMAKE_CREATE_CONSOLE_EXE "-Wl,--subsystem,console:5.01")
 ENDIF()
 
 SET(RP_EXE_LINKER_FLAGS_WIN32 "")

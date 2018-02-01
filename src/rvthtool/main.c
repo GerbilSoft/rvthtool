@@ -72,6 +72,10 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			"extract rvth.img bank# disc.gcm\n"
 			"- Extract the specified bank number from rvth.img to disc.gcm.\n"
 			"\n"
+			"import rvth.img bank# disc.gcm\n"
+			"- Import disc.gcm into rvth.img at the specified bank number.\n"
+			"  The destination bank must be either empty or deleted.\n"
+			"\n"
 			"delete " DEVICE_NAME_EXAMPLE " bank#\n"
 			"- Delete the specified bank number from the specified RVT-H device.\n"
 			"  This does NOT wipe the disc image.\n"
@@ -101,6 +105,13 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = extract(argv[2], argv[3], argv[4]);
+	} else if (!_tcscmp(argv[1], _T("import"))) {
+		// Import a bank.
+		if (argc < 5) {
+			fputs("*** ERROR: Missing parameters for 'import'.\n", stderr);
+			return EXIT_FAILURE;
+		}
+		ret = import(argv[2], argv[3], argv[4]);
 	} else if (!_tcscmp(argv[1], _T("delete"))) {
 		// Delete a bank.
 		if (argc < 4) {
@@ -109,18 +120,42 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		}
 		ret = delete_bank(argv[2], argv[3]);
 	} else if (!_tcscmp(argv[1], _T("undelete"))) {
-		// Delete a bank.
+		// Undelete a bank.
 		if (argc < 4) {
 			fputs("*** ERROR: Missing parameters for 'undelete'.\n", stderr);
 			return EXIT_FAILURE;
 		}
 		ret = undelete_bank(argv[2], argv[3]);
 	} else {
-		// TODO: If it's a filename, handle it as "list".
-		fputs("*** ERROR: Unrecognized command: '", stderr);
-		_fputts(argv[1], stderr);
-		fputs("'\n", stderr);
-		return EXIT_FAILURE;
+		// If the "command" contains a slash or dot (or backslash on Windows),
+		// assume it's a filename and handle it as 'list'.
+		const TCHAR *p;
+		bool isFilename = false;
+		for (p = argv[1]; *p != 0; p++) {
+			if (*p == _T('/') || *p == _T('.')) {
+				// Probably a filename.
+				isFilename = true;
+				break;
+			}
+#ifdef _WIN32
+			else if (*p == '\\') {
+				// Probably a filename on Windows.
+				isFilename = true;
+				break;
+			}
+#endif /* _WIN32 */
+		}
+
+		if (isFilename) {
+			// Probably a filename.
+			ret = list_banks(argv[1]);
+		} else {
+			// Not a filename.
+			fputs("*** ERROR: Unrecognized command: '", stderr);
+			_fputts(argv[1], stderr);
+			fputs("'\n", stderr);
+			ret = EXIT_FAILURE;
+		}
 	}
 
 	return ret;

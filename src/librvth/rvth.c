@@ -20,6 +20,7 @@
 
 #include "rvth.h"
 #include "rvth_p.h"
+#include "rvth_time.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -66,76 +67,6 @@ static void trim_title(char *title, int size)
 }
 
 /**
- * Parse an RVT-H timestamp.
- * @param nhcd_timestamp Pointer to NHCD timestamp string.
- * @return Timestamp, or -1 if invalid.
- */
-static time_t rvth_parse_timestamp(const char *nhcd_timestamp)
-{
-	// Date format: "YYYYMMDD"
-	// Time format: "HHMMSS"
-	unsigned int ymd = 0;
-	unsigned int hms = 0;
-	unsigned int i;
-	struct tm ymdtime;
-
-	// Convert the date to an unsigned integer.
-	for (i = 0; i < 8; i++) {
-		if (unlikely(!isdigit(nhcd_timestamp[i]))) {
-			// Invalid digit.
-			return -1;
-		}
-		ymd *= 10;
-		ymd += (nhcd_timestamp[i] & 0xF);
-	}
-
-	// Sanity checks:
-	// - Must be higher than 19000101.
-	// - Must be lower than 99991231.
-	if (unlikely(ymd < 19000101 || ymd > 99991231)) {
-		// Invalid date.
-		return -1;
-	}
-
-	// Convert the time to an unsigned integer.
-	for (i = 8; i < 14; i++) {
-		if (unlikely(!isdigit(nhcd_timestamp[i]))) {
-			// Invalid digit.
-			return -1;
-		}
-		hms *= 10;
-		hms += (nhcd_timestamp[i] & 0xF);
-	}
-
-	// Sanity checks:
-	// - Must be lower than 235959.
-	if (unlikely(hms > 235959)) {
-		// Invalid time.
-		return -1;
-	}
-
-	// Convert to Unix time.
-	// NOTE: struct tm has some oddities:
-	// - tm_year: year - 1900
-	// - tm_mon: 0 == January
-	ymdtime.tm_year = (ymd / 10000) - 1900;
-	ymdtime.tm_mon  = ((ymd / 100) % 100) - 1;
-	ymdtime.tm_mday = ymd % 100;
-
-	ymdtime.tm_hour = (hms / 10000);
-	ymdtime.tm_min  = (hms / 100) % 100;
-	ymdtime.tm_sec  = hms % 100;
-
-	// tm_wday and tm_yday are output variables.
-	ymdtime.tm_wday = 0;
-	ymdtime.tm_yday = 0;
-	ymdtime.tm_isdst = 0;
-
-	// If conversion fails, this will return -1.
-	return timegm(&ymdtime);
-}
-
-/**
  * Find the game partition in a Wii disc image.
  * @param reader	[in] Reader*
  * @return Game partition LBA (relative to start of reader), or 0 on error.
@@ -156,7 +87,7 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 		uint8_t u8[RVTH_BLOCK_SIZE];
 		struct {
 			RVL_VolumeGroupTable vgtbl;
-			RVL_PartitionTableEntry ptbl[16];
+			RVL_PartitionTableEntry ptbl[15];
 		};
 	} pt;
 
@@ -290,16 +221,18 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
 	uint32_t tmd_size;
+	uint32_t ios_tid_lo;
 	RVL_Cert_Issuer issuer;
 	int ret;
 
 	// Partition header.
 	RVL_PartitionHeader header;
-	const RVL_TMD_Header *tmd;
+	const RVL_TMD_Header *tmdHeader;
 
 	assert(entry->reader != NULL);
 
 	// Clear the ticket/TMD crypto information initially.
+	entry->ios_version = 0;
 	memset(&entry->ticket, 0, sizeof(entry->ticket));
 	memset(&entry->tmd, 0, sizeof(entry->tmd));
 
@@ -352,7 +285,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Check the ticket signature issuer.
-	issuer = cert_get_issuer_from_name(header.ticket.signature_issuer);
+	issuer = cert_get_issuer_from_name(header.ticket.issuer);
 	switch (issuer) {
 		case RVL_CERT_ISSUER_RETAIL_TICKET:
 			// Retail certificate.
@@ -387,8 +320,8 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Check the TMD signature issuer.
 	// TODO: Verify header.tmd_offset?
-	tmd = (const RVL_TMD_Header*)header.tmd;
-	issuer = cert_get_issuer_from_name(tmd->signature_issuer);
+	tmdHeader = (const RVL_TMD_Header*)header.data;
+	issuer = cert_get_issuer_from_name(tmdHeader->issuer);
 	switch (issuer) {
 		case RVL_CERT_ISSUER_RETAIL_TMD:
 			// Retail certificate.
@@ -405,9 +338,9 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Check the TMD size.
 	tmd_size = be32_to_cpu(header.tmd_size);
-	if (tmd_size <= sizeof(header.tmd)) {
+	if (tmd_size <= sizeof(header.data)) {
 		// TMD is not too big. We can validate the signature.
-		ret = cert_verify(header.tmd, tmd_size);
+		ret = cert_verify(header.data, tmd_size);
 		if (ret != 0) {
 			// Signature verification error.
 			if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
@@ -422,6 +355,14 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 		} else {
 			// Signature is valid.
 			entry->tmd.sig_status = RVTH_SigStatus_OK;
+		}
+	}
+
+	// Get the required IOS version.
+	if (be32_to_cpu(tmdHeader->sys_version.hi) == 1) {
+		ios_tid_lo = be32_to_cpu(tmdHeader->sys_version.lo);
+		if (ios_tid_lo < 256) {
+			entry->ios_version = (uint8_t)ios_tid_lo;
 		}
 	}
 
@@ -480,8 +421,11 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp)
 {
-	int ret;
 	size_t size;
+	uint32_t reader_lba_len;
+
+	int ret = 0;	// errno or RvtH_Errors
+	int err = 0;	// errno setting
 
 	// Sector buffer.
 	union {
@@ -507,27 +451,25 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Read the GCN disc header.
 	// TODO: For non-deleted banks, verify the magic number?
-	errno = 0;
 	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
-		int err = errno;
+		// TODO: Mark the bank as invalid?
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		errno = err;
-		// TODO: Mark the bank as invalid?
 		return -err;
 	}
 	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
 	if (size != sizeof(sector_buf.u8)) {
 		// Short read.
-		int err = errno;
+		// TODO: Mark the bank as invalid?
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
 		errno = err;
-		// TODO: Mark the bank as invalid?
 		return -err;
 	}
 
@@ -557,43 +499,59 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		entry->type = type;
 	}
 
-	if (lba_len == 0) {
+	// Determine the maximum LBA length for the Reader:
+	// - GCN or Wii SL: Full bank size.
+	// - Wii DL: Dual-layer bank size.
+	// - First bank in extended bank table: Smaller bank size.
+	if (lba_start < NHCD_BANKTABLE_ADDRESS_LBA) {
+		// Bank starts before the bank table.
+		// This is a relocated Bank 1 on a device with
+		// an extended bank table, so it can only support
+		// GCN disc images.
+		reader_lba_len = NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA;
+	} else {
 		// Use the default LBA length based on bank type.
 		switch (type) {
 			default:
 			case RVTH_BankType_Empty:
 			case RVTH_BankType_Unknown:
+			case RVTH_BankType_GCN:
 			case RVTH_BankType_Wii_SL:
 			case RVTH_BankType_Wii_DL_Bank2:
 				// Full bank.
-				lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
+				reader_lba_len = NHCD_BANK_WII_SL_SIZE_RVTR_LBA;
 				break;
 
 			case RVTH_BankType_Wii_DL:
 				// Dual-layer bank.
-				lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
-				break;
-
-			case RVTH_BankType_GCN:
-				// GameCube disc image.
-				lba_len = NHCD_BANK_GCN_DL_SIZE_NR_LBA;
+				reader_lba_len = NHCD_BANK_WII_DL_SIZE_RVTR_LBA;
 				break;
 		}
-		entry->lba_len = lba_len;
 	}
+
+	if (lba_len == 0) {
+		// Empty bank. Assume the length matches the bank,
+		// except for GameCube.
+		lba_len = (type == RVTH_BankType_GCN)
+			? NHCD_BANK_GCN_SIZE_NR_LBA
+			: reader_lba_len;
+	}
+
+	// Set the bank entry's LBA length.
+	entry->lba_len = lba_len;
+
+	// Initialize the disc image reader.
+	// NOTE: Always the plain reader for RVT-H HDD images.
+	entry->reader = reader_plain_open(f_img, lba_start, reader_lba_len);
 
 	if (type == RVTH_BankType_Empty) {
 		// We're done here.
 		return 0;
 	}
 
-	// Initialize the disc image reader.
-	// NOTE: Always the plain reader for RVT-H HDD images.
-	entry->reader = reader_plain_open(f_img, lba_start, lba_len);
-
 	// Parse the timestamp.
 	if (nhcd_timestamp) {
-		entry->timestamp = rvth_parse_timestamp(nhcd_timestamp);
+		entry->timestamp = rvth_timestamp_parse(nhcd_timestamp);
 	}
 
 	// Initialize fields from the disc header.
@@ -618,11 +576,19 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
  */
 const char *rvth_error(int err)
 {
-	static const char *const errtbl[] = {
+	// TODO: Update functions to only return POSIX error codes
+	// for system-level issues. For anything weird encountered
+	// within an RVT-H HDD or GCN/Wii disc image, an
+	// RvtH_Errors code should be retured instead.
+	static const char *const errtbl[RVTH_ERROR_MAX] = {
 		// tr: RVTH_ERROR_SUCCESS
 		"Success",
+		// tr: RVTH_ERROR_UNRECOGNIZED_FILE
+		"Unrecognized file format",
 		// tr: RVTH_ERROR_NHCD_TABLE_MAGIC
 		"Bank table magic is incorrect",
+		// tr: RVTH_ERROR_NO_BANKS
+		"No banks found",
 		// tr: RVTH_ERROR_BANK_UNKNOWN
 		"Bank status is unknown",
 		// tr: RVTH_ERROR_BANK_EMPTY
@@ -641,7 +607,39 @@ const char *rvth_error(int err)
 		"Wii game partition not found",
 		// tr: RVTH_ERROR_INVALID_BANK_COUNT
 		"RVT-H bank count field is invalid",
+		// tr: RVTH_ERROR_IS_HDD_IMAGE
+		"Operation cannot be performed on devices or HDD images",
+		// tr: RVTH_ERROR_IS_RETAIL_CRYPTO
+		"Cannot import a retail-encrypted Wii game",
+		// tr: RVTH_ERROR_IMAGE_TOO_BIG
+		"Source image does not fit in an RVT-H bank",
+		// tr: RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED
+		"Destination bank is not empty or deleted",
+		// tr: RVTH_ERROR_NOT_WII_IMAGE
+		"Wii-specific operation was requested on a non-Wii image",
+		// tr: RVTH_ERROR_IS_UNENCRYPTED
+		"Image is unencrypted",
+		// tr: RVTH_ERROR_IS_ENCRYPTED
+		"Image is encrypted",
+		// tr: RVTH_ERROR_PARTITION_TABLE_CORRUPTED
+		"Wii partition table is corrupted",
+		// tr: RVTH_ERROR_PARTITION_HEADER_CORRUPTED
+		"At least one Wii partition header is corrupted",
+		// tr: RVTH_ERROR_ISSUER_UNKNOWN
+		"Certificate has an unknown issuer",
+
+		// 'import' command: Dual-Layer errors.
+
+		// tr: RVTH_ERROR_IMPORT_DL_EXT_NO_BANK1
+		"Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.",
+		// tr: RVTH_ERROR_IMPORT_DL_LAST_BANK
+		"Cannot use the last bank for a Dual-Layer image",
+		// tr: RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED
+		"The second bank for the Dual-Layer image is not empty or deleted",
+		// tr: RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS
+		"The two banks are not contiguous",
 	};
+	// TODO: static_assert()
 
 	if (err < 0) {
 		return strerror(-err);
@@ -660,9 +658,10 @@ const char *rvth_error(int err)
  */
 static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 {
-	RvtH *rvth;
+	RvtH *rvth = NULL;
 	RvtH_BankEntry *entry;
-	int ret;
+	int ret = 0;	// errno or RvtH_Errors
+	int err = 0;	// errno setting
 	size_t size;
 
 	int64_t len;
@@ -682,13 +681,12 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	ret = ref_seeko(f_img, 0, SEEK_END);
 	if (ret != 0) {
 		// Seek error.
-		if (errno == 0) {
-			errno = EIO;
+		err = errno;
+		if (err == 0) {
+			err = EIO;
 		}
-		if (pErr) {
-			*pErr = -errno;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
 	len = ref_tello(f_img);
 
@@ -696,30 +694,24 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	ret = ref_seeko(f_img, 0, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
-		if (errno == 0) {
-			errno = EIO;
-		}
-		if (pErr) {
-			*pErr = -errno;
-		}
-		return NULL;
-	}
-
-	// Check the disc header.
-	errno = 0;
-	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
-	if (size != sizeof(sector_buf.u8)) {
-		// Short read.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
+		ret = -err;
+		goto fail;
+	}
+
+	// Check the disc header.
+	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
+	if (size != sizeof(sector_buf.u8)) {
+		// Short read.
+		err = errno;
+		if (err == 0) {
+			err = EIO;
 		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
 
 	// Check for GameCube and/or Wii magic numbers.
@@ -743,30 +735,22 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 			type = RVTH_BankType_GCN;
 		} else {
 			// Not supported.
-			ref_close(f_img);
-			errno = EIO;
-			if (pErr) {
-				*pErr = -EIO;
-			}
-			return NULL;
+			err = EIO;
+			ret = -EIO;
+			goto fail;
 		}
 	}
 
 	// Allocate memory for the RvtH object
-	errno = 0;
-	rvth = malloc(sizeof(RvtH));
+	rvth = calloc(1, sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
 
 	// Allocate memory for a single RvtH_BankEntry object.
@@ -775,22 +759,17 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		free(rvth);
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	};
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	rvth->f_img = f_img;
+	rvth->f_img = ref_dup(f_img);
 	entry = rvth->entries;
 	entry->lba_start = 0;
 	entry->lba_len = BYTES_TO_LBA(len);
@@ -816,6 +795,17 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Disc image loaded.
 	return rvth;
+
+fail:
+	// Failed to open the disc image.
+	rvth_close(rvth);
+	if (pErr) {
+		*pErr = ret;
+	}
+	if (err != 0) {
+		errno = err;
+	}
+	return NULL;
 }
 
 /**
@@ -827,71 +817,55 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 {
 	NHCD_BankTable_Header nhcd_header;
-	RvtH *rvth;
+	RvtH *rvth = NULL;
 	RvtH_BankEntry *rvth_entry;
-	int ret;
+	int ret = 0;	// errno or RvtH_Errors
+	int err = 0;	// errno setting
+
 	unsigned int i;
 	int64_t addr;
 	size_t size;
 
 	// Check the bank table header.
-	errno = 0;
 	ret = ref_seeko(f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
-	errno = 0;
 	size = ref_read(&nhcd_header, 1, sizeof(nhcd_header), f_img);
 	if (size != sizeof(nhcd_header)) {
 		// Short read.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
 
 	// Check the magic number.
 	if (nhcd_header.magic != be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
 		// Incorrect magic number.
-		ref_close(f_img);
-		if (pErr) {
-			*pErr = RVTH_ERROR_NHCD_TABLE_MAGIC;
-		}
-		errno = EIO;
-		return NULL;
+		err = EIO;
+		ret = RVTH_ERROR_NHCD_TABLE_MAGIC;
+		goto fail;
 	}
 
 	// Allocate memory for the RvtH object
-	errno = 0;
-	rvth = malloc(sizeof(RvtH));
+	rvth = calloc(1, sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
 
 	// Get the bank count.
@@ -902,13 +876,12 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		// but we're supporting up to 32 in case the user
 		// has modified it.
 		// TODO: More extensive "extra bank" testing.
-		free(rvth);
-		ref_close(f_img);
-		errno = EIO;
-		if (pErr) {
-			*pErr = RVTH_ERROR_INVALID_BANK_COUNT;
+		err = errno;
+		if (err == 0) {
+			err = ENOMEM;
 		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	}
 
 	// Allocate memory for the 8 RvtH_BankEntry objects.
@@ -916,20 +889,15 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = ENOMEM;
 		}
-		free(rvth);
-		ref_close(f_img);
-		errno = err;
-		if (pErr) {
-			*pErr = -err;
-		}
-		return NULL;
+		ret = -err;
+		goto fail;
 	};
 
-	rvth->f_img = f_img;
+	rvth->f_img = ref_dup(f_img);
 	rvth_entry = rvth->entries;
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
 	for (i = 0; i < rvth->bank_count; i++, rvth_entry++, addr += 512) {
@@ -944,30 +912,25 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 			continue;
 		}
 
-		errno = 0;
 		ret = ref_seeko(f_img, addr, SEEK_SET);
 		if (ret != 0) {
 			// Seek error.
-			int err = errno;
+			err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			rvth_close(rvth);
-			errno = err;
-			return NULL;
+			ret = -err;
+			goto fail;
 		}
-
-		errno = 0;
 		size = ref_read(&nhcd_entry, 1, sizeof(nhcd_entry), f_img);
 		if (size != sizeof(nhcd_entry)) {
 			// Short read.
-			int err = errno;
+			err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			rvth_close(rvth);
-			errno = err;
-			return NULL;
+			ret = -err;
+			goto fail;
 		}
 
 		// Check the type.
@@ -1004,10 +967,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		if (lba_start == 0 || lba_len == 0) {
 			// Invalid LBAs. Use the default starting offset.
 			// Bank size will be determined by rvth_init_BankEntry().
-			// NOTE: Assuming the default bank count, since Bank 1
-			// will eventually be relocated before the bank table header
-			// when extending the bank table.
-			lba_start = NHCD_BANK_1_START_LBA(NHCD_BANK_COUNT) + (NHCD_BANK_SIZE_LBA * i);
+			lba_start = NHCD_BANK_START_LBA(i, rvth->bank_count);
 			lba_len = 0;
 		}
 
@@ -1018,6 +978,17 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 
 	// RVT-H image loaded.
 	return rvth;
+
+fail:
+	// Failed to open the HDD image.
+	rvth_close(rvth);
+	if (pErr) {
+		*pErr = ret;
+	}
+	if (err != 0) {
+		errno = err;
+	}
+	return NULL;
 }
 
 /**
@@ -1029,7 +1000,8 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 RvtH *rvth_open(const TCHAR *filename, int *pErr)
 {
 	RefFile *f_img;
-	int ret;
+	RvtH *rvth = NULL;
+	int ret = 0;
 	int64_t len;
 
 	// Open the disk image.
@@ -1049,28 +1021,31 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 		if (errno == 0) {
 			errno = EIO;
 		}
-		if (pErr) {
-			*pErr = -errno;
-		}
-		return NULL;
+		ret = -errno;
+		goto end;
 	}
 	len = ref_tello(f_img);
 	if (len == 0) {
 		// File is empty.
 		errno = EIO;
-		if (pErr) {
-			*pErr = -EIO;
-		}
-		return NULL;
 	} else if (len <= 2*LBA_TO_BYTES(NHCD_BANK_SIZE_LBA)) {
 		// Two banks or less.
 		// This is most likely a standalone disc image.
-		return rvth_open_gcm(f_img, pErr);
+		rvth = rvth_open_gcm(f_img, pErr);
 	} else {
 		// More than two banks.
 		// This is most likely an RVT-H HDD image.
-		return rvth_open_hdd(f_img, pErr);
+		rvth = rvth_open_hdd(f_img, pErr);
 	}
+
+end:
+	if (pErr) {
+		*pErr = -errno;
+	}
+	// If the RvtH object was opened, it will have
+	// called ref_dup() to increment the reference count.
+	ref_close(f_img);
+	return rvth;
 }
 
 /**
@@ -1137,7 +1112,7 @@ unsigned int rvth_get_BankCount(const RvtH *rvth)
  * @param rvth	[in] RVT-H disk image.
  * @param bank	[in] Bank number. (0-7)
  * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- * @return Bank table entry, or NULL if out of range or empty.
+ * @return Bank table entry, or NULL if out of range.
  */
 const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, int *pErr)
 {
@@ -1151,14 +1126,6 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 		errno = ERANGE;
 		if (pErr) {
 			*pErr = -EINVAL;
-		}
-		return NULL;
-	}
-
-	// Check if the bank is empty.
-	if (rvth->entries[bank].type == RVTH_BankType_Empty) {
-		if (pErr) {
-			*pErr = RVTH_ERROR_BANK_EMPTY;
 		}
 		return NULL;
 	}

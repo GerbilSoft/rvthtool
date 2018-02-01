@@ -31,14 +31,55 @@ extern "C" {
 // SHA-1 hash length.
 #define SHA1_HASH_LENGTH 20
 
+struct _HashCtx_SHA1;
+typedef struct _HashCtx_SHA1 HashCtx_SHA1;
+
 /**
- * Calculate an SHA-1 hash.
- * @param hash	[out] SHA-1 hash buffer. (Must be SHA1_HASH_LENGTH bytes.)
+ * Create an SHA-1 hash object.
+ * @return SHA-1 hash object, or NULL on error.
+ */
+HashCtx_SHA1 *hashw_sha1_new(void);
+
+/**
+ * Free an SHA-1 hash object.
+ * @param sha1 SHA-1 hash object.
+ */
+void hashw_sha1_free(HashCtx_SHA1 *sha1);
+
+/**
+ * Update an SHA-1 hash object with new data.
+ * @param sha1	[in] SHA-1 hash object.
  * @param data	[in] Data to hash.
  * @param size	[in] Size of `data`.
  * @return 0 on success; negative POSIX error code on error.
  */
-int hashw_sha1(uint8_t *hash, const uint8_t *data, size_t size);
+int hashw_sha1_update(HashCtx_SHA1 *sha1, const uint8_t *data, size_t size);
+
+/**
+ * Calculate the final SHA-1 hash.
+ *
+ * NOTE: The SHA-1 hash object is NOT freed when calling this function.
+ * Its internal state will be reset and it will be usable for calculating
+ * another SHA-1 hash.
+ *
+ * @param sha1		[in] SHA-1 hash object.
+ * @param pHash		[out] SHA-1 hash buffer. (Must be SHA1_HASH_LENGTH bytes.)
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int hashw_sha1_finish(HashCtx_SHA1 *sha1, uint8_t *pHash);
+
+/**
+ * Calculate an SHA-1 hash.
+ *
+ * This is a convenience wrapper function that creates a
+ * temporary SHA-1 hash object.
+ *
+ * @param pHash	[out] SHA-1 hash buffer. (Must be SHA1_HASH_LENGTH bytes.)
+ * @param data	[in] Data to hash.
+ * @param size	[in] Size of `data`.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int hashw_sha1(uint8_t *pHash, const uint8_t *data, size_t size);
 
 #ifdef __cplusplus
 }

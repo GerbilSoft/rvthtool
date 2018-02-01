@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * cert.h: Certificate management.                                         *
+ * cert.c: Certificate management.                                         *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -22,6 +22,7 @@
 
 #include "cert.h"
 #include "cert_store.h"
+#include "hashw.h"
 
 #include "common.h"
 #include "byteswap.h"
@@ -35,22 +36,27 @@
 #include "hashw.h"
 
 /**
+ * The signature is stored in PKCS #1 format.
+ * References:
+ * - https://tools.ietf.org/html/rfc3447
+ * - https://tools.ietf.org/html/rfc2313
+ *
  * The signature consists of:
- * - Magic number: 0x00,0x01,0xFF
+ * - PKCS#1 header: 0x00,0x01,0xFF
+ *   - 0x01 is the block type. May be 0x02 or 0x00 also.
+ *   - 0xFF is the first padding byte.
+ *     - For block type 0, this is 0x00.
+ *     - For block type 2, this is pseudorandom.
  * - 36 bytes at the end of the signature:
- *   - 16 bytes: Fixed
+ *   - 1 byte: 0x00
+ *   - 15 bytes: DER SHA-1 identifier.
  *   - 20 bytes: SHA-1 of the rest of the contents.
- * All other bytes are 0xFF.
  */
 
-// Magic number at the start of the signature.
-static const uint8_t sig_magic_retail[3] = {0x00,0x01,0xFF};
-static const uint8_t sig_magic_debug[2]  = {0x00,0x02};
-
-// Fixed data at the end of the signature. (Retail only!)
-static const uint8_t sig_fixed_data_retail[16] = {
-	0x00,0x30,0x21,0x30,0x09,0x06,0x05,0x2B,
-	0x0E,0x03,0x02,0x1A,0x05,0x00,0x04,0x14
+// DER identifier for SHA-1 hashes.
+static const uint8_t pkcs1_der_sha1[15] = {
+	0x30,0x21,0x30,0x09,0x06,0x05,0x2B,0x0E,
+	0x03,0x02,0x1A,0x05,0x00,0x04,0x14
 };
 
 /**
@@ -92,8 +98,8 @@ int cert_verify(const uint8_t *data, size_t size)
 	uint8_t sha1_hash[SHA1_HASH_LENGTH];
 
 	/** Data offsets. **/
-	// Fixed data offset.
-	unsigned int sig_fixed_data_offset;
+	// DER identifier offset.
+	unsigned int sig_der_offset;
 	// SHA-1 offset in the signature.
 	unsigned int sig_sha1_offset;
 	// Start offset within `data` for SHA-1 calculation.
@@ -125,6 +131,11 @@ int cert_verify(const uint8_t *data, size_t size)
 
 	// Get the issuer's certificate.
 	issuer = cert_get_issuer_from_name(s_issuer);
+	if (issuer == RVL_CERT_ISSUER_UNKNOWN) {
+		// Unknown issuer.
+		errno = EINVAL;
+		return SIG_ERROR_UNKNOWN_ISSUER;
+	}
 	cert = (const RVL_Cert*)cert_get(issuer);
 	if (!cert) {
 		// Unknown issuer.
@@ -195,8 +206,8 @@ int cert_verify(const uint8_t *data, size_t size)
 		return tmp_ret;
 	}
 
-	// Fixed data offset.
-	sig_fixed_data_offset = sig_len - sizeof(sig_fixed_data_retail) - SHA1_HASH_LENGTH;
+	// DER separator offset.
+	sig_der_offset = sig_len - 1 - sizeof(pkcs1_der_sha1) - SHA1_HASH_LENGTH;
 
 	// SHA-1 offset in the signature.
 	sig_sha1_offset = sig_len - SHA1_HASH_LENGTH;
@@ -205,42 +216,64 @@ int cert_verify(const uint8_t *data, size_t size)
 	// Includes sig->issuer[], which is always 64-byte aligned.
 	data_sha1_offset = 4 + sig_len + 0x3C;
 
+	// Check for the PKCS#1 magic number.
+	// Reference: https://tools.ietf.org/html/rfc2313
+	// Format: 00 || BT || PS || 00 || D
+	// BT can be one of the following:
+	// - 00: Private key - padding (PS) is 00
+	// - 01: Private key - padding (PS) is FF
+	// - 02: Public key - padding is pseudorandom
+	// PS is the padding string.
+	// Padding is followed by a 0x00 byte, then the data.
+	// Last one seems to match some RVT-H prototypes. (TODO ignore previous commit)
 	// Verify the signature.
 	ret = 0;
-	if (!memcmp(buf, sig_magic_retail, sizeof(sig_magic_retail))) {
-		// Found retail magic.
-		// NOTE: This is also present in the root certificate and
-		// the debug certificates
-		bool has_FF = true;	// 0xFF padding
+	if (buf[0] == 0x00 && buf[1] <= 0x02) {
+		// Padding depends on the block type.
+		if (buf[1] < 0x02) {
+			// Block type 0x00 or 0x01.
+			// Check the padding.
+			static const uint8_t padding[2] = {0x00, 0xFF};
+			const uint8_t ps = padding[buf[1]];
 
-		// Check for 0xFF padding.
-		for (i = (unsigned int)sizeof(sig_magic_retail); i < sig_fixed_data_offset; i++) {
-			if (buf[i] != 0xFF) {
-				// Incorrect padding.
-				has_FF = false;
-				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
-				break;
+			for (i = 2; i < sig_der_offset-1; i++) {
+				if (buf[i] != ps) {
+					// Incorrect padding.
+					ret = SIG_FAIL_PADDING_ERROR | SIG_ERROR_INVALID;
+					break;
+				}
 			}
-		}
-		if (has_FF) {
-			// Check the fixed data.
-			if (memcmp(&buf[sig_fixed_data_offset],
-			    sig_fixed_data_retail, sizeof(sig_fixed_data_retail)) != 0)
-			{
-				// Fixed data is incorrect.
-				ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
-			}
-		}
-	} else if (!memcmp(buf, sig_magic_debug, sizeof(sig_magic_debug))) {
-		// Found debug magic.
-		// No FF padding; not sure what the random data is.
-		if (issuer < RVL_CERT_ISSUER_DEBUG_CA || issuer > RVL_CERT_ISSUER_DEBUG_TMD) {
-			// Wrong magic number for this issuer.
-			return SIG_ERROR_WRONG_MAGIC_NUMBER;
+		} else {
+			// Block type 0x02.
+			// This has pseudorandom data, so we can't check it.
 		}
 	} else {
-		// Signature magic is incorrect.
-		ret = SIG_FAIL_BASE_ERROR | SIG_ERROR_INVALID;
+		// Invalid block type.
+		ret = SIG_FAIL_HEADER_ERROR | SIG_ERROR_INVALID;
+	}
+
+	// NOTE: If block type is 0x02, the DER identifier is missing.
+	// This might be specific to the debug issuer, though.
+	// Reference: https://github.com/iversonjimmy/acer_cloud_wifi_copy/blob/master/sw_x/gvm_core/internal/csl/src/cslrsa.c#L165
+	if (buf[1] == 0x02) {
+		// There's still a 0x00 byte before the SHA-1 hash, though.
+		if (buf[sig_sha1_offset-1] != 0x00) {
+			// Missing 0x00 byte.
+			ret |= SIG_FAIL_NO_SEPARATOR_ERROR | SIG_ERROR_INVALID;
+		}
+	} else {
+		// Check for the 0x00 byte before the DER identifier.
+		if (buf[sig_der_offset] != 0x00) {
+			// Missing 0x00 byte.
+			ret |= SIG_FAIL_NO_SEPARATOR_ERROR | SIG_ERROR_INVALID;
+		}
+
+		// Check the DER identifier.
+		if (memcmp(&buf[sig_der_offset+1], pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0)
+		{
+			// Incorrect or missing DER identifier.
+			ret |= SIG_FAIL_DER_TYPE_ERROR | SIG_ERROR_INVALID;
+		}
 	}
 
 	// Check the SHA-1 hash.
@@ -261,4 +294,207 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	return ret;
+}
+
+/**
+ * Fakesign a ticket.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_ticket(RVL_Ticket *ticket)
+{
+	uint32_t *fake;
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!ticket) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the signature and padding.
+	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(ticket->signature, 0, sizeof(ticket->signature));
+	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
+
+	// Using 0x25C for brute-forcing the SHA-1 hash.
+	// This area is part of the content access permissions.
+	// Disc partitions only have one content, so the rest is unused.
+	// (Wiimm's ISO Tools uses 0x24C.)
+	// NOTE: Brute-forcing is done using HOST-endian.
+	fake = (uint32_t*)&ticket->content_access_perm[0x3A];
+	*fake = 0;
+	do {
+		// Calculate the SHA-1 of the ticket.
+		// If the first byte is 0, we're done.
+		hashw_sha1_update(sha1, (const uint8_t*)&ticket->issuer,
+			sizeof(*ticket) - offsetof(RVL_Ticket, issuer));
+		hashw_sha1_finish(sha1, digest);
+	} while (digest[0] != 0 && ++(*fake) != 0);
+
+	// TODO: If the first byte of the hash is not 0, failed.
+	hashw_sha1_free(sha1);
+	return 0;
+}
+
+/**
+ * Sign a ticket with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
+{
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!ticket) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the padding.
+	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
+
+	// Calculate the SHA-1 hash.
+	hashw_sha1_update(sha1, (const uint8_t*)&ticket->issuer,
+		sizeof(*ticket) - offsetof(RVL_Ticket, issuer));
+	hashw_sha1_finish(sha1, digest);
+
+	// Sign the ticket.
+	// TODO: Check for errors.
+	rsaw_sha1_sign(ticket->signature, sizeof(ticket->signature), key, digest);
+
+	hashw_sha1_free(sha1);
+	return 0;
+}
+
+/**
+ * Fakesign a TMD.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_tmd(uint8_t *tmd, size_t size)
+{
+	RVL_TMD_Header *tmdHeader = (RVL_TMD_Header*)tmd;
+	uint32_t *fake;
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!tmd || size < sizeof(RVL_TMD_Header)) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the signature and padding.
+	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(tmdHeader->signature, 0, sizeof(tmdHeader->signature));
+	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
+
+	// Using 0x19C for brute-forcing the SHA-1 hash.
+	// This area is "reserved" and is otherwise unused.
+	// (Wiimm's ISO Tools uses 0x19A.)
+	// NOTE: Brute-forcing is done using HOST-endian.
+	fake = (uint32_t*)&tmdHeader->reserved[2];
+	*fake = 0;
+	do {
+		// Calculate the SHA-1 of the TMD.
+		// If the first byte is 0, we're done.
+		hashw_sha1_update(sha1, &tmd[offsetof(RVL_TMD_Header, issuer)],
+			size - offsetof(RVL_TMD_Header, issuer));
+		hashw_sha1_finish(sha1, digest);
+	} while (digest[0] != 0 && ++(*fake) != 0);
+
+	// TODO: If the first byte of the hash is not 0, failed.
+	hashw_sha1_free(sha1);
+	return 0;
+}
+
+/**
+ * Sign a TMD with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key)
+{
+	RVL_TMD_Header *tmdHeader = (RVL_TMD_Header*)tmd;
+	HashCtx_SHA1 *sha1 = NULL;
+	uint8_t digest[SHA1_HASH_LENGTH];
+
+	if (!tmd || size < sizeof(RVL_TMD_Header)) {
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	sha1 = hashw_sha1_new();
+	if (!sha1) {
+		// Error initializing an SHA-1 context.
+		if (errno == 0) {
+			errno = ENOMEM;
+		}
+		return -errno;
+	}
+
+	// Zero out the padding.
+	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
+
+	// Calculate the SHA-1 hash.
+	hashw_sha1_update(sha1, &tmd[offsetof(RVL_TMD_Header, issuer)],
+		size - offsetof(RVL_TMD_Header, issuer));
+	hashw_sha1_finish(sha1, digest);
+
+	// Sign the TMD.
+	// TODO: Check for errors.
+	rsaw_sha1_sign(tmdHeader->signature, sizeof(tmdHeader->signature), key, digest);
+
+	hashw_sha1_free(sha1);
+	return 0;
 }

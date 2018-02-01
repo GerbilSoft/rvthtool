@@ -21,9 +21,12 @@
 #ifndef __RVTHTOOL_LIBRVTH_CERT_H__
 #define __RVTHTOOL_LIBRVTH_CERT_H__
 
-#include "common.h"
 #include <stdint.h>
 #include <stddef.h>
+
+#include "common.h"
+#include "gcn_structs.h"
+#include "rsaw.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,21 +56,27 @@ typedef enum {
 	// Signature does not match the declared type.
 	SIG_ERROR_WRONG_TYPE_DECLARATION = 4,
 
-	// Signature's magic number does not match the issuer.
-	SIG_ERROR_WRONG_MAGIC_NUMBER = 5,
-
 	// The following values indicate the signature was
 	// processed, but is not valid or is fakesigned.
-	SIG_FAIL_MASK		= (0xFF << 8),
+	SIG_FAIL_MASK                   = (0xFF << 8),
 
-	// Signature base data is incorrect.
-	SIG_FAIL_BASE_ERROR	= (1 << (0+8)),
+	// PKCS#1 header is incorrect.
+	SIG_FAIL_HEADER_ERROR           = (1 << (0+8)),
+
+	// Padding is incorrect.
+	SIG_FAIL_PADDING_ERROR          = (1 << (1+8)),
+
+	// Missing 0x00 byte between padding and data.
+	SIG_FAIL_NO_SEPARATOR_ERROR     = (1 << (2+8)),
+
+	// DER type is incorrect.
+	SIG_FAIL_DER_TYPE_ERROR         = (1 << (3+8)),
 
 	// Hash is incorrect.
-	SIG_FAIL_HASH_ERROR	= (1 << (1+8)),
+	SIG_FAIL_HASH_ERROR             = (1 << (4+8)),
 
 	// Hash is fakesigned. (starts with 0x00)
-	SIG_FAIL_HASH_FAKE	= (1 << (2+8)),
+	SIG_FAIL_HASH_FAKE              = (1 << (5+8)),
 } Sig_Status;
 
 /**
@@ -86,6 +95,54 @@ typedef enum {
  * @return Signature status. (Sig_Status if positive; if negative, POSIX error code.)
  */
 int cert_verify(const uint8_t *data, size_t size);
+
+/**
+ * Fakesign a ticket.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_ticket(RVL_Ticket *ticket);
+
+/**
+ * Sign a ticket with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer and title key
+ * must be updated *before* calling this function.
+ *
+ * @param ticket Ticket to fakesign.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key);
+
+/**
+ * Fakesign a TMD.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_fakesign_tmd(uint8_t *tmd, size_t size);
+
+/**
+ * Sign a TMD with real encryption keys.
+ *
+ * NOTE: If changing the encryption type, the issuer must be
+ * updated *before* calling this function.
+ *
+ * @param tmd TMD to fakesign.
+ * @param size Size of TMD.
+ * @param key RSA-2048 private key.
+ * @return 0 on success; negative POSIX error code on error.
+ */
+int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key);
 
 #ifdef __cplusplus
 }

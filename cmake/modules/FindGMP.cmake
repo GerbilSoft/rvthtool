@@ -10,8 +10,8 @@
 
 
 if (GMP_INCLUDE_DIR AND GMP_LIBRARIES)
-  # Already in cache, be silent
-  set(GMP_FIND_QUIETLY TRUE)
+# Already in cache, be silent
+	set(GMP_FIND_QUIETLY TRUE)
 endif (GMP_INCLUDE_DIR AND GMP_LIBRARIES)
 
 find_path(GMP_INCLUDE_DIR NAMES gmp.h )

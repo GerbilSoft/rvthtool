@@ -54,6 +54,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// TODO: Check the error code.
 	entry = rvth_get_BankEntry(rvth, bank, &ret);
 	if (!entry) {
+		// NOTE: Should not return NULL for empty banks anymore...
 		if (ret != 0 && ret != RVTH_ERROR_BANK_EMPTY) {
 			// Error...
 			return ret;
@@ -77,7 +78,6 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
-			// NOTE: Should not happen...
 			s_type = "Empty";
 			break;
 		case RVTH_BankType_Unknown:
@@ -109,10 +109,15 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 		fputs("Disc image: ", stdout);
 	}
 	printf("%s%s\n", s_type, (entry->is_deleted ? " [DELETED]" : ""));
+
+	// LBAs.
+	printf("- LBA start:   0x%08X\n", entry->lba_start);
+	printf("- LBA length:  0x%08X\n", entry->lba_len);
+
 	if (entry->type <= RVTH_BankType_Unknown ||
 	    entry->type >= RVTH_BankType_MAX)
 	{
-		// Cannot display any information for this type.
+		// Cannot display any more information for this type.
 		return 0;
 	}
 
@@ -126,10 +131,6 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	} else {
 		printf("- Timestamp:   Unknown\n");
 	}
-
-	// LBAs.
-	printf("- LBA start:   0x%08X\n", entry->lba_start);
-	printf("- LBA length:  0x%08X\n", entry->lba_len);
 
 	// Game ID.
 	printf("- Game ID:     %.6s\n", entry->id6);
@@ -188,6 +189,10 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 			// tr: RVTH_SigStatus_Fake
 			" (fakesigned)",
 		};
+
+		// IOS version.
+		// TODO: If 0, print an error message.
+		printf("- IOS version: %u\n", entry->ios_version);
 
 		// Encryption type.
 		// TODO: static_assert() implementation.
