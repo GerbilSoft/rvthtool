@@ -645,6 +645,8 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 		// Must convert to debug realsigned for use on RVT-H.
 		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, bank, NULL);
 		if (entry &&
+			(entry->type == RVTH_BankType_Wii_SL ||
+			 entry->type == RVTH_BankType_Wii_DL) &&
 			(entry->crypto_type == RVTH_CryptoType_Retail ||
 			 entry->crypto_type == RVTH_CryptoType_Korean ||
 		         entry->ticket.sig_status != RVTH_SigStatus_OK ||
@@ -653,6 +655,12 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 			// Retail or Korean encryption, or invalid signature.
 			// Convert to Debug.
 			ret = rvth_recrypt_partitions(rvth, bank, RVL_KEY_DEBUG, callback);
+		}
+		else
+		{
+			// No recryption needed.
+			// Write the identifier to indicate that this bank was imported.
+			ret = rvth_recrypt_id(rvth, bank);
 		}
 	}
 	rvth_close(rvth_src);

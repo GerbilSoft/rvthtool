@@ -149,15 +149,9 @@ static int parse_rvl_ptbl(Reader *reader, pt_entry_t *ptbl, int size, bool remov
 		for (j = 0, j_orig = 0; j < count && pt_count < size; j++, j_orig++, pte++) {
 			uint32_t lba_start = (uint32_t)((int64_t)be32_to_cpu(pte->addr) / (RVTH_BLOCK_SIZE/4));
 
-			if (remove_upd && be32_to_cpu(pte->type) != 1) {
-				// Standard partition.
-				ptbl->lba_start = lba_start;
-				snprintf(ptbl->id, sizeof(ptbl->id), "%up%u", i, j);
-				snprintf(ptbl->id_orig, sizeof(ptbl->id_orig), "%up%u", i, j_orig);
-				ptbl++;
-				pt_count++;
-			} else {
-				// Update partition.
+			if (remove_upd && be32_to_cpu(pte->type) == 1) {
+				// Update partition, and remove_upd is set.
+				// Remove the partition.
 				upd_lba[upd_count++] = lba_start;
 				// Shift the rest of the partitions over.
 				memmove(pte, pte+1, (count-j) * sizeof(*pte));
@@ -165,6 +159,13 @@ static int parse_rvl_ptbl(Reader *reader, pt_entry_t *ptbl, int size, bool remov
 				pte_start[count-1].type = 0;
 				// Decrement the counters to compensate for the shift.
 				count--; j--; pte--;
+			} else {
+				// Save this partition.
+				ptbl->lba_start = lba_start;
+				snprintf(ptbl->id, sizeof(ptbl->id), "%up%u", i, j);
+				snprintf(ptbl->id_orig, sizeof(ptbl->id_orig), "%up%u", i, j_orig);
+				ptbl++;
+				pt_count++;
 			}
 		}
 
@@ -177,7 +178,7 @@ static int parse_rvl_ptbl(Reader *reader, pt_entry_t *ptbl, int size, bool remov
 		errno = 0;
 		lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
 		if (lba_size != 2) {
-			// Read error.
+			// Write error.
 			if (errno == 0) {
 				errno = EIO;
 			}
@@ -254,6 +255,7 @@ static int rvth_create_id(uint8_t *id, size_t size, const GCN_DiscHeader *gcn, c
 int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 {
 	RvtH_BankEntry *entry;
+	Reader *reader;
 	bool is_wii = false;
 	unsigned int lba_size;
 
@@ -309,9 +311,10 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 		goto end;
 	}
 
-	// Read the disc header.
+	// Get the GCN disc header.
+	reader = entry->reader;
 	errno = 0;
-	lba_size = reader_read(entry->reader, &sbuf.u8, 0, 1);
+	lba_size = reader_read(reader, &sbuf.u8, 0, 1);
 	if (lba_size != 1) {
 		// Unable to read the disc header.
 		err = errno;
@@ -326,7 +329,7 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 	if (!is_wii) {
 		// GCN. Write at 0x480.
 		errno = 0;
-		lba_size = reader_read(entry->reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+		lba_size = reader_read(reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
 		if (lba_size != 1) {
 			err = errno;
 			if (err == 0) {
@@ -337,7 +340,7 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 		}
 		rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
 		errno = 0;
-		lba_size = reader_write(entry->reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+		lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
 		if (lba_size != 1) {
 			err = errno;
 			if (err == 0) {
@@ -347,10 +350,75 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 			goto end;
 		}
 	} else {
-		// Wii. Write before H3 tables.
+		// Wii. Write at the end of the partition header.
 		// TODO: Get partitions.
-		//uint8_t sig[256];
+		pt_entry_t ptbl[31];
+		const pt_entry_t *ptbl_entry;
+		int pt_count = 0;
+		char ptid_buf[24];
+		int i;
+
+		// Save the GCN header for later.
 		memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
+
+		// Read and parse the partition table.
+		errno = 0;
+		pt_count = parse_rvl_ptbl(reader, ptbl, ARRAY_SIZE(ptbl), false);
+		if (pt_count == 0) {
+			// No partitions...
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			ret = -err;
+			goto end;
+		} else if (pt_count < 0) {
+			// An error occurred.
+			err = -pt_count;
+			ret = pt_count;
+			goto end;
+		}
+
+		// Write the ID at the end of each partition header.
+		ptbl_entry = ptbl;
+		for (i = 0; i < pt_count; i++, ptbl_entry++) {
+			uint8_t id_buf[512];	// need to read the LBA
+			const uint32_t lba_id = ptbl_entry->lba_start + BYTES_TO_LBA(0x7E00);
+
+			// Read the last LBA of the partition header.
+			errno = 0;
+			lba_size = reader_read(reader, id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
+			if (lba_size != BYTES_TO_LBA(sizeof(id_buf))) {
+				// Read error.
+				err = errno;
+				if (err == 0) {
+					err = EIO;
+				}
+				ret = -err;
+				goto end;
+			}
+
+			// TODO: Verify that the end of the partition header is blank.
+			// It might not be for games with lots of partitions, e.g. Brawl,
+			// or if the image was previously imported.
+
+			// Write the identifier.
+			snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptbl_entry->id_orig, ptbl_entry->id);
+			rvth_create_id(&id_buf[256], 256, &gcn, ptid_buf);
+
+			// Write the updated LBA.
+			errno = 0;
+			lba_size = reader_write(reader, id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
+			if (lba_size != BYTES_TO_LBA(sizeof(id_buf))) {
+				// Write error.
+				err = errno;
+				if (err == 0) {
+					err = EIO;
+				}
+				ret = -err;
+				goto end;
+			}
+		}
 	}
 
 end:
@@ -732,8 +800,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			goto end;
 		}
 
-		// Write the new certificate chain.
-		// Cert chain order for retail is Ticket, CA, TMD.
+		// Certificate chain order for retail is Ticket, CA, TMD.
 		// TODO: Verify for debug! (and write the dev cert?)
 		p_cert_chain = &hdr_new.u8[data_pos];
 		memcpy(p_cert_chain, cert_ticket, sizeof(*cert_ticket));

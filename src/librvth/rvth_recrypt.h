@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-struct _RvtH;
+int rvth_recrypt_id(RvtH *rvth, unsigned int bank);
 
 /**
  * Re-encrypt partitions in a Wii disc image.
@@ -49,7 +49,7 @@ struct _RvtH;
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_recrypt_partitions(struct _RvtH *rvth, unsigned int bank,
+int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	RVL_AES_Keys_e toKey, RvtH_Progress_Callback callback);
 
 #ifdef __cplusplus
