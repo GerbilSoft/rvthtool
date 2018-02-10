@@ -283,7 +283,8 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	game_lba = rvth_find_GamePartition_int(&sbuf.pt);
 	if (game_lba == 0) {
 		// No game partition.
-		return bankType;
+		ret = bankType;
+		goto end;
 	}
 
 	// Found the game partition.
@@ -301,10 +302,11 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start + game_lba), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
-		if (errno != EIO) {
-			errno = EIO;
+		ret = -errno;
+		if (ret == 0) {
+			ret = -EIO;
 		}
-		return -errno;
+		goto end;
 	}
 	errno = 0;
 	size = ref_read(pthdr, 1, sizeof(*pthdr), f_img);
@@ -321,17 +323,19 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	data_offset = (int64_t)be32_to_cpu(pthdr->data_offset) << 2;
 	if (data_offset < (int64_t)sizeof(*pthdr)) {
 		// Invalid offset.
-		return bankType;
+		ret = bankType;
+		goto end;
 	}
 
 	// Read the first LBA of the partition.
 	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start + game_lba) + data_offset, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
-		if (errno != EIO) {
-			errno = EIO;
+		ret = -errno;
+		if (ret == 0) {
+			ret = -EIO;
 		}
-		return -errno;
+		goto end;
 	}
 	errno = 0;
 	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
