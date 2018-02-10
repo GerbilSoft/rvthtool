@@ -618,16 +618,13 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	RvtH_BankEntry *entry;
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
-	size_t size;
 
 	int64_t len;
 	uint8_t type;
+	bool isDeleted;
 
-	// Sector buffer.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		GCN_DiscHeader gcn;
-	} sector_buf;
+	// Disc header.
+	GCN_DiscHeader discHeader;
 
 	// TODO: Detect CISO and WBFS.
 
@@ -658,30 +655,14 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		goto fail;
 	}
 
-	// Check the disc header.
-	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
-	if (size != sizeof(sector_buf.u8)) {
-		// Short read.
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		ret = -err;
-		goto fail;
-	}
-
-	// Check for GameCube and/or Wii magic numbers.
-	ret = rvth_disc_header_identify(&sector_buf.gcn);
+	// Read the GCN disc header.
+	// TODO: For non-deleted banks, verify the magic number?
+	ret = rvth_disc_header_get(f_img, 0, &discHeader, &isDeleted);
 	if (ret < 0) {
 		// Error...
+		// TODO: Mark the bank as invalid?
 		err = -ret;
 		goto fail;
-	} else if (ret == RVTH_BankType_Unknown) {
-		// Check if it's empty.
-		if (rvth_is_block_empty(sector_buf.u8, sizeof(sector_buf.u8))) {
-			// Empty sector.
-			ret = RVTH_BankType_Empty;
-		}
 	}
 	type = (uint8_t)ret;
 
@@ -718,7 +699,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	entry->lba_start = 0;
 	entry->lba_len = BYTES_TO_LBA(len);
 	entry->type = type;
-	entry->is_deleted = false;
+	entry->is_deleted = isDeleted;
 
 	// Initialize the disc image reader.
 	// TODO: Handle CISO and WBFS for standalone disc images.
@@ -728,14 +709,16 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// TODO: Get the timestamp from the file.
 	entry->timestamp = -1;
 
-	// Initialize fields from the disc header.
-	rvth_init_BankEntry_gcn(entry, &sector_buf.gcn);
+	if (type != RVTH_BankType_Empty) {
+		// Initialize fields from the disc header.
+		rvth_init_BankEntry_gcn(entry, &discHeader);
 
-	// TODO: Error handling.
-	// Initialize the region code.
-	rvth_init_BankEntry_region(entry);
-	// Initialize the encryption status.
-	rvth_init_BankEntry_crypto(entry, &sector_buf.gcn);
+		// TODO: Error handling.
+		// Initialize the region code.
+		rvth_init_BankEntry_region(entry);
+		// Initialize the encryption status.
+		rvth_init_BankEntry_crypto(entry, &discHeader);
+	}
 
 	// Disc image loaded.
 	return rvth;
