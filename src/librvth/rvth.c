@@ -54,62 +54,6 @@ static void trim_title(char *title, int size)
 }
 
 /**
- * Find the game partition in a Wii disc image.
- * @param reader	[in] Reader*
- * @return Game partition LBA (relative to start of reader), or 0 on error.
- */
-uint32_t rvth_find_GamePartition(Reader *reader)
-{
-	// Assuming this is a valid Wii disc image.
-	int64_t addr;
-	unsigned int ptcount, i;
-	uint32_t lba_size;
-
-	// Volume group and partition table.
-	// NOTE: Only reading the first partition table,
-	// which we're assuming is stored directly after
-	// the volume group table.
-	// FIXME: Handle other cases when using direct device access on Windows.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		struct {
-			RVL_VolumeGroupTable vgtbl;
-			RVL_PartitionTableEntry ptbl[15];
-		};
-	} pt;
-
-	// Get the volume group table.
-	lba_size = reader_read(reader, &pt, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
-	if (lba_size != 1) {
-		// Read error.
-		return 0;
-	}
-
-	// Game partition is always in volume group 0.
-	addr = ((int64_t)be32_to_cpu(pt.vgtbl.vg[0].addr) << 2);
-	if (addr != (RVL_VolumeGroupTable_ADDRESS + sizeof(pt.vgtbl))) {
-		// Partition table offset isn't supported right now.
-		return 0;
-	}
-
-	ptcount = be32_to_cpu(pt.vgtbl.vg[0].count);
-	if (ptcount > ARRAY_SIZE(pt.ptbl)) {
-		// Can't check this many partitions.
-		// Reduce it to the maximum we can check.
-		ptcount = ARRAY_SIZE(pt.ptbl);
-	}
-	for (i = 0; i < ptcount; i++) {
-		if (pt.ptbl[i].type == cpu_to_be32(0)) {
-			// Found the game partition.
-			return (be32_to_cpu(pt.ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
-		}
-	}
-
-	// No game partition found...
-	return 0;
-}
-
-/**
  * Initialize the GCN Disc Header fields in an RvtH_BankEntry.
  * The reader field must have already been set.
  * @param entry		[in,out] RvtH_BankEntry

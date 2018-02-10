@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 struct _RefFile;
+struct _Reader;
 struct _GCN_DiscHeader;
 
 #ifdef __cplusplus
@@ -47,6 +48,13 @@ extern "C" {
 int rvth_disc_header_identify(const struct _GCN_DiscHeader *discHeader);
 
 /**
+ * Find the game partition in a Wii disc image.
+ * @param reader	[in] Reader*
+ * @return Game partition LBA (relative to start of reader), or 0 on error.
+ */
+uint32_t rvth_find_GamePartition(struct _Reader *reader);
+
+/**
  * Read a GCN/Wii disc header and determine its type.
  *
  * On some RVT-H firmware versions, pressing the "flush" button zeroes
@@ -59,7 +67,7 @@ int rvth_disc_header_identify(const struct _GCN_DiscHeader *discHeader);
  *
  * @param f_img		[in] Disc image file.
  * @param lba_start	[in] Starting LBA.
- * @param discHeader	[out] GCN disc header.
+ * @param discHeader	[out] GCN disc header. (Not filled in if empty or unknown types.)
  * @param pIsDeleted	[out,opt] Set to true if the image appears to be "deleted".
  * @return Bank type, or negative POSIX error code. (See RvtH_BankType_e.)
  */
