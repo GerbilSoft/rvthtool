@@ -157,7 +157,6 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
 	uint32_t tmd_size;
-	RVL_Cert_Issuer issuer;
 	int ret;
 
 	// Partition header.
@@ -220,8 +219,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Check the ticket signature issuer.
-	issuer = cert_get_issuer_from_name(header.ticket.issuer);
-	switch (issuer) {
+	switch (cert_get_issuer_from_name(header.ticket.issuer)) {
 		case RVL_CERT_ISSUER_RETAIL_TICKET:
 			// Retail certificate.
 			entry->ticket.sig_type = RVTH_SigType_Retail;
@@ -256,8 +254,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	// Check the TMD signature issuer.
 	// TODO: Verify header.tmd_offset?
 	tmdHeader = (const RVL_TMD_Header*)header.data;
-	issuer = cert_get_issuer_from_name(tmdHeader->issuer);
-	switch (issuer) {
+	switch (cert_get_issuer_from_name(tmdHeader->issuer)) {
 		case RVL_CERT_ISSUER_RETAIL_TMD:
 			// Retail certificate.
 			entry->tmd.sig_type = RVTH_SigType_Retail;
