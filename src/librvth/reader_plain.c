@@ -139,6 +139,8 @@ fail:
  */
 static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
+	int ret;
+
 	// LBA bounds checking.
 	// TODO: Check for overflow?
 	lba_start += reader->lba_start;
@@ -150,7 +152,7 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
 	}
 
 	// Seek to lba_start.
-	int ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -173,6 +175,8 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
  */
 static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
+	int ret;
+
 	// LBA bounds checking.
 	// TODO: Check for overflow?
 	lba_start += reader->lba_start;
@@ -184,7 +188,7 @@ static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba
 	}
 
 	// Seek to lba_start.
-	int ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
