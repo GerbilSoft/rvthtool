@@ -140,7 +140,7 @@ static int init_random(struct yarrow256_ctx *yarrow)
 	}
 
 	// Generate random data.
-	if (!CryptGenRandom(hCryptProv, buf_remain, buf)) {
+	if (!CryptGenRandom(hCryptProv, (DWORD)buf_remain, buf)) {
 		// TODO: Convert GetLastError() to errno?
 		err = EIO;
 		goto end;

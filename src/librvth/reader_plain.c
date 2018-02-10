@@ -162,7 +162,7 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
 	}
 
 	// Read the data.
-	return ref_read(ptr, LBA_SIZE, lba_len, reader->file);
+	return (uint32_t)ref_read(ptr, LBA_SIZE, lba_len, reader->file);
 }
 
 /**
@@ -198,7 +198,7 @@ static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba
 	}
 
 	// Write the data.
-	return ref_write(ptr, LBA_SIZE, lba_len, reader->file);
+	return (uint32_t)ref_write(ptr, LBA_SIZE, lba_len, reader->file);
 }
 
 /**
