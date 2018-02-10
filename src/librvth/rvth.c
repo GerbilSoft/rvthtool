@@ -93,6 +93,11 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 	}
 
 	ptcount = be32_to_cpu(pt.vgtbl.vg[0].count);
+	if (ptcount > ARRAY_SIZE(pt.ptbl)) {
+		// Can't check this many partitions.
+		// Reduce it to the maximum we can check.
+		ptcount = ARRAY_SIZE(pt.ptbl);
+	}
 	for (i = 0; i < ptcount; i++) {
 		if (pt.ptbl[i].type == cpu_to_be32(0)) {
 			// Found the game partition.
