@@ -157,7 +157,6 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
 	uint32_t tmd_size;
-	uint32_t ios_tid_lo;
 	RVL_Cert_Issuer issuer;
 	int ret;
 
@@ -242,7 +241,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 		// Signature verification error.
 		if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
 			// Invalid signature.
-			entry->ticket.sig_status = (ret & SIG_FAIL_HASH_FAKE
+			entry->ticket.sig_status = ((ret & SIG_FAIL_HASH_FAKE)
 				? RVTH_SigStatus_Fake
 				: RVTH_SigStatus_Invalid);
 		} else {
@@ -281,7 +280,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 			// Signature verification error.
 			if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
 				// Invalid signature.
-				entry->tmd.sig_status = (ret & SIG_FAIL_HASH_FAKE
+				entry->tmd.sig_status = ((ret & SIG_FAIL_HASH_FAKE)
 					? RVTH_SigStatus_Fake
 					: RVTH_SigStatus_Invalid);
 			} else {
@@ -296,7 +295,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Get the required IOS version.
 	if (be32_to_cpu(tmdHeader->sys_version.hi) == 1) {
-		ios_tid_lo = be32_to_cpu(tmdHeader->sys_version.lo);
+		uint32_t ios_tid_lo = be32_to_cpu(tmdHeader->sys_version.lo);
 		if (ios_tid_lo < 256) {
 			entry->ios_version = (uint8_t)ios_tid_lo;
 		}
