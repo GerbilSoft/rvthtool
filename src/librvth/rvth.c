@@ -94,7 +94,7 @@ uint32_t rvth_find_GamePartition(Reader *reader)
 
 	ptcount = be32_to_cpu(pt.vgtbl.vg[0].count);
 	for (i = 0; i < ptcount; i++) {
-		if (be32_to_cpu(pt.ptbl[i].type == 0)) {
+		if (pt.ptbl[i].type == cpu_to_be32(0)) {
 			// Found the game partition.
 			return (be32_to_cpu(pt.ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
 		}
