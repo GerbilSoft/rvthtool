@@ -27,6 +27,7 @@
 #include "gcn_structs.h"
 #include "cert_store.h"
 #include "cert.h"
+#include "disc_header.h"
 
 // Disc image readers.
 #include "reader_plain.h"
@@ -36,20 +37,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-// NDDEMO header.
-// Used in early GameCube tech demos.
-// Note the lack of a GameCube magic number.
-static const uint8_t nddemo_header[64] = {
-	0x30, 0x30, 0x00, 0x45, 0x30, 0x31, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x4E, 0x44, 0x44, 0x45, 0x4D, 0x4F, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
 
 /**
  * Trim a game title.
@@ -421,17 +408,13 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp)
 {
-	size_t size;
 	uint32_t reader_lba_len;
+	bool isDeleted;
 
-	int ret = 0;	// errno or RvtH_Errors
-	int err = 0;	// errno setting
+	int ret;	// errno or RvtH_Errors
 
-	// Sector buffer.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		GCN_DiscHeader gcn;
-	} sector_buf;
+	// Disc header.
+	GCN_DiscHeader discHeader;
 
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
@@ -451,53 +434,19 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Read the GCN disc header.
 	// TODO: For non-deleted banks, verify the magic number?
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
-	if (ret != 0) {
-		// Seek error.
+	ret = rvth_disc_header_get(f_img, lba_start, &discHeader, &isDeleted);
+	if (ret < 0) {
+		// Error...
 		// TODO: Mark the bank as invalid?
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		return -err;
-	}
-	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
-	if (size != sizeof(sector_buf.u8)) {
-		// Short read.
-		// TODO: Mark the bank as invalid?
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		errno = err;
-		return -err;
+		return ret;
 	}
 
-	// If the entry type is Empty, check for GCN/Wii magic.
-	if (type == RVTH_BankType_Empty) {
-		if (sector_buf.gcn.magic_wii == cpu_to_be32(WII_MAGIC)) {
-			// Wii disc image.
-			// TODO: Detect SL vs. DL.
-			// TODO: Actual disc image size?
-			type = RVTH_BankType_Wii_SL;
-			entry->is_deleted = true;
-		} else if (sector_buf.gcn.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
-			// GameCube disc image.
-			// TODO: Actual disc image size?
-			type = RVTH_BankType_GCN;
-			entry->is_deleted = true;
-		} else {
-			// Check for GameCube NDDEMO.
-			if (!memcmp(&sector_buf.gcn, nddemo_header, sizeof(nddemo_header))) {
-				// NDDEMO header found.
-				type = RVTH_BankType_GCN;
-				entry->is_deleted = true;
-			} else {
-				// The "Flush" button on my RVT-H wipes the first 16k.
-				// On Wii, this is the same as the first partition header.
-				// TODO: Attempt to read the first partition header.
-			}
-		}
+	// If the original bank type is empty, or the disc header is zeroed,
+	// this bank is deleted.
+	entry->is_deleted = (isDeleted | (type == RVTH_BankType_Empty && ret >= RVTH_BankType_GCN));
+	if (entry->is_deleted) {
+		// Bank type was determined by rvth_disc_header_get().
+		type = (uint8_t)ret;
 		entry->type = type;
 	}
 
@@ -557,13 +506,13 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	}
 
 	// Initialize fields from the disc header.
-	rvth_init_BankEntry_gcn(entry, &sector_buf.gcn);
+	rvth_init_BankEntry_gcn(entry, &discHeader);
 
 	// TODO: Error handling.
 	// Initialize the region code.
 	rvth_init_BankEntry_region(entry);
 	// Initialize the encryption status.
-	rvth_init_BankEntry_crypto(entry, &sector_buf.gcn);
+	rvth_init_BankEntry_crypto(entry, &discHeader);
 
 	// We're done here.
 	return 0;
@@ -717,31 +666,19 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	}
 
 	// Check for GameCube and/or Wii magic numbers.
-	if (sector_buf.gcn.magic_wii == cpu_to_be32(WII_MAGIC)) {
-		// Wii disc image.
-		if (len > LBA_TO_BYTES(NHCD_BANK_WII_SL_SIZE_RVTR_LBA)) {
-			// Dual-layer Wii disc image.
-			// TODO: Check for retail vs. RVT-R?
-			type = RVTH_BankType_Wii_DL;
-		} else {
-			// Single-layer Wii disc image.
-			type = RVTH_BankType_Wii_SL;
-		}
-	} else if (sector_buf.gcn.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
-		// GameCube disc image.
-		type = RVTH_BankType_GCN;
-	} else {
-		// Check for GameCube NDDEMO.
-		if (!memcmp(&sector_buf.gcn, nddemo_header, sizeof(nddemo_header))) {
-			// NDDEMO header found.
-			type = RVTH_BankType_GCN;
-		} else {
-			// Not supported.
-			err = EIO;
-			ret = -EIO;
-			goto fail;
+	ret = rvth_disc_header_identify(&sector_buf.gcn);
+	if (ret < 0) {
+		// Error...
+		err = -ret;
+		goto fail;
+	} else if (ret == RVTH_BankType_Unknown) {
+		// Check if it's empty.
+		if (rvth_is_block_empty(sector_buf.u8, sizeof(sector_buf.u8))) {
+			// Empty sector.
+			ret = RVTH_BankType_Empty;
 		}
 	}
+	type = (uint8_t)ret;
 
 	// Allocate memory for the RvtH object
 	rvth = calloc(1, sizeof(RvtH));
