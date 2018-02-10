@@ -177,6 +177,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 {
 	int ret = 0;	// errno setting
 	size_t size;
+	bool isDeleted = false;
 
 	// Sector buffer.
 	union {
@@ -198,6 +199,9 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		return -EINVAL;
 	}
 
+	// Clear the returned discHeader struct initially.
+	memset(discHeader, 0, sizeof(*discHeader));
+
 	// Read the disc header.
 	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
@@ -218,17 +222,13 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	ret = rvth_disc_header_identify(&sbuf.gcn);
 	if (ret < 0) {
 		// Error...
-		errno = -ret;
-		return ret;
+		goto end;
 	}
 
 	if (ret > RVTH_BankType_Unknown) {
 		// Known magic found.
-		if (pIsDeleted) {
-			pIsDeleted = false;
-		}
 		memcpy(discHeader, &sbuf.gcn, sizeof(*discHeader));
-		return ret;
+		goto end;
 	}
 
 	// If unknown, check if the entire sector is empty.
@@ -242,14 +242,8 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	if (ret != RVTH_BankType_Empty) {
 		// Not empty.
 		// TODO: Check for the Wii header anyway?
-		if (pIsDeleted) {
-			*pIsDeleted = false;
-		}
 		memcpy(discHeader, &sbuf.gcn, sizeof(*discHeader));
-		return ret;
-	} else {
-		// Empty. Clear the discHeader for now.
-		memset(discHeader, 0, sizeof(*discHeader));
+		goto end;
 	}
 
 	// For Wii games, we can recover the disc header by reading the
@@ -356,10 +350,9 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		sbuf.gcn.hash_verify = 1;
 		sbuf.gcn.disc_noCrypt = 1;
 		memcpy(discHeader, &sbuf.gcn, sizeof(*discHeader));
-		if (pIsDeleted) {
-			*pIsDeleted = true;
-		}
-		return RVTH_BankType_Wii_SL;
+		ret = RVTH_BankType_Wii_SL;
+		isDeleted = true;
+		goto end;
 	}
 
 	// May need to decrypt.
@@ -369,6 +362,9 @@ end:
 	free(pthdr);
 	if (ret < 0) {
 		errno = -ret;
+	}
+	if (pIsDeleted) {
+		*pIsDeleted = isDeleted;
 	}
 	return ret;
 }
