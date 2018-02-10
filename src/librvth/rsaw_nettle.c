@@ -20,6 +20,12 @@
 
 #include "rsaw.h"
 
+#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <nettle/rsa.h>
 #include <nettle/yarrow.h>
 
@@ -28,11 +34,10 @@
 # include <gmp.h>
 #endif
 
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#ifdef _WIN32
+# include <windows.h>
+# include <wincrypt.h>
+#endif
 
 // Size of the buffer for random number generation.
 #define RANDOM_BUFFER_SIZE 1024
@@ -100,15 +105,19 @@ int rsaw_decrypt_signature(uint8_t *buf, const uint8_t *modulus,
  */
 static int init_random(struct yarrow256_ctx *yarrow)
 {
+	uint8_t *buf = NULL;
+	size_t buf_remain = RANDOM_BUFFER_SIZE;
+#ifdef _WIN32
+	const size_t size = buf_remain;
+	HCRYPTPROV hCryptProv = 0;
+#else /* !_WIN32 */
 	size_t size;
 	size_t total_read = 0;
-	size_t buf_remain = RANDOM_BUFFER_SIZE;
-	uint8_t *buf = NULL;
 	FILE *f = NULL;
+#endif
 
 	int err = 0;
 
-	// TODO: Windows equivalent.
 	// Based on simple_random() from nettle-3.4/examples/io.c.
 	yarrow256_init(yarrow, 0, NULL);
 
@@ -122,6 +131,21 @@ static int init_random(struct yarrow256_ctx *yarrow)
 		goto end;
 	}
 
+#ifdef _WIN32
+	// TODO: Untested.
+	if (!CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, 0)) {
+		// TODO: Convert GetLastError() to errno?
+		err = EIO;
+		goto end;
+	}
+
+	// Generate random data.
+	if (!CryptGenRandom(hCryptProv, buf_remain, buf)) {
+		// TODO: Convert GetLastError() to errno?
+		err = EIO;
+		goto end;
+	}
+#else /* _WIN32 */
 	errno = 0;
 	f = fopen("/dev/urandom", "rb");
 	if (!f) {
@@ -156,15 +180,22 @@ static int init_random(struct yarrow256_ctx *yarrow)
 		}
 		goto end;
 	}
+#endif
 
 	// Seed the random number generator.
 	yarrow256_seed(yarrow, size, buf);
 
 end:
 	free(buf);
+#ifdef _WIN32
+	if (hCryptProv != 0) {
+		CryptReleaseContext(hCryptProv, 0);
+	}
+#else /* !_WIN32 */
 	if (f) {
 		fclose(f);
 	}
+#endif /* !WIN32 */
 	if (err != 0) {
 		errno = err;
 	}
