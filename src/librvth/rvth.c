@@ -493,7 +493,9 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 				type = RVTH_BankType_GCN;
 				entry->is_deleted = true;
 			} else {
-				// Probably actually empty...
+				// The "Flush" button on my RVT-H wipes the first 16k.
+				// On Wii, this is the same as the first partition header.
+				// TODO: Attempt to read the first partition header.
 			}
 		}
 		entry->type = type;

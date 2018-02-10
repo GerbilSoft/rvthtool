@@ -216,7 +216,7 @@ int cert_verify(const uint8_t *data, size_t size)
 	// Includes sig->issuer[], which is always 64-byte aligned.
 	data_sha1_offset = 4 + sig_len + 0x3C;
 
-	// Check for the PKCS#1 magic number.
+	// Check for the PKCS#1 header and padding.
 	// Reference: https://tools.ietf.org/html/rfc2313
 	// Format: 00 || BT || PS || 00 || D
 	// BT can be one of the following:
@@ -225,7 +225,8 @@ int cert_verify(const uint8_t *data, size_t size)
 	// - 02: Public key - padding is pseudorandom
 	// PS is the padding string.
 	// Padding is followed by a 0x00 byte, then the data.
-	// Last one seems to match some RVT-H prototypes. (TODO ignore previous commit)
+	// - Retail and official RVT-R images use 01.
+	// - RVT-H prototypes I've encountered seem to use 02.
 	// Verify the signature.
 	ret = 0;
 	if (buf[0] == 0x00 && buf[1] <= 0x02) {

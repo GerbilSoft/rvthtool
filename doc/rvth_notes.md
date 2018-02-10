@@ -111,3 +111,21 @@ The standard NHCD layout is as follows:
 * Bank 6: 0x5DAE41200 (LBA 0x02ED7209)
 * Bank 7: 0x6F3781200 (LBA 0x0379BC09)
 * Bank 8: 0x80C0C1200 (LBA 0x04060609)
+
+## Deleted Banks
+
+* On some RVT-H systems, deleting a bank by pressing the "Flush" button
+  merely erases the bank table entry.
+* On other RVT-H systems, this also zeroes out the first 16 KB of the bank.
+* This may depend on the RVT-H firmware version.
+
+The first 16 KB contains:
+* Wii: Disc header.
+* GameCube: Disc header, bi2.bin, and apploader
+
+For Wii, the disc header can be reconstructed by copying the disc header from
+the primary game partition. (The hash/crypto bytes need to be flipped if the
+disc image is encrypted.)
+
+For GameCube, the disc header, bi2.bin, and apploader cannot be automatically
+reconstructed; it needs to be manually rebuilt.
