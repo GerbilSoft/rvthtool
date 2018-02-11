@@ -179,6 +179,20 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		// TODO: Error handling.
 		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);
 
+		if (lba_count == 0) {
+			// Make sure we copy the disc header in if the
+			// header was zeroed by the RVT-H's "Flush" function.
+			// TODO: Move this outside of the `for` loop.
+			// TODO: Also check for NDDEMO?
+			const GCN_DiscHeader *const origHdr = (const GCN_DiscHeader*)buf;
+			if (origHdr->magic_wii != be32_to_cpu(WII_MAGIC) &&
+			    origHdr->magic_gcn != be32_to_cpu(GCN_MAGIC))
+			{
+				// Missing magic number. Need to restore the disc header.
+				memcpy(buf, &entry_src->discHeader, sizeof(entry_src->discHeader));
+			}
+		}
+
 		// Check for empty 4 KB blocks.
 		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
 			if (!rvth_is_block_empty(&buf[sprs], 4096)) {
@@ -553,6 +567,10 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 				goto end;
 			}
 		}
+
+		// TODO: Restore the disc header here if necessary?
+		// GCMs being imported generally won't have the first
+		// 16 KB zeroed out...
 
 		// TODO: Error handling.
 		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);
