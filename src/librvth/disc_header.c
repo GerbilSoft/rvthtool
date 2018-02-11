@@ -23,6 +23,8 @@
 #include "rvth_p.h"
 #include "byteswap.h"
 #include "reader.h"
+#include "cert_store.h"
+#include "aesw.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -191,6 +193,10 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	// Wii partition header.
 	RVL_PartitionHeader *pthdr = NULL;
 	int64_t data_offset;
+	const uint8_t *common_key;
+	uint8_t title_key[16];
+	uint8_t iv[16];
+	AesCtx *aesw = NULL;
 
 	assert(f_img != NULL);
 	assert(discHeader != NULL);
@@ -355,10 +361,92 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 
-	// May need to decrypt.
-	// TODO: Get encryption key and decrypt.
+	// Try decrypting the partition header.
+	switch (cert_get_issuer_from_name(pthdr->ticket.issuer)) {
+		case RVL_CERT_ISSUER_RETAIL_TICKET:
+			// Retail certificate.
+			common_key = ((pthdr->ticket.common_key_index == 1)
+					? RVL_AES_Keys[RVL_KEY_KOREAN]
+					: RVL_AES_Keys[RVL_KEY_RETAIL]);
+			break;
+		case RVL_CERT_ISSUER_DEBUG_TICKET:
+			// Debug certificate.
+			common_key = RVL_AES_Keys[RVL_KEY_DEBUG];
+			break;
+		default:
+			// Unknown issuer, or not valid for ticket.
+			ret = bankType;
+			goto end;
+	}
+
+	// Initialize the AES context.
+	errno = 0;
+	aesw = aesw_new();
+	if (!aesw) {
+		ret = -errno;
+		if (ret == 0) {
+			ret = -EIO;
+		}
+		goto end;
+	}
+
+	// Decrypt the title key.
+	memcpy(title_key, pthdr->ticket.enc_title_key, sizeof(title_key));
+	memcpy(iv, &pthdr->ticket.title_id, 8);
+	memset(&iv[8], 0, 8);
+	aesw_set_key(aesw, common_key, 16);
+	aesw_set_iv(aesw, iv, sizeof(iv));
+	aesw_decrypt(aesw, title_key, sizeof(title_key));
+
+	// Read the next LBA. This contains encrypted hashes,
+	// including the IV for the user data.
+	errno = 0;
+	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	if (size != sizeof(sbuf.u8)) {
+		// Read error.
+		ret = -errno;
+		if (ret == 0) {
+			ret = -EIO;
+		}
+		goto end;
+	}
+	memcpy(iv, &sbuf.u8[0x3D0-0x200], sizeof(iv));
+
+	// Read the first LBA of user data.
+	errno = 0;
+	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	if (size != sizeof(sbuf.u8)) {
+		// Read error.
+		ret = -errno;
+		if (ret == 0) {
+			ret = -EIO;
+		}
+		goto end;
+	}
+
+	// Decrypt the user data.
+	// NOTE: Only decrypting 128 bytes.
+	aesw_set_key(aesw, title_key, sizeof(title_key));
+	aesw_set_iv(aesw, iv, sizeof(iv));
+	aesw_decrypt(aesw, sbuf.u8, 128);
+
+	// If the LBA has Wii magic, we have a valid encrypted disc header.
+	if (sbuf.gcn.magic_wii == cpu_to_be32(WII_MAGIC)) {
+		// Encrypted disc header.
+		// TODO: Check the hash_verify/disc_noCrypt values.
+		// For now, always setting them to 0.
+		sbuf.gcn.hash_verify = 0;
+		sbuf.gcn.disc_noCrypt = 0;
+		memcpy(discHeader, &sbuf.gcn, sizeof(*discHeader));
+		isDeleted = true;
+		ret = RVTH_BankType_Wii_SL;
+		goto end;
+	}
 
 end:
+	if (aesw) {
+		aesw_free(aesw);
+	}
 	free(pthdr);
 	if (ret < 0) {
 		errno = -ret;
