@@ -98,8 +98,8 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
 		int64_t offset;
-		int err = ref_seeko(file, 0, SEEK_END);
-		if (err != 0) {
+		int ret = ref_seeko(file, 0, SEEK_END);
+		if (ret != 0) {
 			// Seek error.
 			err = errno;
 			if (err == 0) {

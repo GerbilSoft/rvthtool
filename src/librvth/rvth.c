@@ -845,7 +845,6 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 		if (errno == 0) {
 			errno = EIO;
 		}
-		ret = -errno;
 		goto end;
 	}
 	len = ref_tello(f_img);
