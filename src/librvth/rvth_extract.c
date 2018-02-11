@@ -130,16 +130,15 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	}
 
 	// Copy the bank table information.
-	memcpy(entry_dest->id6, entry_src->id6, sizeof(entry_dest->id6));
-	memcpy(entry_dest->game_title, entry_src->game_title, sizeof(entry_dest->game_title));
 	entry_dest->type	= entry_src->type;
-	entry_dest->disc_number	= entry_src->disc_number;
-	entry_dest->revision	= entry_src->revision;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
 	entry_dest->crypto_type	= entry_src->crypto_type;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
+
+	// Copy the disc header.
+	memcpy(&entry_dest->discHeader, &entry_src->discHeader, sizeof(entry_dest->discHeader));
 
 	// Timestamp.
 	if (entry_src->timestamp >= 0) {
@@ -507,17 +506,16 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	// Copy the bank table information.
-	memcpy(entry_dest->id6, entry_src->id6, sizeof(entry_dest->id6));
-	memcpy(entry_dest->game_title, entry_src->game_title, sizeof(entry_dest->game_title));
 	entry_dest->lba_len	= entry_src->lba_len;
 	entry_dest->type	= entry_src->type;
-	entry_dest->disc_number	= entry_src->disc_number;
-	entry_dest->revision	= entry_src->revision;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
 	entry_dest->crypto_type	= entry_src->crypto_type;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
+
+	// Copy the disc header.
+	memcpy(&entry_dest->discHeader, &entry_src->discHeader, sizeof(entry_dest->discHeader));
 
 	// Timestamp.
 	if (entry_src->timestamp >= 0) {

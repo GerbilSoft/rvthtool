@@ -25,6 +25,7 @@
 #include "ref_file.h"
 #include "reader.h"
 #include "cert_store.h"
+#include "gcn_structs.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -93,14 +94,13 @@ typedef struct RvtH_BankEntry {
 	// TODO: Function pointer table for reading CISO and WBFS.
 	uint32_t lba_start;	// Starting LBA. (512-byte sectors)
 	uint32_t lba_len;	// Length, in 512-byte sectors.
-	char id6[6];		// Game ID. (NOT NULL-terminated!)
-	char game_title[65];	// Game title. (from GCN header)
 	time_t timestamp;	// Timestamp. (no timezone information)
 	uint8_t type;		// Bank type. (See RvtH_BankType_e.)
-	uint8_t disc_number;	// Disc number.
-	uint8_t revision;	// Revision.
 	uint8_t region_code;	// Region code. (See GCN_Region_Code.)
 	bool is_deleted;	// If true, this entry was deleted.
+
+	// Disc header.
+	GCN_DiscHeader discHeader;
 
 	// Wii-specific
 	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)

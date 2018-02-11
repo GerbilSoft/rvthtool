@@ -39,43 +39,6 @@
 #include <string.h>
 
 /**
- * Trim a game title.
- * @param title Game title.
- * @param size Size of game title.
- */
-static void trim_title(char *title, int size)
-{
-	size--;
-	for (; size >= 0; size--) {
-		if (title[size] != ' ')
-			break;
-		title[size] = 0;
-	}
-}
-
-/**
- * Initialize the GCN Disc Header fields in an RvtH_BankEntry.
- * The reader field must have already been set.
- * @param entry		[in,out] RvtH_BankEntry
- * @param discHeader	[in] GCN_DiscHeader
- */
-static void rvth_init_BankEntry_gcn(RvtH_BankEntry *entry, GCN_DiscHeader *discHeader)
-{
-	// Copy the game ID.
-	memcpy(entry->id6, discHeader->id6, 6);
-
-	// Disc number and revision.
-	entry->disc_number = discHeader->disc_number;
-	entry->revision    = discHeader->revision;
-
-	// Read the disc title.
-	// TODO: Convert from Shift-JIS to UTF-8?
-	memcpy(entry->game_title, discHeader->game_title, 64);
-	// Remove excess spaces.
-	trim_title(entry->game_title, 64);
-}
-
-/**
  * Set the region field in an RvtH_BankEntry.
  * The reader field must have already been set.
  * @param entry		[in,out] RvtH_BankEntry
@@ -147,12 +110,11 @@ static int rvth_init_BankEntry_region(RvtH_BankEntry *entry)
 
 /**
  * Set the crypto_type and sig_type fields in an RvtH_BankEntry.
- * The reader field must have already been set.
+ * The reader and discHeader fields must have already been set.
  * @param entry		[in,out] RvtH_BankEntry
- * @param discHeader	[in] GCN_DiscHeader
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeader *discHeader)
+static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 {
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
@@ -195,7 +157,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Check for an unencrypted RVT-H image.
-	if (discHeader->hash_verify != 0 && discHeader->disc_noCrypt != 0) {
+	if (entry->discHeader.hash_verify != 0 && entry->discHeader.disc_noCrypt != 0) {
 		// Unencrypted.
 		// TODO: I haven't seen any images where only one of these
 		// is zero or non-zero, but that may show up...
@@ -358,9 +320,6 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	int ret;	// errno or RvtH_Errors
 
-	// Disc header.
-	GCN_DiscHeader discHeader;
-
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
 	entry->lba_start = lba_start;
@@ -379,10 +338,11 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Read the GCN disc header.
 	// TODO: For non-deleted banks, verify the magic number?
-	ret = rvth_disc_header_get(f_img, lba_start, &discHeader, &isDeleted);
+	ret = rvth_disc_header_get(f_img, lba_start, &entry->discHeader, &isDeleted);
 	if (ret < 0) {
 		// Error...
 		// TODO: Mark the bank as invalid?
+		memset(&entry->discHeader, 0, sizeof(entry->discHeader));
 		return ret;
 	}
 
@@ -450,14 +410,11 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		entry->timestamp = rvth_timestamp_parse(nhcd_timestamp);
 	}
 
-	// Initialize fields from the disc header.
-	rvth_init_BankEntry_gcn(entry, &discHeader);
-
 	// TODO: Error handling.
 	// Initialize the region code.
 	rvth_init_BankEntry_region(entry);
 	// Initialize the encryption status.
-	rvth_init_BankEntry_crypto(entry, &discHeader);
+	rvth_init_BankEntry_crypto(entry);
 
 	// We're done here.
 	return 0;
@@ -650,14 +607,14 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	entry->timestamp = -1;
 
 	if (type != RVTH_BankType_Empty) {
-		// Initialize fields from the disc header.
-		rvth_init_BankEntry_gcn(entry, &discHeader);
+		// Copy the disc header.
+		memcpy(&entry->discHeader, &discHeader, sizeof(entry->discHeader));
 
 		// TODO: Error handling.
 		// Initialize the region code.
 		rvth_init_BankEntry_region(entry);
 		// Initialize the encryption status.
-		rvth_init_BankEntry_crypto(entry, &discHeader);
+		rvth_init_BankEntry_crypto(entry);
 	}
 
 	// Disc image loaded.
