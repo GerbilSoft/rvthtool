@@ -89,7 +89,6 @@ int cert_verify(const uint8_t *data, size_t size)
 	uint32_t pubkey_exp;
 
 	uint8_t buf[RVL_CERT_SIGLENGTH_RSA4096];
-	unsigned int i;
 	int ret;	// our return value
 	int tmp_ret;	// function return values
 
@@ -236,6 +235,7 @@ int cert_verify(const uint8_t *data, size_t size)
 			// Check the padding.
 			static const uint8_t padding[2] = {0x00, 0xFF};
 			const uint8_t ps = padding[buf[1]];
+			unsigned int i;
 
 			for (i = 2; i < sig_der_offset-1; i++) {
 				if (buf[i] != ps) {

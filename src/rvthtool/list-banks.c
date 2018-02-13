@@ -23,6 +23,22 @@
 #include "librvth/gcn_structs.h"
 
 #include <errno.h>
+#include <string.h>
+
+/**
+ * Trim a game title.
+ * @param title Game title.
+ * @param size Size of game title.
+ */
+static void trim_title(char *title, int size)
+{
+	size--;
+	for (; size >= 0; size--) {
+		if (title[size] != ' ')
+			break;
+		title[size] = 0;
+	}
+}
 
 /**
  * Print information for the specified bank.
@@ -35,6 +51,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	const RvtH_BankEntry *entry;
 	const char *s_type;
 	bool is_hdd;
+	char game_title[65];
 	int ret = 0;
 
 	// Region codes.
@@ -133,13 +150,15 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	}
 
 	// Game ID.
-	printf("- Game ID:     %.6s\n", entry->id6);
+	printf("- Game ID:     %.6s\n", entry->discHeader.id6);
 
 	// Game title.
-	// rvth_open() has already trimmed the title.
-	printf("- Title:       %.64s\n", entry->game_title);
-	printf("- Disc #:      %u\n", entry->disc_number);
-	printf("- Revision:    %u\n", entry->revision);
+	memcpy(game_title, entry->discHeader.game_title, 64);
+	game_title[64] = 0;
+	trim_title(game_title, 64);
+	printf("- Title:       %.64s\n", game_title);
+	printf("- Disc #:      %u\n", entry->discHeader.disc_number);
+	printf("- Revision:    %u\n", entry->discHeader.revision);
 
 	// Region code.
 	fputs("- Region code: ", stdout);

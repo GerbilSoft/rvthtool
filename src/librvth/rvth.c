@@ -27,6 +27,7 @@
 #include "gcn_structs.h"
 #include "cert_store.h"
 #include "cert.h"
+#include "disc_header.h"
 
 // Disc image readers.
 #include "reader_plain.h"
@@ -36,108 +37,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-// NDDEMO header.
-// Used in early GameCube tech demos.
-// Note the lack of a GameCube magic number.
-static const uint8_t nddemo_header[64] = {
-	0x30, 0x30, 0x00, 0x45, 0x30, 0x31, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x4E, 0x44, 0x44, 0x45, 0x4D, 0x4F, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
-
-/**
- * Trim a game title.
- * @param title Game title.
- * @param size Size of game title.
- */
-static void trim_title(char *title, int size)
-{
-	size--;
-	for (; size >= 0; size--) {
-		if (title[size] != ' ')
-			break;
-		title[size] = 0;
-	}
-}
-
-/**
- * Find the game partition in a Wii disc image.
- * @param reader	[in] Reader*
- * @return Game partition LBA (relative to start of reader), or 0 on error.
- */
-uint32_t rvth_find_GamePartition(Reader *reader)
-{
-	// Assuming this is a valid Wii disc image.
-	int64_t addr;
-	unsigned int ptcount, i;
-	uint32_t lba_size;
-
-	// Volume group and partition table.
-	// NOTE: Only reading the first partition table,
-	// which we're assuming is stored directly after
-	// the volume group table.
-	// FIXME: Handle other cases when using direct device access on Windows.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		struct {
-			RVL_VolumeGroupTable vgtbl;
-			RVL_PartitionTableEntry ptbl[15];
-		};
-	} pt;
-
-	// Get the volume group table.
-	lba_size = reader_read(reader, &pt, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
-	if (lba_size != 1) {
-		// Read error.
-		return 0;
-	}
-
-	// Game partition is always in volume group 0.
-	addr = ((int64_t)be32_to_cpu(pt.vgtbl.vg[0].addr) << 2);
-	if (addr != (RVL_VolumeGroupTable_ADDRESS + sizeof(pt.vgtbl))) {
-		// Partition table offset isn't supported right now.
-		return 0;
-	}
-
-	ptcount = be32_to_cpu(pt.vgtbl.vg[0].count);
-	for (i = 0; i < ptcount; i++) {
-		if (be32_to_cpu(pt.ptbl[i].type == 0)) {
-			// Found the game partition.
-			return (be32_to_cpu(pt.ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
-		}
-	}
-
-	// No game partition found...
-	return 0;
-}
-
-/**
- * Initialize the GCN Disc Header fields in an RvtH_BankEntry.
- * The reader field must have already been set.
- * @param entry		[in,out] RvtH_BankEntry
- * @param discHeader	[in] GCN_DiscHeader
- */
-static void rvth_init_BankEntry_gcn(RvtH_BankEntry *entry, GCN_DiscHeader *discHeader)
-{
-	// Copy the game ID.
-	memcpy(entry->id6, discHeader->id6, 6);
-
-	// Disc number and revision.
-	entry->disc_number = discHeader->disc_number;
-	entry->revision    = discHeader->revision;
-
-	// Read the disc title.
-	// TODO: Convert from Shift-JIS to UTF-8?
-	memcpy(entry->game_title, discHeader->game_title, 64);
-	// Remove excess spaces.
-	trim_title(entry->game_title, 64);
-}
 
 /**
  * Set the region field in an RvtH_BankEntry.
@@ -211,18 +110,15 @@ static int rvth_init_BankEntry_region(RvtH_BankEntry *entry)
 
 /**
  * Set the crypto_type and sig_type fields in an RvtH_BankEntry.
- * The reader field must have already been set.
+ * The reader and discHeader fields must have already been set.
  * @param entry		[in,out] RvtH_BankEntry
- * @param discHeader	[in] GCN_DiscHeader
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeader *discHeader)
+static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 {
 	uint32_t lba_game;	// LBA of the Game Partition.
 	uint32_t lba_size;
 	uint32_t tmd_size;
-	uint32_t ios_tid_lo;
-	RVL_Cert_Issuer issuer;
 	int ret;
 
 	// Partition header.
@@ -261,7 +157,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Check for an unencrypted RVT-H image.
-	if (discHeader->hash_verify != 0 && discHeader->disc_noCrypt != 0) {
+	if (entry->discHeader.hash_verify != 0 && entry->discHeader.disc_noCrypt != 0) {
 		// Unencrypted.
 		// TODO: I haven't seen any images where only one of these
 		// is zero or non-zero, but that may show up...
@@ -285,8 +181,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	}
 
 	// Check the ticket signature issuer.
-	issuer = cert_get_issuer_from_name(header.ticket.issuer);
-	switch (issuer) {
+	switch (cert_get_issuer_from_name(header.ticket.issuer)) {
 		case RVL_CERT_ISSUER_RETAIL_TICKET:
 			// Retail certificate.
 			entry->ticket.sig_type = RVTH_SigType_Retail;
@@ -306,7 +201,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 		// Signature verification error.
 		if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
 			// Invalid signature.
-			entry->ticket.sig_status = (ret & SIG_FAIL_HASH_FAKE
+			entry->ticket.sig_status = ((ret & SIG_FAIL_HASH_FAKE)
 				? RVTH_SigStatus_Fake
 				: RVTH_SigStatus_Invalid);
 		} else {
@@ -321,8 +216,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 	// Check the TMD signature issuer.
 	// TODO: Verify header.tmd_offset?
 	tmdHeader = (const RVL_TMD_Header*)header.data;
-	issuer = cert_get_issuer_from_name(tmdHeader->issuer);
-	switch (issuer) {
+	switch (cert_get_issuer_from_name(tmdHeader->issuer)) {
 		case RVL_CERT_ISSUER_RETAIL_TMD:
 			// Retail certificate.
 			entry->tmd.sig_type = RVTH_SigType_Retail;
@@ -345,7 +239,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 			// Signature verification error.
 			if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
 				// Invalid signature.
-				entry->tmd.sig_status = (ret & SIG_FAIL_HASH_FAKE
+				entry->tmd.sig_status = ((ret & SIG_FAIL_HASH_FAKE)
 					? RVTH_SigStatus_Fake
 					: RVTH_SigStatus_Invalid);
 			} else {
@@ -360,7 +254,7 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry, const GCN_DiscHeade
 
 	// Get the required IOS version.
 	if (be32_to_cpu(tmdHeader->sys_version.hi) == 1) {
-		ios_tid_lo = be32_to_cpu(tmdHeader->sys_version.lo);
+		uint32_t ios_tid_lo = be32_to_cpu(tmdHeader->sys_version.lo);
 		if (ios_tid_lo < 256) {
 			entry->ios_version = (uint8_t)ios_tid_lo;
 		}
@@ -421,17 +315,10 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp)
 {
-	size_t size;
 	uint32_t reader_lba_len;
+	bool isDeleted;
 
-	int ret = 0;	// errno or RvtH_Errors
-	int err = 0;	// errno setting
-
-	// Sector buffer.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		GCN_DiscHeader gcn;
-	} sector_buf;
+	int ret;	// errno or RvtH_Errors
 
 	// Initialize the standard properties.
 	memset(entry, 0, sizeof(*entry));
@@ -451,53 +338,20 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Read the GCN disc header.
 	// TODO: For non-deleted banks, verify the magic number?
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
-	if (ret != 0) {
-		// Seek error.
+	ret = rvth_disc_header_get(f_img, lba_start, &entry->discHeader, &isDeleted);
+	if (ret < 0) {
+		// Error...
 		// TODO: Mark the bank as invalid?
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		return -err;
-	}
-	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
-	if (size != sizeof(sector_buf.u8)) {
-		// Short read.
-		// TODO: Mark the bank as invalid?
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		errno = err;
-		return -err;
+		memset(&entry->discHeader, 0, sizeof(entry->discHeader));
+		return ret;
 	}
 
-	// If the entry type is Empty, check for GCN/Wii magic.
-	if (type == RVTH_BankType_Empty) {
-		if (sector_buf.gcn.magic_wii == cpu_to_be32(WII_MAGIC)) {
-			// Wii disc image.
-			// TODO: Detect SL vs. DL.
-			// TODO: Actual disc image size?
-			type = RVTH_BankType_Wii_SL;
-			entry->is_deleted = true;
-		} else if (sector_buf.gcn.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
-			// GameCube disc image.
-			// TODO: Actual disc image size?
-			type = RVTH_BankType_GCN;
-			entry->is_deleted = true;
-		} else {
-			// Check for GameCube NDDEMO.
-			if (!memcmp(&sector_buf.gcn, nddemo_header, sizeof(nddemo_header))) {
-				// NDDEMO header found.
-				type = RVTH_BankType_GCN;
-				entry->is_deleted = true;
-			} else {
-				// The "Flush" button on my RVT-H wipes the first 16k.
-				// On Wii, this is the same as the first partition header.
-				// TODO: Attempt to read the first partition header.
-			}
-		}
+	// If the original bank type is empty, or the disc header is zeroed,
+	// this bank is deleted.
+	entry->is_deleted = (isDeleted | (type == RVTH_BankType_Empty && ret >= RVTH_BankType_GCN));
+	if (entry->is_deleted) {
+		// Bank type was determined by rvth_disc_header_get().
+		type = (uint8_t)ret;
 		entry->type = type;
 	}
 
@@ -556,14 +410,11 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 		entry->timestamp = rvth_timestamp_parse(nhcd_timestamp);
 	}
 
-	// Initialize fields from the disc header.
-	rvth_init_BankEntry_gcn(entry, &sector_buf.gcn);
-
 	// TODO: Error handling.
 	// Initialize the region code.
 	rvth_init_BankEntry_region(entry);
 	// Initialize the encryption status.
-	rvth_init_BankEntry_crypto(entry, &sector_buf.gcn);
+	rvth_init_BankEntry_crypto(entry);
 
 	// We're done here.
 	return 0;
@@ -664,16 +515,13 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	RvtH_BankEntry *entry;
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
-	size_t size;
 
 	int64_t len;
 	uint8_t type;
+	bool isDeleted;
 
-	// Sector buffer.
-	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
-		GCN_DiscHeader gcn;
-	} sector_buf;
+	// Disc header.
+	GCN_DiscHeader discHeader;
 
 	// TODO: Detect CISO and WBFS.
 
@@ -704,44 +552,16 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		goto fail;
 	}
 
-	// Check the disc header.
-	size = ref_read(sector_buf.u8, 1, sizeof(sector_buf.u8), f_img);
-	if (size != sizeof(sector_buf.u8)) {
-		// Short read.
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		ret = -err;
+	// Read the GCN disc header.
+	// TODO: For non-deleted banks, verify the magic number?
+	ret = rvth_disc_header_get(f_img, 0, &discHeader, &isDeleted);
+	if (ret < 0) {
+		// Error...
+		// TODO: Mark the bank as invalid?
+		err = -ret;
 		goto fail;
 	}
-
-	// Check for GameCube and/or Wii magic numbers.
-	if (sector_buf.gcn.magic_wii == cpu_to_be32(WII_MAGIC)) {
-		// Wii disc image.
-		if (len > LBA_TO_BYTES(NHCD_BANK_WII_SL_SIZE_RVTR_LBA)) {
-			// Dual-layer Wii disc image.
-			// TODO: Check for retail vs. RVT-R?
-			type = RVTH_BankType_Wii_DL;
-		} else {
-			// Single-layer Wii disc image.
-			type = RVTH_BankType_Wii_SL;
-		}
-	} else if (sector_buf.gcn.magic_gcn == cpu_to_be32(GCN_MAGIC)) {
-		// GameCube disc image.
-		type = RVTH_BankType_GCN;
-	} else {
-		// Check for GameCube NDDEMO.
-		if (!memcmp(&sector_buf.gcn, nddemo_header, sizeof(nddemo_header))) {
-			// NDDEMO header found.
-			type = RVTH_BankType_GCN;
-		} else {
-			// Not supported.
-			err = EIO;
-			ret = -EIO;
-			goto fail;
-		}
-	}
+	type = (uint8_t)ret;
 
 	// Allocate memory for the RvtH object
 	rvth = calloc(1, sizeof(RvtH));
@@ -776,7 +596,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	entry->lba_start = 0;
 	entry->lba_len = BYTES_TO_LBA(len);
 	entry->type = type;
-	entry->is_deleted = false;
+	entry->is_deleted = isDeleted;
 
 	// Initialize the disc image reader.
 	// TODO: Handle CISO and WBFS for standalone disc images.
@@ -786,14 +606,16 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// TODO: Get the timestamp from the file.
 	entry->timestamp = -1;
 
-	// Initialize fields from the disc header.
-	rvth_init_BankEntry_gcn(entry, &sector_buf.gcn);
+	if (type != RVTH_BankType_Empty) {
+		// Copy the disc header.
+		memcpy(&entry->discHeader, &discHeader, sizeof(entry->discHeader));
 
-	// TODO: Error handling.
-	// Initialize the region code.
-	rvth_init_BankEntry_region(entry);
-	// Initialize the encryption status.
-	rvth_init_BankEntry_crypto(entry, &sector_buf.gcn);
+		// TODO: Error handling.
+		// Initialize the region code.
+		rvth_init_BankEntry_region(entry);
+		// Initialize the encryption status.
+		rvth_init_BankEntry_crypto(entry);
+	}
 
 	// Disc image loaded.
 	return rvth;
@@ -1023,7 +845,6 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 		if (errno == 0) {
 			errno = EIO;
 		}
-		ret = -errno;
 		goto end;
 	}
 	len = ref_tello(f_img);

@@ -130,16 +130,15 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	}
 
 	// Copy the bank table information.
-	memcpy(entry_dest->id6, entry_src->id6, sizeof(entry_dest->id6));
-	memcpy(entry_dest->game_title, entry_src->game_title, sizeof(entry_dest->game_title));
 	entry_dest->type	= entry_src->type;
-	entry_dest->disc_number	= entry_src->disc_number;
-	entry_dest->revision	= entry_src->revision;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
 	entry_dest->crypto_type	= entry_src->crypto_type;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
+
+	// Copy the disc header.
+	memcpy(&entry_dest->discHeader, &entry_src->discHeader, sizeof(entry_dest->discHeader));
 
 	// Timestamp.
 	if (entry_src->timestamp >= 0) {
@@ -179,6 +178,20 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 
 		// TODO: Error handling.
 		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);
+
+		if (lba_count == 0) {
+			// Make sure we copy the disc header in if the
+			// header was zeroed by the RVT-H's "Flush" function.
+			// TODO: Move this outside of the `for` loop.
+			// TODO: Also check for NDDEMO?
+			const GCN_DiscHeader *const origHdr = (const GCN_DiscHeader*)buf;
+			if (origHdr->magic_wii != be32_to_cpu(WII_MAGIC) &&
+			    origHdr->magic_gcn != be32_to_cpu(GCN_MAGIC))
+			{
+				// Missing magic number. Need to restore the disc header.
+				memcpy(buf, &entry_src->discHeader, sizeof(entry_src->discHeader));
+			}
+		}
 
 		// Check for empty 4 KB blocks.
 		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
@@ -507,17 +520,16 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	// Copy the bank table information.
-	memcpy(entry_dest->id6, entry_src->id6, sizeof(entry_dest->id6));
-	memcpy(entry_dest->game_title, entry_src->game_title, sizeof(entry_dest->game_title));
 	entry_dest->lba_len	= entry_src->lba_len;
 	entry_dest->type	= entry_src->type;
-	entry_dest->disc_number	= entry_src->disc_number;
-	entry_dest->revision	= entry_src->revision;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
 	entry_dest->crypto_type	= entry_src->crypto_type;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
+
+	// Copy the disc header.
+	memcpy(&entry_dest->discHeader, &entry_src->discHeader, sizeof(entry_dest->discHeader));
 
 	// Timestamp.
 	if (entry_src->timestamp >= 0) {
@@ -555,6 +567,10 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 				goto end;
 			}
 		}
+
+		// TODO: Restore the disc header here if necessary?
+		// GCMs being imported generally won't have the first
+		// 16 KB zeroed out...
 
 		// TODO: Error handling.
 		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);

@@ -214,6 +214,10 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	RvtH_BankEntry *rvth_entry;
 	int ret;
 
+	// Sector buffer.
+	uint8_t sbuf[LBA_SIZE];
+	uint32_t lba_size;
+
 	if (!rvth) {
 		errno = EINVAL;
 		return -EINVAL;
@@ -264,7 +268,20 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 			return RVTH_ERROR_BANK_DL_2;
 	}
 
-	// Delete the bank and write the entry.
+	// Restore the disc header if necessary.
+	lba_size = reader_read(rvth_entry->reader, sbuf, 0, 1);
+	if (lba_size == 1) {
+		// Check if the disc header is correct.
+		if (memcmp(sbuf, &rvth_entry->discHeader, sizeof(rvth_entry->discHeader)) != 0) {
+			// Disc header is incorrect.
+			// Restore it.
+			memcpy(sbuf, &rvth_entry->discHeader, sizeof(rvth_entry->discHeader));
+			// TODO: Check for errors.
+			reader_write(rvth_entry->reader, sbuf, 0, 1);
+		}
+	}
+
+	// Undelete the bank and write the entry.
 	rvth_entry->is_deleted = false;
 	ret = rvth_write_BankEntry(rvth, bank);
 	if (ret != 0) {
