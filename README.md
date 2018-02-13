@@ -13,14 +13,14 @@ This is an open-source tool for managing RVT-H Reader consoles.
   present on the HDD.
 * Extracts disc images from the RVT-H into an image file.
 * Allows deletion and undeletion of banks on an RVT-H system.
+  * Can undelete Wii images that were "flushed" using the front-panel button.
+  * GameCube images deleted this way cannot currently be undeleted.
 * Signature verification for all Wii disc images. Indicates if the signature
   is valid, invalid, or fakesigned. (Game partition only at the moment.)
-* Installation of GameCube and Wii disc images. Wii disc images must be
-  either unencrypted or debug-encrypted in order to run correctly.
+* Installation of GameCube and Wii disc images.
 * Automatic re-signing of retail Wii disc images to allow them to run on
   the RVT-H system. (Update partitions will be removed, since retail updates
   won't work properly on RVT-H.)
-  * NOTE: Currently broken on Windows due to `/dev/urandom` not existing.
 
 ## Planned Features
 
