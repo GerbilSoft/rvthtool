@@ -75,10 +75,10 @@ Disc images on the RVT-H may or may not be encrypted:
 * GameCube: Not encrypted.
 * Wii: May be encrypted using the RVT-R debug key, or not encrypted.
 
-Wii disc images encrypted using the RVT-R debug key are currently playable
-on the [Dolphin emulator](https://dolphin-emu.org/) and on retail consoles
-with a USB loader, if the image is re-encrypted and fakesigned using the
-retail keys.
+Wii disc images encrypted using the RVT-R debug key are playable on the
+[Dolphin emulator](https://dolphin-emu.org/) with no changes. They can also
+be used on retail consoles with a USB loader if the image is re-encrypted
+and fakesigned using the retail encryption key.
 
 Unencrypted Wii disc images are not currently usable on Dolphin or retail
 consoles. I have been working on adding unencrypted image support to Dolphin
