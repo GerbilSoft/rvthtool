@@ -2,6 +2,9 @@
 # Reference: https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
 PROJECT(rvthtool)
 
+# Create the manifest file.
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/rvthtool.exe.manifest.in" "${CMAKE_CURRENT_BINARY_DIR}/rvthtool.exe.manifest" @ONLY)
+
 # Sources.
 SET(rvthtool_SRCS
 	main.c
@@ -15,6 +18,9 @@ SET(rvthtool_H
 	extract.h
 	undelete.h
 	)
+IF(WIN32)
+	SET(rvthtool_RC resource.rc)
+ENDIF(WIN32)
 
 #########################
 # Build the executable. #
@@ -23,6 +29,7 @@ SET(rvthtool_H
 ADD_EXECUTABLE(rvthtool
 	${rvthtool_SRCS}
 	${rvthtool_H}
+	${rvthtool_RC}
 	)
 SET_TARGET_PROPERTIES(rvthtool PROPERTIES PREFIX "")
 DO_SPLIT_DEBUG(rvthtool)
