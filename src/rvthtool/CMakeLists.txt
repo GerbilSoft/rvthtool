@@ -1,3 +1,5 @@
+# getopt() for MSVC with Unicode support.
+# Reference: https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
 PROJECT(rvthtool)
 
 # Sources.
@@ -44,6 +46,9 @@ TARGET_INCLUDE_DIRECTORIES(rvthtool
 	)
 
 TARGET_LINK_LIBRARIES(rvthtool rvth)
+IF(MSVC)
+	TARGET_LINK_LIBRARIES(rvthtool getopt_msvc)
+ENDIF(MSVC)
 
 # CMake-3.7.2 doesn't add include paths to windres.
 IF(MINGW)

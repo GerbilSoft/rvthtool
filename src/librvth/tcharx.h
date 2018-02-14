@@ -44,6 +44,9 @@ typedef char TCHAR;
 #define _tprintf printf
 #define _ftprintf fprintf
 #define _sntprintf snprintf
+#define _vtprintf vprintf
+#define _vftprintf vfprintf
+#define _vsprintf vsprintf
 
 // stdlib.h
 #define _tcscmp(s1, s2)			strcmp((s1), (s2))
