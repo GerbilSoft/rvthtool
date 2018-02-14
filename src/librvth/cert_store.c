@@ -28,6 +28,10 @@
 
 // Encryption keys. (AES-128)
 const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16] = {
+	// RVL_KEY_DEBUG
+	{0xA1,0x60,0x4A,0x6A,0x71,0x23,0xB5,0x29,
+	 0xAE,0x8B,0xEC,0x32,0xC8,0x16,0xFC,0xAA},
+
 	// RVL_KEY_RETAIL
 	{0xEB,0xE4,0x2A,0x22,0x5E,0x85,0x93,0xE4,
 	 0x48,0xD9,0xC5,0x45,0x73,0x81,0xAA,0xF7},
@@ -35,10 +39,6 @@ const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16] = {
 	// RVL_KEY_KOREAN
 	{0x63,0xB8,0x2B,0xB4,0xF4,0x61,0x4E,0x2E,
 	 0x13,0xF2,0xFE,0xFB,0xBA,0x4C,0x9B,0x7E},
-
-	// RVL_KEY_DEBUG
-	{0xA1,0x60,0x4A,0x6A,0x71,0x23,0xB5,0x29,
-	 0xAE,0x8B,0xEC,0x32,0xC8,0x16,0xFC,0xAA},
 };
 
 // Signature issuers.
@@ -46,16 +46,16 @@ const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
 	NULL,				// RVL_CERT_ISSUER_UNKNOWN
 	"Root",				// RVL_CERT_ISSUER_ROOT
 
-	// Retail
-	"Root-CA00000001",		// RVL_CERT_ISSUER_RETAIL_CA
-	"Root-CA00000001-XS00000003",	// RVL_CERT_ISSUER_RETAIL_TICKET
-	"Root-CA00000001-CP00000004",	// RVL_CERT_ISSUER_RETAIL_TMD
-
 	// Debug
 	"Root-CA00000002",		// RVL_CERT_ISSUER_DEBUG_CA
 	"Root-CA00000002-XS00000006",	// RVL_CERT_ISSUER_DEBUG_TICKET
 	"Root-CA00000002-CP00000007",	// RVL_CERT_ISSUER_DEBUG_TMD
 	"Root-CA00000002-MS00000003",	// RVL_CERT_ISSUER_DEBUG_DEV
+
+	// Retail
+	"Root-CA00000001",		// RVL_CERT_ISSUER_RETAIL_CA
+	"Root-CA00000001-XS00000003",	// RVL_CERT_ISSUER_RETAIL_TICKET
+	"Root-CA00000001-CP00000004",	// RVL_CERT_ISSUER_RETAIL_TMD
 };
 
 // Root certificate.
@@ -561,16 +561,16 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer)
 		NULL,					// RVL_CERT_ISSUER_UNKNOWN
 		(const RVL_Cert*)&cert_root,		// RVL_CERT_ISSUER_ROOT
 
-		// Retail
-		(const RVL_Cert*)&cert_retail_ca,	// RVL_CERT_ISSUER_RETAIL_CA
-		(const RVL_Cert*)&cert_retail_ticket,	// RVL_CERT_ISSUER_RETAIL_TICKET
-		(const RVL_Cert*)&cert_retail_tmd,	// RVL_CERT_ISSUER_RETAIL_TMD
-
 		// Debug
 		(const RVL_Cert*)&cert_debug_ca,	// RVL_CERT_ISSUER_DEBUG_CA
 		(const RVL_Cert*)&cert_debug_ticket,	// RVL_CERT_ISSUER_DEBUG_TICKET
 		(const RVL_Cert*)&cert_debug_tmd,	// RVL_CERT_ISSUER_DEBUG_TMD
 		(const RVL_Cert*)&cert_debug_dev,	// RVL_CERT_ISSUER_DEBUG_DEV
+
+		// Retail
+		(const RVL_Cert*)&cert_retail_ca,	// RVL_CERT_ISSUER_RETAIL_CA
+		(const RVL_Cert*)&cert_retail_ticket,	// RVL_CERT_ISSUER_RETAIL_TICKET
+		(const RVL_Cert*)&cert_retail_tmd,	// RVL_CERT_ISSUER_RETAIL_TMD
 	};
 
 	assert(issuer > RVL_CERT_ISSUER_UNKNOWN && issuer < RVL_CERT_ISSUER_MAX);
@@ -606,16 +606,16 @@ unsigned int cert_get_size(RVL_Cert_Issuer issuer)
 		0U,						// RVL_CERT_ISSUER_UNKNOWN
 		(unsigned int)sizeof(cert_root),		// RVL_CERT_ISSUER_ROOT
 
-		// Retail
-		(unsigned int)sizeof(cert_retail_ca),		// RVL_CERT_ISSUER_RETAIL_CA
-		(unsigned int)sizeof(cert_retail_ticket),	// RVL_CERT_ISSUER_RETAIL_TICKET
-		(unsigned int)sizeof(cert_retail_tmd),		// RVL_CERT_ISSUER_RETAIL_TMD
-
 		// Debug
 		(unsigned int)sizeof(cert_debug_ca),		// RVL_CERT_ISSUER_DEBUG_CA
 		(unsigned int)sizeof(cert_debug_ticket),	// RVL_CERT_ISSUER_DEBUG_TICKET
 		(unsigned int)sizeof(cert_debug_tmd),		// RVL_CERT_ISSUER_DEBUG_TMD
 		(unsigned int)sizeof(cert_debug_dev),		// RVL_CERT_ISSUER_DEBUG_DEV
+
+		// Retail
+		(unsigned int)sizeof(cert_retail_ca),		// RVL_CERT_ISSUER_RETAIL_CA
+		(unsigned int)sizeof(cert_retail_ticket),	// RVL_CERT_ISSUER_RETAIL_TICKET
+		(unsigned int)sizeof(cert_retail_tmd),		// RVL_CERT_ISSUER_RETAIL_TMD
 	};
 
 	assert(issuer > RVL_CERT_ISSUER_UNKNOWN && issuer < RVL_CERT_ISSUER_MAX);

@@ -34,9 +34,9 @@ extern "C" {
 
 // Encryption keys. (AES-128)
 typedef enum {
-	RVL_KEY_RETAIL	= 0,	// Retail common key
-	RVL_KEY_KOREAN	= 1,	// Korean common key
-	RVL_KEY_DEBUG	= 2,	// Debug common key
+	RVL_KEY_DEBUG	= 0,	// Debug common key
+	RVL_KEY_RETAIL	= 1,	// Retail common key
+	RVL_KEY_KOREAN	= 2,	// Korean common key
 
 	RVL_KEY_MAX
 } RVL_AES_Keys_e;
@@ -47,16 +47,16 @@ typedef enum {
 	RVL_CERT_ISSUER_UNKNOWN		= 0,
 	RVL_CERT_ISSUER_ROOT,
 
-	// Retail
-	RVL_CERT_ISSUER_RETAIL_CA,
-	RVL_CERT_ISSUER_RETAIL_TICKET,
-	RVL_CERT_ISSUER_RETAIL_TMD,
-
 	// Debug
 	RVL_CERT_ISSUER_DEBUG_CA,
 	RVL_CERT_ISSUER_DEBUG_TICKET,
 	RVL_CERT_ISSUER_DEBUG_TMD,
 	RVL_CERT_ISSUER_DEBUG_DEV,
+
+	// Retail
+	RVL_CERT_ISSUER_RETAIL_CA,
+	RVL_CERT_ISSUER_RETAIL_TICKET,
+	RVL_CERT_ISSUER_RETAIL_TMD,
 
 	RVL_CERT_ISSUER_MAX
 } RVL_Cert_Issuer;
