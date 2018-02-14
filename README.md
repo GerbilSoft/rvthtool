@@ -6,21 +6,26 @@ This is an open-source tool for managing RVT-H Reader consoles.
 [![Travis Build Status](https://travis-ci.org/GerbilSoft/rvthtool.svg?branch=master)](https://travis-ci.org/GerbilSoft/rvthtool)
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/l83tx6d16gqr4ov2?svg=true)](https://ci.appveyor.com/project/GerbilSoft/rvthtool/branch/master)
 
+-![RVT-H Reader, RVT-R Reader, Wii RVL-001, and Commodore 1541C](doc/RVT.jpg)
+
 ## Current Features
 
 * Lists all disc images currently installed on the RVT-H system.
-* Lists "deleted" images that aren't accessible on the RVT-H but are still
-  present on the HDD.
-* Extracts disc images from the RVT-H into an image file.
-* Allows deletion and undeletion of banks on an RVT-H system.
+* Can find "deleted" images that aren't accessible on the RVT-H but are still
+  present on the HDD, and has an option to undelete these images.
+  * Can undelete any image deleted by rvtwriter, which only clears the
+    bank table entry.
   * Can undelete Wii images that were "flushed" using the front-panel button.
-  * GameCube images deleted this way cannot currently be undeleted.
+    * GameCube images deleted this way cannot currently be undeleted.
+* Extracts disc images from an RVT-H system or HDD image into a GCM file.
+  * Supports optional recryption to convert a debug-encrypted image to retail
+    encryption with fake-signed ticket and TMD.
 * Signature verification for all Wii disc images. Indicates if the signature
   is valid, invalid, or fakesigned. (Game partition only at the moment.)
-* Installation of GameCube and Wii disc images.
-* Automatic re-signing of retail Wii disc images to allow them to run on
-  the RVT-H system. (Update partitions will be removed, since retail updates
-  won't work properly on RVT-H.)
+* Installation of GameCube and Wii disc images onto an RVT-H system. If
+  importing a retail Wii disc image, it will automatically be re-signed and
+  re-encrypted using the debug keys. (Update partitions will be removed, since
+  retail updates won't work properly on RVT-H.)
 
 ## Planned Features
 
@@ -30,8 +35,13 @@ This is an open-source tool for managing RVT-H Reader consoles.
   in a fakesigned image.
   * Support for both CISO and WBFS formats for converting retail to debug
     and vice-versa, but not encrypted to unencrypted.
+* Converting unencrypted debug-signed disc images to retail fake-signed.
 * RVT-H device scanning to determine which device names are associated with
   connected RVT-H Readers.
+* Extend the bank table to support more than 8 banks. Requires an RVT-H Reader
+  with an HDD larger than 40 GB.
+  * Bank 1 will be relocated to before the bank table, limiting it to GameCube
+    images.
 
 A future version will also add a GUI.
 
@@ -49,21 +59,29 @@ number in the bottom pane.
 **WARNING:** Disk Management will prompt to initialize the RVT-H device. DO NOT
 ALLOW IT TO INITIALIZE THE DRIVE; this may cause data loss.
 
-List disc images: `sudo ./rvthtool list /dev/sdb`
+The following commands assume `/dev/sdb` is the RVT-H Reader, and will
+extract bank 1.
 
-Extract disc image: `sudo ./rvthtool extract /dev/sdb 1 disc.gcm`
-* Replace `1` with the bank number.
-
-Delete a bank: `sudo ./rvthtool delete /dev/sdb 1`
-* Replace `1` with the bank number.
-
-Undelete a bank: `sudo ./rvthtool undelete /dev/sdb 1`
-* Replace `1` with the bank number.
-
-Import a GameCube or Wii game: `sudo ./rvthtool import /dev/sdb 1 disc.gcm`
-* Replace `1` with the bank number.
-* If the game is retail-encrypted, it will be converted to debug encryption
-  and signed using the debug keys.
+* List disc images:
+  * `sudo ./rvthtool list /dev/sdb`
+* Extract a bank with no modifications:
+  * `sudo ./rvthtool extract /dev/sdb 1 disc.gcm`
+* Extract a bank and convert to retail fakesigned encryption:
+  * `sudo ./rvthtool extract --recrypt=retail /dev/sdb 1 disc.gcm`
+* Delete a bank:
+  * `sudo ./rvthtool delete /dev/sdb 1`
+  * NOTE: This will only clear the bank table entry.
+* Undelete a bank:
+  * `sudo ./rvthtool undelete /dev/sdb 1`
+* Import a GameCube or Wii game:
+  * `sudo ./rvthtool import /dev/sdb 1 disc.gcm`
+  * If the game is retail-encrypted, it will be converted to debug encryption
+    and signed using the debug keys.
+* Convert an RVT-R disc image to retail fakesigned:
+  * `./rvthtool extract --recrypt=retail RVT-R.gcm 1 RetailFakesigned.gcm`
+  * NOTE: Currently, disc images are treated as if they're single-bank RVT-H
+    HDD images. This is why a bank number is required, even though it will
+    always be 1.
 
 ## Encryption
 
