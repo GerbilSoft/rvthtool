@@ -65,8 +65,9 @@ typedef struct PACKED _GCN_DiscHeader {
 	// Normally 0 on retail and RVT-R (indicating the disc is encrypted).
 	uint8_t hash_verify;		// [0x060] If non-zero, disable hash verification.
 	uint8_t disc_noCrypt;		// [0x061] If non-zero, disable disc encryption.
+	uint8_t reserved2[6];		// [0x062] Reserved.
 } GCN_DiscHeader;
-//ASSERT_STRUCT(GCN_DiscHeader, 98);
+//ASSERT_STRUCT(GCN_DiscHeader, 0x68);
 
 /**
  * GameCube region codes.
