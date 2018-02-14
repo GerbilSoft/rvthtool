@@ -32,9 +32,10 @@ extern "C" {
  * @param rvth_filename	RVT-H device or disk image filename.
  * @param s_bank	Bank number (as a string).
  * @param gcm_filename	Filename for the extracted GCM image.
+ * @param recrypt_key	[in] Key for recryption. (-1 for default)
  * @return 0 on success; non-zero on error.
  */
-int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename);
+int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key);
 
 /**
  * 'import' command.

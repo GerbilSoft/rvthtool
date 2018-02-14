@@ -281,10 +281,11 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
+ * @param recrypt_key	[in] Key for recryption. (-1 for default)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progress_Callback callback);
+int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int recrypt_key, RvtH_Progress_Callback callback);
 
 /**
  * Copy a bank from an RVT-H HDD or standalone disc image to an RVT-H system.

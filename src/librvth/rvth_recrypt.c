@@ -547,15 +547,16 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
  *
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
- * @param toKey		[in] Key to use for re-encryption.
+ * @param cryptoType	[in] New encryption type.
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
-	RVL_AES_Keys_e toKey, RvtH_Progress_Callback callback)
+	RvtH_CryptoType_e cryptoType, RvtH_Progress_Callback callback)
 {
 	RvtH_BankEntry *entry;
 	Reader *reader;
+	RVL_AES_Keys_e toKey;
 	uint32_t lba_size;
 	int i;
 
@@ -584,7 +585,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	// Callback state.
 	RvtH_Progress_State state;
 
-	if (!rvth || toKey < RVL_KEY_RETAIL || toKey >= RVL_KEY_MAX) {
+	if (!rvth || cryptoType < RVTH_CryptoType_Debug || cryptoType >= RVTH_CryptoType_MAX) {
 		errno = EINVAL;
 		return -EINVAL;
 	} else if (bank >= rvth->bank_count) {
@@ -624,6 +625,22 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	if (entry->crypto_type <= RVTH_CryptoType_None) {
 		// Not encrypted. Cannot process it.
 		return RVTH_ERROR_IS_UNENCRYPTED;
+	}
+
+	// Determine the key index.
+	switch (cryptoType) {
+		case RVTH_CryptoType_Debug:
+			toKey = RVL_KEY_DEBUG;
+			break;
+		case RVTH_CryptoType_Retail:
+			toKey = RVL_KEY_RETAIL;
+			break;
+		case RVTH_CryptoType_Korean:
+			toKey = RVL_KEY_KOREAN;
+			break;
+		default:
+			// Invalid key index.
+			return -EINVAL;
 	}
 
 	// NOTE: We're not checking for encryption/signature type,

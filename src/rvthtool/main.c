@@ -206,12 +206,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		ret = list_banks(argv[optind+1]);
 	} else if (!_tcscmp(argv[optind], _T("extract"))) {
 		// Extract a bank.
-		// TODO: Pass the 'recrypt_key' parameter.
 		if (argc < optind+4) {
 			print_error(argv[0], _T("missing parameters for 'extract'"));
 			return EXIT_FAILURE;
 		}
-		ret = extract(argv[optind+1], argv[optind+2], argv[optind+3]);
+		ret = extract(argv[optind+1], argv[optind+2], argv[optind+3], recrypt_key);
 	} else if (!_tcscmp(argv[optind], _T("import"))) {
 		// Import a bank.
 		if (argc < optind+4) {

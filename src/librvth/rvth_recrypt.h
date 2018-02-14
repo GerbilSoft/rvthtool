@@ -45,12 +45,12 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank);
  *
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
- * @param toKey		[in] Key to use for re-encryption.
+ * @param cryptoType	[in] New encryption type.
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
-	RVL_AES_Keys_e toKey, RvtH_Progress_Callback callback);
+	RvtH_CryptoType_e cryptoType, RvtH_Progress_Callback callback);
 
 #ifdef __cplusplus
 }
