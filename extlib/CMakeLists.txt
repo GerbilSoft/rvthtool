@@ -11,6 +11,12 @@ FUNCTION(SET_EXTLIB_PROPERTIES)
 	ENDFOREACH(_target ${ARGV})
 ENDFUNCTION(SET_EXTLIB_PROPERTIES)
 
+# getopt for MSVC
+IF(MSVC)
+	ADD_SUBDIRECTORY(getopt_msvc)
+	SET_EXTLIB_PROPERTIES(getopt_msvc)
+ENDIF(MSVC)
+
 # Google Test
 IF(BUILD_TESTING)
 	# Reference: http://stackoverflow.com/questions/12540970/how-to-make-gtest-build-mdd-instead-of-mtd-by-default-using-cmake
@@ -19,7 +25,6 @@ IF(BUILD_TESTING)
 	SET(SKIP_INSTALL_ALL ON)
 	ADD_SUBDIRECTORY(googletest)
 
-	INCLUDE(SetMSVCDebugPath)
 	SET_EXTLIB_PROPERTIES(
 		gtest gtest_main gtest_no_exception gtest_main_no_exception
 		gtest_main_no_rtti gtest_dll gtest_main_use_own_tuple
