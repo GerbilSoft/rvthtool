@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "config.version.h"
+#include "git.h"
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -133,8 +134,15 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	((void)argc);
 	((void)argv);
 
-	printf("RVT-H Tool v" VERSION_STRING "\n"
-		"Copyright (c) 2018 by David Korth.\n\n");
+	puts("RVT-H Tool v" VERSION_STRING "\n"
+		"Copyright (c) 2018 by David Korth.");
+#ifdef RP_GIT_VERSION
+	puts(RP_GIT_VERSION);
+# ifdef RP_GIT_DESCRIBE
+	puts(RP_GIT_DESCRIBE);
+# endif
+#endif
+	putchar('\n');
 
 	// TODO: getopt().
 	// Unicode getopt() for Windows:
