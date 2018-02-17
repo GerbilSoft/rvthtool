@@ -190,7 +190,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 		ptbl[pt_idx].lba_len = ptbl[pt_idx+1].lba_start - ptbl[pt_idx].lba_start;
 	}
 	// Last partition.
-	ptbl[pt_total_proc-1].lba_len = ptbl[pt_total_proc-1].lba_start - entry->lba_len;
+	ptbl[pt_total_proc-1].lba_len = entry->lba_len - ptbl[pt_total_proc-1].lba_start;
 
 	// Save the original per-table addresses and counts.
 	for (vg_idx = 0; vg_idx < 4; vg_idx++) {
