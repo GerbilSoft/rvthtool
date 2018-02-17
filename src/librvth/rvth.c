@@ -888,6 +888,7 @@ void rvth_close(RvtH *rvth)
 		if (rvth->entries[i].reader) {
 			reader_close(rvth->entries[i].reader);
 		}
+		free(rvth->entries[i].ptbl);
 	}
 
 	// Free the bank entries array.

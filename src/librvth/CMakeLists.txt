@@ -53,6 +53,7 @@ SET(librvth_SRCS
 	cert.c
 	priv_key_store.c
 	disc_header.c
+	ptbl.c
 	)
 # Headers.
 SET(librvth_H
@@ -75,6 +76,7 @@ SET(librvth_H
 	aesw.h
 	priv_key_store.h
 	disc_header.h
+	ptbl.h
 	)
 
 IF(HAVE_NETTLE)

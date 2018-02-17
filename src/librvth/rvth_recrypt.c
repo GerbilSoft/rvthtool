@@ -21,6 +21,7 @@
 #include "rvth_recrypt.h"
 #include "rvth.h"
 #include "rvth_p.h"
+#include "ptbl.h"
 
 #include "reader.h"
 #include "gcn_structs.h"
@@ -58,17 +59,6 @@ typedef union _sbuf2_t {
 	};
 } sbuf2_t;
 
-// Parsed partition tables.
-// Does not include partition length, which is listed in the
-// partition header. (If 0, which is common for unencrypted
-// images, the FST will need to be parsed.)
-typedef struct _pt_entry_t {
-	uint32_t lba_start;	// Starting LBA.
-	uint32_t type;		// Partition type.
-	char id[8];		// Identifier string.
-	char id_orig[8];	// Original ID string if shifted.
-} pt_entry_t;
-
 // ID
 static const uint32_t id_exp = 0x00010001;
 static const uint8_t id_pub[256] = {
@@ -89,106 +79,6 @@ static const uint8_t id_pub[256] = {
 	0xAB,0x2F,0x66,0xA1,0x3C,0xDC,0x28,0x39,0xFD,0x64,0x33,0xDF,0x72,0x43,0xD9,0x65,
 	0x2B,0xDF,0x94,0x14,0x0A,0x7B,0xE0,0xBA,0x40,0x29,0xC5,0x23,0x30,0x2C,0x14,0xC1
 };
-
-/**
- * Parse a Wii partition table.
- * @param reader	[in] Reader object.
- * @param ptbl		[out] Array of pt_entry_t structs.
- * @param size		[in] Number of elements in the ptbl array.
- * @param remove_upd	[in] If true, remove update partitions and rewrite the table.
- * @return Number of partition table entries read, or negative POSIX error code on error.
- */
-static int parse_rvl_ptbl(Reader *reader, pt_entry_t *ptbl, int size, bool remove_upd)
-{
-	uint32_t lba_size;
-	unsigned int i, j, j_orig;
-	int pt_count = 0;
-
-	// Partitions to zero out. (update partitions)
-	// NOTE: This only contains the LBA starting address.
-	// The actual partition length is in the partition header.
-	// TODO: Unencrypted partitions will need special handling.
-	uint32_t upd_lba[31];
-	unsigned int upd_count = 0;
-
-	// Sector buffer.
-	sbuf2_t sbuf;
-
-	// Get the volume group and partition tables.
-	errno = 0;
-	lba_size = reader_read(reader, &sbuf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
-	if (lba_size != 2) {
-		// Read error.
-		if (errno == 0) {
-			errno = EIO;
-		}
-		return -errno;
-	}
-
-	// All volume group tables must be within the two sectors.
-	for (i = 0; i < ARRAY_SIZE(sbuf.vgtbl.vg) && pt_count < size; i++) {
-		int64_t addr;
-		RVL_PartitionTableEntry *pte_start, *pte;
-
-		uint32_t count = be32_to_cpu(sbuf.vgtbl.vg[i].count);
-		if (count == 0)
-			continue;
-
-		addr = (int64_t)be32_to_cpu(sbuf.vgtbl.vg[i].addr) << 2;
-		addr -= RVL_VolumeGroupTable_ADDRESS;
-		if (addr + (count * sizeof(RVL_PartitionTableEntry)) > sizeof(sbuf.u8)) {
-			// Out of bounds.
-			// TODO: Return RVTH_ERROR_PARTITION_TABLE_CORRUPTED?
-			errno = EIO;
-			return -EIO;
-		}
-
-		// Process the partition table.
-		pte_start = (RVL_PartitionTableEntry*)&sbuf.u8[addr];
-		pte = pte_start;
-		for (j = 0, j_orig = 0; j < count && pt_count < size; j++, j_orig++, pte++) {
-			uint32_t lba_start = (uint32_t)((int64_t)be32_to_cpu(pte->addr) / (RVTH_BLOCK_SIZE/4));
-
-			if (remove_upd && be32_to_cpu(pte->type) == 1) {
-				// Update partition, and remove_upd is set.
-				// Remove the partition.
-				upd_lba[upd_count++] = lba_start;
-				// Shift the rest of the partitions over.
-				memmove(pte, pte+1, (count-j) * sizeof(*pte));
-				pte_start[count-1].addr = 0;
-				pte_start[count-1].type = 0;
-				// Decrement the counters to compensate for the shift.
-				count--; j--; pte--;
-			} else {
-				// Save this partition.
-				ptbl->lba_start = lba_start;
-				snprintf(ptbl->id, sizeof(ptbl->id), "%up%u", i, j);
-				snprintf(ptbl->id_orig, sizeof(ptbl->id_orig), "%up%u", i, j_orig);
-				ptbl++;
-				pt_count++;
-			}
-		}
-
-		// Update the partition count.
-		sbuf.vgtbl.vg[i].count = cpu_to_be32(count);
-	}
-
-	if (remove_upd && upd_count > 0) {
-		// Write the updated volume group and partition tables.
-		errno = 0;
-		lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 2);
-		if (lba_size != 2) {
-			// Write error.
-			if (errno == 0) {
-				errno = EIO;
-			}
-			return -errno;
-		}
-	}
-
-	// TODO: Zero out any update partitions if requested.
-	return pt_count;
-}
 
 /**
  * @param id ID buffer.
@@ -355,39 +245,23 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 		}
 	} else {
 		// Wii. Write at the end of the partition header.
-		// TODO: Get partitions.
-		pt_entry_t ptbl[31];
-		const pt_entry_t *ptbl_entry;
-		int pt_count = 0;
+		const pt_entry_t *pte;
 		char ptid_buf[24];
-		int i;
+		unsigned int i;
 
-		// Save the GCN header for later.
-		memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
-
-		// Read and parse the partition table.
-		errno = 0;
-		pt_count = parse_rvl_ptbl(reader, ptbl, ARRAY_SIZE(ptbl), false);
-		if (pt_count == 0) {
-			// No partitions...
-			err = errno;
-			if (err == 0) {
-				err = EIO;
-			}
-			ret = -err;
-			goto end;
-		} else if (pt_count < 0) {
-			// An error occurred.
-			err = -pt_count;
-			ret = pt_count;
+		// Make sure the partition table is loaded.
+		ret = rvth_ptbl_load(entry);
+		if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
+			// Unable to load the partition table.
+			err = -ret;
 			goto end;
 		}
 
 		// Write the ID at the end of each partition header.
-		ptbl_entry = ptbl;
-		for (i = 0; i < pt_count; i++, ptbl_entry++) {
+		pte = entry->ptbl;
+		for (i = 0; i < entry->pt_count; i++, pte++) {
 			uint8_t id_buf[512];	// need to read the LBA
-			const uint32_t lba_id = ptbl_entry->lba_start + BYTES_TO_LBA(0x7E00);
+			const uint32_t lba_id = pte->lba_start + BYTES_TO_LBA(0x7E00);
 
 			// Read the last LBA of the partition header.
 			errno = 0;
@@ -407,7 +281,9 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 				continue;
 
 			// Write the identifier.
-			snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptbl_entry->id_orig, ptbl_entry->id);
+			snprintf(ptid_buf, sizeof(ptid_buf), "%up%u -> %up%u",
+				pte->vg, pte->pt_orig,
+				pte->vg, pte->pt);
 			rvth_create_id(&id_buf[256], 256, &gcn, ptid_buf);
 
 			// Write the updated LBA.
@@ -558,7 +434,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	Reader *reader;
 	RVL_AES_Keys_e toKey;
 	uint32_t lba_size;
-	int i;
+	unsigned int i;
 
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
@@ -577,9 +453,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	// NOTE: This only contains the LBA starting address.
 	// The actual partition length is in the partition header.
 	// TODO: Unencrypted partitions will need special handling.
-	pt_entry_t ptbl[31];
-	const pt_entry_t *ptbl_entry;
-	int pt_count = 0;
+	const pt_entry_t *pte;
 	char ptid_buf[24];
 
 	// Callback state.
@@ -688,21 +562,29 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 	memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
 
-	// Parse the partition table.
-	errno = 0;
-	pt_count = parse_rvl_ptbl(reader, ptbl, ARRAY_SIZE(ptbl), true);
-	if (pt_count == 0) {
-		// No partitions...
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		ret = -err;
+	// Make sure the partition table is loaded.
+	ret = rvth_ptbl_load(entry);
+	if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
+		// Unable to load the partition table.
+		err = -ret;
 		goto end;
-	} else if (pt_count < 0) {
-		// An error occurred.
-		err = -pt_count;
-		ret = pt_count;
+	}
+
+	// Remove update partitions.
+	// TODO: Actually zero them out instead of just
+	// removing them from the partition table.
+	ret = rvth_ptbl_RemoveUpdates(entry);
+	if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
+		// Unable to remove update partitions.
+		err = -ret;
+		goto end;
+	}
+
+	// Write the updated partition table.
+	ret = rvth_ptbl_write(entry);
+	if (ret != 0) {
+		// Unable to write the updated partition table.
+		err = -ret;
 		goto end;
 	}
 
@@ -722,8 +604,8 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 
 	// Process the other partitions.
-	ptbl_entry = ptbl;
-	for (i = 0; i < pt_count; i++, ptbl_entry++) {
+	pte = entry->ptbl;
+	for (i = 0; i < entry->pt_count; i++, pte++) {
 		RVL_PartitionHeader hdr_orig;	// Original header
 		RVL_PartitionHeader hdr_new;	// Rebuilt header
 		uint32_t data_pos;		// Current position in hdr_new.u8[].
@@ -736,7 +618,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 
 		// Read the partition header.
 		errno = 0;
-		lba_size = reader_read(reader, &hdr_orig, ptbl_entry->lba_start, BYTES_TO_LBA(sizeof(hdr_orig.u8)));
+		lba_size = reader_read(reader, &hdr_orig, pte->lba_start, BYTES_TO_LBA(sizeof(hdr_orig.u8)));
 		if (lba_size != BYTES_TO_LBA(sizeof(hdr_orig))) {
 			// Read error.
 			err = errno;
@@ -845,13 +727,15 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		// Write the identifier.
 		// (Only if this area is empty!)
 		if (rvth_is_block_empty(&hdr_new.data[sizeof(hdr_new.data)-256], 256)) {
-			snprintf(ptid_buf, sizeof(ptid_buf), "%s -> %s", ptbl_entry->id_orig, ptbl_entry->id);
+			snprintf(ptid_buf, sizeof(ptid_buf), "%up%u -> %up%u",
+				pte->vg, pte->pt_orig,
+				pte->vg, pte->pt);
 			rvth_create_id(&hdr_new.data[sizeof(hdr_new.data)-256], 256, &gcn, ptid_buf);
 		}
 
 		// Write the new partition header.
 		errno = 0;
-		lba_size = reader_write(reader, &hdr_new, ptbl_entry->lba_start, BYTES_TO_LBA(sizeof(hdr_new.u8)));
+		lba_size = reader_write(reader, &hdr_new, pte->lba_start, BYTES_TO_LBA(sizeof(hdr_new.u8)));
 		if (lba_size != BYTES_TO_LBA(sizeof(hdr_new))) {
 			// Write error.
 			err = errno;

@@ -89,9 +89,9 @@ typedef struct _RvtH_SigInfo {
 } RvtH_SigInfo;
 
 // Disc image and RVT-H bank entry definition.
-typedef struct RvtH_BankEntry {
+struct _pt_entry_t;
+typedef struct _RvtH_BankEntry {
 	Reader *reader;		// Disc image reader.
-	// TODO: Function pointer table for reading CISO and WBFS.
 	uint32_t lba_start;	// Starting LBA. (512-byte sectors)
 	uint32_t lba_len;	// Length, in 512-byte sectors.
 	time_t timestamp;	// Timestamp. (no timezone information)
@@ -107,6 +107,11 @@ typedef struct RvtH_BankEntry {
 	uint8_t ios_version;	// IOS version. (0 == ERROR)
 	RvtH_SigInfo ticket;	// Ticket encryption/signature.
 	RvtH_SigInfo tmd;	// TMD encryption/signature.
+
+	// Wii partition table
+	RVL_VolumeGroupTable vg_orig;	// Original volume group table, in host-endian.
+	unsigned int pt_count;		// Number of entries in ptbl.
+	struct _pt_entry_t *ptbl;	// Partition table.
 } RvtH_BankEntry;
 
 // RVT-H bank types.
