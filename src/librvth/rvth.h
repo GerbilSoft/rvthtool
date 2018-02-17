@@ -42,7 +42,7 @@ extern "C" {
 #define LBA_TO_BYTES(x) ((int64_t)(x) * RVTH_BLOCK_SIZE)
 // Convert bytes to an LBA value.
 // NOTE: Partial LBAs will be truncated!
-#define BYTES_TO_LBA(x) ((uint32_t)(x / RVTH_BLOCK_SIZE))
+#define BYTES_TO_LBA(x) ((uint32_t)((x) / RVTH_BLOCK_SIZE))
 
 typedef enum {
 	RVTH_ERROR_SUCCESS		= 0,
