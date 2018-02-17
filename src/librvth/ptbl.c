@@ -63,7 +63,7 @@ static int compar_pt_entry_t(const void *a, const void *b)
  *
  * If the partition table was already loaded, this function does nothing.
  *
- * @param entry			[in] RVTH_BankEntry*
+ * @param entry		[in] RvtH_BankEntry*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_ptbl_load(RvtH_BankEntry *entry)
@@ -185,6 +185,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 	qsort(ptbl, pt_total_proc, sizeof(*ptbl), compar_pt_entry_t);
 
 	// Calculate the size of each partition.
+	// TODO: Use the data size in the partition header if it's available?
 	for (pt_idx = 0; pt_idx < pt_total_proc-1; pt_idx++) {
 		ptbl[pt_idx].lba_len = ptbl[pt_idx+1].lba_start - ptbl[pt_idx].lba_start;
 	}
@@ -209,7 +210,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
  * This function loads the partition table if it hasn't been loaded
  * yet, then removes all entries with type == 1.
  *
- * @param entry			[in] RVTH_BankEntry*
+ * @param entry		[in] RvtH_BankEntry*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_ptbl_RemoveUpdates(RvtH_BankEntry *entry)
@@ -258,10 +259,10 @@ int rvth_ptbl_RemoveUpdates(RvtH_BankEntry *entry)
  *
  * If the partition table hasn't been loaded yet, this function does nothing.
  *
- * @param entry			[in] RVTH_BankEntry*
+ * @param entry		[in] RvtH_BankEntry*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_ptbl_write(struct _RvtH_BankEntry *entry)
+int rvth_ptbl_write(RvtH_BankEntry *entry)
 {
 	ptbl_t pt;
 	RVL_PartitionTableEntry *ptptr[4];
@@ -327,4 +328,51 @@ int rvth_ptbl_write(struct _RvtH_BankEntry *entry)
 
 	// Partition table updated.
 	return 0;
+}
+
+/**
+ * Find the game partition in a Wii disc image.
+ * @param entry		[in] RvtH_BankEntry*
+ * @return Game partition entry, or NULL on error.
+ */
+const pt_entry_t *rvth_ptbl_find_game(RvtH_BankEntry *entry)
+{
+	unsigned int i;
+	int ret;
+	const pt_entry_t *pte;
+
+	assert(entry != NULL);
+	assert(entry->reader != NULL);
+	if (!entry || !entry->reader) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	// Bank must be Wii SL or DL.
+	if (entry->type != RVTH_BankType_Wii_SL &&
+	    entry->type != RVTH_BankType_Wii_DL)
+	{
+		// Not a Wii disc image.
+		errno = EINVAL;
+		return NULL;
+	}
+
+	// Make sure the partition table is loaded.
+	ret = rvth_ptbl_load(entry);
+	if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
+		// Unable to load the partition table.
+		return NULL;
+	}
+
+	// Find the game partition in Volume Group 0.
+	pte = entry->ptbl;
+	for (i = 0; i < entry->pt_count; i++, pte++) {
+		if (pte->vg == 0 && pte->type == 0) {
+			// Found the game partition.
+			return pte;
+		}
+	}
+
+	// Not found.
+	return NULL;
 }

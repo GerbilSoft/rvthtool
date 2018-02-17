@@ -54,7 +54,7 @@ struct _RvtH_BankEntry;
  *
  * If the partition table was already loaded, this function does nothing.
  *
- * @param entry			[in] RVTH_BankEntry*
+ * @param entry		[in] RvtH_BankEntry*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_ptbl_load(struct _RvtH_BankEntry *entry);
@@ -65,7 +65,7 @@ int rvth_ptbl_load(struct _RvtH_BankEntry *entry);
  * This function loads the partition table if it hasn't been loaded
  * yet, then removes all entries with type == 1.
  *
- * @param entry			[in] RVTH_BankEntry*
+ * @param entry		[in] RvtH_BankEntry*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_ptbl_RemoveUpdates(struct _RvtH_BankEntry *entry);
@@ -76,10 +76,17 @@ int rvth_ptbl_RemoveUpdates(struct _RvtH_BankEntry *entry);
  *
  * If the partition table hasn't been loaded yet, this function does nothing.
  *
- * @param entry			[in] RVTH_BankEntry*
+ * @param entry		[in] RvtH_BankEntry*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_ptbl_write(struct _RvtH_BankEntry *entry);
+
+/**
+ * Find the game partition in a Wii disc image.
+ * @param entry		[in] RvtH_BankEntry*
+ * @return Game partition entry, or NULL on error.
+ */
+const pt_entry_t *rvth_ptbl_find_game(RvtH_BankEntry *entry);
 
 #ifdef __cplusplus
 }
