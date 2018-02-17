@@ -199,7 +199,7 @@ typedef struct PACKED _RVL_Ticket {
 
 /**
  * Wii TMD header.
- * Reference: http://wiibrew.org/wiki/Tmd_file_structure
+ * Reference: http://wiibrew.org/wiki/Title_metadata
  */
 typedef struct PACKED _RVL_TMD_Header {
 	uint32_t signature_type;	// [0x000] Always 0x10001 for RSA-2048.
@@ -226,6 +226,19 @@ typedef struct PACKED _RVL_TMD_Header {
 	// Following this header is a variable-length content table.
 } RVL_TMD_Header;
 //ASSERT_STRUCT(RVL_TMD_Header, 0x1E4);
+
+/**
+ * Wii content entry. (Stored after the TMD.)
+ * Reference: http://wiibrew.org/wiki/Title_metadata
+ */
+typedef struct PACKED _RVL_Content_Entry {
+	uint32_t content_id;		// [0x000] Content ID
+	uint16_t index;			// [0x004] Index
+	uint16_t type;			// [0x006] Type
+	uint64_t size;			// [0x008] Size
+	uint8_t sha1_hash[20];		// [0x010] SHA-1 hash of the H3 table
+} RVL_Content_Entry;
+//ASSERT_STRUCT(RVL_Content_Entry, 0x24);
 
 /**
  * Wii partition header.
