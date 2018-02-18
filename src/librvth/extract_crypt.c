@@ -58,7 +58,7 @@ typedef struct _Wii_Disc_H3_t {
 	uint8_t h3[4915][SHA1_DIGEST_SIZE];
 	uint8_t pad[4];
 } Wii_Disc_H3_t;
-//ASSERT_STRUCT(Wii_Disc_H3_t, 0x18000);
+ASSERT_STRUCT(Wii_Disc_H3_t, 0x18000);
 
 // Encrypted Wii disc sector: Hash data.
 // The hash data is encrypted using AES-128-CBC.
@@ -90,7 +90,7 @@ typedef struct _Wii_Disc_Hashes_t {
 	// Padding. (0x00)
 	uint8_t pad_H2[32];
 } Wii_Disc_Hashes_t;
-//ASSERT_STRUCT(Wii_Disc_Hashes_t, 1024);
+ASSERT_STRUCT(Wii_Disc_Hashes_t, 1024);
 
 // Encrypted Wii disc sector.
 typedef struct _Wii_Disc_Sector_t {
@@ -104,7 +104,7 @@ typedef struct _Wii_Disc_Sector_t {
 	//        aka the last 16 bytes of hashes.h2[7].
 	uint8_t data[31*1024];
 } Wii_Disc_Sector_t;
-//ASSERT_STRUCT(Wii_Disc_Sector_t, 32*1024);
+ASSERT_STRUCT(Wii_Disc_Sector_t, 32*1024);
 
 // TODO: Static assertion that SHA1_DIGEST_SIZE == 20.
 

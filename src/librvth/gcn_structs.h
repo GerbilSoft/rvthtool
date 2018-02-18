@@ -18,8 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-// FIXME: ASSERT_STRUCT() doesn't work in C99.
-
 #ifndef __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__
 #define __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__
 
@@ -67,7 +65,7 @@ typedef struct PACKED _GCN_DiscHeader {
 	uint8_t disc_noCrypt;		// [0x061] If non-zero, disable disc encryption.
 	uint8_t reserved2[6];		// [0x062] Reserved.
 } GCN_DiscHeader;
-//ASSERT_STRUCT(GCN_DiscHeader, 0x68);
+ASSERT_STRUCT(GCN_DiscHeader, 0x68);
 
 /**
  * GameCube region codes.
@@ -100,7 +98,7 @@ typedef struct PACKED _GCN_Boot_Info {
 	uint32_t dol_limit;		// Maximum total size of DOL text/data sections. (0 == unlimited)
 	uint32_t reserved2;
 } GCN_Boot_Info;
-//ASSERT_STRUCT(GCN_Boot_Info, 48);
+ASSERT_STRUCT(GCN_Boot_Info, 48);
 
 /** Wii-specific structs. **/
 
@@ -150,7 +148,7 @@ typedef struct PACKED _RVL_TimeLimit {
 	uint32_t enable;	// 1 == enable; 0 == disable
 	uint32_t seconds;	// Time limit, in seconds.
 } RVL_TimeLimit;
-//ASSERT_STRUCT(RVL_TimeLimit, 8);
+ASSERT_STRUCT(RVL_TimeLimit, 8);
 
 /**
  * Title ID struct/union.
@@ -164,7 +162,7 @@ typedef union PACKED _RVL_TitleID_t {
 	};
 	uint8_t u8[8];
 } RVL_TitleID_t;
-//ASSERT_STRUCT(RVL_TitleID_t, 8);
+ASSERT_STRUCT(RVL_TitleID_t, 8);
 
 /**
  * Wii ticket.
@@ -195,7 +193,7 @@ typedef struct PACKED _RVL_Ticket {
 	uint8_t padding2[2];		// [0x262] Padding. (always 0)
 	RVL_TimeLimit time_limits[8];	// [0x264] Time limits.
 } RVL_Ticket;
-//ASSERT_STRUCT(RVL_Ticket, 0x2A4);
+ASSERT_STRUCT(RVL_Ticket, 0x2A4);
 
 /**
  * Wii TMD header.
@@ -225,7 +223,7 @@ typedef struct PACKED _RVL_TMD_Header {
 
 	// Following this header is a variable-length content table.
 } RVL_TMD_Header;
-//ASSERT_STRUCT(RVL_TMD_Header, 0x1E4);
+ASSERT_STRUCT(RVL_TMD_Header, 0x1E4);
 
 /**
  * Wii content entry. (Stored after the TMD.)
@@ -238,7 +236,7 @@ typedef struct PACKED _RVL_Content_Entry {
 	uint64_t size;			// [0x008] Size
 	uint8_t sha1_hash[20];		// [0x010] SHA-1 hash of the H3 table
 } RVL_Content_Entry;
-//ASSERT_STRUCT(RVL_Content_Entry, 0x24);
+ASSERT_STRUCT(RVL_Content_Entry, 0x24);
 
 /**
  * Wii partition header.
@@ -261,7 +259,7 @@ typedef union PACKED _RVL_PartitionHeader {
 	};
 	uint8_t u8[0x8000];
 } RVL_PartitionHeader;
-//ASSERT_STRUCT(RVL_PartitionHeader, 0x8000);
+ASSERT_STRUCT(RVL_PartitionHeader, 0x8000);
 
 /**
  * Country indexes in RVL_RegionSetting.ratings[].
