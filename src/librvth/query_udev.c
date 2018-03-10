@@ -150,6 +150,8 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 		// Copy the strings.
 		list_tail->device_name = strdup(s_devnode);
+		list_tail->usb_vendor = strdup_null(udev_device_get_sysattr_value(usb_dev, "manufacturer"));
+		list_tail->usb_product = strdup_null(udev_device_get_sysattr_value(usb_dev, "product"));
 		list_tail->serial_number = strdup_null(udev_device_get_sysattr_value(usb_dev, "serial"));
 		list_tail->fw_version = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));
 		list_tail->hdd_vendor = strdup_null(udev_device_get_sysattr_value(scsi_dev, "vendor"));
@@ -175,6 +177,8 @@ void rvth_query_free(RvtH_QueryEntry *devs)
 	while (devs) {
 		next = devs->next;
 		free((char*)devs->device_name);
+		free((char*)devs->usb_vendor);
+		free((char*)devs->usb_product);
 		free((char*)devs->serial_number);
 		free((char*)devs->fw_version);
 		free((char*)devs->hdd_vendor);

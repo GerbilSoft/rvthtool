@@ -39,6 +39,9 @@ typedef struct _RvtH_QueryEntry {
 	struct _RvtH_QueryEntry *next;
 
 	const char *device_name;	// Device name, e.g. "/dev/sdc" or "\\.\PhysicalDrive3".
+
+	const char *usb_vendor;		// USB vendor name.
+	const char *usb_product;	// USB product name.
 	const char *serial_number;	// Serial number, in ASCII.
 	const char *fw_version;		// Firmware version. (FIXME: HDD or RVT-H board?)
 

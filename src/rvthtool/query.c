@@ -137,6 +137,8 @@ int query(void)
 		return 0;
 	}
 
+	printf("Detected RVT-H Reader devices:\n\n");
+
 	p = devs;
 	for (; p != NULL; p = p->next) {
 		if (!p->device_name) {
@@ -151,12 +153,13 @@ int query(void)
 		}
 
 		printf("%s\n", p->device_name);
+		printf("- Manufacturer:  %s\n", (p->usb_vendor ? p->usb_vendor : "(unknown)"));
+		printf("- Product Name:  %s\n", (p->usb_product ? p->usb_product : "(unknown)"));
 		printf("- Serial Number: %s\n", (p->serial_number ? p->serial_number : "(unknown)"));
 		printf("- HDD Firmware:  %s\n", (p->fw_version ? p->fw_version : "(unknown)"));
 		// TODO: Trim the vendor/model fields if necessary.
-		printf("- HDD Model:     %s %s\n",
-		       (p->hdd_vendor ? p->hdd_vendor : "(unknown)"),
-		       (p->hdd_model ? p->hdd_model : "(unknown)"));
+		printf("- HDD Vendor:    %s\n", (p->hdd_vendor ? p->hdd_vendor : "(unknown)"));
+		printf("- HDD Model:     %s\n", (p->hdd_model ? p->hdd_model : "(unknown)"));
 
 		// Format and print the HDD size.
 		format_size(hdd_size, sizeof(hdd_size), p->size);
