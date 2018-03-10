@@ -84,7 +84,7 @@ extract bank 1.
 ```
 $ ./rvthtool query
 
-/dev/sdc
+/dev/sdb
 - Manufacturer:  Nintendo Co., Ltd.
 - Product Name:  RVT-H READER
 - Serial Number: abcdefgh
