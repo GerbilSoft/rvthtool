@@ -26,6 +26,12 @@
 
 #include <libudev.h>
 
+// strdup() wrapper that returns NULL if the input is NULL.
+static inline char *strdup_null(const char *s)
+{
+	return (s ? strdup(s) : NULL);
+}
+
 /**
  * Scan all USB devices for RVT-H Readers.
  * @return List of matching devices, or NULL if none were found.
@@ -64,9 +70,6 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		unsigned int vid, pid;
 
 		const char *s_blk_size;
-		const char *s_hdd_vendor, *s_hdd_model;
-		const char *s_serial_number;
-		const char *s_fw_version;
 
 		// Get the filename of the /sys entry for the device
 		// and create a udev_device object (dev) representing it.
@@ -139,23 +142,18 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			list_tail->next = NULL;
 		}
 
-		// USB device information.		
-		s_serial_number = udev_device_get_sysattr_value(usb_dev, "serial");
-
-		// Block/SCSI device information.
-		// TODO: Returns number of LBAs.
+		// Block device size.
+		// NOTE: Returns number of LBAs.
 		// Assuming blocks are 512 bytes.
+		// TODO: Get the actual LBA size.
 		s_blk_size = udev_device_get_sysattr_value(dev, "size");
-		s_hdd_vendor = udev_device_get_sysattr_value(scsi_dev, "vendor");
-		s_hdd_model = udev_device_get_sysattr_value(scsi_dev, "model");
-		s_fw_version = udev_device_get_sysattr_value(scsi_dev, "rev");
 
 		// Copy the strings.
 		list_tail->device_name = strdup(s_devnode);
-		list_tail->serial_number = (s_serial_number ? strdup(s_serial_number) : NULL);
-		list_tail->fw_version = (s_fw_version ? strdup(s_fw_version) : NULL);
-		list_tail->hdd_vendor = (s_hdd_vendor ? strdup(s_hdd_vendor) : NULL);
-		list_tail->hdd_model = (s_hdd_model ? strdup(s_hdd_model) : NULL);
+		list_tail->serial_number = strdup_null(udev_device_get_sysattr_value(usb_dev, "serial"));
+		list_tail->fw_version = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));
+		list_tail->hdd_vendor = strdup_null(udev_device_get_sysattr_value(scsi_dev, "vendor"));
+		list_tail->hdd_model = strdup_null(udev_device_get_sysattr_value(scsi_dev, "model"));
 		list_tail->size = (s_blk_size ? strtoull(s_blk_size, NULL, 10) * 512ULL : 0);
 
 		udev_device_unref(dev);
