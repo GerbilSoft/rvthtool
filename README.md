@@ -29,7 +29,7 @@ This is an open-source tool for managing RVT-H Reader consoles.
 * Standalone disc image re-signing to convert e.g. retail to debug, debug
   to retail, unencrypted to debug, etc. Conversion to retail will result
   in a fakesigned image.
-* Querying all available RVT-H Reader devices to determine which devices name
+* Querying all available RVT-H Reader devices to determine which device name
   is associated with which reader. (Linux with UDEV only at the moment.)
 
 ## Planned Features
