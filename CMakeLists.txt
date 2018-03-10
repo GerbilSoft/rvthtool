@@ -29,6 +29,8 @@ SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib" CACHE INTERNAL "Put
 # enough tests are added.
 ENABLE_TESTING()
 
+# Set default build options.
+INCLUDE(cmake/options.cmake)
 # Check for platform-specific functionality.
 INCLUDE(cmake/platform.cmake NO_POLICY_SCOPE)
 

@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * config.librvth.h.in: librvth configuration. (source file)               *
+ * query.c: Query storage devices. (common code)                           *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,31 +18,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_CONFIG_H__
-#define __RVTHTOOL_LIBRVTH_CONFIG_H__
+#include "query.h"
 
-/* Define to 1 if you have the `ftruncate' function. */
-#cmakedefine HAVE_FTRUNCATE 1
+#include <stdlib.h>
 
-/* Define to 1 if you have gmp. */
-#cmakedefine HAVE_GMP 1
-
-/* Define to 1 if we're using nettle for decryption. */
-#cmakedefine HAVE_NETTLE 1
-
-/* Define to 1 if we're using nettle and it is v3.0 or later. */
-#cmakedefine HAVE_NETTLE_3 1
-
-/* Define to 1 if "nettle/version.h" is present. */
-#cmakedefine HAVE_NETTLE_VERSION_H
-
-/* Define to 1 if nettle version functions are present. */
-#cmakedefine HAVE_NETTLE_VERSION_FUNCTIONS
-
-/* Define to 1 if udev is present. */
-#cmakedefine HAVE_UDEV 1
-
-/* Define to 1 if query.h is usable. */
-#cmakedefine HAVE_QUERY 1
-
-#endif /* __RVTHTOOL_LIBRVTH_CONFIG_H__ */
+/**
+ * Free a list of queried devices.
+ */
+void rvth_query_free(RvtH_QueryEntry *devs)
+{
+	RvtH_QueryEntry *next;
+	while (devs) {
+		next = devs->next;
+		free((char*)devs->device_name);
+		free((char*)devs->usb_vendor);
+		free((char*)devs->usb_product);
+		free((char*)devs->serial_number);
+		free((char*)devs->fw_version);
+		free((char*)devs->hdd_vendor);
+		free((char*)devs->hdd_model);
+		free(devs);
+		devs = next;
+	}
+}

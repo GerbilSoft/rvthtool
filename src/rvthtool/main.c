@@ -26,6 +26,7 @@
 #include <string.h>
 #include <getopt.h>
 
+#include "librvth/config.librvth.h"
 #include "librvth/common.h"
 #include "librvth/byteswap.h"
 #include "librvth/rvth.h"
@@ -33,6 +34,7 @@
 #include "list-banks.h"
 #include "extract.h"
 #include "undelete.h"
+#include "query.h"
 
 #ifdef _MSC_VER
 # define RVTH_CDECL __cdecl
@@ -107,6 +109,12 @@ static void print_help(const TCHAR *argv0)
 		"undelete " DEVICE_NAME_EXAMPLE " bank#\n"
 		"- Undelete the specified bank number from the specified RVT-H device.\n"
 		"  [This command only works with RVT-H Readers, not disk images.]\n"
+		"\n"
+		"query\n"
+		"- Query all available RVT-H Reader devices and list them.\n"
+#ifndef HAVE_QUERY
+		"  [NOTE: Not available on this system.]\n"
+#endif /* HAVE_QUERY */
 		"\n"
 		"help\n"
 		"- Display this help and exit.\n"
@@ -240,6 +248,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = undelete_bank(argv[optind+1], argv[optind+2]);
+	} else if (!_tcscmp(argv[optind], _T("query"))) {
+		// Query RVT-H Reader devices.
+		// NOTE: Not checking HAVE_QUERY. If querying isn't available,
+		// an error message will be displayed.
+		ret = query();
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'list'.

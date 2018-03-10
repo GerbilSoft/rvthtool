@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * config.librvth.h.in: librvth configuration. (source file)               *
+ * query.h: Query storage devices.                                         *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,31 +18,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_CONFIG_H__
-#define __RVTHTOOL_LIBRVTH_CONFIG_H__
+#ifndef __RVTHTOOL_LIBRVTH_QUERY_H__
+#define __RVTHTOOL_LIBRVTH_QUERY_H__
 
-/* Define to 1 if you have the `ftruncate' function. */
-#cmakedefine HAVE_FTRUNCATE 1
+#include <stdint.h>
 
-/* Define to 1 if you have gmp. */
-#cmakedefine HAVE_GMP 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* Define to 1 if we're using nettle for decryption. */
-#cmakedefine HAVE_NETTLE 1
+// RVT-H Reader USB VID/PID.
+#define RVTH_READER_VID 0x057e
+#define RVTH_READER_PID 0x0304
 
-/* Define to 1 if we're using nettle and it is v3.0 or later. */
-#cmakedefine HAVE_NETTLE_3 1
+/**
+ * Scanned device entry.
+ * This is a singly-linked list.
+ */
+typedef struct _RvtH_QueryEntry {
+	struct _RvtH_QueryEntry *next;
 
-/* Define to 1 if "nettle/version.h" is present. */
-#cmakedefine HAVE_NETTLE_VERSION_H
+	const char *device_name;	// Device name, e.g. "/dev/sdc" or "\\.\PhysicalDrive3".
 
-/* Define to 1 if nettle version functions are present. */
-#cmakedefine HAVE_NETTLE_VERSION_FUNCTIONS
+	const char *usb_vendor;		// USB vendor name.
+	const char *usb_product;	// USB product name.
+	const char *serial_number;	// Serial number, in ASCII.
+	const char *fw_version;		// Firmware version. (FIXME: HDD or RVT-H board?)
 
-/* Define to 1 if udev is present. */
-#cmakedefine HAVE_UDEV 1
+	const char *hdd_vendor;		// HDD vendor.
+	const char *hdd_model;		// HDD model number.
+	uint64_t size;			// HDD size, in bytes.
+} RvtH_QueryEntry;
 
-/* Define to 1 if query.h is usable. */
-#cmakedefine HAVE_QUERY 1
+/**
+ * Scan all USB devices for RVT-H Readers.
+ * @return List of matching devices, or NULL if none were found.
+ */
+RvtH_QueryEntry *rvth_query_devices(void);
 
-#endif /* __RVTHTOOL_LIBRVTH_CONFIG_H__ */
+/**
+ * Free a list of queried devices.
+ */
+void rvth_query_free(RvtH_QueryEntry *devs);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __RVTHTOOL_LIBRVTH_QUERY_H__ */
