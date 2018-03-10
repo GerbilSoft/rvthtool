@@ -6,7 +6,7 @@ This is an open-source tool for managing RVT-H Reader consoles.
 [![Travis Build Status](https://travis-ci.org/GerbilSoft/rvthtool.svg?branch=master)](https://travis-ci.org/GerbilSoft/rvthtool)
 [![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/l83tx6d16gqr4ov2?svg=true)](https://ci.appveyor.com/project/GerbilSoft/rvthtool/branch/master)
 
--![RVT-H Reader, RVT-R Reader, Wii RVL-001, and Commodore 1541C](doc/RVT.jpg)
+![RVT-H Reader, RVT-R Reader, Wii RVL-001, and Commodore 1541C](doc/RVT.jpg)
 
 ## Current Features
 
