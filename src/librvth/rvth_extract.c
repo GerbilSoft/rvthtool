@@ -298,7 +298,9 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 
 	// Create a standalone disc image.
 	entry = &rvth->entries[bank];
-	unenc_to_enc = (entry->crypto_type == RVTH_CryptoType_None && recrypt_key != 0);
+	unenc_to_enc = (entry->type >= RVTH_BankType_Wii_SL &&
+			entry->crypto_type == RVTH_CryptoType_None &&
+			recrypt_key != 0);
 	if (unenc_to_enc) {
 		// Converting from unencrypted to encrypted.
 		// Need to convert 31k sectors to 32k.
