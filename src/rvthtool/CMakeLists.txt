@@ -11,12 +11,14 @@ SET(rvthtool_SRCS
 	list-banks.c
 	extract.c
 	undelete.c
+	query.c
 	)
 # Headers.
 SET(rvthtool_H
 	list-banks.h
 	extract.h
 	undelete.h
+	query.h
 	)
 IF(WIN32)
 	SET(rvthtool_RC resource.rc)

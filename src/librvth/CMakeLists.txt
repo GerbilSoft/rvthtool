@@ -36,6 +36,14 @@ SET(CMAKE_REQUIRED_LIBRARIES "${OLD_CMAKE_REQUIRED_LIBRARIES}")
 UNSET(OLD_CMAKE_REQUIRED_INCLUDES)
 UNSET(OLD_CMAKE_REQUIRED_LIBRARIES)
 
+# Find UDEV.
+IF(UNIX AND NOT APPLE)
+	FIND_PACKAGE(UDev)
+	IF(UDEV_FOUND)
+		SET(HAVE_UDEV 1)
+	ENDIF(UDEV_FOUND)
+ENDIF(UNIX AND NOT APPLE)
+
 # Write the config.h file.
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.librvth.h")
 
@@ -75,6 +83,7 @@ SET(librvth_H
 	aesw.h
 	priv_key_store.h
 	disc_header.h
+	query.h
 	)
 
 IF(HAVE_NETTLE)
@@ -89,6 +98,10 @@ ELSE()
 	MESSAGE(FATAL_ERROR "No AES function wrappers for this platform.")
 ENDIF()
 
+IF(HAVE_UDEV)
+	SET(librvth_QUERY_SRCS query_udev.c)
+ENDIF()
+
 ######################
 # Build the library. #
 ######################
@@ -97,6 +110,7 @@ ADD_LIBRARY(rvth STATIC
 	${librvth_SRCS} ${librvth_H}
 	${librvth_RSA_SRCS}
 	${librvth_AES_SRCS}
+	${librvth_QUERY_SRCS}
 	)
 
 # Include paths:
@@ -132,6 +146,12 @@ IF(HAVE_NETTLE)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${NETTLE_INCLUDE_DIRS})
 	TARGET_LINK_LIBRARIES(rvth ${NETTLE_LIBRARIES})
 ENDIF(HAVE_NETTLE)
+
+# UDEV
+IF(HAVE_UDEV)
+	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${UDEV_INCLUDE_DIRS})
+	TARGET_LINK_LIBRARIES(rvth ${UDEV_LIBRARIES})
+ENDIF(HAVE_UDEV)
 
 # Unix: Add -fpic/-fPIC in order to use this static library in plugins.
 IF(UNIX AND NOT APPLE)

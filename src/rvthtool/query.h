@@ -1,6 +1,6 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
- * config.librvth.h.in: librvth configuration. (source file)               *
+ * RVT-H Tool                                                              *
+ * query.h: Query available RVT-H Reader devices.                          *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,28 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_CONFIG_H__
-#define __RVTHTOOL_LIBRVTH_CONFIG_H__
+#ifndef __RVTHTOOL_RVTHTOOL_QUERY_H__
+#define __RVTHTOOL_RVTHTOOL_QUERY_H__
 
-/* Define to 1 if you have the `ftruncate' function. */
-#cmakedefine HAVE_FTRUNCATE 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* Define to 1 if you have gmp. */
-#cmakedefine HAVE_GMP 1
+/**
+ * 'query' command.
+ * @return 0 on success; non-zero on error.
+ */
+int query(void);
 
-/* Define to 1 if we're using nettle for decryption. */
-#cmakedefine HAVE_NETTLE 1
+#ifdef __cplusplus
+}
+#endif
 
-/* Define to 1 if we're using nettle and it is v3.0 or later. */
-#cmakedefine HAVE_NETTLE_3 1
-
-/* Define to 1 if "nettle/version.h" is present. */
-#cmakedefine HAVE_NETTLE_VERSION_H
-
-/* Define to 1 if nettle version functions are present. */
-#cmakedefine HAVE_NETTLE_VERSION_FUNCTIONS
-
-/* Define to 1 if udev is present. */
-#cmakedefine HAVE_UDEV 1
-
-#endif /* __RVTHTOOL_LIBRVTH_CONFIG_H__ */
+#endif /* __RVTHTOOL_RVTHTOOL_QUERY_H__ */
