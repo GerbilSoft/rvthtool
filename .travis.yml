@@ -16,6 +16,7 @@ addons:
       - cmake
       - libgmp-dev
       - nettle-dev
+      - libudev-dev
 
 # Run the build script.
 script: ./travis.sh
