@@ -42,4 +42,7 @@
 /* Define to 1 if udev is present. */
 #cmakedefine HAVE_UDEV 1
 
+/* Define to 1 if query.h is usable. */
+#cmakedefine HAVE_QUERY 1
+
 #endif /* __RVTHTOOL_LIBRVTH_CONFIG_H__ */

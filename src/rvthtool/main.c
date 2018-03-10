@@ -110,12 +110,12 @@ static void print_help(const TCHAR *argv0)
 		"- Undelete the specified bank number from the specified RVT-H device.\n"
 		"  [This command only works with RVT-H Readers, not disk images.]\n"
 		"\n"
-// TODO: Make more general for UDEV/Win32.
-#ifdef HAVE_UDEV
 		"query\n"
 		"- Query all available RVT-H Reader devices and list them.\n"
+#ifndef HAVE_QUERY
+		"  [NOTE: Not available on this system.]\n"
+#endif /* HAVE_QUERY */
 		"\n"
-#endif /* HAVE_UDEV */
 		"help\n"
 		"- Display this help and exit.\n"
 		"\n"
@@ -248,15 +248,12 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = undelete_bank(argv[optind+1], argv[optind+2]);
-	}
-// TODO: Make more general for UDEV/Win32.
-#ifdef HAVE_UDEV
-	else if (!_tcscmp(argv[optind], _T("query"))) {
+	} else if (!_tcscmp(argv[optind], _T("query"))) {
 		// Query RVT-H Reader devices.
+		// NOTE: Not checking HAVE_QUERY. If querying isn't available,
+		// an error message will be displayed.
 		ret = query();
-	}
-#endif /* HAVE_UDEV */
-	else {
+	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'list'.
 		const TCHAR *p;

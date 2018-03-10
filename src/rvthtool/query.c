@@ -20,6 +20,11 @@
 
 #include "query.h"
 
+// FIXME: Better way to detect if querying is available.
+#include "librvth/config.librvth.h"
+
+#ifdef HAVE_QUERY
+
 #include "librvth/common.h"
 #include "librvth/query.h"
 
@@ -169,3 +174,20 @@ int query(void)
 	rvth_query_free(devs);
 	return 0;
 }
+
+#else /* !HAVE_QUERY */
+
+#include <stdio.h>
+#include <errno.h>
+
+/**
+ * 'query' command.
+ * @return 0 on success; non-zero on error.
+ */
+int query(void)
+{
+	fputs("*** ERROR: Querying devices is not available on this system.\n", stderr);
+	return -ENOSYS;
+}
+
+#endif /* HAVE_QUERY */
