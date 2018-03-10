@@ -19,7 +19,6 @@
  ***************************************************************************/
 
 #include "query.h"
-#include <stdio.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -166,24 +165,4 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 	udev_unref(udev);
 	return list_head;
-}
-
-/**
- * Free a list of queried devices.
- */
-void rvth_query_free(RvtH_QueryEntry *devs)
-{
-	RvtH_QueryEntry *next;
-	while (devs) {
-		next = devs->next;
-		free((char*)devs->device_name);
-		free((char*)devs->usb_vendor);
-		free((char*)devs->usb_product);
-		free((char*)devs->serial_number);
-		free((char*)devs->fw_version);
-		free((char*)devs->hdd_vendor);
-		free((char*)devs->hdd_model);
-		free(devs);
-		devs = next;
-	}
 }

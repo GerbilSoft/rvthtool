@@ -61,6 +61,7 @@ SET(librvth_SRCS
 	cert.c
 	priv_key_store.c
 	disc_header.c
+	query.c
 	)
 # Headers.
 SET(librvth_H
