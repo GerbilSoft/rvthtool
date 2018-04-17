@@ -28,6 +28,7 @@
 #include "cert_store.h"
 #include "cert.h"
 #include "disc_header.h"
+#include "ptbl.h"
 
 // Disc image readers.
 #include "reader_plain.h"
@@ -116,7 +117,7 @@ static int rvth_init_BankEntry_region(RvtH_BankEntry *entry)
  */
 static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 {
-	uint32_t lba_game;	// LBA of the Game Partition.
+	const pt_entry_t *game_pte;	// Game partition entry.
 	uint32_t lba_size;
 	uint32_t tmd_size;
 	int ret;
@@ -166,15 +167,15 @@ static int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 
 	// Find the game partition.
 	// TODO: Error checking.
-	lba_game = rvth_find_GamePartition(entry->reader);
-	if (lba_game == 0) {
+	game_pte = rvth_ptbl_find_game(entry);
+	if (!game_pte) {
 		// No game partition...
 		return RVTH_ERROR_NO_GAME_PARTITION;
 	}
 
 	// Found the game partition.
 	// Read the partition header.
-	lba_size = reader_read(entry->reader, &header, lba_game, BYTES_TO_LBA(sizeof(header)));
+	lba_size = reader_read(entry->reader, &header, game_pte->lba_start, BYTES_TO_LBA(sizeof(header)));
 	if (lba_size != BYTES_TO_LBA(sizeof(header))) {
 		// Error reading the partition header.
 		return -EIO;
@@ -888,6 +889,7 @@ void rvth_close(RvtH *rvth)
 		if (rvth->entries[i].reader) {
 			reader_close(rvth->entries[i].reader);
 		}
+		free(rvth->entries[i].ptbl);
 	}
 
 	// Free the bank entries array.

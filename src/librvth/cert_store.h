@@ -77,7 +77,7 @@ RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer);
 typedef struct _RVL_Cert {
 	uint32_t signature_type;	// [0x000] Signature type. (See Cert_SigType_e.)
 } RVL_Cert;
-//ASSERT_STRUCT(RVL_Cert, 4);
+ASSERT_STRUCT(RVL_Cert, 4);
 
 /**
  * Get a standard certificate.
@@ -133,7 +133,7 @@ typedef struct _RVL_Sig_Dummy {
 	uint8_t padding1[0x3C];	// [0x004] Padding.
 	char issuer[64];	// [0x040] Issuer.
 } RVL_Sig_Dummy;
-//ASSERT_STRUCT(RVL_Sig_Dummy, 0x080);
+ASSERT_STRUCT(RVL_Sig_Dummy, 0x080);
 
 /**
  * Signature. (RSA-4096)
@@ -146,7 +146,7 @@ typedef struct _RVL_Sig_RSA4096 {
 	uint8_t padding1[0x3C];				// [0x204] Padding.
 	char issuer[64];				// [0x240] Issuer.
 } RVL_Sig_RSA4096;
-//ASSERT_STRUCT(RVL_Sig_RSA4096, 0x280);
+ASSERT_STRUCT(RVL_Sig_RSA4096, 0x280);
 
 /**
  * Public key. (RSA-4096)
@@ -161,7 +161,7 @@ typedef struct _RVL_PubKey_RSA4096 {
 	uint32_t exponent;		// [0x248] Public exponent.
 	uint8_t padding2[0x34];		// [0x24C]
 } RVL_PubKey_RSA4096;
-//ASSERT_STRUCT(RVL_PubKey_RSA4096, 0x280);
+ASSERT_STRUCT(RVL_PubKey_RSA4096, 0x280);
 
 /**
  * Certificate. (RSA-4096, no signature)
@@ -175,7 +175,7 @@ typedef struct _RVL_Cert_RSA4096_KeyOnly {
 	RVL_Sig_Dummy sig;	// [0x000] Dummy signature.
 	RVL_PubKey_RSA4096 pub;	// [0x040] Public key.
 } RVL_Cert_RSA4096_KeyOnly;
-//ASSERT_STRUCT(RVL_Cert_RSA4096_KeyOnly, 0x300);
+ASSERT_STRUCT(RVL_Cert_RSA4096_KeyOnly, 0x300);
 
 /**
  * Certificate. (RSA-4096)
@@ -186,7 +186,7 @@ typedef struct _RVL_Cert_RSA4096 {
 	RVL_Sig_RSA4096 sig;	// [0x000] Signature.
 	RVL_PubKey_RSA4096 pub;	// [0x280] Public key.
 } RVL_Cert_RSA4096;
-//ASSERT_STRUCT(RVL_Cert_RSA4096, 0x500);
+ASSERT_STRUCT(RVL_Cert_RSA4096, 0x500);
 
 /**
  * Signature. (RSA-4096)
@@ -199,7 +199,7 @@ typedef struct _RVL_Sig_RSA2048 {
 	uint8_t padding1[0x3C];				// [0x104] Padding.
 	char issuer[64];				// [0x140] Issuer.
 } RVL_Sig_RSA2048;
-//ASSERT_STRUCT(RVL_Sig_RSA2048, 0x180);
+ASSERT_STRUCT(RVL_Sig_RSA2048, 0x180);
 
 /**
  * Public key. (RSA-2048)
@@ -214,7 +214,7 @@ typedef struct _RVL_PubKey_RSA2048 {
 	uint32_t exponent;		// [0x148] Public exponent.
 	uint8_t padding2[0x34];		// [0x14C]
 } RVL_PubKey_RSA2048;
-//ASSERT_STRUCT(RVL_PubKey_RSA2048, 0x180);
+ASSERT_STRUCT(RVL_PubKey_RSA2048, 0x180);
 
 /**
  * Certificate. (RSA-2048)
@@ -225,7 +225,7 @@ typedef struct _RVL_Cert_RSA2048 {
 	RVL_Sig_RSA2048 sig;	// [0x000] Signature.
 	RVL_PubKey_RSA2048 pub;	// [0x180] Public key.
 } RVL_Cert_RSA2048;
-//ASSERT_STRUCT(RVL_Cert_RSA2048, 0x300);
+ASSERT_STRUCT(RVL_Cert_RSA2048, 0x300);
 
 /**
  * Certificate. (RSA-4096 signature with RSA-2048 public key)
@@ -237,7 +237,7 @@ typedef struct _RVL_Cert_RSA4096_RSA2048 {
 	RVL_Sig_RSA4096 sig;	// [0x000] Signature.
 	RVL_PubKey_RSA2048 pub;	// [0x280] Public key.
 } RVL_Cert_RSA4096_RSA2048;
-//ASSERT_STRUCT(RVL_Cert_RSA4096_RSA2048, 0x400);
+ASSERT_STRUCT(RVL_Cert_RSA4096_RSA2048, 0x400);
 
 /**
  * Public key. (ECC)
@@ -251,7 +251,7 @@ typedef struct _RVL_PubKey_ECC {
 	uint8_t modulus[0x3C];		// [0x048] Modulus.
 	uint8_t padding1[0x3C];		// [0x084]
 } RVL_PubKey_ECC;
-//ASSERT_STRUCT(RVL_PubKey_ECC, 0x180);
+ASSERT_STRUCT(RVL_PubKey_ECC, 0xC0);
 
 /**
  * Certificate. (RSA-2048 signature with ECC public key)
@@ -263,7 +263,7 @@ typedef struct _RVL_Cert_RSA2048_ECC {
 	RVL_Sig_RSA2048 sig;	// [0x000] Signature.
 	RVL_PubKey_ECC pub;	// [0x180] Public key.
 } RVL_Cert_RSA2048_ECC;
-//ASSERT_STRUCT(RVL_Cert_RSA2048_ECC, 0x240);
+ASSERT_STRUCT(RVL_Cert_RSA2048_ECC, 0x240);
 
 #pragma pack()
 

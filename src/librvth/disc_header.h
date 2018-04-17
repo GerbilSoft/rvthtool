@@ -26,7 +26,6 @@
 #include <stdint.h>
 
 struct _RefFile;
-struct _Reader;
 struct _GCN_DiscHeader;
 
 #ifdef __cplusplus
@@ -46,13 +45,6 @@ extern "C" {
  * @return Bank type, or negative POSIX error code. (See RvtH_BankType_e.)
  */
 int rvth_disc_header_identify(const struct _GCN_DiscHeader *discHeader);
-
-/**
- * Find the game partition in a Wii disc image.
- * @param reader	[in] Reader*
- * @return Game partition LBA (relative to start of reader), or 0 on error.
- */
-uint32_t rvth_find_GamePartition(struct _Reader *reader);
 
 /**
  * Read a GCN/Wii disc header and determine its type.

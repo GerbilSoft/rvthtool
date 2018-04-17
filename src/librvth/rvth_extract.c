@@ -21,6 +21,8 @@
 #include "rvth.h"
 #include "rvth_p.h"
 #include "rvth_recrypt.h"
+#include "ptbl.h"
+#include "extract_crypt.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -269,14 +271,17 @@ end:
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
- * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RvtH_CryptoType_e)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int recrypt_key, RvtH_Progress_Callback callback)
 {
 	RvtH *rvth_dest;
-	const RvtH_BankEntry *entry;
+	RvtH_BankEntry *entry;
+	uint32_t gcm_lba_len;
+	bool unenc_to_enc;
+
 	int ret;
 
 	if (!rvth || !filename || filename[0] == 0) {
@@ -288,14 +293,41 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 		return -ERANGE;
 	}
 
-	// TODO: If re-encryption is needed, validate parts of the partitions,
+	// TODO: If recryption is needed, validate parts of the partitions,
 	// e.g. certificate chain length, before copying.
 
 	// Create a standalone disc image.
-	// TODO: Handle conversion of unencrypted to encrypted.
 	entry = &rvth->entries[bank];
+	unenc_to_enc = (entry->type >= RVTH_BankType_Wii_SL &&
+			entry->crypto_type == RVTH_CryptoType_None &&
+			recrypt_key != 0);
+	if (unenc_to_enc) {
+		// Converting from unencrypted to encrypted.
+		// Need to convert 31k sectors to 32k.
+		uint32_t lba_tmp;
+		const pt_entry_t *game_pte = rvth_ptbl_find_game(entry);
+		if (!game_pte) {
+			// No game partition...
+			errno = EIO;
+			return RVTH_ERROR_NO_GAME_PARTITION;
+		}
+
+		// TODO: Read the partition header to determine the data offset.
+		// Assuming 0x8000 partition header size for now.
+		lba_tmp = game_pte->lba_len - BYTES_TO_LBA(0x8000);
+		gcm_lba_len = (lba_tmp / 3968 * 4096);
+		if (lba_tmp % 3968 != 0) {
+			gcm_lba_len += 4096;
+		}
+		// Assuming 0x8000 header + 0x18000 H3 table.
+		gcm_lba_len += BYTES_TO_LBA(0x20000) + game_pte->lba_start;
+	} else {
+		// Use the bank size as-is.
+		gcm_lba_len = entry->lba_len;
+	}
+
 	ret = 0;
-	rvth_dest = rvth_create_gcm(filename, entry->lba_len, &ret);
+	rvth_dest = rvth_create_gcm(filename, gcm_lba_len, &ret);
 	if (!rvth_dest) {
 		// Error creating the standalone disc image.
 		if (ret == 0) {
@@ -305,8 +337,11 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 	}
 
 	// Copy the bank from the source image to the destination GCM.
-	// TODO: Handle unencrypted to encrypted.
-	ret = rvth_copy_to_gcm(rvth_dest, rvth, bank, callback);
+	if (unenc_to_enc) {
+		ret = rvth_copy_to_gcm_doCrypt(rvth_dest, rvth, bank, callback);
+	} else {
+		ret = rvth_copy_to_gcm(rvth_dest, rvth, bank, callback);
+	}
 	if (ret == 0 && recrypt_key >= 0) {
 		// Recrypt the disc image.
 		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth_dest, 0, NULL);

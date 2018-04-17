@@ -25,8 +25,6 @@
 // rvth.h contains "RVTH_" high-level structs, which should
 // be used by the application.
 
-// FIXME: ASSERT_STRUCT() doesn't work in C99.
-
 #ifndef __RVTHTOOL_LIBRVTH_NHCD_STRUCTS_H__
 #define __RVTHTOOL_LIBRVTH_NHCD_STRUCTS_H__
 
@@ -54,7 +52,7 @@ typedef struct PACKED _NHCD_BankTable_Header {
 	uint32_t x010;		// [0x010] 0x002FF000
 	uint8_t unk[492];	// [0x014] Unknown
 } NHCD_BankTable_Header;
-//ASSERT_STRUCT(NHCD_BankTable_Header, 512);
+ASSERT_STRUCT(NHCD_BankTable_Header, 512);
 
 /**
  * RVT-H bank entry.
@@ -68,7 +66,7 @@ typedef struct PACKED _NHCD_BankEntry {
 	uint32_t lba_len;	// [0x024] Length, in 512-byte sectors.
 	uint8_t unk[472];	// [0x028] Unknown
 } NHCD_BankEntry;
-//ASSERT_STRUCT(NHCD_BankEntry, 512);
+ASSERT_STRUCT(NHCD_BankEntry, 512);
 
 /**
  * RVT-H bank types.
@@ -87,7 +85,7 @@ typedef struct _NHCD_BankTable {
 	NHCD_BankTable_Header header;
 	NHCD_BankEntry entries[NHCD_BANK_COUNT];
 } NHCD_BankTable;
-//ASSERT_STRUCT(NHCD_BankTable, 512*9);
+ASSERT_STRUCT(NHCD_BankTable, 512*9);
 
 /** LBA values. **/
 

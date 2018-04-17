@@ -69,6 +69,8 @@ SET(librvth_SRCS
 	priv_key_store.c
 	disc_header.c
 	query.c
+	ptbl.c
+	extract_crypt.c
 	)
 # Headers.
 SET(librvth_H
@@ -92,6 +94,8 @@ SET(librvth_H
 	priv_key_store.h
 	disc_header.h
 	query.h
+	ptbl.h
+	extract_crypt.h
 	)
 
 IF(HAVE_NETTLE)

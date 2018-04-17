@@ -98,6 +98,10 @@ int rvth_disc_header_identify(const GCN_DiscHeader *discHeader)
 
 /**
  * Find the game partition in a Wii disc image.
+ *
+ * Internal version for use with raw disc images, i.e.
+ * before the RvtH_BankEntry has been created.
+ *
  * @param pt	[in] Partition table.
  * @return Game partition LBA (relative to start of disc), or 0 on error.
  */
@@ -130,32 +134,6 @@ static uint32_t rvth_find_GamePartition_int(const ptbl_t *pt)
 
 	// No game partition found...
 	return 0;
-}
-
-/**
- * Find the game partition in a Wii disc image.
- * @param reader	[in] Reader*
- * @return Game partition LBA (relative to start of reader), or 0 on error.
- */
-uint32_t rvth_find_GamePartition(Reader *reader)
-{
-	// Assuming this is a valid Wii disc image.
-	uint32_t lba_size;
-	ptbl_t pt;
-
-	assert(reader != NULL);
-	if (!reader) {
-		return 0;
-	}
-
-	// Get the volume group table.
-	lba_size = reader_read(reader, &pt, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
-	if (lba_size != 1) {
-		// Read error.
-		return 0;
-	}
-
-	return rvth_find_GamePartition_int(&pt);
 }
 
 /**

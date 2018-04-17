@@ -42,7 +42,7 @@ extern "C" {
 #define LBA_TO_BYTES(x) ((int64_t)(x) * RVTH_BLOCK_SIZE)
 // Convert bytes to an LBA value.
 // NOTE: Partial LBAs will be truncated!
-#define BYTES_TO_LBA(x) ((uint32_t)(x / RVTH_BLOCK_SIZE))
+#define BYTES_TO_LBA(x) ((uint32_t)((x) / RVTH_BLOCK_SIZE))
 
 typedef enum {
 	RVTH_ERROR_SUCCESS		= 0,
@@ -89,9 +89,9 @@ typedef struct _RvtH_SigInfo {
 } RvtH_SigInfo;
 
 // Disc image and RVT-H bank entry definition.
-typedef struct RvtH_BankEntry {
+struct _pt_entry_t;
+typedef struct _RvtH_BankEntry {
 	Reader *reader;		// Disc image reader.
-	// TODO: Function pointer table for reading CISO and WBFS.
 	uint32_t lba_start;	// Starting LBA. (512-byte sectors)
 	uint32_t lba_len;	// Length, in 512-byte sectors.
 	time_t timestamp;	// Timestamp. (no timezone information)
@@ -107,6 +107,11 @@ typedef struct RvtH_BankEntry {
 	uint8_t ios_version;	// IOS version. (0 == ERROR)
 	RvtH_SigInfo ticket;	// Ticket encryption/signature.
 	RvtH_SigInfo tmd;	// TMD encryption/signature.
+
+	// Wii partition table
+	RVL_VolumeGroupTable vg_orig;	// Original volume group table, in host-endian.
+	unsigned int pt_count;		// Number of entries in ptbl.
+	struct _pt_entry_t *ptbl;	// Partition table.
 } RvtH_BankEntry;
 
 // RVT-H bank types.
@@ -281,7 +286,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
- * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RvtH_CryptoType_e)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
