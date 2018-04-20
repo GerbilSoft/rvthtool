@@ -96,7 +96,7 @@ Each bank is 0x8C4A00 sectors. (4,707,319,808 bytes)
 The dual-layer games installed on this system take up 0xEE0000 sectors.
 * 7,985,954,816 bytes
 * These images are unencrypted, so encrypted DL images are probably larger.
-* DVD-R DL discs are 0xFE9F00U sectors. (8,543,666,176 bytes)
+* DVD-R DL discs are 0xFE9F00 sectors. (8,543,666,176 bytes)
 * Retail Wii DL discs are 0xFDA700 sectors. (8,511,160,320 bytes)
 
 Single-layer GCN disc image: 0x2B82C0 sectors (1,459,978,240 bytes)
