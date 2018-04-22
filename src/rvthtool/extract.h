@@ -30,7 +30,7 @@ extern "C" {
 /**
  * 'extract' command.
  * @param rvth_filename	RVT-H device or disk image filename.
- * @param s_bank	Bank number (as a string).
+ * @param s_bank	Bank number (as a string). (If NULL, assumes bank 1.)
  * @param gcm_filename	Filename for the extracted GCM image.
  * @param recrypt_key	[in] Key for recryption. (-1 for default)
  * @return 0 on success; non-zero on error.

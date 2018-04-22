@@ -222,11 +222,19 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		ret = list_banks(argv[optind+1]);
 	} else if (!_tcscmp(argv[optind], _T("extract"))) {
 		// Extract a bank.
-		if (argc < optind+4) {
+		if (argc < optind+3) {
 			print_error(argv[0], _T("missing parameters for 'extract'"));
 			return EXIT_FAILURE;
+		} else if (argc == optind+3) {
+			// Two parameters specified.
+			// Pass NULL as the bank number, which will be
+			// interpreted as bank 1 for single-disc images
+			// and an error for HDD images.
+			ret = extract(argv[optind+1], NULL, argv[optind+2], recrypt_key);
+		} else {
+			// Three or more parameters specified.
+			ret = extract(argv[optind+1], argv[optind+2], argv[optind+3], recrypt_key);
 		}
-		ret = extract(argv[optind+1], argv[optind+2], argv[optind+3], recrypt_key);
 	} else if (!_tcscmp(argv[optind], _T("import"))) {
 		// Import a bank.
 		if (argc < optind+4) {

@@ -76,10 +76,9 @@ extract bank 1.
   * If the game is retail-encrypted, it will be converted to debug encryption
     and signed using the debug keys.
 * Convert an RVT-R disc image to retail fakesigned:
-  * `$ ./rvthtool extract --recrypt=retail RVT-R.gcm 1 RetailFakesigned.gcm`
-  * NOTE: Currently, disc images are treated as if they're single-bank RVT-H
-    HDD images. This is why a bank number is required, even though it will
-    always be 1.
+  * `$ ./rvthtool extract --recrypt=retail RVT-R.gcm RetailFakesigned.gcm`
+  * The bank number may be omitted if the source file is a standalone disc
+    image instead of an RVT-H HDD image or RVT-H Reader device.
 * Query available RVT-H Readers:
 ```
 $ ./rvthtool query

@@ -74,7 +74,7 @@ static bool progress_callback(const RvtH_Progress_State *state)
 /**
  * 'extract' command.
  * @param rvth_filename	[in] RVT-H device or disk image filename.
- * @param s_bank	[in] Bank number (as a string).
+ * @param s_bank	[in] Bank number (as a string). (If NULL, assumes bank 1.)
  * @param gcm_filename	[in] Filename for the extracted GCM image.
  * @param recrypt_key	[in] Key for recryption. (-1 for default)
  * @return 0 on success; non-zero on error.
@@ -95,14 +95,27 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		return ret;
 	}
 
-	// Validate the bank number.
-	bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
-	if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
-		fputs("*** ERROR: Invalid bank number '", stderr);
-		_fputts(s_bank, stderr);
-		fputs("'.\n", stderr);
-		rvth_close(rvth);
-		return -EINVAL;
+	if (s_bank) {
+		// Validate the bank number.
+		bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
+		if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+			fputs("*** ERROR: Invalid bank number '", stderr);
+			_fputts(s_bank, stderr);
+			fputs("'.\n", stderr);
+			rvth_close(rvth);
+			return -EINVAL;
+		}
+	} else {
+		// No bank number specified.
+		// Assume 1 bank if this is a standalone disc image.
+		// For HDD images or RVT-H Readers, this is an error.
+		if (rvth_get_BankCount(rvth) != 1) {
+			fprintf(stderr, "*** ERROR: Must specify a bank number for this RVT-H Reader%s.\n",
+				rvth_is_hdd(rvth) ? "" : " disk image");
+			rvth_close(rvth);
+			return -EINVAL;
+		}
+		bank = 0;
 	}
 
 	// Print the bank information.
