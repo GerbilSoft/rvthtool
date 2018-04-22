@@ -318,8 +318,9 @@ static uint32_t reader_ciso_read(Reader *reader, void *ptr, uint32_t lba_start, 
 		} else {
 			// Determine the offset.
 			size_t size;
+			unsigned int blockStart = physBlockIdx * cisoReader->block_size_lba;
 			unsigned int offset = lba % cisoReader->block_size_lba;
-			ret = ref_seeko(reader->file, LBA_TO_BYTES(lba + offset + reader->lba_start), SEEK_SET);
+			ret = ref_seeko(reader->file, LBA_TO_BYTES(blockStart + offset + reader->lba_start), SEEK_SET);
 			if (ret != 0) {
 				// Seek error.
 				if (errno == 0) {
