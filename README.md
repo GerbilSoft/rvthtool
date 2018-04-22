@@ -26,6 +26,7 @@ This is an open-source tool for managing RVT-H Reader consoles.
   importing a retail Wii disc image, it will automatically be re-signed and
   re-encrypted using the debug keys. (Update partitions will be removed, since
   retail updates won't work properly on RVT-H.)
+  * Supported image formats: GCM, headered GCM, CISO
 * Standalone disc image re-signing to convert e.g. retail to debug, debug
   to retail, unencrypted to debug, etc. Conversion to retail will result
   in a fakesigned image.
@@ -34,7 +35,7 @@ This is an open-source tool for managing RVT-H Reader consoles.
 
 ## Planned Features
 
-* Support for both CISO and WBFS formats for importing.
+* Support for importing WBFS images.
 * Converting unencrypted debug-signed disc images to retail fake-signed.
 * Extend the bank table to support more than 8 banks. Requires an RVT-H Reader
   with an HDD larger than 40 GB.
