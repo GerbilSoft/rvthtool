@@ -118,6 +118,9 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		goto end;
 	}
 
+	// FIXME: If the file existed and wasn't 0 bytes,
+	// either truncate it or don't do sparse writes.
+
 	// Make this a sparse file.
 	entry_dest = &rvth_dest->entries[0];
 	ret = ref_make_sparse(rvth_dest->f_img, LBA_TO_BYTES(entry_dest->lba_len));
