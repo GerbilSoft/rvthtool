@@ -27,9 +27,10 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-// Disc image readers.
-#include "reader_plain.h"
+// Disc image reader.
+#include "reader.h"
 
+// C includes.
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>

@@ -27,9 +27,10 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-// Disc image readers.
-#include "reader_plain.h"
+// Disc image reader.
+#include "reader.h"
 
+// C includes.
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -527,7 +528,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 	// If no reader is set up for the destination bank, set one up now.
 	if (!entry_dest->reader) {
-		entry_dest->reader = reader_plain_open(rvth_dest->f_img,
+		entry_dest->reader = reader_open(rvth_dest->f_img,
 			entry_dest->lba_start, entry_dest->lba_len);
 		if (!entry_dest->reader) {
 			// Cannot create a reader...

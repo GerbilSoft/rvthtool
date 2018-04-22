@@ -24,9 +24,10 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-// Disc image readers.
-#include "reader_plain.h"
+// Disc image reader.
+#include "reader.h"
 
+// C includes.
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -103,7 +104,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	entry->timestamp = time(NULL);
 
 	// Initialize the disc image reader.
-	entry->reader = reader_plain_open(f_img, entry->lba_start, entry->lba_len);
+	entry->reader = reader_open(f_img, entry->lba_start, entry->lba_len);
 	if (!entry->reader) {
 		// Error creating the disc image reader.
 		err = errno;

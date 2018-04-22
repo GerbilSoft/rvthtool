@@ -63,6 +63,7 @@ SET(librvth_SRCS
 	rvth_time.c
 	rvth_recrypt.c
 	ref_file.c
+	reader.c
 	reader_plain.c
 	cert_store.c
 	cert.c

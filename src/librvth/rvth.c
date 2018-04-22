@@ -30,9 +30,10 @@
 #include "disc_header.h"
 #include "ptbl.h"
 
-// Disc image readers.
-#include "reader_plain.h"
+// Disc image reader.
+#include "reader.h"
 
+// C includes.
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -398,8 +399,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	entry->lba_len = lba_len;
 
 	// Initialize the disc image reader.
-	// NOTE: Always the plain reader for RVT-H HDD images.
-	entry->reader = reader_plain_open(f_img, lba_start, reader_lba_len);
+	entry->reader = reader_open(f_img, lba_start, reader_lba_len);
 
 	if (type == RVTH_BankType_Empty) {
 		// We're done here.
@@ -600,8 +600,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	entry->is_deleted = isDeleted;
 
 	// Initialize the disc image reader.
-	// TODO: Handle CISO and WBFS for standalone disc images.
-	entry->reader = reader_plain_open(f_img, entry->lba_start, entry->lba_len);
+	entry->reader = reader_open(f_img, entry->lba_start, entry->lba_len);
 
 	// Timestamp.
 	// TODO: Get the timestamp from the file.
