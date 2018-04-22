@@ -577,6 +577,12 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Identify the disc type.
 	type = rvth_disc_header_identify(&discHeader.gcn);
+	if (type == RVTH_BankType_Wii_SL &&
+	    reader->lba_len > NHCD_BANK_WII_SL_SIZE_RVTR_LBA)
+	{
+		// Dual-layer image.
+		type = RVTH_BankType_Wii_DL;
+	}
 
 	// Allocate memory for the RvtH object
 	rvth = calloc(1, sizeof(RvtH));
