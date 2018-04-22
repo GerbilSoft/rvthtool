@@ -25,6 +25,7 @@
 // C includes.
 #include <assert.h>
 #include <errno.h>
+#include <string.h>
 
 /**
  * Create a Reader object for a disc image.
@@ -59,8 +60,8 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// if we're opening a file for writing.
 
 	// Check for other disc image formats.
-	uint8_t sbuf[512];
-	ret = ref_seeko(file, lba_start * LBA_SIZE, SEEK_SET);
+	uint8_t sbuf[4096];
+	ret = ref_seeko(file, LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -88,6 +89,22 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	if (reader_ciso_is_supported(sbuf, sizeof(sbuf))) {
 		// This is a supported CISO image.
 		return reader_ciso_open(file, lba_start, lba_len);
+	}
+
+	// Check for SDK headers.
+	// TODO: Verify GC1L, NN2L. (These are all NN1L images.)
+	// TODO: Checksum at 0x0830.
+	static const uint8_t sdk_0x0000[4] = {0xFF,0xFF,0x00,0x00};
+	static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
+	if (lba_len > BYTES_TO_LBA(32768) &&
+	    !memcmp(&sbuf[0x0000], sdk_0x0000, sizeof(sdk_0x0000)) &&
+	    !memcmp(&sbuf[0x082C], sdk_0x082C, sizeof(sdk_0x082C)) &&
+	    sbuf[0x0844] == 0x01)
+	{
+		// This image has an SDK header.
+		// Adjust the LBA values to skip it.
+		lba_start += BYTES_TO_LBA(32768);
+		lba_len -= BYTES_TO_LBA(32768);
 	}
 
 	// Use the plain disc image reader.
