@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "reader.h"
+#include "reader_plain.h"
 
 /**
  * Create a Reader object for a disc image.
