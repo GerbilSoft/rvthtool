@@ -63,8 +63,6 @@ SET(librvth_SRCS
 	rvth_time.c
 	rvth_recrypt.c
 	ref_file.c
-	reader.c
-	reader_plain.c
 	cert_store.c
 	cert.c
 	priv_key_store.c
@@ -72,6 +70,11 @@ SET(librvth_SRCS
 	query.c
 	ptbl.c
 	extract_crypt.c
+
+	# Disc image readers
+	reader.c
+	reader_plain.c
+	reader_ciso.c
 	)
 # Headers.
 SET(librvth_H
@@ -86,8 +89,6 @@ SET(librvth_H
 	rvth_recrypt.h
 	ref_file.h
 	tcharx.h
-	reader.h
-	reader_plain.h
 	cert_store.h
 	cert.h
 	rsaw.h
@@ -97,8 +98,12 @@ SET(librvth_H
 	query.h
 	ptbl.h
 	extract_crypt.h
-	)
 
+	# Disc image readers
+	reader.h
+	reader_plain.h
+	reader_ciso.h
+	)
 IF(HAVE_NETTLE)
 	SET(librvth_RSA_SRCS rsaw_nettle.c)
 ELSE()

@@ -20,6 +20,11 @@
 
 #include "reader.h"
 #include "reader_plain.h"
+#include "reader_ciso.h"
+
+// C includes.
+#include <assert.h>
+#include <errno.h>
 
 /**
  * Create a Reader object for a disc image.
@@ -38,6 +43,53 @@
  */
 Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
-	// TODO: Add support for other formats.
+	int ret;
+	size_t size;
+
+	assert(file != NULL);
+	if (ref_is_device(file)) {
+		// This is an RVT-H Reader system.
+		// Only plain images are supported.
+		// TODO: Also check for RVT-H Reader HDD images?
+		return reader_plain_open(file, lba_start, lba_len);
+	}
+
+	// This is a disc image file.
+	// NOTE: Ignoring errors here because the file may be empty
+	// if we're opening a file for writing.
+
+	// Check for other disc image formats.
+	uint8_t sbuf[512];
+	ret = ref_seeko(file, lba_start * LBA_SIZE, SEEK_SET);
+	if (ret != 0) {
+		// Seek error.
+		if (errno == 0) {
+			errno = EIO;
+		}
+		return NULL;
+	}
+	errno = 0;
+	size = ref_read(sbuf, 1, sizeof(sbuf), file);
+	if (size != sizeof(sbuf)) {
+		// Short read. May be empty.
+		if (errno != 0) {
+			// Actual error.
+			return NULL;
+		} else {
+			// Assume it's a new file.
+			// Use the plain disc image reader.
+			ref_rewind(file);
+			return reader_plain_open(file, lba_start, lba_len);
+		}
+	}
+	ref_rewind(file);
+
+	// Check the magic number.
+	if (reader_ciso_is_supported(sbuf, sizeof(sbuf))) {
+		// This is a supported CISO image.
+		return reader_ciso_open(file, lba_start, lba_len);
+	}
+
+	// Use the plain disc image reader.
 	return reader_plain_open(file, lba_start, lba_len);
 }

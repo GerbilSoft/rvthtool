@@ -30,8 +30,14 @@
 extern "C" {
 #endif
 
-// TODO: Consolidate the block size values.
+// LBA size.
 #define LBA_SIZE 512
+
+// Convert LBA values to bytes.
+#define LBA_TO_BYTES(x) ((int64_t)(x) * LBA_SIZE)
+// Convert bytes to an LBA value.
+// NOTE: Partial LBAs will be truncated!
+#define BYTES_TO_LBA(x) ((uint32_t)((x) / LBA_SIZE))
 
 struct _Reader;
 

@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader_plain.h: Plain disc image reader base class.                     *
+ * reader_plain.c: Plain disc image reader class.                          *
  * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
@@ -45,7 +45,7 @@ static const Reader_Vtbl reader_plain_vtable = {
 
 // We're not using an internal struct for reader_plain,
 // since we don't need to maintain any internal state
-// other than what's provided by RefFile*.
+// other than what's provided by Reader*.
 
 /**
  * Create a plain reader for a disc image.
@@ -98,7 +98,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
 		int64_t offset;
-		int ret = ref_seeko(file, 0, SEEK_END);
+		int ret = ref_seeko(reader->file, 0, SEEK_END);
 		if (ret != 0) {
 			// Seek error.
 			err = errno;
@@ -107,7 +107,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 			}
 			goto fail;
 		}
-		offset = ref_tello(file);
+		offset = ref_tello(reader->file);
 
 		// NOTE: If not a multiple of the LBA size,
 		// the partial LBA will be ignored.
