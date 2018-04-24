@@ -75,6 +75,7 @@ SET(librvth_SRCS
 	reader.c
 	reader_plain.c
 	reader_ciso.c
+	reader_wbfs.c
 	)
 # Headers.
 SET(librvth_H
@@ -103,6 +104,8 @@ SET(librvth_H
 	reader.h
 	reader_plain.h
 	reader_ciso.h
+	libwbfs.h
+	reader_wbfs.h
 	)
 IF(HAVE_NETTLE)
 	SET(librvth_RSA_SRCS rsaw_nettle.c)

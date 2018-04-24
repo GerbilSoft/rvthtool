@@ -21,6 +21,7 @@
 #include "reader.h"
 #include "reader_plain.h"
 #include "reader_ciso.h"
+#include "reader_wbfs.h"
 
 // C includes.
 #include <assert.h>
@@ -95,6 +96,9 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	if (reader_ciso_is_supported(sbuf, sizeof(sbuf))) {
 		// This is a supported CISO image.
 		return reader_ciso_open(file, lba_start, lba_len);
+	} else if (reader_wbfs_is_supported(sbuf, sizeof(sbuf))) {
+		// This is a supported WBFS image.
+		return reader_wbfs_open(file, lba_start, lba_len);
 	}
 
 	// Check for SDK headers.
