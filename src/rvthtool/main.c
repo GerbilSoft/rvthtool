@@ -21,6 +21,8 @@
 #include "config.version.h"
 #include "git.h"
 
+// C includes.
+#include <locale.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +32,10 @@
 #include "librvth/common.h"
 #include "librvth/byteswap.h"
 #include "librvth/rvth.h"
+
+#ifdef _WIN32
+#include "librvth/win32/secoptions.h"
+#endif /* _WIN32 */
 
 #include "list-banks.h"
 #include "extract.h"
@@ -144,6 +150,14 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 
 	((void)argc);
 	((void)argv);
+
+#ifdef _WIN32
+	// Set Win32 security options.
+	secoptions_init();
+#endif /* _WIN32 */
+
+	// Set the C locale.
+	setlocale(LC_ALL, "");
 
 	puts("RVT-H Tool v" VERSION_STRING "\n"
 		"Copyright (c) 2018 by David Korth.");
