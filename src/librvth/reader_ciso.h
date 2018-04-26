@@ -1,7 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader_plain.h: Plain disc image reader class.                          *
- * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
+ * reader_ciso.c: CISO disc image reader class.                            *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -19,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_READER_PLAIN_H__
-#define __RVTHTOOL_LIBRVTH_READER_PLAIN_H__
+#ifndef __RVTHTOOL_LIBRVTH_READER_CISO_H__
+#define __RVTHTOOL_LIBRVTH_READER_CISO_H__
 
 #include "reader.h"
 
@@ -29,7 +28,15 @@ extern "C" {
 #endif
 
 /**
- * Create a plain reader for a disc image.
+ * Is a given disc image supported by the CISO reader?
+ * @param sbuf	[in] Sector buffer. (first LBA of the disc)
+ * @param size	[in] Size of sbuf. (should be 512 or larger)
+ * @return True if supported; false if not.
+ */
+bool reader_ciso_is_supported(const uint8_t *sbuf, size_t size);
+
+/**
+ * Create a CISO reader for a disc image.
  *
  * NOTE: If lba_start == 0 and lba_len == 0, the entire file
  * will be used.
@@ -39,10 +46,10 @@ extern "C" {
  * @param lba_len	[in] Length, in LBAs.
  * @return Reader*, or NULL on error.
  */
-Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_READER_PLAIN_H__ */
+#endif /* __RVTHTOOL_LIBRVTH_READER_CISO_H__ */

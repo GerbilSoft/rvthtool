@@ -30,8 +30,14 @@
 extern "C" {
 #endif
 
-// TODO: Consolidate the block size values.
+// LBA size.
 #define LBA_SIZE 512
+
+// Convert LBA values to bytes.
+#define LBA_TO_BYTES(x) ((int64_t)(x) * LBA_SIZE)
+// Convert bytes to an LBA value.
+// NOTE: Partial LBAs will be truncated!
+#define BYTES_TO_LBA(x) ((uint32_t)((x) / LBA_SIZE))
 
 struct _Reader;
 
@@ -87,6 +93,23 @@ typedef struct _Reader {
 	uint32_t lba_len;		// Length of image, in LBAs.
 } Reader;
 
+/**
+ * Create a Reader object for a disc image.
+ *
+ * If the disc image is using a supported compressed/compacted
+ * format, the appropriate reader will be chosen. Otherwise,
+ * the plain reader will be used.
+ *
+ * NOTE: If lba_start == 0 and lba_len == 0, the entire file
+ * will be used.
+ *
+ * @param file		RefFile*.
+ * @param lba_start	[in] Starting LBA,
+ * @param lba_len	[in] Length, in LBAs.
+ * @return Reader*, or NULL on error.
+ */
+Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+
 /** Wrapper functions for the vtable. **/
 
 /**
@@ -97,7 +120,7 @@ typedef struct _Reader {
  * @param lba_len	[in] Length, in LBAs.
  * @return Number of LBAs read, or 0 on error.
  */
-static inline uint32_t reader_read(struct _Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
+static inline uint32_t reader_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
 	return reader->vtbl->read(reader, ptr, lba_start, lba_len);
 }
@@ -110,7 +133,7 @@ static inline uint32_t reader_read(struct _Reader *reader, void *ptr, uint32_t l
  * @param lba_len	[in] Length, in LBAs.
  * @return Number of LBAs read, or 0 on error.
  */
-static inline uint32_t reader_write(struct _Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
+static inline uint32_t reader_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
 	return reader->vtbl->write(reader, ptr, lba_start, lba_len);
 }
@@ -128,7 +151,7 @@ static inline void reader_flush(Reader *reader)
  * Close a disc image.
  * @param reader	[in] Reader*
  */
-static inline void reader_close(struct _Reader *reader)
+static inline void reader_close(Reader *reader)
 {
 	reader->vtbl->close(reader);
 }

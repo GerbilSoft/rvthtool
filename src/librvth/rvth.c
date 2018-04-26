@@ -30,9 +30,10 @@
 #include "disc_header.h"
 #include "ptbl.h"
 
-// Disc image readers.
-#include "reader_plain.h"
+// Disc image reader.
+#include "reader.h"
 
+// C includes.
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -398,8 +399,7 @@ static int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	entry->lba_len = lba_len;
 
 	// Initialize the disc image reader.
-	// NOTE: Always the plain reader for RVT-H HDD images.
-	entry->reader = reader_plain_open(f_img, lba_start, reader_lba_len);
+	entry->reader = reader_open(f_img, lba_start, reader_lba_len);
 
 	if (type == RVTH_BankType_Empty) {
 		// We're done here.
@@ -434,7 +434,7 @@ const char *rvth_error(int err)
 	// for system-level issues. For anything weird encountered
 	// within an RVT-H HDD or GCN/Wii disc image, an
 	// RvtH_Errors code should be retured instead.
-	static const char *const errtbl[RVTH_ERROR_MAX] = {
+	static const char *const errtbl[] = {
 		// tr: RVTH_ERROR_SUCCESS
 		"Success",
 		// tr: RVTH_ERROR_UNRECOGNIZED_FILE
@@ -492,8 +492,13 @@ const char *rvth_error(int err)
 		"The second bank for the Dual-Layer image is not empty or deleted",
 		// tr: RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS
 		"The two banks are not contiguous",
+
+		// NDEV option.
+
+		// tr: RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED
+		"NDEV headers for GCN are currently unsupported.",
 	};
-	// TODO: static_assert()
+	static_assert(ARRAY_SIZE(errtbl) == RVTH_ERROR_MAX, "Missing error descriptions!");
 
 	if (err < 0) {
 		return strerror(-err);
@@ -517,12 +522,15 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
 
+	Reader *reader = NULL;
 	int64_t len;
 	uint8_t type;
-	bool isDeleted;
 
 	// Disc header.
-	GCN_DiscHeader discHeader;
+	union {
+		GCN_DiscHeader gcn;
+		uint8_t sbuf[LBA_SIZE];
+	} discHeader;
 
 	// TODO: Detect CISO and WBFS.
 
@@ -553,16 +561,33 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		goto fail;
 	}
 
+	// Initialize the disc image reader.
+	// We need to do this before anything else in order to
+	// handle CISO and WBFS images.
+	reader = reader_open(f_img, 0, BYTES_TO_LBA(len));
+	if (!reader) {
+		// Unable to open the reader.
+		goto fail;
+	}
+
 	// Read the GCN disc header.
-	// TODO: For non-deleted banks, verify the magic number?
-	ret = rvth_disc_header_get(f_img, 0, &discHeader, &isDeleted);
+	// NOTE: Since this is a standalone disc image, we'll just
+	// read the header directly.
+	ret = reader_read(reader, discHeader.sbuf, 0, 1);
 	if (ret < 0) {
 		// Error...
-		// TODO: Mark the bank as invalid?
 		err = -ret;
 		goto fail;
 	}
-	type = (uint8_t)ret;
+
+	// Identify the disc type.
+	type = rvth_disc_header_identify(&discHeader.gcn);
+	if (type == RVTH_BankType_Wii_SL &&
+	    reader->lba_len > NHCD_BANK_WII_SL_SIZE_RVTR_LBA)
+	{
+		// Dual-layer image.
+		type = RVTH_BankType_Wii_DL;
+	}
 
 	// Allocate memory for the RvtH object
 	rvth = calloc(1, sizeof(RvtH));
@@ -570,7 +595,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		// Error allocating memory.
 		err = errno;
 		if (err == 0) {
-			err = ENOMEM;
+			err = ENOMEM;	// NOTE: Standalone
 		}
 		ret = -err;
 		goto fail;
@@ -594,14 +619,11 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// NOTE: Not using rvth_init_BankEntry() here.
 	rvth->f_img = ref_dup(f_img);
 	entry = rvth->entries;
-	entry->lba_start = 0;
-	entry->lba_len = BYTES_TO_LBA(len);
+	entry->lba_start = reader->lba_start;
+	entry->lba_len = reader->lba_len;
 	entry->type = type;
-	entry->is_deleted = isDeleted;
-
-	// Initialize the disc image reader.
-	// TODO: Handle CISO and WBFS for standalone disc images.
-	entry->reader = reader_plain_open(f_img, entry->lba_start, entry->lba_len);
+	entry->is_deleted = false;
+	entry->reader = reader;
 
 	// Timestamp.
 	// TODO: Get the timestamp from the file.
@@ -609,7 +631,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	if (type != RVTH_BankType_Empty) {
 		// Copy the disc header.
-		memcpy(&entry->discHeader, &discHeader, sizeof(entry->discHeader));
+		memcpy(&entry->discHeader, &discHeader.gcn, sizeof(entry->discHeader));
 
 		// TODO: Error handling.
 		// Initialize the region code.
@@ -623,6 +645,10 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 fail:
 	// Failed to open the disc image.
+	if (reader) {
+		reader_close(reader);
+	}
+
 	rvth_close(rvth);
 	if (pErr) {
 		*pErr = ret;

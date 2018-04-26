@@ -27,9 +27,10 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-// Disc image readers.
-#include "reader_plain.h"
+// Disc image reader.
+#include "reader.h"
 
+// C includes.
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -116,6 +117,9 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		ret = -err;
 		goto end;
 	}
+
+	// FIXME: If the file existed and wasn't 0 bytes,
+	// either truncate it or don't do sparse writes.
 
 	// Make this a sparse file.
 	entry_dest = &rvth_dest->entries[0];
@@ -272,12 +276,14 @@ end:
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
  * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RvtH_CryptoType_e)
+ * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int recrypt_key, RvtH_Progress_Callback callback)
+int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
+	int recrypt_key, uint32_t flags, RvtH_Progress_Callback callback)
 {
-	RvtH *rvth_dest;
+	RvtH *rvth_dest = NULL;
 	RvtH_BankEntry *entry;
 	uint32_t gcm_lba_len;
 	bool unenc_to_enc;
@@ -309,7 +315,8 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 		if (!game_pte) {
 			// No game partition...
 			errno = EIO;
-			return RVTH_ERROR_NO_GAME_PARTITION;
+			ret = RVTH_ERROR_NO_GAME_PARTITION;
+			goto end;
 		}
 
 		// TODO: Read the partition header to determine the data offset.
@@ -326,6 +333,15 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 		gcm_lba_len = entry->lba_len;
 	}
 
+	if (flags & RVTH_EXTRACT_PREPEND_SDK_HEADER) {
+		if (entry->type == RVTH_BankType_GCN) {
+			// FIXME: Not supported.
+			return RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
+		}
+		// Prepend 32k to the GCM.
+		gcm_lba_len += BYTES_TO_LBA(32768);
+	}
+
 	ret = 0;
 	rvth_dest = rvth_create_gcm(filename, gcm_lba_len, &ret);
 	if (!rvth_dest) {
@@ -333,7 +349,65 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 		if (ret == 0) {
 			ret = -EIO;
 		}
-		return ret;
+		goto end;
+	}
+
+	if (flags & RVTH_EXTRACT_PREPEND_SDK_HEADER) {
+		// Prepend 32k to the GCM.
+		size_t size;
+		Reader *const reader = rvth_dest->entries[0].reader;
+		uint8_t *sdk_header = calloc(1, SDK_HEADER_SIZE_BYTES);
+		if (!sdk_header) {
+			ret = -errno;
+			if (ret == 0) {
+				ret = -ENOMEM;
+			}
+			goto end;
+		}
+
+		// TODO: Get headers for GC1L and NN2L.
+		// TODO: Optimize by using 32-bit writes?
+		switch (entry->type) {
+			case RVTH_BankType_GCN:
+				// FIXME; GameCube GCM seems to use the same values,
+				// but it doesn't load with NDEV.
+				// Checksum field is always 0xAB0B.
+				// TODO: Delete the file?
+				rvth_close(rvth_dest);
+				return RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
+			case RVTH_BankType_Wii_SL:
+			case RVTH_BankType_Wii_DL:
+				// 0x0000: FF FF 00 00
+				sdk_header[0x0000] = 0xFF;
+				sdk_header[0x0001] = 0xFF;
+				// 0x082C: 00 00 E0 06
+				sdk_header[0x082E] = 0xE0;
+				sdk_header[0x082F] = 0x06;
+				// TODO: Checksum at 0x0830? (If 00 00, seems to work for all discs.)
+				// 0x0844: 01 00 00 00
+				sdk_header[0x0844] = 0x01;
+				break;
+			default:
+				// Should not get here...
+				assert(!"Incorrect bank type.");
+				free(sdk_header);
+				goto end;
+		}
+
+		size = reader_write(reader, sdk_header, 0, SDK_HEADER_SIZE_LBA);
+		if (size != SDK_HEADER_SIZE_LBA) {
+			// Write error.
+			ret = -errno;
+			if (ret == 0) {
+				ret = -EIO;
+			}
+			goto end;
+		}
+		free(sdk_header);
+
+		// Remove the SDK header from the reader's offsets.
+		reader->lba_start += SDK_HEADER_SIZE_LBA;
+		reader->lba_len -= SDK_HEADER_SIZE_LBA;
 	}
 
 	// Copy the bank from the source image to the destination GCM.
@@ -350,7 +424,11 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int
 		}
 	}
 
-	rvth_close(rvth_dest);
+end:
+	// TODO: Delete the file on error?
+	if (rvth_dest) {
+		rvth_close(rvth_dest);
+	}
 	return ret;
 }
 
@@ -527,7 +605,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 	// If no reader is set up for the destination bank, set one up now.
 	if (!entry_dest->reader) {
-		entry_dest->reader = reader_plain_open(rvth_dest->f_img,
+		entry_dest->reader = reader_open(rvth_dest->f_img,
 			entry_dest->lba_start, entry_dest->lba_len);
 		if (!entry_dest->reader) {
 			// Cannot create a reader...

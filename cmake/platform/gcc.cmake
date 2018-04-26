@@ -47,6 +47,13 @@ FOREACH(FLAG_TEST "-Wall" "-Wextra" "-fstrict-aliasing" "-Wno-multichar")
 	UNSET(CXXFLAG_${FLAG_TEST})
 ENDFOREACH()
 
+# -Wimplicit-function-declaration should be an error. (C only)
+CHECK_C_COMPILER_FLAG("-Werror=implicit-function-declaration" CFLAG_IMPLFUNC)
+IF(CFLAG_IMPLFUNC)
+	SET(RP_C_FLAGS_COMMON "${RP_C_FLAGS_COMMON} -Werror=implicit-function-declaration")
+ENDIF(CFLAG_IMPLFUNC)
+UNSET(CFLAG_IMPLFUNC)
+
 # Code coverage checking.
 IF(ENABLE_COVERAGE)
 	# Partially based on:

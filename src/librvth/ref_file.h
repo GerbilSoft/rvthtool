@@ -117,6 +117,11 @@ static inline int64_t ref_flush(RefFile *stream)
 	return fflush(stream->file);
 }
 
+static inline void ref_rewind(RefFile *stream)
+{
+	rewind(stream->file);
+}
+
 /** Convenience wrappers for various RefFile fields. **/
 
 static inline const TCHAR *ref_filename(const RefFile *f)

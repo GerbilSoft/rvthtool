@@ -77,9 +77,10 @@ static bool progress_callback(const RvtH_Progress_State *state)
  * @param s_bank	[in] Bank number (as a string). (If NULL, assumes bank 1.)
  * @param gcm_filename	[in] Filename for the extracted GCM image.
  * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @return 0 on success; non-zero on error.
  */
-int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key)
+int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key, uint32_t flags)
 {
 	RvtH *rvth;
 	TCHAR *endptr;
@@ -126,7 +127,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	printf("Extracting Bank %u into '", bank+1);
 	_fputts(gcm_filename, stdout);
 	fputs("'...\n", stdout);
-	ret = rvth_extract(rvth, bank, gcm_filename, recrypt_key, progress_callback);
+	ret = rvth_extract(rvth, bank, gcm_filename, recrypt_key, flags, progress_callback);
 	if (ret == 0) {
 		printf("Bank %u extracted to '", bank+1);
 		_fputts(gcm_filename, stdout);
