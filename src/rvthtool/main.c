@@ -90,6 +90,10 @@ static void ATTR_PRINTF(2, 3) print_error(const TCHAR *argv0, const TCHAR *fmt, 
  */
 static void print_help(const TCHAR *argv0)
 {
+	fputs("This program is licensed under the GNU GPL v2.\n"
+		"For more information, visit: http://www.gnu.org/licenses/\n"
+		"\n", stdout);
+
 	fputs("Syntax: ", stdout);
 	_fputts(argv0, stdout);
 	fputs(" [options] [command]\n"
