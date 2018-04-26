@@ -434,7 +434,7 @@ const char *rvth_error(int err)
 	// for system-level issues. For anything weird encountered
 	// within an RVT-H HDD or GCN/Wii disc image, an
 	// RvtH_Errors code should be retured instead.
-	static const char *const errtbl[RVTH_ERROR_MAX] = {
+	static const char *const errtbl[] = {
 		// tr: RVTH_ERROR_SUCCESS
 		"Success",
 		// tr: RVTH_ERROR_UNRECOGNIZED_FILE
@@ -492,8 +492,13 @@ const char *rvth_error(int err)
 		"The second bank for the Dual-Layer image is not empty or deleted",
 		// tr: RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS
 		"The two banks are not contiguous",
+
+		// NDEV option.
+
+		// tr: RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED
+		"NDEV headers for GCN are currently unsupported.",
 	};
-	// TODO: static_assert()
+	static_assert(ARRAY_SIZE(errtbl) == RVTH_ERROR_MAX, "Missing error descriptions!");
 
 	if (err < 0) {
 		return strerror(-err);

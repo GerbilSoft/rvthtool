@@ -69,6 +69,9 @@ typedef enum {
 	RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED	= 25,	// The second bank for the Dual-Layer image is not empty or deleted.
 	RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS	= 26,	// The two banks are not contiguous.
 
+	// NDEV option.
+	RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED	= 27,	// NDEV headers for GCN are currently unsupported.
+
 	RVTH_ERROR_MAX
 } RvtH_Errors;
 
@@ -275,16 +278,27 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr);
 int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_src, RvtH_Progress_Callback callback);
 
 /**
+ * RVT-H extraction flags.
+ */
+typedef enum {
+	// Prepend a 32k SDK header.
+	// Required for rvtwriter, NDEV ODEM, etc.
+	RVTH_EXTRACT_PREPEND_SDK_HEADER		= (1 << 0),
+} RvtH_Extract_Flags;
+
+/**
  * Extract a disc image from the RVT-H disk image.
  * Compatibility wrapper; this function calls rvth_create_gcm() and rvth_copy().
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
  * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RvtH_CryptoType_e)
+ * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename, int recrypt_key, RvtH_Progress_Callback callback);
+int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
+	int recrypt_key, uint32_t flags, RvtH_Progress_Callback callback);
 
 /**
  * Copy a bank from an RVT-H HDD or standalone disc image to an RVT-H system.

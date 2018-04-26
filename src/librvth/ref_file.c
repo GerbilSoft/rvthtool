@@ -81,9 +81,9 @@ static RefFile *ref_open_int(const TCHAR *filename, const TCHAR *mode)
 
 	// Initialize the reference count.
 	f->ref_count = 1;
-        // File writability depends on the mode.
+	// File writability depends on the mode.
 	// NOTE: Only checking the first character.
-        f->is_writable = (mode[0] == _T('w'));
+	f->is_writable = (mode[0] == _T('w'));
 	return f;
 
 fail:

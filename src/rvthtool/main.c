@@ -125,6 +125,8 @@ static void print_help(const TCHAR *argv0)
 		"                            default, retail, korean, debug\n"
 		"                            Recrypting to retail will use fakesigning.\n"
 		"                            Importing to RVT-H will always use debug keys.\n"
+		"  -N, --ndev                Prepend extracted images with a 32 KB header\n"
+		"                            required by official SDK tools.\n"
 		"  -h, --help                Display this help and exit.\n"
 		"\n"
 		, stdout);
@@ -133,6 +135,7 @@ static void print_help(const TCHAR *argv0)
 int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 {
 	int ret;
+	uint32_t flags = 0;
 
 	// Key to use for recryption.
 	// -1 == default; no recryption, except when importing retail to RVT-H.
@@ -159,12 +162,13 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	while (true) {
 		static const struct option long_options[] = {
 			{_T("recrypt"),	required_argument,	0, _T('k')},
+			{_T("ndev"),	no_argument,		0, _T('N')},
 			{_T("help"),	no_argument,		0, _T('h')},
 
 			{NULL, 0, 0, 0}
 		};
 
-		int c = getopt_long(argc, argv, _T("k:h"), long_options, NULL);
+		int c = getopt_long(argc, argv, _T("k:Nh"), long_options, NULL);
 		if (c == -1)
 			break;
 
@@ -188,6 +192,12 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
 					return EXIT_FAILURE;
 				}
+				break;
+
+			case 'N':
+				// Prepend the SDK header.
+				// TODO: Show error if not using 'extract'?
+				flags |= RVTH_EXTRACT_PREPEND_SDK_HEADER;
 				break;
 
 			case 'h':
@@ -230,10 +240,10 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			// Pass NULL as the bank number, which will be
 			// interpreted as bank 1 for single-disc images
 			// and an error for HDD images.
-			ret = extract(argv[optind+1], NULL, argv[optind+2], recrypt_key);
+			ret = extract(argv[optind+1], NULL, argv[optind+2], recrypt_key, flags);
 		} else {
 			// Three or more parameters specified.
-			ret = extract(argv[optind+1], argv[optind+2], argv[optind+3], recrypt_key);
+			ret = extract(argv[optind+1], argv[optind+2], argv[optind+3], recrypt_key, flags);
 		}
 	} else if (!_tcscmp(argv[optind], _T("import"))) {
 		// Import a bank.

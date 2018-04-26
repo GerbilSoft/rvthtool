@@ -22,6 +22,7 @@
 #define __RVTHTOOL_RVTHTOOL_EXTRACT_H__
 
 #include "librvth/tcharx.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,9 +34,10 @@ extern "C" {
  * @param s_bank	Bank number (as a string). (If NULL, assumes bank 1.)
  * @param gcm_filename	Filename for the extracted GCM image.
  * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @return 0 on success; non-zero on error.
  */
-int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key);
+int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key, uint32_t flags);
 
 /**
  * 'import' command.

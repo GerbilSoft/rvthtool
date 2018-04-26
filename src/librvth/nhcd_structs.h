@@ -140,6 +140,10 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 // Block size.
 #define NHCD_BLOCK_SIZE		512
 
+// SDK header size.
+#define SDK_HEADER_SIZE_BYTES	32768
+#define SDK_HEADER_SIZE_LBA	(SDK_HEADER_SIZE_BYTES / NHCD_BLOCK_SIZE)
+
 #pragma pack()
 
 #ifdef __cplusplus
