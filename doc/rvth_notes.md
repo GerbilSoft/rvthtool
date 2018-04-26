@@ -1,13 +1,16 @@
 # RVT-H Reverse-Engineering Notes
 
-These notes were written using a full dump of an RVT-H disk using the
+This document is Copyright (C) 2018 by David Korth.<br>
+Licensed under the GNU Free Documentation License v1.3.
+
+These notes were written using a full dump of an RVT-H Reader HDD using the
 front-panel USB port and an API trace of rvtwriter.exe 1.0.0.4.
 
 NOTE: Sectors (LBAs) are assumed to be 512 bytes.
 
 ## Test System
 
-According to rvtwriter, this RVT-H has:
+According to rvtwriter, this RVT-H Reader has:
 * Bank 1: Empty
 * Bank 2: THE LAST STORY / 2011.11.25 10:18:15
 * Bank 3: ^ (dual-layer)
@@ -49,10 +52,10 @@ typedef struct _NHCD_BankTable_Header {
 } NHCD_BankTable_Header;
 ```
 
-On all known RVT-H systems, `bank_count` is set to 8. Earlier models included
-a 40 GB HDD, which can hold up to 8 banks. Later models have an 80 GB HDD,
-possibly because the 40 GB HDD was no longer manufactured. These systems are
-still limited to 8 banks by default.
+On all known RVT-H Reader systems, `bank_count` is set to 8. Earlier models
+included a 40 GB HDD, which can hold up to 8 banks. Later models have an
+80 GB HDD, possibly because the 40 GB HDD was no longer manufactured. These
+systems are still limited to 8 banks by default.
 
 By modifying `bank_count`, it is possible to get more than 8 banks on systems
 with larger HDDs. Note that the bank table size will increase by 512 bytes
@@ -62,11 +65,11 @@ be repartitioned.
 
 rvthtool does not currently support non-standard partition layouts.
 
-Note that the front-panel display on the RVT-H has a 4-bit binary counter.
-This counter normally shows 1-8 for selected banks, or 15 if the drive is
-in "writable" mode. It should be possible to extend `bank_count` to at
-least 14. Larger bank counts may work, but the counter display will be
-incorrect.
+Note that the front-panel display on the RVT-H Reader has a 4-bit binary
+counter. This counter normally shows 1-8 for selected banks, or 15 if the
+drive is in "writable" mode. It should be possible to extend `bank_count`
+to at least 14. Larger bank counts may work, but the counter display will
+be incorrect.
 
 $60000200: Bank 1. Each bank entry is 512 bytes.
 ```c
@@ -114,10 +117,11 @@ The standard NHCD layout is as follows:
 
 ## Deleted Banks
 
-* On some RVT-H systems, deleting a bank by pressing the "Flush" button
+* On some RVT-H Reader systems, deleting a bank by pressing the "Flush" button
   merely erases the bank table entry.
-* On other RVT-H systems, this also zeroes out the first 16 KB of the bank.
-* This may depend on the RVT-H firmware version.
+* On other RVT-H Reader systems, this also zeroes out the first 16 KB of the
+  bank.
+* This may depend on the RVT-H Reader firmware version.
 
 The first 16 KB contains:
 * Wii: Disc header.
