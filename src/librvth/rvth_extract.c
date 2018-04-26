@@ -308,6 +308,9 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 			entry->crypto_type == RVTH_CryptoType_None &&
 			recrypt_key != 0);
 	if (unenc_to_enc) {
+		// FIXME: Broken...
+		return RVTH_ERROR_IS_UNENCRYPTED;
+
 		// Converting from unencrypted to encrypted.
 		// Need to convert 31k sectors to 32k.
 		uint32_t lba_tmp;
