@@ -1,0 +1,21 @@
+Source: rvthtool
+Section: games
+Priority: optional
+Maintainer: David Korth <gerbilsoft@gerbilsoft.com>
+Build-Depends:
+ debhelper (>= 9),
+ cmake (>= 2.8.12),
+ dpkg-dev (>= 1.17.17),
+ libgmp3-dev,
+ nettle-dev,
+ libudev-dev
+Standards-Version: 3.9.8
+Homepage: https://github.com/GerbilSoft/rvthtool
+Vcs-Git: https://github.com/GerbilSoft/rvthtool
+Vcs-Browser: https://github.com/GerbilSoft/rvthtool
+
+Package: rvthtool
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: RVT-H Tool
+ This is an open-source tool for managing RVT-H Reader consoles.
