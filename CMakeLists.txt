@@ -111,6 +111,7 @@ ADD_CUSTOM_TARGET(uninstall
 # Project subdirectories.
 ADD_SUBDIRECTORY(extlib)
 ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(doc)
 
 # TODO: Print build summary indicating what plugins will be built.
 # (Some other project had something like this...)
