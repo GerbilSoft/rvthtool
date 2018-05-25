@@ -56,7 +56,7 @@ NOTE: Partition offsets are right-shifted by two.
 
 This partition table indicates that we have two partitions:
 * Partition 0: Update @ 0x50000
-* Partition 1: Game @ 0x838000 (VERIFY)
+* Partition 1: Game @ 0x838000
 
 Game partitions are normally located 0xF800000 on encrypted retail and
 debug discs.
