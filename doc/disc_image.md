@@ -42,7 +42,7 @@ Deconstructing the various disc header fields:
 
 The important fields here are at 0x060 and 0x061. These are normally set to 0
 on retail and debug discs in the headers, and 1 within encrypted partitions.
-In unencrypted images, these are set to 1 in the disc header.
+In unencrypted images, these are set to 1 in both places.
 
 ## Partition Table
 
