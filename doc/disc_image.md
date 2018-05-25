@@ -58,14 +58,13 @@ This partition table indicates that we have two partitions:
 * Partition 0: Update @ 0x50000
 * Partition 1: Game @ 0x838000
 
-Game partitions are normally located 0xF800000 on encrypted retail and
+Game partitions are normally located at 0xF800000 on encrypted retail and
 debug discs.
 
-Note that the update partition on this disc is garbage. It consists of
-incrementing DWORD values instead of an actual partition. Debug discs
-usually have two IOS WADs in the update partition: one for 64 MB MEM2
-systems (RVT-R Reader), and one for 128 MB MEM2 systems (RVT-H Reader,
-NDEV).
+Note that the update partition on this disc is garbage. It consists of 32-bit
+values, incrementing by 4, instead of an actual partition. Debug discs usually
+have two IOS WADs in the update partition: one for 64 MB MEM2 systems (RVT-R
+Reader), and one for 128 MB MEM2 systems (RVT-H Reader, NDEV).
 
 ## Region Setting
 
