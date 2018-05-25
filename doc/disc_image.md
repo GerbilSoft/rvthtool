@@ -67,6 +67,21 @@ usually have two IOS WADs in the update partition: one for 64 MB MEM2
 systems (RVT-R Reader), and one for 128 MB MEM2 systems (RVT-H Reader,
 NDEV).
 
+## Region Setting
+
+```
+0004e000  00 00 00 02 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+0004e010  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
+```
+
+The region code here is `00 00 00 02`, which corresponds to PAL (Europe).
+
+All age rating bytes are 0, which means "all ages" for all regions. This is
+somewhat unusual, since ratings that don't apply to the selected region
+should be set to 0x80 (disabled). In particular, $4E010 (Japan/Taiwan),
+$4E011 (USA), and $4E019 (South Korea) should be set to 0x80, as well as
+unused fields $4E012 and $4E01A-$4E01F.
+
 ## Partition Header
 
 Partition header, excluding the ticket and TMD:
