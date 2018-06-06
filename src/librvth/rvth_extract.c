@@ -306,7 +306,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 	entry = &rvth->entries[bank];
 	unenc_to_enc = (entry->type >= RVTH_BankType_Wii_SL &&
 			entry->crypto_type == RVTH_CryptoType_None &&
-			recrypt_key != 0);
+			recrypt_key > RVTH_CryptoType_Unknown);
 	if (unenc_to_enc) {
 		// FIXME: Broken...
 		return RVTH_ERROR_IS_UNENCRYPTED;
@@ -419,7 +419,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 	} else {
 		ret = rvth_copy_to_gcm(rvth_dest, rvth, bank, callback);
 	}
-	if (ret == 0 && recrypt_key >= 0) {
+	if (ret == 0 && recrypt_key > RVTH_CryptoType_Unknown) {
 		// Recrypt the disc image.
 		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth_dest, 0, NULL);
 		if (entry && entry->crypto_type != recrypt_key) {
