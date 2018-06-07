@@ -95,6 +95,7 @@ typedef struct _RvtH_BankEntry {
 	uint8_t type;		// Bank type. (See RvtH_BankType_e.)
 	uint8_t region_code;	// Region code. (See GCN_Region_Code.)
 	bool is_deleted;	// If true, this entry was deleted.
+	uint8_t aplerr;		// AppLoader error. (See AppLoader_Error_e.)
 
 	// Disc header.
 	GCN_DiscHeader discHeader;

@@ -248,6 +248,54 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 		printf("- TMD Signature:    %s%s\n", s_sig_type, s_sig_status);
 	}
 
+	// Check the AppLoader status.
+	// TODO: Move strings to librvth?
+	if (entry->aplerr > APLERR_OK) {
+		printf("\n*** APPLOADER ERROR: ");
+		switch (entry->aplerr) {
+			default:
+				printf("Unknown (%u)\n", entry->aplerr);
+				break;
+
+			// TODO: Get values for these errors.
+			case APLERR_FSTLENGTH:
+				printf("FSTLength > FSTMaxLength\n");
+				break;
+			case APLERR_DEBUGMONSIZE_UNALIGNED:
+				printf("Debug Monitor Size is not a multiple of 32.\n");
+				break;
+			case APLERR_SIMMEMSIZE_UNALIGNED:
+				printf("Simulated Memory Size is not a multiple of 32.\n");
+				break;
+			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
+				printf("(PhysMemSize - SimMemSize) must be > DebugMonSize\n");
+				break;
+			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
+				printf("Simulated Memory Size must be <= Physical Memory Size\n");
+				break;
+			case APLERR_ILLEGAL_FST_ADDRESS:
+				printf("Illegal FST address. (must be < 0x81700000)\n");
+				break;
+			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
+				printf("DOL exceeds size limit.\n");
+				break;
+			case APLERR_DOL_ADDR_LIMIT_GCN_RETAIL_EXCEEDED:
+				printf("DOL exceeds retail GameCube address limit.\n"
+					"*** This disc will still boot on devkits.\n");
+				break;
+			case APLERR_DOL_ADDR_LIMIT_GCN_DEBUG_EXCEEDED:
+				printf("DOL exceeds debug GameCube address limit.\n");
+				break;
+			case APLERR_DOL_ADDR_LIMIT_RVL_RETAIL_EXCEEDED:
+				printf("DOL exceeds retail Wii address limit.\n"
+					"*** This disc will still boot on devkits.\n");
+				break;
+			case APLERR_DOL_ADDR_LIMIT_RVL_DEBUG_EXCEEDED:
+				printf("DOL exceeds debug Wii address limit.\n");
+				break;
+		}
+	}
+
 	return 0;
 }
 

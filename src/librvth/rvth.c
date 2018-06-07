@@ -257,6 +257,8 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		rvth_init_BankEntry_region(entry);
 		// Initialize the encryption status.
 		rvth_init_BankEntry_crypto(entry);
+		// Initialize the AppLoader error status.
+		rvth_init_BankEntry_AppLoader(entry);
 	}
 
 	// Disc image loaded.

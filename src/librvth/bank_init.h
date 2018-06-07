@@ -40,6 +40,14 @@ int rvth_init_BankEntry_region(RvtH_BankEntry *entry);
 int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry);
 
 /**
+ * Set the apploader_error field in an RvtH_BankEntry.
+ * The reader field must have already been set.
+ * @param entry		[in,out] RvtH_BankEntry
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry);
+
+/**
  * Initialize an RVT-H bank entry from an opened HDD image.
  * @param entry			[out] RvtH_BankEntry
  * @param f_img			[in] RefFile*

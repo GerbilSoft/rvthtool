@@ -80,6 +80,29 @@ typedef enum {
 } GCN_Region_Code;
 
 /**
+ * DVD Boot Block.
+ * References:
+ * - http://wiibrew.org/wiki/Wii_Disc#Decrypted
+ * - http://hitmen.c02.at/files/yagcd/yagcd/chap13.html
+ * - http://www.gc-forever.com/wiki/index.php?title=Apploader
+ *
+ * All fields are big-endian.
+ */
+#define GCN_Boot_Block_ADDRESS 0x420
+typedef struct PACKED _GCN_Boot_Block {
+	uint32_t bootFilePosition;	// NOTE: 34-bit RSH2 on Wii.
+	uint32_t FSTPosition;		// NOTE: 34-bit RSH2 on Wii.
+	uint32_t FSTLength;		// FST size. (NOTE: 34-bit RSH2 on Wii.)
+	uint32_t FSTMaxLength;		// Size of biggest additional FST. (NOTE: 34-bit RSH2 on Wii.)
+
+	uint32_t FSTAddress;	// FST address in RAM.
+	uint32_t userPosition;	// Data area start. (Might be wrong; use FST.)
+	uint32_t userLength;	// Data area length. (Might be wrong; use FST.)
+	uint32_t reserved;
+} GCN_Boot_Block;
+ASSERT_STRUCT(GCN_Boot_Block, 32);
+
+/**
  * DVD Boot Info. (bi2.bin)
  * Reference: http://www.gc-forever.com/wiki/index.php?title=Apploader
  *
@@ -87,18 +110,83 @@ typedef enum {
  */
 #define GCN_Boot_Info_ADDRESS 0x440
 typedef struct PACKED _GCN_Boot_Info {
-	uint32_t debug_mon_size;	// Debug monitor size. [FIXME: Listed as signed?]
-	uint32_t sim_mem_size;		// Simulated memory size. (bytes) [FIXME: Listed as signed?]
-	uint32_t arg_offset;		// Command line arguments.
-	uint32_t debug_flag;		// Debug flag. (set to 3 if using CodeWarrior on GDEV)
-	uint32_t trk_location;		// Target resident kernel location.
-	uint32_t trk_size;		// Size of TRK. [FIXME: Listed as signed?]
+	uint32_t debugMonSize;		// Debug monitor size. [FIXME: Listed as signed?]
+	uint32_t simMemSize;		// Simulated memory size. (bytes) [FIXME: Listed as signed?]
+	uint32_t argOffset;		// Command line arguments.
+	uint32_t debugFlag;		// Debug flag. (set to 3 if using CodeWarrior on GDEV)
+	uint32_t TRKLocation;		// Target resident kernel location.
+	uint32_t TRKSize;		// Size of TRK. [FIXME: Listed as signed?]
 	uint32_t region_code;		// Region code. (See GCN_Region_Code.)
 	uint32_t reserved1[3];
-	uint32_t dol_limit;		// Maximum total size of DOL text/data sections. (0 == unlimited)
+	uint32_t dolLimit;		// Maximum total size of DOL text/data sections. (0 == unlimited)
 	uint32_t reserved2;
 } GCN_Boot_Info;
 ASSERT_STRUCT(GCN_Boot_Info, 48);
+
+/**
+ * DOL header.
+ * Reference: http://wiibrew.org/wiki/DOL
+ *
+ * All fields are big-endian.
+ */
+typedef struct PACKED _DOL_Header {
+	uint32_t textData[7];	// File offsets to Text sections.
+	uint32_t dataData[11];	// File offsets to Data sections.
+	uint32_t text[7];	// Load addresses for Text sections.
+	uint32_t data[11];	// Load addresses for Data sections.
+	uint32_t textLen[7];	// Section sizes for Text sections.
+	uint32_t dataLen[11];	// Section sizes for Data sections.
+	uint32_t bss;		// BSS address.
+	uint32_t bssLen;	// BSS size.
+	uint32_t entry;		// Entry point.
+	uint8_t padding[28];	// Padding.
+} DOL_Header;
+ASSERT_STRUCT(DOL_Header, 256);
+
+/**
+ * AppLoader errors.
+ *
+ * Reference: https://www.gc-forever.com/wiki/index.php?title=Apploader
+ */
+typedef enum {
+	// Unknown.
+	APLERR_UNKNOWN			= 0,
+	// No errors.
+	APLERR_OK			= 1,
+
+	// FSTLength > FSTMaxLength
+	APLERR_FSTLENGTH,
+
+	// Debug Monitor Size is not a multiple of 32.
+	APLERR_DEBUGMONSIZE_UNALIGNED,
+
+	// Simulated Memory Size is not a multiple of 32.
+	APLERR_SIMMEMSIZE_UNALIGNED,
+
+	// (PhysMemSize - SimMemSize) must be > DebugMonSize
+	APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE,
+
+	// Simulated Memory Size must be <= Physical Memory Size
+	APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE,
+
+	// Illegal FST address. (must be < 0x81700000)
+	APLERR_ILLEGAL_FST_ADDRESS,
+
+	// DOL exceeds size limit.
+	APLERR_DOL_EXCEEDS_SIZE_LIMIT,
+
+	// DOL exceeds retail GameCube address limit.
+	APLERR_DOL_ADDR_LIMIT_GCN_RETAIL_EXCEEDED,
+
+	// DOL exceeds debug GameCube address limit.
+	APLERR_DOL_ADDR_LIMIT_GCN_DEBUG_EXCEEDED,
+
+	// DOL exceeds retail Wii address limit.
+	APLERR_DOL_ADDR_LIMIT_RVL_RETAIL_EXCEEDED,
+
+	// DOL exceeds debug Wii address limit.
+	APLERR_DOL_ADDR_LIMIT_RVL_DEBUG_EXCEEDED,
+} AppLoader_Error_e;
 
 /** Wii-specific structs. **/
 

@@ -296,6 +296,247 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 }
 
 /**
+ * Check the address limit for a DOL header.
+ * @param dol DOL header.
+ * @param limit Address limit.
+ * @return True if the DOL does not exceed the address limit; false if it does.
+ */
+static bool dol_check_address_limit(const DOL_Header *dol, uint32_t limit)
+{
+	unsigned int i;
+	uint32_t end;
+
+	for (i = 0; i < ARRAY_SIZE(dol->text); i++) {
+		if (dol->text[i] != cpu_to_be32(0)) {
+			end = be32_to_cpu(dol->text[i]) + be32_to_cpu(dol->textLen[i]);
+			if ((end < 0x81100000 || end > 0x81130000) && end > limit) {
+				// Out of range.
+				return false;
+			}
+		}
+	}
+
+	for (i = 0; i < ARRAY_SIZE(dol->data); i++) {
+		if (dol->data[i] != cpu_to_be32(0)) {
+			end = be32_to_cpu(dol->data[i]) + be32_to_cpu(dol->dataLen[i]);
+			if ((end < 0x81100000 || end > 0x81130000) && end > limit) {
+				// Out of range.
+				return false;
+			}
+		}
+	}
+
+	end = be32_to_cpu(dol->bss) + be32_to_cpu(dol->bssLen);
+	if ((end < 0x81100000 || end > 0x81130000) && end > limit) {
+		// Out of range.
+		return false;
+	}
+
+	// In range.
+	return true;
+}
+
+/**
+ * Set the aplerr field in an RvtH_BankEntry.
+ * The reader field must have already been set.
+ * @param entry		[in,out] RvtH_BankEntry
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
+{
+	uint32_t lba_size;
+	uint32_t lba_start = 0;
+	uint8_t shift = 0;
+	bool is_wii = false;
+	unsigned int i;
+
+	// Sector buffer.
+	uint8_t sector_buf[RVTH_BLOCK_SIZE];
+
+	// Physical memory size is 24 MB.
+	static const uint32_t physMemSize = 24*1024*1024;
+
+	// BI2 fields.
+	uint32_t debugMonSize;
+	uint32_t simMemSize;
+
+#pragma pack(1)
+	// Boot block and boot info. (starts at 0x420)
+	struct PACKED {
+		GCN_Boot_Block bb2;
+		GCN_Boot_Info bi2;
+	} boot;
+#pragma pack()
+
+	// main.dol
+	int64_t dolOffset;
+	DOL_Header dol;
+
+	assert(entry->reader != NULL);
+
+	entry->aplerr = APLERR_UNKNOWN;
+	switch (entry->type) {
+		case RVTH_BankType_Empty:
+			// Empty bank.
+			return RVTH_ERROR_BANK_EMPTY;
+		case RVTH_BankType_Unknown:
+		default:
+			// Unknown bank.
+			return RVTH_ERROR_BANK_UNKNOWN;
+		case RVTH_BankType_Wii_DL_Bank2:
+			// Second bank of a dual-layer Wii disc image.
+			// TODO: Automatically select the first bank?
+			return RVTH_ERROR_BANK_DL_2;
+
+		case RVTH_BankType_GCN:
+			// Shift value is 0.
+			lba_start = 0;
+			shift = 0;
+			is_wii = false;
+			break;
+
+		case RVTH_BankType_Wii_SL:
+		case RVTH_BankType_Wii_DL: {
+			// Find the game partition.
+			// TODO: Error checking.
+			const pt_entry_t *game_pte = rvth_ptbl_find_game(entry);
+			if (!game_pte) {
+				// No game partition...
+				return RVTH_ERROR_NO_GAME_PARTITION;
+			}
+			// NOTE: This is the partition header.
+			// Need to read the header to find the data offset.
+			lba_start = game_pte->lba_start;
+			shift = 2;
+			is_wii = true;
+			break;
+		}
+	}
+
+	// TODO: Need to manually decrypt the Wii sectors.
+	if (entry->crypto_type != RVTH_CryptoType_None) {
+		return RVTH_ERROR_IS_ENCRYPTED;
+	}
+
+	if (is_wii) {
+		// Read the partition header to determine the data offset.
+		// 0x2B8: Data offset >> 2 (LBA 1)
+		uint64_t data_offset;
+		lba_size = reader_read(entry->reader, sector_buf, lba_start + 1, 1);
+		if (lba_size != 1) {
+			// Error reading the boot block and boot info.
+			return -EIO;
+		}
+
+		// TODO: Optimize this?
+		data_offset = (sector_buf[0x0B8] << 24) |
+			      (sector_buf[0x0B9] << 16) |
+			      (sector_buf[0x0BA] <<  8) |
+			       sector_buf[0x0BB];
+		data_offset <<= shift;
+		lba_start += BYTES_TO_LBA(data_offset);
+	}
+
+	// Read the boot block and boot info.
+	// Start address: 0x420 (LBA 2)
+	lba_size = reader_read(entry->reader, sector_buf, lba_start + 2, 1);
+	if (lba_size != 1) {
+		// Error reading the boot block and boot info.
+		return -EIO;
+	}
+	memcpy(&boot, &sector_buf[0x020], sizeof(boot));
+
+	// BI2 fields.
+	debugMonSize = be32_to_cpu(boot.bi2.debugMonSize);
+	simMemSize = be32_to_cpu(boot.bi2.simMemSize);
+
+	// Validate the boot info.
+	if (be32_to_cpu(boot.bb2.FSTLength) > be32_to_cpu(boot.bb2.FSTMaxLength)) {
+		// FSTLength > FSTMaxLength
+		entry->aplerr = APLERR_FSTLENGTH;
+		return 0;
+	} else if (debugMonSize % 32 != 0) {
+		// Debug Monitor Size is not a multiple of 32.
+		entry->aplerr = APLERR_DEBUGMONSIZE_UNALIGNED;
+		return 0;
+	} else if (simMemSize % 32 != 0) {
+		// Simulated Memory Size is not a multiple of 32.
+		entry->aplerr = APLERR_SIMMEMSIZE_UNALIGNED;
+		return 0;
+	} else if (debugMonSize >= (physMemSize - simMemSize)) {
+		// (PhysMemSize - SimMemSize) must be > DebugMonSize
+		entry->aplerr = APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE;
+		return 0;
+	} else if (simMemSize > physMemSize) {
+		// Simulated Memory Size must be <= Physical Memory Size
+		entry->aplerr = APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE;
+		return 0;
+	} else if (be32_to_cpu(boot.bb2.FSTAddress) > 0x81700000) {
+		// Illegal FST address. (must be < 0x81700000)
+		entry->aplerr = APLERR_ILLEGAL_FST_ADDRESS;
+		return 0;
+	}
+
+	// Load the DOL header.
+	dolOffset = (int64_t)be32_to_cpu(boot.bb2.bootFilePosition) << shift;
+	lba_size = reader_read(entry->reader, sector_buf, lba_start + BYTES_TO_LBA(dolOffset), 1);
+	if (lba_size != 1) {
+		// Error reading the DOL header.
+		return -EIO;
+	}
+
+	memcpy(&dol, &sector_buf[dolOffset % RVTH_BLOCK_SIZE], sizeof(dol));
+
+	if (boot.bi2.dolLimit != cpu_to_be32(0)) {
+		// Calculate the total size of all sections.
+		uint32_t dolSize = 0;
+		for (i = 0; i < ARRAY_SIZE(dol.text); i++) {
+			if (dol.text[i] != cpu_to_be32(0)) {
+				dolSize += ALIGN(32, be32_to_cpu(dol.textLen[i]));
+			}
+		}
+		for (i = 0; i < ARRAY_SIZE(dol.data); i++) {
+			if (dol.data[i] != cpu_to_be32(0)) {
+				dolSize += ALIGN(32, be32_to_cpu(dol.dataLen[i]));
+			}
+		}
+		if (dolSize > be32_to_cpu(boot.bi2.dolLimit)) {
+			// DOL exceeds size limit.
+			entry->aplerr = APLERR_DOL_EXCEEDS_SIZE_LIMIT;
+			return 0;
+		}
+	}
+
+	// Check the address limit.
+	if (is_wii) {
+		if (!dol_check_address_limit(&dol, 0x80900000)) {
+			// Retail Wii address limit exceeded.
+			// TODO: Does this vary by apploader?
+			// "The Last Story" uses 0x80900000.
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_RVL_RETAIL_EXCEEDED;
+			return 0;
+		} else if (!dol_check_address_limit(&dol, 0x81200000)) {
+			// Debug Wii address limit exceeded.
+			// TODO: Verify this. (using the gc-forever value)
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_RVL_DEBUG_EXCEEDED;
+		}
+	} else {
+		if (!dol_check_address_limit(&dol, 0x80700000)) {
+			// Retail Wii address limit exceeded.
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_GCN_RETAIL_EXCEEDED;
+			return 0;
+		} else if (!dol_check_address_limit(&dol, 0x81200000)) {
+			// Debug Wii address limit exceeded.
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_GCN_DEBUG_EXCEEDED;
+		}
+	}
+
+	// TODO: Check more stuff.
+	entry->aplerr = APLERR_OK;
+	return 0;
+}
+
+/**
  * Initialize an RVT-H bank entry from an opened HDD image.
  * @param entry			[out] RvtH_BankEntry
  * @param f_img			[in] RefFile*
@@ -408,6 +649,8 @@ int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	rvth_init_BankEntry_region(entry);
 	// Initialize the encryption status.
 	rvth_init_BankEntry_crypto(entry);
+	// Initialize the AppLoader error status.
+	rvth_init_BankEntry_AppLoader(entry);
 
 	// We're done here.
 	return 0;
