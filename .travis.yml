@@ -17,6 +17,7 @@ addons:
       - libgmp-dev
       - nettle-dev
       - libudev-dev
+      - qtbase5-dev
 
 # Run the build script.
 script: ./travis.sh

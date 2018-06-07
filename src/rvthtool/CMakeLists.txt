@@ -66,6 +66,10 @@ IF(MINGW)
 	SET(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -I \"${CMAKE_BINARY_DIR}\"")
 ENDIF(MINGW)
 
+# Win32: image version.
+INCLUDE(Win32ImageVersionLinkerFlags)
+WIN32_IMAGE_VERSION_LINKER_FLAGS(${VERSION_MAJOR} ${VERSION_MINOR})
+
 #################
 # Installation. #
 #################
