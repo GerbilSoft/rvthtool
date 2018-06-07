@@ -251,7 +251,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// Check the AppLoader status.
 	// TODO: Move strings to librvth?
 	if (entry->aplerr > APLERR_OK) {
-		printf("\n*** APPLOADER ERROR: ");
+		printf("\nAPPLOADER ERROR >>> ");
 		switch (entry->aplerr) {
 			default:
 				printf("Unknown (%u)\n", entry->aplerr);
@@ -259,39 +259,47 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 
 			// TODO: Get values for these errors.
 			case APLERR_FSTLENGTH:
-				printf("FSTLength > FSTMaxLength\n");
+				printf("FSTLength(%u) in BB2 is greater than FSTMaxLength(%u)\n",
+					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 			case APLERR_DEBUGMONSIZE_UNALIGNED:
-				printf("Debug Monitor Size is not a multiple of 32.\n");
+				printf("Debug monitor size (%u) should be a multiple of 32\n",
+					entry->aplerr_val[0]);
 				break;
 			case APLERR_SIMMEMSIZE_UNALIGNED:
-				printf("Simulated Memory Size is not a multiple of 32.\n");
+				printf("Simulated memory size (%u) should be a multiple of 32\n",
+				       entry->aplerr_val[0]);
 				break;
 			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
-				printf("(PhysMemSize - SimMemSize) must be > DebugMonSize\n");
+				printf("[Physical memory size(0x%x)] - [Console simulated memory size(0x%x)]\n"
+					"APPLOADER ERROR >>> must be greater than debug monitor size(0x%x)\n",
+					entry->aplerr_val[0], entry->aplerr_val[1], entry->aplerr_val[2]);
 				break;
 			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
-				printf("Simulated Memory Size must be <= Physical Memory Size\n");
+				printf("Physical memory size is 0x%x bytes.\n"
+					"APPLOADER ERROR >>> Console simulated memory size (0x%x) must be smaller than or equal to the Physical memory size.\n",
+					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 			case APLERR_ILLEGAL_FST_ADDRESS:
-				printf("Illegal FST address. (must be < 0x81700000)\n");
+				printf("Illegal FST destination address! (0x%x)\n",
+					entry->aplerr_val[0]);
 				break;
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
-				printf("DOL exceeds size limit.\n");
+				printf("Total size of text/data sections of the dol file are too big (%d(0x%08x) bytes).\n"
+					"APPLOADER ERROR >>> Currently the limit is set as %d(0x%08x) bytes\n",
+					entry->aplerr_val[0], entry->aplerr_val[0],
+					entry->aplerr_val[1], entry->aplerr_val[1]);
 				break;
-			case APLERR_DOL_ADDR_LIMIT_GCN_RETAIL_EXCEEDED:
-				printf("DOL exceeds retail GameCube address limit.\n"
-					"*** This disc will still boot on devkits.\n");
+			case APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED:
+				printf("One of the sections in the dol file exceeded its boundary.\n"
+					"APPLOADER ERROR >>> All the sections should not exceed 0x%08x (production mode).\n"
+					"APPLOADER WARNING >>> NOTE: This disc will still boot on devkits.\n",
+					entry->aplerr_val[0]);
 				break;
-			case APLERR_DOL_ADDR_LIMIT_GCN_DEBUG_EXCEEDED:
-				printf("DOL exceeds debug GameCube address limit.\n");
-				break;
-			case APLERR_DOL_ADDR_LIMIT_RVL_RETAIL_EXCEEDED:
-				printf("DOL exceeds retail Wii address limit.\n"
-					"*** This disc will still boot on devkits.\n");
-				break;
-			case APLERR_DOL_ADDR_LIMIT_RVL_DEBUG_EXCEEDED:
-				printf("DOL exceeds debug Wii address limit.\n");
+			case APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED:
+				printf("One of the sections in the dol file exceeded its boundary.\n"
+					"APPLOADER ERROR >>> All the sections should not exceed 0x%08x (development mode).\n",
+					entry->aplerr_val[0]);
 				break;
 		}
 	}

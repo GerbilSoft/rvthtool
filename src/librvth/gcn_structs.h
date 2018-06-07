@@ -175,17 +175,11 @@ typedef enum {
 	// DOL exceeds size limit.
 	APLERR_DOL_EXCEEDS_SIZE_LIMIT,
 
-	// DOL exceeds retail GameCube address limit.
-	APLERR_DOL_ADDR_LIMIT_GCN_RETAIL_EXCEEDED,
+	// DOL exceeds retail address limit.
+	APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED,
 
-	// DOL exceeds debug GameCube address limit.
-	APLERR_DOL_ADDR_LIMIT_GCN_DEBUG_EXCEEDED,
-
-	// DOL exceeds retail Wii address limit.
-	APLERR_DOL_ADDR_LIMIT_RVL_RETAIL_EXCEEDED,
-
-	// DOL exceeds debug Wii address limit.
-	APLERR_DOL_ADDR_LIMIT_RVL_DEBUG_EXCEEDED,
+	// DOL exceeds debug address limit.
+	APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED,
 } AppLoader_Error_e;
 
 /** Wii-specific structs. **/

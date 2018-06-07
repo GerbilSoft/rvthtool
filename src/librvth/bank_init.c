@@ -375,6 +375,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	assert(entry->reader != NULL);
 
 	entry->aplerr = APLERR_UNKNOWN;
+	memset(entry->aplerr_val, 0, sizeof(entry->aplerr_val));
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
 			// Empty bank.
@@ -454,26 +455,36 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	if (be32_to_cpu(boot.bb2.FSTLength) > be32_to_cpu(boot.bb2.FSTMaxLength)) {
 		// FSTLength > FSTMaxLength
 		entry->aplerr = APLERR_FSTLENGTH;
+		entry->aplerr_val[0] = be32_to_cpu(boot.bb2.FSTLength) << shift;
+		entry->aplerr_val[1] = be32_to_cpu(boot.bb2.FSTMaxLength) << shift;
 		return 0;
 	} else if (debugMonSize % 32 != 0) {
 		// Debug Monitor Size is not a multiple of 32.
 		entry->aplerr = APLERR_DEBUGMONSIZE_UNALIGNED;
+		entry->aplerr_val[0] = debugMonSize;
 		return 0;
 	} else if (simMemSize % 32 != 0) {
 		// Simulated Memory Size is not a multiple of 32.
 		entry->aplerr = APLERR_SIMMEMSIZE_UNALIGNED;
+		entry->aplerr_val[0] = simMemSize;
 		return 0;
 	} else if (debugMonSize >= (physMemSize - simMemSize)) {
 		// (PhysMemSize - SimMemSize) must be > DebugMonSize
 		entry->aplerr = APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE;
+		entry->aplerr_val[0] = physMemSize;
+		entry->aplerr_val[1] = simMemSize;
+		entry->aplerr_val[2] = debugMonSize;
 		return 0;
 	} else if (simMemSize > physMemSize) {
 		// Simulated Memory Size must be <= Physical Memory Size
 		entry->aplerr = APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE;
+		entry->aplerr_val[0] = physMemSize;
+		entry->aplerr_val[1] = simMemSize;
 		return 0;
 	} else if (be32_to_cpu(boot.bb2.FSTAddress) > 0x81700000) {
 		// Illegal FST address. (must be < 0x81700000)
 		entry->aplerr = APLERR_ILLEGAL_FST_ADDRESS;
+		entry->aplerr_val[0] = be32_to_cpu(boot.bb2.FSTAddress);
 		return 0;
 	}
 
@@ -489,6 +500,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 
 	if (boot.bi2.dolLimit != cpu_to_be32(0)) {
 		// Calculate the total size of all sections.
+		const uint32_t dolLimit = be32_to_cpu(boot.bi2.dolLimit);
 		uint32_t dolSize = 0;
 		for (i = 0; i < ARRAY_SIZE(dol.text); i++) {
 			if (dol.text[i] != cpu_to_be32(0)) {
@@ -500,9 +512,11 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 				dolSize += ALIGN(32, be32_to_cpu(dol.dataLen[i]));
 			}
 		}
-		if (dolSize > be32_to_cpu(boot.bi2.dolLimit)) {
+		if (dolSize > dolLimit) {
 			// DOL exceeds size limit.
 			entry->aplerr = APLERR_DOL_EXCEEDS_SIZE_LIMIT;
+			entry->aplerr_val[0] = dolSize;
+			entry->aplerr_val[1] = dolLimit;
 			return 0;
 		}
 	}
@@ -513,21 +527,25 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 			// Retail Wii address limit exceeded.
 			// TODO: Does this vary by apploader?
 			// "The Last Story" uses 0x80900000.
-			entry->aplerr = APLERR_DOL_ADDR_LIMIT_RVL_RETAIL_EXCEEDED;
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED;
+			entry->aplerr_val[0] = 0x80900000;
 			return 0;
 		} else if (!dol_check_address_limit(&dol, 0x81200000)) {
 			// Debug Wii address limit exceeded.
 			// TODO: Verify this. (using the gc-forever value)
-			entry->aplerr = APLERR_DOL_ADDR_LIMIT_RVL_DEBUG_EXCEEDED;
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED;
+			entry->aplerr_val[0] = 0x81200000;
 		}
 	} else {
 		if (!dol_check_address_limit(&dol, 0x80700000)) {
 			// Retail Wii address limit exceeded.
-			entry->aplerr = APLERR_DOL_ADDR_LIMIT_GCN_RETAIL_EXCEEDED;
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED;
+			entry->aplerr_val[0] = 0x80700000;
 			return 0;
 		} else if (!dol_check_address_limit(&dol, 0x81200000)) {
 			// Debug Wii address limit exceeded.
-			entry->aplerr = APLERR_DOL_ADDR_LIMIT_GCN_DEBUG_EXCEEDED;
+			entry->aplerr = APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED;
+			entry->aplerr_val[0] = 0x81200000;
 		}
 	}
 
