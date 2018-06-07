@@ -70,6 +70,7 @@ SET(librvth_SRCS
 	query.c
 	ptbl.c
 	extract_crypt.c
+	bank_init.c
 
 	# Disc image readers
 	reader.c
@@ -99,6 +100,7 @@ SET(librvth_H
 	query.h
 	ptbl.h
 	extract_crypt.h
+	bank_init.h
 
 	# Disc image readers
 	reader.h
