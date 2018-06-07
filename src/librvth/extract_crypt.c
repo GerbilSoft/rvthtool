@@ -457,6 +457,8 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	entry_dest->type	= entry_src->type;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
+	entry_dest->crypto_type	= entry_src->crypto_type;
+	entry_dest->ios_version	= entry_src->ios_version;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
 
@@ -468,18 +470,6 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 		entry_dest->timestamp = entry_src->timestamp;
 	} else {
 		entry_dest->timestamp = time(NULL);
-	}
-
-	if (callback) {
-		// Initialize the callback state.
-		// TODO: Fields for source vs. destination sizes?
-		state.type = RVTH_PROGRESS_EXTRACT;
-		state.rvth = rvth_src;
-		state.rvth_gcm = rvth_dest;
-		state.bank_rvth = bank_src;
-		state.bank_gcm = 0;
-		state.lba_processed = 0;
-		state.lba_total = lba_copy_len;
 	}
 
 	// Copy the disc header.
@@ -528,6 +518,18 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	data_lba_src = game_pte->lba_start + BYTES_TO_LBA(data_offset);
 	data_lba_dest = game_pte->lba_start + BYTES_TO_LBA(data_offset + sizeof(Wii_Disc_H3_t));
 	lba_copy_len -= BYTES_TO_LBA(data_offset);
+
+	if (callback) {
+		// Initialize the callback state.
+		// TODO: Fields for source vs. destination sizes?
+		state.type = RVTH_PROGRESS_EXTRACT;
+		state.rvth = rvth_src;
+		state.rvth_gcm = rvth_dest;
+		state.bank_rvth = bank_src;
+		state.bank_gcm = 0;
+		state.lba_processed = 0;
+		state.lba_total = lba_copy_len;
+	}
 
 	// Decrypt the title key.
 	ret = decrypt_title_key(&pthdr.ticket, titleKey, &entry_dest->crypto_type);

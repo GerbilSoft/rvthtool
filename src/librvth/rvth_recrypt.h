@@ -40,8 +40,8 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank);
  * another. It does not support converting unencrypted to encrypted or
  * vice-versa.
  *
- * NOTE 2: If the disc image is already encrypted using the specified key,
- * the function will return immediately with a success code (0).
+ * NOTE 2: Any partitions that are already encrypted with the specified key
+ * will be left as-is; however, the tickets and TMDs wlil be re-signed.
  *
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)

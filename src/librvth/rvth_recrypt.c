@@ -419,7 +419,7 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
  * vice-versa.
  *
  * NOTE 2: Any partitions that are already encrypted with the specified key
- * will be left as-is.
+ * will be left as-is; however, the tickets and TMDs wlil be re-signed.
  *
  * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)

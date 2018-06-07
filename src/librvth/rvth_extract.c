@@ -140,6 +140,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
 	entry_dest->crypto_type	= entry_src->crypto_type;
+	entry_dest->ios_version	= entry_src->ios_version;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
 
@@ -308,9 +309,6 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 			entry->crypto_type == RVTH_CryptoType_None &&
 			recrypt_key > RVTH_CryptoType_Unknown);
 	if (unenc_to_enc) {
-		// FIXME: Broken...
-		return RVTH_ERROR_IS_UNENCRYPTED;
-
 		// Converting from unencrypted to encrypted.
 		// Need to convert 31k sectors to 32k.
 		uint32_t lba_tmp;
@@ -421,8 +419,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 	}
 	if (ret == 0 && recrypt_key > RVTH_CryptoType_Unknown) {
 		// Recrypt the disc image.
-		const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth_dest, 0, NULL);
-		if (entry && entry->crypto_type != recrypt_key) {
+		if (entry->crypto_type != recrypt_key) {
 			ret = rvth_recrypt_partitions(rvth_dest, 0, recrypt_key, callback);
 		}
 	}
@@ -640,6 +637,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
 	entry_dest->crypto_type	= entry_src->crypto_type;
+	entry_dest->ios_version	= entry_src->ios_version;
 	entry_dest->ticket	= entry_src->ticket;
 	entry_dest->tmd		= entry_src->tmd;
 
