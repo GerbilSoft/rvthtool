@@ -788,7 +788,7 @@ int rvth_import(RvtH *rvth, unsigned int bank, const TCHAR *filename, RvtH_Progr
 		{
 			// Retail or Korean encryption, or invalid signature.
 			// Convert to Debug.
-			ret = rvth_recrypt_partitions(rvth, bank, RVL_KEY_DEBUG, callback);
+			ret = rvth_recrypt_partitions(rvth, bank, RVTH_CryptoType_Debug, callback);
 		}
 		else
 		{
