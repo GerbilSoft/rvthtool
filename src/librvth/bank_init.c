@@ -535,6 +535,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 			// TODO: Verify this. (using the gc-forever value)
 			entry->aplerr = APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED;
 			entry->aplerr_val[0] = 0x81200000;
+			return 0;
 		}
 	} else {
 		if (!dol_check_address_limit(&dol, 0x80700000)) {
@@ -546,6 +547,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 			// Debug Wii address limit exceeded.
 			entry->aplerr = APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED;
 			entry->aplerr_val[0] = 0x81200000;
+			return 0;
 		}
 	}
 
