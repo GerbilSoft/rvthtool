@@ -503,12 +503,12 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 		const uint32_t dolLimit = be32_to_cpu(boot.bi2.dolLimit);
 		uint32_t dolSize = 0;
 		for (i = 0; i < ARRAY_SIZE(dol.text); i++) {
-			if (dol.text[i] != cpu_to_be32(0)) {
+			if (dol.textData[i] != cpu_to_be32(0)) {
 				dolSize += ALIGN(32, be32_to_cpu(dol.textLen[i]));
 			}
 		}
 		for (i = 0; i < ARRAY_SIZE(dol.data); i++) {
-			if (dol.data[i] != cpu_to_be32(0)) {
+			if (dol.dataData[i] != cpu_to_be32(0)) {
 				dolSize += ALIGN(32, be32_to_cpu(dol.dataLen[i]));
 			}
 		}
