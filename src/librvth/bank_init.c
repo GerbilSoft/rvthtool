@@ -478,7 +478,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 		entry->aplerr = APLERR_SIMMEMSIZE_UNALIGNED;
 		entry->aplerr_val[0] = simMemSize;
 		return 0;
-	} else if (debugMonSize >= (physMemSize - simMemSize)) {
+	} else if ((simMemSize < physMemSize) && (debugMonSize >= (physMemSize - simMemSize))) {
 		// (PhysMemSize - SimMemSize) must be > DebugMonSize
 		entry->aplerr = APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE;
 		entry->aplerr_val[0] = physMemSize;
