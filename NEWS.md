@@ -1,5 +1,18 @@
 # Changes
 
+## v1.0 - Bug Fixes and Recryption (released 2018/06/07)
+
+* Fixed extracting unencrypted images from RVT-H Reader devices. This broke
+  when disabling the recryption functionality close to v0.9's release.
+* Fixed an issue that broke recryption from unencrypted debug-signed to
+  encrypted debug-signed.
+* Enabled recryption. The issue I was having with "The Last Story" was caused
+  by main.dol being slightly out of spec, which is allowed on devkits but not
+  on retail. An upcoming Dolphin patch will fix this as well.
+* Added an AppLoader DOL verifier to check for known issues with DOL files in
+  disc images. This is currently only supported for GameCube and unencrypted
+  Wii disc images.
+
 ## v0.9 - Initial Release (released 2018/04/26)
 
 * Lists all disc images currently installed on the RVT-H system.

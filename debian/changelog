@@ -1,3 +1,9 @@
+rvthtool (1.0-1ppa1~xenial1) xenial; urgency=medium
+
+  * 1.0 release.
+
+ -- David Korth <gerbilsoft@gerbilsoft.com>  Thu, 07 Jun 2018 00:11:05 -0400
+
 rvthtool (0.9-1ppa1) xenial; urgency=medium
 
   * Initial release.

@@ -34,10 +34,11 @@ This is an open-source tool for managing RVT-H Reader consoles.
   in a fakesigned image.
 * Querying all available RVT-H Reader devices to determine which device name
   is associated with which reader. (Linux with UDEV only at the moment.)
+* Converting unencrypted debug-signed disc images to retail fake-signed and
+  debug-encrypted debug-signed.
 
 ## Planned Features
 
-* Converting unencrypted debug-signed disc images to retail fake-signed.
 * Extend the bank table to support more than 8 banks. Requires an RVT-H Reader
   with an HDD larger than 40 GB.
   * Bank 1 will be relocated to before the bank table, limiting it to GameCube
