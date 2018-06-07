@@ -375,6 +375,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 
 	assert(entry->reader != NULL);
 
+	// Reference: https://www.gc-forever.com/wiki/index.php?title=Apploader
 	entry->aplerr = APLERR_UNKNOWN;
 	memset(entry->aplerr_val, 0, sizeof(entry->aplerr_val));
 	switch (entry->type) {
