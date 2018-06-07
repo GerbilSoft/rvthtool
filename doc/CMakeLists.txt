@@ -12,6 +12,7 @@ INSTALL(FILES
 	RVT.jpg
 	rvth_notes.md
 	sdk_header.md
+	disc_image.md
 	DESTINATION "${DIR_INSTALL_DOC}"
 	COMPONENT "doc"
 	)
