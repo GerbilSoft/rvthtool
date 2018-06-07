@@ -352,7 +352,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	unsigned int i;
 
 	// Sector buffer.
-	uint8_t sector_buf[RVTH_BLOCK_SIZE];
+	uint8_t sector_buf[RVTH_BLOCK_SIZE*2];
 
 	// Physical memory size is 24 MB.
 	static const uint32_t physMemSize = 24*1024*1024;
@@ -500,8 +500,8 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 
 	// Load the DOL header.
 	dolOffset = (int64_t)be32_to_cpu(boot.bb2.bootFilePosition) << shift;
-	lba_size = reader_read(entry->reader, sector_buf, lba_start + BYTES_TO_LBA(dolOffset), 1);
-	if (lba_size != 1) {
+	lba_size = reader_read(entry->reader, sector_buf, lba_start + BYTES_TO_LBA(dolOffset), 2);
+	if (lba_size != 2) {
 		// Error reading the DOL header.
 		return -EIO;
 	}
