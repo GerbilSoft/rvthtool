@@ -180,6 +180,12 @@ typedef enum {
 
 	// DOL exceeds debug address limit.
 	APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED,
+
+	// Text segment is too big.
+	APLERR_DOL_TEXTSEG2BIG,
+
+	// Data segment is too big.
+	APLERR_DOL_DATASEG2BIG,
 } AppLoader_Error_e;
 
 /** Wii-specific structs. **/

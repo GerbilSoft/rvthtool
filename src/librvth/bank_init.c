@@ -348,6 +348,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	uint32_t lba_start = 0;
 	uint8_t shift = 0;
 	bool is_wii = false;
+	bool fst_after_dol = false;
 	unsigned int i;
 
 	// Sector buffer.
@@ -451,14 +452,22 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	debugMonSize = be32_to_cpu(boot.bi2.debugMonSize);
 	simMemSize = be32_to_cpu(boot.bi2.simMemSize);
 
-	// Validate the boot info.
-	if (be32_to_cpu(boot.bb2.FSTLength) > be32_to_cpu(boot.bb2.FSTMaxLength)) {
-		// FSTLength > FSTMaxLength
-		entry->aplerr = APLERR_FSTLENGTH;
-		entry->aplerr_val[0] = be32_to_cpu(boot.bb2.FSTLength) << shift;
-		entry->aplerr_val[1] = be32_to_cpu(boot.bb2.FSTMaxLength) << shift;
-		return 0;
-	} else if (debugMonSize % 32 != 0) {
+	// Is the FST before or after main.dol?
+	fst_after_dol = (be32_to_cpu(boot.bb2.bootFilePosition) < be32_to_cpu(boot.bb2.FSTPosition));
+
+	if (!fst_after_dol) {
+		// FST is before main.dol.
+		if (be32_to_cpu(boot.bb2.FSTLength) > be32_to_cpu(boot.bb2.FSTMaxLength)) {
+			// FSTLength > FSTMaxLength
+			entry->aplerr = APLERR_FSTLENGTH;
+			entry->aplerr_val[0] = be32_to_cpu(boot.bb2.FSTLength) << shift;
+			entry->aplerr_val[1] = be32_to_cpu(boot.bb2.FSTMaxLength) << shift;
+			return 0;
+		}
+	}
+
+	// Validate the rest of the boot info.
+	if (debugMonSize % 32 != 0) {
 		// Debug Monitor Size is not a multiple of 32.
 		entry->aplerr = APLERR_DEBUGMONSIZE_UNALIGNED;
 		entry->aplerr_val[0] = debugMonSize;
@@ -551,7 +560,48 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 		}
 	}
 
-	// TODO: Check more stuff.
+	// "Load" text segments.
+	for (i = 0; i < ARRAY_SIZE(dol.textData); i++) {
+		if (dol.textData[i] != cpu_to_be32(0)) {
+			const uint32_t addr = be32_to_cpu(dol.text[i]);
+			const uint32_t end = addr + be32_to_cpu(dol.textLen[i]);
+			if (end > 0x81200000) {
+				// Text segment is too big.
+				entry->aplerr = APLERR_DOL_TEXTSEG2BIG;
+				entry->aplerr_val[0] = addr;
+				entry->aplerr_val[1] = end;
+				return 0;
+			}
+		}
+	}
+
+	// "Load" data segments.
+	for (i = 0; i < ARRAY_SIZE(dol.dataData); i++) {
+		if (dol.dataData[i] != cpu_to_be32(0)) {
+			const uint32_t addr = be32_to_cpu(dol.data[i]);
+			const uint32_t end = addr + be32_to_cpu(dol.dataLen[i]);
+			if (end > 0x81200000) {
+				// Data segment is too big.
+				entry->aplerr = APLERR_DOL_DATASEG2BIG;
+				entry->aplerr_val[0] = addr;
+				entry->aplerr_val[1] = end;
+				return 0;
+			}
+		}
+	}
+
+	if (fst_after_dol) {
+		// FST is after main.dol.
+		if (be32_to_cpu(boot.bb2.FSTLength) > be32_to_cpu(boot.bb2.FSTMaxLength)) {
+			// FSTLength > FSTMaxLength
+			entry->aplerr = APLERR_FSTLENGTH;
+			entry->aplerr_val[0] = be32_to_cpu(boot.bb2.FSTLength) << shift;
+			entry->aplerr_val[1] = be32_to_cpu(boot.bb2.FSTMaxLength) << shift;
+			return 0;
+		}
+	}
+
+	// We're done here.
 	entry->aplerr = APLERR_OK;
 	return 0;
 }

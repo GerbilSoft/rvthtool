@@ -301,6 +301,14 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 					"APPLOADER ERROR >>> All the sections should not exceed 0x%08x (development mode).\n",
 					entry->aplerr_val[0]);
 				break;
+			case APLERR_DOL_TEXTSEG2BIG:
+				printf("Too big text segment! (0x%x - 0x%x)\n",
+					entry->aplerr_val[0], entry->aplerr_val[1]);
+				break;
+			case APLERR_DOL_DATASEG2BIG:
+				printf("Too big data segment! (0x%x - 0x%x)\n",
+					entry->aplerr_val[0], entry->aplerr_val[1]);
+				break;
 		}
 	}
 
