@@ -268,9 +268,16 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	// Game title.
 	// TODO: Is Shift-JIS permissible in the game title?
 	// TODO: cp1252
-	ui.lblGameTitle->setText(QString::fromLatin1(
+	QString s_title = QString::fromLatin1(
 		bankEntry->discHeader.game_title,
-		sizeof(bankEntry->discHeader.game_title)).trimmed());
+		sizeof(bankEntry->discHeader.game_title)).trimmed().toHtmlEscaped();
+	if (bankEntry->is_deleted) {
+		// Indicate that this bank is deleted.
+		s_title += QLatin1String("<br/><b>");
+		s_title += BankEntryView::tr("[DELETED]");
+		s_title += QLatin1String("</b>");
+	}
+	ui.lblGameTitle->setText(s_title);
 	ui.lblGameTitle->show();
 
 	// Type.
