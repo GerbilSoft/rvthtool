@@ -187,13 +187,19 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
 			// Empty slot.
-			// TODO: Indicate that this is empty.
-			if (role == Qt::DisplayRole &&
-			    index.column() == COL_BANKNUM)
-			{
-				// Print the bank number.
-				return QString::number(index.row() + 1);
+			if (index.column() == COL_BANKNUM) {
+				// Bank number.
+				switch (role) {
+					case Qt::DisplayRole:
+						return QString::number(index.row() + 1);
+					case Qt::TextAlignmentRole:
+						// Center-align the text.
+						return Qt::AlignCenter;
+					default:
+						break;
+				}
 			}
+			// All other columns are empty.
 			return QVariant();
 		case RVTH_BankType_Wii_DL_Bank2:
 			// TODO: Make the previous bank double-tall.
@@ -221,8 +227,22 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					// TODO: BCD?
 					return QString::number(entry->discHeader.revision);
 				case COL_REGION:
-					// TODO: Parse the number.
-					return QString::number(entry->region_code);
+					// TODO: Icon?
+					switch (entry->region_code) {
+						default:
+							return QString::number(entry->region_code);
+						case GCN_REGION_JAPAN:
+							return QLatin1String("JPN");
+						case GCN_REGION_USA:
+							return QLatin1String("USA");
+						case GCN_REGION_PAL:
+							return QLatin1String("EUR");
+						case GCN_REGION_FREE:
+							return QLatin1String("ALL");
+						case GCN_REGION_SOUTH_KOREA:
+							return QLatin1String("KOR");
+					}
+					break;
 
 				case COL_IOS_VERSION:
 					// Wii only.
@@ -234,6 +254,21 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					break;
 
 				case COL_ENCRYPTION:
+					switch (entry->crypto_type) {
+						case RVTH_CryptoType_Unknown:
+						default:
+							return QString::number(entry->crypto_type);
+						case RVTH_CryptoType_None:
+							return tr("None");
+						case RVTH_CryptoType_Debug:
+							return tr("Debug");
+						case RVTH_CryptoType_Retail:
+							return tr("Retail");
+						case RVTH_CryptoType_Korean:
+							return tr("Korean");
+					}
+					break;
+
 				case COL_SIG_TICKET:
 				case COL_SIG_TMD:
 				case COL_APPLOADER:
@@ -251,12 +286,12 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 
 		case Qt::TextAlignmentRole:
 			switch (index.column()) {
-				case COL_BANKNUM:
 				case COL_ICON:
 				case COL_TITLE:
 					// Left-align, center vertically.
 					return (int)(Qt::AlignLeft | Qt::AlignVCenter);
 
+				case COL_BANKNUM:
 				case COL_GAMEID:
 				case COL_DISCNUM:
 				case COL_REVISION:
