@@ -154,7 +154,7 @@ typedef enum {
 	RVTH_SigStatus_Fake	= 3,	// Fakesigned
 
 	RVTH_SigStatus_MAX
-} RVTH_SigStatus_e;
+} RvtH_SigStatus_e;
 
 /** Functions. **/
 
