@@ -121,6 +121,9 @@
    </property>
   </widget>
   <action name="actionOpen">
+   <property name="icon">
+    <iconset theme="document-open"/>
+   </property>
    <property name="text">
     <string>&amp;Open</string>
    </property>
@@ -128,10 +131,13 @@
     <string>Open an RVT-H Reader disk image</string>
    </property>
    <property name="shortcut">
-    <string extracomment="Shortcut for opening an RVT-H Reader disk image.">Ctrl+O</string>
+    <string>Ctrl+O</string>
    </property>
   </action>
   <action name="actionExit">
+   <property name="icon">
+    <iconset theme="application-exit"/>
+   </property>
    <property name="text">
     <string>E&amp;xit</string>
    </property>
@@ -140,6 +146,9 @@
    </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset theme="help-about"/>
+   </property>
    <property name="text">
     <string>&amp;About</string>
    </property>
@@ -148,6 +157,9 @@
    </property>
   </action>
   <action name="actionClose">
+   <property name="icon">
+    <iconset theme="document-close"/>
+   </property>
    <property name="text">
     <string>&amp;Close</string>
    </property>
@@ -155,9 +167,10 @@
     <string>Close the RVT-H Reader disk image</string>
    </property>
    <property name="shortcut">
-    <string extracomment="Shortcut for closing the current RVT-H Reader disk image.">Ctrl+W</string>
+    <string>Ctrl+W</string>
    </property>
   </action>
  </widget>
+ <resources/>
  <connections/>
 </ui>
