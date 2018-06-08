@@ -60,6 +60,9 @@ class RvtHModelPrivate
 			QPixmap pxmIsValid_unknown;
 			QPixmap pxmIsValid_invalid;
 			QPixmap pxmIsValid_good;
+
+			// Monosapced font.
+			QFont fntMonospace;
 		};
 		style_t style;
 
@@ -127,6 +130,10 @@ void RvtHModelPrivate::style_t::init(void)
 	pxmIsValid_good    = QPixmap(QLatin1String(":/oxygen/") + s_sz +
 		QLatin1String("/dialog-ok-apply.png"));
 #endif
+
+	// Monospaced font.
+	fntMonospace = QFont(QLatin1String("Monospace"));
+	fntMonospace.setStyleHint(QFont::TypeWriter);
 }
 
 /** RvtHModel **/
@@ -317,9 +324,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			switch (index.column()) {
 				case COL_GAMEID: {
 					// These columns should be monospaced.
-					QFont fntMonospace(QLatin1String("Monospace"));
-					fntMonospace.setStyleHint(QFont::TypeWriter);
-					return fntMonospace;
+					return d->style.fntMonospace;
 				}
 
 				default:
