@@ -223,9 +223,15 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 				case COL_REGION:
 					// TODO: Parse the number.
 					return QString::number(entry->region_code);
-				case COL_IOS:
-					// TODO: Not on GCN.
-					return QString::number(entry->ios_version);
+
+				case COL_IOS_VERSION:
+					// Wii only.
+					if (entry->type == RVTH_BankType_Wii_SL ||
+					    entry->type == RVTH_BankType_Wii_DL)
+					{
+						return QString::number(entry->ios_version);
+					}
+					break;
 
 				case COL_ENCRYPTION:
 				case COL_SIG_TICKET:
@@ -255,7 +261,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 				case COL_DISCNUM:
 				case COL_REVISION:
 				case COL_REGION:
-				case COL_IOS:
+				case COL_IOS_VERSION:
 				case COL_ENCRYPTION:
 				case COL_SIG_TICKET:
 				case COL_SIG_TMD:
@@ -306,7 +312,7 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 				case COL_DISCNUM:	return tr("Disc #");
 				case COL_REVISION:	return tr("Revision");
 				case COL_REGION:	return tr("Region");
-				case COL_IOS:		return tr("IOS");
+				case COL_IOS_VERSION:	return tr("IOS");
 				case COL_ENCRYPTION:	return tr("Encryption");
 				case COL_SIG_TICKET:	return tr("Ticket Sig");
 				case COL_SIG_TMD:	return tr("TMD Sig");
@@ -329,7 +335,7 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 				case COL_DISCNUM:
 				case COL_REVISION:
 				case COL_REGION:
-				case COL_IOS:
+				case COL_IOS_VERSION:
 				case COL_ENCRYPTION:
 				case COL_SIG_TICKET:
 				case COL_SIG_TMD:

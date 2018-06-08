@@ -52,6 +52,9 @@ class QRvtHToolWindowPrivate
 		QString filename;
 		QString displayFilename;	// filename without subdirectories
 
+		// Initialized columns?
+		bool cols_init;
+
 		/**
 		 * Update the RVT-H Reader disk image's QTreeView.
 		 */
@@ -67,6 +70,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	: q_ptr(q)
 	, rvth(nullptr)
 	, model(new RvtHModel(q))
+	, cols_init(false)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -105,6 +109,26 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 	for (int i = 0; i < num_sections; i++)
 		ui.lstBankList->resizeColumnToContents(i);
 	ui.lstBankList->resizeColumnToContents(num_sections);
+
+	// Show all columns except signature status by default.
+	// TODO: Allow the user to customize the columns, and save the
+	// customized columns somewhere.
+	if (!cols_init) {
+		cols_init = false;
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_BANKNUM, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_ICON, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_TITLE, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_DISCNUM, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_REVISION, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_REGION, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_IOS_VERSION, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_ENCRYPTION, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TICKET, true);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TMD, true);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_APPLOADER, true);
+		static_assert(RvtHModel::COL_APPLOADER + 1 == RvtHModel::COL_MAX,
+			"Default column visibility status needs to be updated!");
+	}
 }
 
 /**
