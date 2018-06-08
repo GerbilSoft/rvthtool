@@ -38,7 +38,7 @@
        </property>
        <layout class="QVBoxLayout" name="vboxBankList">
         <item>
-         <widget class="QTreeView" name="lstBankList">
+         <widget class="QTreeViewOpt" name="lstBankList">
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
@@ -181,6 +181,11 @@
    <extends>QWidget</extends>
    <header>widgets/BankEntryView.hpp</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QTreeViewOpt</class>
+   <extends>QTreeView</extends>
+   <header>widgets/QTreeViewOpt.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

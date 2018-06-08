@@ -15,6 +15,7 @@ SET(qrvthtool_SRCS
 	RvtHModel.cpp
 
 	widgets/BankEntryView.cpp
+	widgets/QTreeViewOpt.cpp
 
 	windows/QRvtHToolWindow.cpp
 	)
@@ -24,6 +25,7 @@ SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 
 	widgets/BankEntryView.hpp
+	widgets/QTreeViewOpt.hpp
 
 	windows/QRvtHToolWindow.hpp
 	)
