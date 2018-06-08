@@ -213,8 +213,14 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 		case Qt::DisplayRole:
 			// TODO: Cache these?
 			switch (index.column()) {
-				case COL_BANKNUM:
-					return QString::number(index.row() + 1);
+				case COL_BANKNUM: {
+					QString banknum = QString::number(index.row() + 1);
+					if (entry->type == RVTH_BankType_Wii_DL) {
+						// Print both bank numbers.
+						banknum += QChar(L'\n') + QString::number(index.row() + 2);
+					}
+					return banknum;
+				}
 				case COL_TITLE:
 					// TODO: Convert from Japanese if necessary.
 					// Also cp1252.

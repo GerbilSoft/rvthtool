@@ -30,6 +30,9 @@ RvtHItemDelegate::RvtHItemDelegate(QObject *parent)
 QSize RvtHItemDelegate::sizeHint(const QStyleOptionViewItem &option,
 				 const QModelIndex &index) const
 {
+	// FIXME: Re-enable this if needed once icons are added.
+	return super::sizeHint(option, index);
+#if 0
 	if (!index.isValid()) {
 		// Index is invalid.
 		// Use the default sizeHint().
@@ -41,4 +44,5 @@ QSize RvtHItemDelegate::sizeHint(const QStyleOptionViewItem &option,
 		size.setHeight(size.height() * 2);
 	}
 	return size;
+#endif
 }
