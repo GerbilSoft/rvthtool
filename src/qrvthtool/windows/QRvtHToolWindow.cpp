@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (qrvthtool)                                                  *
  * QRvtHToolWindow.cpp: Main window.                                       *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
@@ -171,6 +171,10 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 
 	// Set the models.
 	d->ui.lstBankList->setModel(d->model);
+
+	// Connect the lstBankList slots.
+	connect(d->ui.lstBankList->selectionModel(), &QItemSelectionModel::selectionChanged,
+		this, &QRvtHToolWindow::lstBankList_selectionModel_selectionChanged);
 
 	// Initialize the UI.
 	d->updateLstBankList();
@@ -358,4 +362,45 @@ void QRvtHToolWindow::rvthModel_rowsInserted(void)
 	// FIXME: This doesn't work the first time a file is added...
 	Q_D(QRvtHToolWindow);
 	d->updateLstBankList();
+}
+
+/** lstBankList slots. **/
+void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
+	const QItemSelection& selected, const QItemSelection& deselected)
+{
+	Q_UNUSED(selected)
+	Q_UNUSED(deselected)
+	Q_D(QRvtHToolWindow);
+
+	if (!d->rvth) {
+		// No RVT-H Reader disk image.
+		d->ui.bevBankEntryView->setBankEntry(nullptr);
+		return;
+	}
+
+	// FIXME: QItemSelection::indexes() *crashes* in MSVC debug builds. (Qt 4.8.6)
+	// References: (search for "QModelIndexList assertion", no quotes)
+	// - http://www.qtforum.org/article/13355/qt4-qtableview-assertion-failure.html#post66572
+	// - http://www.qtcentre.org/threads/55614-QTableView-gt-selectionModel%20%20-gt-selection%20%20-indexes%20%20-crash#8766774666573257762
+	// - https://forum.qt.io/topic/24664/crash-with-qitemselectionmodel-selectedindexes
+	//QModelIndexList indexes = selected.indexes();
+	int bank = -1;
+	const RvtH_BankEntry *entry = nullptr;
+	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
+	if (selectionModel->hasSelection()) {
+		// TODO: If multiple banks are selected, and one of the
+		// banks was just now unselected, this will still be the
+		// unselected bank.
+		QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
+		if (index.isValid()) {
+			// TODO: Sort proxy model like in mcrecover.
+			bank = index.row();
+			// TODO: Check for errors?
+			entry = rvth_get_BankEntry(d->rvth, bank, nullptr);
+		}
+	}
+
+	// Set the BankView's BankEntry to the selected bank.
+	// NOTE: Only handles the first selected bank.
+	d->ui.bevBankEntryView->setBankEntry(entry);
 }

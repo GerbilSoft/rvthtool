@@ -14,6 +14,8 @@ SET(qrvthtool_SRCS
 	qrvthtool.cpp
 	RvtHModel.cpp
 
+	widgets/BankEntryView.cpp
+
 	windows/QRvtHToolWindow.cpp
 	)
 
@@ -21,12 +23,16 @@ SET(qrvthtool_SRCS
 SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 
+	widgets/BankEntryView.hpp
+
 	windows/QRvtHToolWindow.hpp
 	)
 QT5_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
 
 # UI files.
 SET(qrvthtool_UIS
+	widgets/BankEntryView.ui
+
 	windows/QRvtHToolWindow.ui
 	)
 QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})

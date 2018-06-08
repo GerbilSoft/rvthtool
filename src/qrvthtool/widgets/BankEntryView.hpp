@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (qrvthtool)                                                  *
- * QRvtHToolWindow.hpp: Main window.                                       *
+ * BankEntryView.hpp: Bank Entry view widget.                              *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,57 +18,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__
+#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__
+#define __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__
 
-class QItemSelection;
-#include <QMainWindow>
+#include <QWidget>
 
-class QRvtHToolWindowPrivate;
-class QRvtHToolWindow : public QMainWindow
+struct _RvtH_BankEntry;
+
+class BankEntryViewPrivate;
+class BankEntryView : public QWidget
 {
 	Q_OBJECT
-	typedef QMainWindow super;
-	
+	typedef QWidget super;
+
+	Q_PROPERTY(const struct _RvtH_BankEntry* bankEntry READ bankEntry WRITE setBankEntry)
+
 	public:
-		explicit QRvtHToolWindow(QWidget *parent = 0);
-		virtual ~QRvtHToolWindow();
+		explicit BankEntryView(QWidget *parent = 0);
+		virtual ~BankEntryView();
 
 	protected:
-		QRvtHToolWindowPrivate *const d_ptr;
-		Q_DECLARE_PRIVATE(QRvtHToolWindow)
+		BankEntryViewPrivate *const d_ptr;
+		Q_DECLARE_PRIVATE(BankEntryView)
 	private:
-		Q_DISABLE_COPY(QRvtHToolWindow)
+		Q_DISABLE_COPY(BankEntryView)
 
 	public:
 		/**
-		 * Open an RVT-H Reader disk image.
-		 * @param filename Filename.
+		 * Get the RvtH_BankEntry being displayed.
+		 * @return RvtH_BankEntry.
 		 */
-		void openRvtH(const QString &filename);
+		const struct _RvtH_BankEntry *bankEntry(void) const;
 
 		/**
-		 * Close the currently-opened RVT-H Reader disk image.
+		 * Set the RvtH_BankEntry being displayed.
+		 * @param bankEntry RvtH_BankEntry.
 		 */
-		void closeRvtH(void);
+		void setBankEntry(const struct _RvtH_BankEntry *bankEntry);
 
 	protected:
 		// State change event. (Used for switching the UI language at runtime.)
-		void changeEvent(QEvent *event) final;
-
-	protected slots:
-		// Actions.
-		void on_actionOpen_triggered(void);
-		void on_actionClose_triggered(void);
-		void on_actionExit_triggered(void);
-		void on_actionAbout_triggered(void);
-
-		// RvtHModel slots.
-		void rvthModel_layoutChanged(void);
-		void rvthModel_rowsInserted(void);
-
-		// lstBankList slots.
-		void lstBankList_selectionModel_selectionChanged(const QItemSelection& selected, const QItemSelection& deselected);
+		void changeEvent(QEvent *event);
 };
 
-#endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__ */
+#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__ */

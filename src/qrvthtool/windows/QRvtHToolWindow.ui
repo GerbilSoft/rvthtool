@@ -72,7 +72,11 @@
         <property name="title">
          <string>Bank Information</string>
         </property>
-        <layout class="QVBoxLayout" name="vboxBankInfo"/>
+        <layout class="QVBoxLayout" name="vboxBankInfo">
+         <item>
+          <widget class="BankEntryView" name="bevBankEntryView" native="true"/>
+         </item>
+        </layout>
        </widget>
       </widget>
      </widget>
@@ -171,6 +175,14 @@
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>BankEntryView</class>
+   <extends>QWidget</extends>
+   <header>widgets/BankEntryView.hpp</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
