@@ -373,7 +373,7 @@ void RvtHModel::setRvtH(RvtH *rvth)
 
 	if (rvth) {
 		// Notify the view that we're about to add rows.
-		const int bankCount = rvth_get_BankCount(d->rvth);
+		const int bankCount = rvth_get_BankCount(rvth);
 		if (bankCount > 0) {
 			beginInsertRows(QModelIndex(), 0, (bankCount - 1));
 		}
