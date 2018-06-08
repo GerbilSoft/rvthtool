@@ -365,6 +365,7 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 	switch (role) {
 		case Qt::DisplayRole:
 			switch (section) {
+				case COL_BANKNUM:	return tr("#");
 				case COL_ICON:		return tr("Icon");
 				case COL_TITLE:	return tr("Title");
 				//: 6-digit game ID, e.g. GALE01.
@@ -384,27 +385,8 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 			break;
 
 		case Qt::TextAlignmentRole:
-			switch (section) {
-				case COL_BANKNUM:
-					// Left-align the text.
-					return Qt::AlignLeft;
-
-				case COL_ICON:
-				case COL_TITLE:
-				case COL_GAMEID:
-				case COL_DISCNUM:
-				case COL_REVISION:
-				case COL_REGION:
-				case COL_IOS_VERSION:
-				case COL_ENCRYPTION:
-				case COL_SIG_TICKET:
-				case COL_SIG_TMD:
-				case COL_APPLOADER:
-				default:
-					// Center-align the text.
-					return Qt::AlignHCenter;
-			}
-			break;
+			// Center-align the text.
+			return Qt::AlignHCenter;
 	}
 
 	// Default value.
