@@ -25,6 +25,7 @@
 // Qt includes.
 #include <QApplication>
 #include <QtGui/QBrush>
+#include <QtGui/QFont>
 #include <QtGui/QPalette>
 
 /** RvtHModelPrivate **/
@@ -313,7 +314,17 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			}
 
 		case Qt::FontRole:
-			// TODO: Monospaced columns.
+			switch (index.column()) {
+				case COL_GAMEID: {
+					// These columns should be monospaced.
+					QFont fntMonospace(QLatin1String("Monospace"));
+					fntMonospace.setStyleHint(QFont::TypeWriter);
+					return fntMonospace;
+				}
+
+				default:
+					break;
+			}
 			break;
 
 		case Qt::BackgroundRole:
