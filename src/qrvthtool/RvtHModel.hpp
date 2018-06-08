@@ -60,6 +60,11 @@ class RvtHModel : public QAbstractListModel
 			COL_MAX
 		};
 
+		// Dual-layer role.
+		// If true, this is a Wii DL image and should be
+		// represented as taking up two banks.
+		static const int DualLayerRole = Qt::UserRole;
+
 		// Qt Model/View interface.
 		int rowCount(const QModelIndex& parent = QModelIndex()) const final;
 		int columnCount(const QModelIndex& parent = QModelIndex()) const final;

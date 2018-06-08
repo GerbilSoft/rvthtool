@@ -13,6 +13,8 @@ FIND_PACKAGE(Qt5 5.2.0 REQUIRED COMPONENTS Core Gui Widgets)
 SET(qrvthtool_SRCS
 	qrvthtool.cpp
 	RvtHModel.cpp
+	RvtHSortFilterProxyModel.cpp
+	RvtHItemDelegate.cpp
 
 	widgets/BankEntryView.cpp
 	widgets/QTreeViewOpt.cpp
@@ -23,6 +25,8 @@ SET(qrvthtool_SRCS
 # Headers with Qt objects.
 SET(qrvthtool_MOC_H
 	RvtHModel.hpp
+	RvtHSortFilterProxyModel.hpp
+	RvtHItemDelegate.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/QTreeViewOpt.hpp

@@ -22,6 +22,8 @@
 
 #include "librvth/rvth.h"
 #include "RvtHModel.hpp"
+#include "RvtHSortFilterProxyModel.hpp"
+#include "RvtHItemDelegate.hpp"
 
 // Qt includes.
 #include <QtWidgets/QFileDialog>
@@ -47,6 +49,7 @@ class QRvtHToolWindowPrivate
 		// RVT-H Reader disk image
 		RvtH *rvth;
 		RvtHModel *model;
+		RvtHSortFilterProxyModel *proxyModel;
 
 		// Filename.
 		QString filename;
@@ -70,6 +73,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	: q_ptr(q)
 	, rvth(nullptr)
 	, model(new RvtHModel(q))
+	, proxyModel(new RvtHSortFilterProxyModel(q))
 	, cols_init(false)
 {
 	// Connect the RvtHModel slots.
@@ -190,11 +194,16 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->ui.splitterMain->setStretchFactor(1, 0);
 
 	// Initialize lstBankList's item delegate.
-	// TODO
-	//d->ui.lstBankList->setItemDelegate(new RvtHItemDelegate(this));
+	d->ui.lstBankList->setItemDelegate(new RvtHItemDelegate(this));
 
 	// Set the models.
-	d->ui.lstBankList->setModel(d->model);
+	d->proxyModel->setSourceModel(d->model);
+	d->ui.lstBankList->setModel(d->proxyModel);
+
+	// Sort by COL_BANKNUM by default.
+	// TODO: Disable sorting on specific columns.
+	//d->proxyModel->setDynamicSortFilter(true);
+	//d->ui.lstBankList->sortByColumn(RvtHModel::COL_BANKNUM, Qt::AscendingOrder);
 
 	// Connect the lstBankList slots.
 	connect(d->ui.lstBankList->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -418,7 +427,7 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 		QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
 		if (index.isValid()) {
 			// TODO: Sort proxy model like in mcrecover.
-			bank = index.row();
+			bank = d->proxyModel->mapToSource(index).row();
 			// TODO: Check for errors?
 			entry = rvth_get_BankEntry(d->rvth, bank, nullptr);
 		}

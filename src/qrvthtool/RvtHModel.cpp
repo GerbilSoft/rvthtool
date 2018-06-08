@@ -325,6 +325,9 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			// TODO
 			break;
 
+		case DualLayerRole:
+			return (entry->type == RVTH_BankType_Wii_DL);
+
 		default:
 			break;
 	}
