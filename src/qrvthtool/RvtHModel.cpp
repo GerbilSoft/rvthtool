@@ -90,7 +90,7 @@ class RvtHModelPrivate
 			QIcon getIcon(IconID id) const;
 
 		private:
-			// Icons for COL_ICON.
+			// Icons for COL_TYPE.
 			mutable QIcon m_icons[ICON_MAX];
 		};
 		style_t style;
@@ -357,7 +357,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					}
 					break;
 
-				case COL_ICON:
+				case COL_TYPE:
 					if (role == Qt::SizeHintRole) {
 						// Using 32x32 icons.
 						// (Hi-DPI is handled by Qt automatically.)
@@ -461,7 +461,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			break;
 
 		case Qt::DecorationRole:
-			if (index.column() == COL_ICON) {
+			if (index.column() == COL_TYPE) {
 				// Get the icon for this bank.
 				return d->iconForBank(bank);
 			}
@@ -473,7 +473,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					// Left-align, center vertically.
 					return (int)(Qt::AlignLeft | Qt::AlignVCenter);
 
-				case COL_ICON:
+				case COL_TYPE:
 				case COL_BANKNUM:
 				case COL_GAMEID:
 				case COL_DISCNUM:
@@ -513,7 +513,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			break;
 
 		case Qt::SizeHintRole: {
-			if (index.column() == COL_ICON) {
+			if (index.column() == COL_TYPE) {
 				// Using 32x32 icons.
 				// (Hi-DPI is handled by Qt automatically.)
 				QSize size(32 + iconWadj, 32);
@@ -545,8 +545,8 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 		case Qt::DisplayRole:
 			switch (section) {
 				case COL_BANKNUM:	return tr("#");
-				case COL_ICON:		return tr("Icon");
-				case COL_TITLE:	return tr("Title");
+				case COL_TYPE:		return tr("Type");
+				case COL_TITLE:		return tr("Title");
 				//: 6-digit game ID, e.g. GALE01.
 				case COL_GAMEID:	return tr("Game ID");
 				case COL_DISCNUM:	return tr("Disc #");

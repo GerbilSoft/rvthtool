@@ -120,7 +120,7 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 	if (!cols_init) {
 		cols_init = false;
 		ui.lstBankList->setColumnHidden(RvtHModel::COL_BANKNUM, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_ICON, false);
+		ui.lstBankList->setColumnHidden(RvtHModel::COL_TYPE, false);
 		ui.lstBankList->setColumnHidden(RvtHModel::COL_TITLE, false);
 		ui.lstBankList->setColumnHidden(RvtHModel::COL_DISCNUM, false);
 		ui.lstBankList->setColumnHidden(RvtHModel::COL_REVISION, false);

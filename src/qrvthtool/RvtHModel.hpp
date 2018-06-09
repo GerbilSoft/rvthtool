@@ -45,7 +45,7 @@ class RvtHModel : public QAbstractListModel
 	public:
 		enum Column {
 			COL_BANKNUM,		// Bank #
-			COL_ICON,		// Icon (HW)
+			COL_TYPE,		// Type (HW)
 			COL_TITLE,		// Title
 			COL_GAMEID,		// Game ID
 			COL_DISCNUM,		// Disc #
