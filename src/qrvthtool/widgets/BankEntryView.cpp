@@ -413,7 +413,89 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		ui.lblTMDSig->hide();
 	}
 
-	// TODO: AppLoader status.
+	// AppLoader status.
+	// Check the AppLoader status.
+	// TODO: Move strings to librvth?
+	if (bankEntry->aplerr > APLERR_OK) {
+		// NOTE: Not translatable. These strings are based on
+		// the strings from the original AppLoader.
+		// NOTE: lblAppLoader uses RichText.
+		QString aplerr = QLatin1String("<b>APPLOADER ERROR >>></b><br>\n");
+		switch (bankEntry->aplerr) {
+			default:
+				aplerr += QString::fromLatin1("Unknown (%1)")
+					.arg(bankEntry->aplerr);
+				break;
+
+			// TODO: Get values for these errors.
+			case APLERR_FSTLENGTH:
+				aplerr += QString::fromLatin1("FSTLength(%1) in BB2 is greater than FSTMaxLength(%2)")
+					.arg(bankEntry->aplerr_val[0])
+					.arg(bankEntry->aplerr_val[1]);
+				break;
+			case APLERR_DEBUGMONSIZE_UNALIGNED:
+				aplerr += QString::fromLatin1("Debug monitor size (%1) should be a multiple of 32")
+					.arg(bankEntry->aplerr_val[0]);
+				break;
+			case APLERR_SIMMEMSIZE_UNALIGNED:
+				aplerr += QString::fromLatin1("Simulated memory size (%1) should be a multiple of 32")
+					.arg(bankEntry->aplerr_val[0]);
+				break;
+			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
+				aplerr += QString::fromLatin1("[Physical memory size(0x%1)] - "
+					"[Console simulated memory size(0x%2)] "
+					"must be greater than debug monitor size(0x%3)")
+					.arg(bankEntry->aplerr_val[0], 0, 16)
+					.arg(bankEntry->aplerr_val[1], 0, 16)
+					.arg(bankEntry->aplerr_val[2], 0, 16);
+				break;
+			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
+				aplerr += QString::fromLatin1("Physical memory size is 0x%1 bytes."
+					"Console simulated memory size (0x%2) must be smaller than "
+					"or equal to the Physical memory size.")
+					.arg(bankEntry->aplerr_val[0], 0, 16)
+					.arg(bankEntry->aplerr_val[1], 0, 16);
+				break;
+			case APLERR_ILLEGAL_FST_ADDRESS:
+				aplerr += QString::fromLatin1("Illegal FST destination address! (0x%1)")
+					.arg(bankEntry->aplerr_val[0], 0, 16);
+				break;
+			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
+				aplerr += QString::fromLatin1("Total size of text/data sections of the dol file are too big (%1(0x%2) bytes). "
+					"Currently the limit is set as %3(0x%4) bytes")
+					.arg(bankEntry->aplerr_val[0])
+					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'))
+					.arg(bankEntry->aplerr_val[1])
+					.arg(bankEntry->aplerr_val[1], 0, 16, QChar(L'0'));
+				break;
+			case APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED:
+				aplerr += QString::fromLatin1("One of the sections in the dol file exceeded its boundary. "
+					"All the sections should not exceed 0x%1 (production mode).<br>\n"
+					"<i>*** NOTE: This disc will still boot on devkits.</i>")
+					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
+				break;
+			case APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED:
+				aplerr += QString::fromLatin1("One of the sections in the dol file exceeded its boundary. "
+					"All the sections should not exceed 0x%1 (development mode mode).")
+					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
+				break;
+			case APLERR_DOL_TEXTSEG2BIG:
+				aplerr += QString::fromLatin1("Too big text segment! (0x%1 - 0x%2)")
+					.arg(bankEntry->aplerr_val[0], 0, 16)
+					.arg(bankEntry->aplerr_val[1], 0, 16);
+				break;
+			case APLERR_DOL_DATASEG2BIG:
+				aplerr += QString::fromLatin1("Too big data segment! (0x%1 - 0x%2)")
+					.arg(bankEntry->aplerr_val[0], 0, 16)
+					.arg(bankEntry->aplerr_val[1], 0, 16);
+				break;
+		}
+		ui.lblAppLoader->setText(aplerr);
+		ui.lblAppLoader->show();
+	} else {
+		// No AppLoader error.
+		ui.lblAppLoader->hide();
+	}
 }
 
 /** BankEntryView **/
