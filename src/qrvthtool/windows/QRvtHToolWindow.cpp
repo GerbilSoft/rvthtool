@@ -55,6 +55,9 @@ class QRvtHToolWindowPrivate
 		QString filename;
 		QString displayFilename;	// filename without subdirectories
 
+		// TODO: Config class like mcrecover?
+		QString lastPath;
+
 		// Initialized columns?
 		bool cols_init;
 
@@ -322,25 +325,36 @@ void QRvtHToolWindow::on_actionOpen_triggered(void)
 	// TODO: Remove the space before the "*.raw"?
 	// On Linux, Qt shows an extra space after the filter name, since
 	// it doesn't show the extension. Not sure about Windows...
-	const QString gcnFilter = tr("GameCube Memory Card Image") + QLatin1String(" (*.raw)");
-	const QString vmuFilter = tr("Dreamcast VMU Image") + QLatin1String(" (*.bin)");
+	const QString allSupportedFilter = tr("All Supported Files") +
+		QLatin1String(" (*.img *.bin *.gcm *.wbfs *.ciso *.cso *.iso)");
+	const QString hddFilter = tr("RVT-H Reader Disk Image Files") +
+		QLatin1String(" (*.img *.bin)");
+	const QString gcmFilter = tr("GameCube/Wii Disc Image Files") +
+		QLatin1String(" (*.gcm *.wbfs *.ciso *.cso *.iso)");
 	const QString allFilter = tr("All Files") + QLatin1String(" (*)");
 
 	// NOTE: Using a QFileDialog instead of QFileDialog::getOpenFileName()
 	// causes a non-native appearance on Windows. Hence, we should use
 	// QFileDialog::getOpenFileName().
-	const QString filters = tr("Disk Image Files") + QLatin1String(" (*.img);;") +
-		tr("All Files") + QLatin1String(" (*)");
+	const QString filters =
+		allSupportedFilter + QLatin1String(";;") +
+		hddFilter + QLatin1String(";;") +
+		gcmFilter + QLatin1String(";;") +
+		allFilter;
 
 	// Get the filename.
 	// TODO: d->lastPath()
 	QString filename = QFileDialog::getOpenFileName(this,
 			tr("Open RVT-H Reader Disk Image"),	// Dialog title
-			QString() /*d->lastPath()*/,		// Default filename
+			d->lastPath,				// Default filename
 			filters);				// Filters
 
 	if (!filename.isEmpty()) {
 		// Filename is selected.
+
+		// Save the last path.
+		d->lastPath = QFileInfo(filename).absolutePath();
+
 		// Open the RVT-H Reader disk image.
 		openRvtH(filename);
 	}
