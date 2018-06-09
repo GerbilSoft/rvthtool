@@ -59,13 +59,6 @@ class RvtHModelPrivate
 			QBrush brush_lostFile;
 			QBrush brush_lostFile_alt;
 
-			/**
-			 * Load an icon from the Qt resources.
-			 * @param dir Base directory.
-			 * @param name Icon name.
-			 */
-			static QIcon loadIcon(const QString &dir, const QString &name);
-
 			// Monosapced font.
 			QFont fntMonospace;
 
@@ -85,6 +78,13 @@ class RvtHModelPrivate
 			QIcon getIcon(IconID id) const;
 
 		private:
+			/**
+			 * Load an icon from the Qt resources.
+			 * @param dir Base directory.
+			 * @param name Icon name.
+			 */
+			static QIcon loadIcon(const QString &dir, const QString &name);
+
 			// Icons for COL_TYPE.
 			mutable QIcon m_icons[ICON_MAX];
 		};
@@ -104,6 +104,30 @@ RvtHModelPrivate::RvtHModelPrivate(RvtHModel *q)
 {
 	// Initialize the style variables.
 	style.init();
+}
+
+/**
+ * Load an icon.
+ * @param id Icon ID.
+ * @return Icon.
+ */
+QIcon RvtHModelPrivate::style_t::getIcon(IconID id) const
+{
+	assert(id >= 0);
+	assert(id < ICON_MAX);
+	if (id < 0 || id >= ICON_MAX) {
+		return QIcon();
+	}
+
+	if (m_icons[id].isNull()) {
+		static const char *const names[] = {
+			"gcn", "nr"
+		};
+		m_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
+		assert(!m_icons[id].isNull());
+	}
+
+	return m_icons[id];
 }
 
 /**
@@ -130,30 +154,6 @@ QIcon RvtHModelPrivate::style_t::loadIcon(const QString &dir, const QString &nam
 	}
 
 	return icon;
-}
-
-/**
- * Load an icon.
- * @param id Icon ID.
- * @return Icon.
- */
-QIcon RvtHModelPrivate::style_t::getIcon(IconID id) const
-{
-	assert(id >= 0);
-	assert(id < ICON_MAX);
-	if (id < 0 || id >= ICON_MAX) {
-		return QIcon();
-	}
-
-	if (m_icons[id].isNull()) {
-		static const char *const names[] = {
-			"gcn", "nr"
-		};
-		m_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
-		assert(!m_icons[id].isNull());
-	}
-
-	return m_icons[id];
 }
 
 /**
