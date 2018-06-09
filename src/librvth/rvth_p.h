@@ -24,6 +24,7 @@
 #include "common.h"
 
 #include "rvth.h"
+#include "rvth_imagetype.h"
 #include "ref_file.h"
 
 // RVT-H main struct.
@@ -36,8 +37,8 @@ struct _RvtH {
 	// - Standalone disc image: 1
 	unsigned int bank_count;
 
-	// Is this an HDD image?
-	bool is_hdd;
+	// Image type.
+	RvtH_ImageType_e type;
 
 	// BankEntry objects.
 	RvtH_BankEntry *entries;

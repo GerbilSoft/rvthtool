@@ -778,7 +778,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 
 	// If this is an HDD, write the bank table entry.
-	if (rvth->is_hdd) {
+	if (rvth_is_hdd(rvth)) {
 		// TODO: Check for errors.
 		rvth_write_BankEntry(rvth, bank);
 	}

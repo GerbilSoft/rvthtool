@@ -263,6 +263,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 
 	// Reader initialized.
 	free(cisoHeader);
+	cisoReader->reader.type = RVTH_ImageType_GCM;
 	return (Reader*)cisoReader;
 
 fail:

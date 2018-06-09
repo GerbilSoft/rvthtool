@@ -222,7 +222,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Allocate memory for a single RvtH_BankEntry object.
 	rvth->bank_count = 1;
-	rvth->is_hdd = false;
+	rvth->type = reader->type;
 	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -357,7 +357,9 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the 8 RvtH_BankEntry objects.
-	rvth->is_hdd = true;
+	rvth->type = (ref_is_device(f_img)
+		? RVTH_ImageType_HDD_Reader
+		: RVTH_ImageType_HDD_Image);
 	rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -551,9 +553,9 @@ void rvth_close(RvtH *rvth)
 }
 
 /**
- * Is this RVT-H object an HDD image or a standalone disc image?
+ * Is this RVT-H object an RVT-H Reader / HDD image, or a standalone disc image?
  * @param rvth RVT-H object.
- * @return True if the RVT-H object is an HDD image; false if it's a standalone disc image.
+ * @return True if the RVT-H object is an RVT-H Reader / HDD image; false if it's a standalone disc image.
  */
 bool rvth_is_hdd(const RvtH *rvth)
 {
@@ -561,7 +563,21 @@ bool rvth_is_hdd(const RvtH *rvth)
 		errno = EINVAL;
 		return false;
 	}
-	return rvth->is_hdd;
+
+	switch (rvth->type) {
+		case RVTH_ImageType_HDD_Reader:
+		case RVTH_ImageType_HDD_Image:
+			return true;
+
+		case RVTH_ImageType_Unknown:
+		case RVTH_ImageType_GCM:
+		case RVTH_ImageType_GCM_SDK:
+		default:
+			return false;
+	}
+
+	assert(!"Should not get here!");
+	return false;
 }
 
 /**

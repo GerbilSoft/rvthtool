@@ -364,7 +364,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	} else if (bank_src >= rvth_src->bank_count) {
 		errno = ERANGE;
 		return -ERANGE;
-	} else if (rvth_dest->is_hdd || rvth_dest->bank_count != 1) {
+	} else if (rvth_is_hdd(rvth_dest) || rvth_dest->bank_count != 1) {
 		// Destination is not a standalone disc image.
 		// Copying to HDDs will be handled differently.
 		errno = EIO;

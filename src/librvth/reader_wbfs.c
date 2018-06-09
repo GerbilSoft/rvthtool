@@ -461,6 +461,7 @@ Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	wbfsReader->reader.lba_len = BYTES_TO_LBA(getWbfsDiscSize(wbfsReader, wbfsReader->m_wbfs_disc));
 
 	// Reader initialized.
+	wbfsReader->reader.type = RVTH_ImageType_GCM;
 	return (Reader*)wbfsReader;
 
 fail:

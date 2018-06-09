@@ -61,6 +61,8 @@ static const Reader_Vtbl reader_plain_vtable = {
 Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
 	Reader *reader;
+	int64_t filesize;
+	int ret;
 	int err = 0;
 
 	// Validate parameters.
@@ -94,27 +96,43 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Set the vtable.
 	reader->vtbl = &reader_plain_vtable;
 
+	// Get the file size.
+	ret = ref_seeko(reader->file, 0, SEEK_END);
+	if (ret != 0) {
+		// Seek error.
+		err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		goto fail;
+	}
+	filesize = ref_tello(reader->file);
+
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
-		// Determine the maximum LBA.
-		int64_t offset;
-		int ret = ref_seeko(reader->file, 0, SEEK_END);
-		if (ret != 0) {
-			// Seek error.
-			err = errno;
-			if (err == 0) {
-				err = EIO;
-			}
-			goto fail;
-		}
-		offset = ref_tello(reader->file);
-
 		// NOTE: If not a multiple of the LBA size,
 		// the partial LBA will be ignored.
-		lba_len = (uint32_t)(offset / LBA_SIZE);
+		lba_len = (uint32_t)(filesize / LBA_SIZE);
 	}
 	reader->lba_start = lba_start;
 	reader->lba_len = lba_len;
+
+	// Set the reader type.
+	if (ref_is_device(reader->file)) {
+		// This is an RVT-H Reader.
+		reader->type = RVTH_ImageType_HDD_Reader;
+	} else {
+		// If the file is larger than 10 GB, assume it's an RVT-H Reader disk image.
+		// Otherwise, it's a standalone disc image.
+		if (filesize > 10LL*1024LL*1024LL*1024LL) {
+			// RVT-H Reader disk image.
+			reader->type = RVTH_ImageType_HDD_Image;
+		} else {
+			// If the starting LBA is 0, it's a standard GCM.
+			// Otherwise, it has an SDK header.
+			reader->type = (lba_start == 0 ? RVTH_ImageType_GCM : RVTH_ImageType_GCM_SDK);
+		}
+	}
 
 	// Reader initialized.
 	return reader;

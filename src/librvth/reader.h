@@ -23,6 +23,7 @@
 
 #include "common.h"
 #include "ref_file.h"
+#include "rvth_imagetype.h"
 
 #include <stdint.h>
 
@@ -91,6 +92,7 @@ typedef struct _Reader {
 	RefFile *file;			// Disc image file.
 	uint32_t lba_start;		// Starting LBA.
 	uint32_t lba_len;		// Length of image, in LBAs.
+	RvtH_ImageType_e type;		// Disc image type.
 } Reader;
 
 /**
