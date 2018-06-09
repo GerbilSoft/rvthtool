@@ -63,18 +63,35 @@ class RvtHModelPrivate
 			 */
 			static QIcon loadIcon(const QString &dir, const QString &name);
 
-			// Icons for COL_ICON.
-			QIcon icoGCN;	// GameCube (retail)
-			QIcon icoNR;	// GameCube (debug)
-
 			// Pixmaps for COL_ISVALID.
 			static const QSize szPxmIsValid;
+#if 0
 			QPixmap pxmIsValid_unknown;
 			QPixmap pxmIsValid_invalid;
 			QPixmap pxmIsValid_good;
+#endif
 
 			// Monosapced font.
 			QFont fntMonospace;
+
+			// Icon IDs.
+			enum IconID {
+				ICON_GCN,	// GameCube (retail)
+				ICON_NR,	// NR Reader (debug)
+
+				ICON_MAX
+			};
+
+			/**
+			 * Load an icon.
+			 * @param id Icon ID.
+			 * @return Icon.
+			 */
+			QIcon getIcon(IconID id) const;
+
+		private:
+			// Icons for COL_ICON.
+			mutable QIcon m_icons[ICON_MAX];
 		};
 		style_t style;
 
@@ -123,6 +140,30 @@ QIcon RvtHModelPrivate::style_t::loadIcon(const QString &dir, const QString &nam
 }
 
 /**
+ * Load an icon.
+ * @param id Icon ID.
+ * @return Icon.
+ */
+QIcon RvtHModelPrivate::style_t::getIcon(IconID id) const
+{
+	assert(id >= 0);
+	assert(id < ICON_MAX);
+	if (id < 0 || id >= ICON_MAX) {
+		return QIcon();
+	}
+
+	if (m_icons[id].isNull()) {
+		static const char *const names[] = {
+			"gcn", "nr"
+		};
+		m_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
+		assert(!m_icons[id].isNull());
+	}
+
+	return m_icons[id];
+}
+
+/**
  * Initialize the style variables.
  */
 void RvtHModelPrivate::style_t::init(void)
@@ -152,10 +193,6 @@ void RvtHModelPrivate::style_t::init(void)
 	// Save the background colors in QBrush objects.
 	brush_lostFile = QBrush(bgColor_lostFile);
 	brush_lostFile_alt = QBrush(bgColor_lostFile_alt);
-
-	// Load icons.
-	icoGCN = loadIcon(QLatin1String("hw"), QLatin1String("gcn"));
-	icoNR = loadIcon(QLatin1String("hw"), QLatin1String("nr"));
 
 	// TODO: Pixmaps.
 #if 0
@@ -211,11 +248,11 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 			// GameCube.
 			if (imageType == RVTH_ImageType_GCM) {
 				// Standalone GCM. Use the retail icon.
-				return style.icoGCN;
+				return style.getIcon(style_t::ICON_GCN);
 			} else {
 				// GCM with SDK header, or RVT-H Reader.
 				// Use the NR Reader icon.
-				return style.icoNR;
+				return style.getIcon(style_t::ICON_NR);
 			}
 			break;
 
@@ -225,11 +262,11 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 			// Using NR Reader icon for now.
 			if (imageType == RVTH_ImageType_GCM) {
 				// Standalone GCM. Use the retail icon.
-				return style.icoGCN;
+				return style.getIcon(style_t::ICON_GCN);
 			} else {
 				// GCM with SDK header, or RVT-H Reader.
 				// Use the NR Reader icon.
-				return style.icoNR;
+				return style.getIcon(style_t::ICON_NR);
 			}
 			break;
 	}
