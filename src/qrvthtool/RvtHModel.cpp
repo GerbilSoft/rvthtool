@@ -66,14 +66,6 @@ class RvtHModelPrivate
 			 */
 			static QIcon loadIcon(const QString &dir, const QString &name);
 
-			// Pixmaps for COL_ISVALID.
-			static const QSize szPxmIsValid;
-#if 0
-			QPixmap pxmIsValid_unknown;
-			QPixmap pxmIsValid_invalid;
-			QPixmap pxmIsValid_good;
-#endif
-
 			// Monosapced font.
 			QFont fntMonospace;
 
@@ -105,8 +97,6 @@ class RvtHModelPrivate
 		 */
 		QIcon iconForBank(unsigned int bank) const;
 };
-
-const QSize RvtHModelPrivate::style_t::szPxmIsValid = QSize(16, 16);
 
 RvtHModelPrivate::RvtHModelPrivate(RvtHModel *q)
 	: q_ptr(q)
@@ -196,23 +186,6 @@ void RvtHModelPrivate::style_t::init(void)
 	// Save the background colors in QBrush objects.
 	brush_lostFile = QBrush(bgColor_lostFile);
 	brush_lostFile_alt = QBrush(bgColor_lostFile_alt);
-
-	// TODO: Pixmaps.
-#if 0
-	// Initialize the COL_ISVALID pixmaps.
-	// NOTE: Using Oxygen icons for all systems.
-	// TODO: Better dialog-question icon.
-	// TODO: Hi-DPI icon handling.
-	static const QSize sz(16, 16);
-	const QString s_sz = QString::number(sz.width()) +
-		QChar(L'x') + QString::number(sz.height());
-	pxmIsValid_unknown = QPixmap(QLatin1String(":/oxygen/") + s_sz +
-		QLatin1String("/dialog-question.png"));
-	pxmIsValid_invalid = QPixmap(QLatin1String(":/oxygen/") + s_sz +
-		QLatin1String("/dialog-error.png"));
-	pxmIsValid_good    = QPixmap(QLatin1String(":/oxygen/") + s_sz +
-		QLatin1String("/dialog-ok-apply.png"));
-#endif
 
 	// Monospaced font.
 	fntMonospace = QFont(QLatin1String("Monospace"));
