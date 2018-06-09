@@ -259,20 +259,20 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 
 			// TODO: Get values for these errors.
 			case APLERR_FSTLENGTH:
-				printf("FSTLength(%u) in BB2 is greater than FSTMaxLength(%u)\n",
+				printf("FSTLength(%u) in BB2 is greater than FSTMaxLength(%u).\n",
 					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 			case APLERR_DEBUGMONSIZE_UNALIGNED:
-				printf("Debug monitor size (%u) should be a multiple of 32\n",
+				printf("Debug monitor size (%u) should be a multiple of 32.\n",
 					entry->aplerr_val[0]);
 				break;
 			case APLERR_SIMMEMSIZE_UNALIGNED:
-				printf("Simulated memory size (%u) should be a multiple of 32\n",
+				printf("Simulated memory size (%u) should be a multiple of 32.\n",
 				       entry->aplerr_val[0]);
 				break;
 			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
 				printf("[Physical memory size(0x%x)] - [Console simulated memory size(0x%x)]\n"
-					"APPLOADER ERROR >>> must be greater than debug monitor size(0x%x)\n",
+					"APPLOADER ERROR >>> must be greater than debug monitor size(0x%x).\n",
 					entry->aplerr_val[0], entry->aplerr_val[1], entry->aplerr_val[2]);
 				break;
 			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
@@ -286,7 +286,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 				break;
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
 				printf("Total size of text/data sections of the dol file are too big (%d(0x%08x) bytes).\n"
-					"APPLOADER ERROR >>> Currently the limit is set as %d(0x%08x) bytes\n",
+					"APPLOADER ERROR >>> Currently the limit is set as %d(0x%08x) bytes.\n",
 					entry->aplerr_val[0], entry->aplerr_val[0],
 					entry->aplerr_val[1], entry->aplerr_val[1]);
 				break;

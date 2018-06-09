@@ -429,22 +429,22 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 
 			// TODO: Get values for these errors.
 			case APLERR_FSTLENGTH:
-				aplerr += QString::fromLatin1("FSTLength(%1) in BB2 is greater than FSTMaxLength(%2)")
+				aplerr += QString::fromLatin1("FSTLength(%1) in BB2 is greater than FSTMaxLength(%2).")
 					.arg(bankEntry->aplerr_val[0])
 					.arg(bankEntry->aplerr_val[1]);
 				break;
 			case APLERR_DEBUGMONSIZE_UNALIGNED:
-				aplerr += QString::fromLatin1("Debug monitor size (%1) should be a multiple of 32")
+				aplerr += QString::fromLatin1("Debug monitor size (%1) should be a multiple of 32.")
 					.arg(bankEntry->aplerr_val[0]);
 				break;
 			case APLERR_SIMMEMSIZE_UNALIGNED:
-				aplerr += QString::fromLatin1("Simulated memory size (%1) should be a multiple of 32")
+				aplerr += QString::fromLatin1("Simulated memory size (%1) should be a multiple of 32.")
 					.arg(bankEntry->aplerr_val[0]);
 				break;
 			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
 				aplerr += QString::fromLatin1("[Physical memory size(0x%1)] - "
 					"[Console simulated memory size(0x%2)] "
-					"must be greater than debug monitor size(0x%3)")
+					"must be greater than debug monitor size(0x%3).")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
 					.arg(bankEntry->aplerr_val[1], 0, 16)
 					.arg(bankEntry->aplerr_val[2], 0, 16);
@@ -462,7 +462,7 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 				break;
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
 				aplerr += QString::fromLatin1("Total size of text/data sections of the dol file are too big (%1(0x%2) bytes). "
-					"Currently the limit is set as %3(0x%4) bytes")
+					"Currently the limit is set as %3(0x%4) bytes.")
 					.arg(bankEntry->aplerr_val[0])
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'))
 					.arg(bankEntry->aplerr_val[1])
@@ -476,7 +476,7 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 				break;
 			case APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED:
 				aplerr += QString::fromLatin1("One of the sections in the dol file exceeded its boundary. "
-					"All the sections should not exceed 0x%1 (development mode mode).")
+					"All the sections should not exceed 0x%1 (development mode).")
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_TEXTSEG2BIG:
