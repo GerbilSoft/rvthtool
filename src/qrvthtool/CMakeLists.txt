@@ -14,7 +14,6 @@ SET(qrvthtool_SRCS
 	qrvthtool.cpp
 	RvtHModel.cpp
 	RvtHSortFilterProxyModel.cpp
-	RvtHItemDelegate.cpp
 
 	widgets/BankEntryView.cpp
 	widgets/QTreeViewOpt.cpp
@@ -26,7 +25,6 @@ SET(qrvthtool_SRCS
 SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 	RvtHSortFilterProxyModel.hpp
-	RvtHItemDelegate.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/QTreeViewOpt.hpp

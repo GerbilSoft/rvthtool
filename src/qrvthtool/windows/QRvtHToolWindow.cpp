@@ -23,7 +23,6 @@
 #include "librvth/rvth.h"
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
-#include "RvtHItemDelegate.hpp"
 
 // Qt includes.
 #include <QtWidgets/QFileDialog>
@@ -195,9 +194,6 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	// We want the QTreeView to stretch, but not the card info panel.
 	d->ui.splitterMain->setStretchFactor(0, 1);
 	d->ui.splitterMain->setStretchFactor(1, 0);
-
-	// Initialize lstBankList's item delegate.
-	d->ui.lstBankList->setItemDelegate(new RvtHItemDelegate(this));
 
 	// Set the models.
 	d->proxyModel->setSourceModel(d->model);
