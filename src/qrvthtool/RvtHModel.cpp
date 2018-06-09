@@ -26,6 +26,7 @@
 #include <QApplication>
 #include <QtGui/QBrush>
 #include <QtGui/QFont>
+#include <QtGui/QIcon>
 #include <QtGui/QPalette>
 
 /** RvtHModelPrivate **/
@@ -55,6 +56,17 @@ class RvtHModelPrivate
 			QBrush brush_lostFile;
 			QBrush brush_lostFile_alt;
 
+			/**
+			 * Load an icon from the Qt resources.
+			 * @param dir Base directory.
+			 * @param name Icon name.
+			 */
+			static QIcon loadIcon(const QString &dir, const QString &name);
+
+			// Icons for COL_ICON.
+			QIcon icoGCN;	// GameCube (retail)
+			QIcon icoNR;	// GameCube (debug)
+
 			// Pixmaps for COL_ISVALID.
 			static const QSize szPxmIsValid;
 			QPixmap pxmIsValid_unknown;
@@ -66,9 +78,12 @@ class RvtHModelPrivate
 		};
 		style_t style;
 
-		// Row insert start/end indexes.
-		int insertStart;
-		int insertEnd;
+		/**
+		 * Get the icon for the specified bank.
+		 * @param bank Bank number.
+		 * @return QIcon.
+		 */
+		QIcon iconForBank(unsigned int bank) const;
 };
 
 const QSize RvtHModelPrivate::style_t::szPxmIsValid = QSize(16, 16);
@@ -76,11 +91,35 @@ const QSize RvtHModelPrivate::style_t::szPxmIsValid = QSize(16, 16);
 RvtHModelPrivate::RvtHModelPrivate(RvtHModel *q)
 	: q_ptr(q)
 	, rvth(nullptr)
-	, insertStart(-1)
-	, insertEnd(-1)
 {
 	// Initialize the style variables.
 	style.init();
+}
+
+/**
+ * Load an icon from the Qt resources.
+ * @param dir Base directory.
+ * @param name Icon name.
+ */
+QIcon RvtHModelPrivate::style_t::loadIcon(const QString &dir, const QString &name)
+{
+	// Icon sizes.
+	static const unsigned int icoSz[] = {32, 48, 64, 128, 0};
+
+	QIcon icon;
+	for (const unsigned int *p = icoSz; *p != 0; p++) {
+		const QString s_sz = QString::number(*p);
+		QString full_path = QLatin1String(":/") +
+			dir + QChar(L'/') +
+			s_sz + QChar(L'x') + s_sz + QChar(L'/') +
+			name + QLatin1String(".png");;
+		QPixmap pxm(full_path);
+		if (!pxm.isNull()) {
+			icon.addPixmap(pxm);
+		}
+	}
+
+	return icon;
 }
 
 /**
@@ -114,6 +153,10 @@ void RvtHModelPrivate::style_t::init(void)
 	brush_lostFile = QBrush(bgColor_lostFile);
 	brush_lostFile_alt = QBrush(bgColor_lostFile_alt);
 
+	// Load icons.
+	icoGCN = loadIcon(QLatin1String("hw"), QLatin1String("gcn"));
+	icoNR = loadIcon(QLatin1String("hw"), QLatin1String("nr"));
+
 	// TODO: Pixmaps.
 #if 0
 	// Initialize the COL_ISVALID pixmaps.
@@ -134,6 +177,65 @@ void RvtHModelPrivate::style_t::init(void)
 	// Monospaced font.
 	fntMonospace = QFont(QLatin1String("Monospace"));
 	fntMonospace.setStyleHint(QFont::TypeWriter);
+}
+
+/**
+ * Get the icon for the specified bank.
+ * @param bank Bank number.
+ * @return QIcon.
+ */
+QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
+{
+	if (!rvth) {
+		// No RVT-H Reader image.
+		return QIcon();
+	}
+
+	const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, bank, nullptr);
+	assert(entry != nullptr);
+	if (!entry) {
+		// No bank entry here...
+		return QIcon();
+	}
+	const RvtH_ImageType_e imageType = rvth_get_ImageType(rvth);
+
+	switch (entry->type) {
+		case RVTH_BankType_Empty:
+		case RVTH_BankType_Unknown:
+		case RVTH_BankType_Wii_DL_Bank2:
+		default:
+			// No icon for these banks.
+			return QIcon();
+
+		case RVTH_BankType_GCN:
+			// GameCube.
+			if (imageType == RVTH_ImageType_GCM) {
+				// Standalone GCM. Use the retail icon.
+				return style.icoGCN;
+			} else {
+				// GCM with SDK header, or RVT-H Reader.
+				// Use the NR Reader icon.
+				return style.icoNR;
+			}
+			break;
+
+		case RVTH_BankType_Wii_SL:
+		case RVTH_BankType_Wii_DL:
+			// TODO: Wii icons.
+			// Using NR Reader icon for now.
+			if (imageType == RVTH_ImageType_GCM) {
+				// Standalone GCM. Use the retail icon.
+				return style.icoGCN;
+			} else {
+				// GCM with SDK header, or RVT-H Reader.
+				// Use the NR Reader icon.
+				return style.icoNR;
+			}
+			break;
+	}
+
+	assert(!"Should not get here!");
+	return QIcon();
 }
 
 /** RvtHModel **/
@@ -186,26 +288,53 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 		return QVariant();
 
 	// Get the bank entry.
-	const RvtH_BankEntry *const entry = rvth_get_BankEntry(d->rvth, index.row(), nullptr);
+	const unsigned int bank = static_cast<unsigned int>(index.row());
+	const RvtH_BankEntry *const entry = rvth_get_BankEntry(d->rvth, bank, nullptr);
 	if (!entry) {
 		// No entry...
 		return QVariant();
 	}
 
+	// HACK: Increase icon width on Windows.
+	// Figure out a better method later.
+#ifdef Q_OS_WIN
+	static const int iconWadj = 8;
+#else
+	static const int iconWadj = 0;
+#endif
+
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
 			// Empty slot.
-			if (index.column() == COL_BANKNUM) {
-				// Bank number.
-				switch (role) {
-					case Qt::DisplayRole:
-						return QString::number(index.row() + 1);
-					case Qt::TextAlignmentRole:
-						// Center-align the text.
-						return Qt::AlignCenter;
-					default:
-						break;
-				}
+			switch (index.column()) {
+				case COL_BANKNUM:
+					// Bank number.
+					switch (role) {
+						case Qt::DisplayRole:
+							return QString::number(bank + 1);
+						case Qt::TextAlignmentRole:
+							// Center-align the text.
+							return Qt::AlignCenter;
+						default:
+							break;
+					}
+					break;
+
+				case COL_ICON:
+					if (role == Qt::SizeHintRole) {
+						// Using 32x32 icons.
+						// (Hi-DPI is handled by Qt automatically.)
+						QSize size(32 + iconWadj, 32);
+						if (entry->type == RVTH_BankType_Wii_DL) {
+							// Double-size the row.
+							size.setHeight(size.height() * 2);
+						}
+						return size;
+					}
+					break;
+
+				default:
+					break;
 			}
 			// All other columns are empty.
 			return QVariant();
@@ -222,10 +351,10 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			// TODO: Cache these?
 			switch (index.column()) {
 				case COL_BANKNUM: {
-					QString banknum = QString::number(index.row() + 1);
+					QString banknum = QString::number(bank + 1);
 					if (entry->type == RVTH_BankType_Wii_DL) {
 						// Print both bank numbers.
-						banknum += QChar(L'\n') + QString::number(index.row() + 2);
+						banknum += QChar(L'\n') + QString::number(bank + 2);
 					}
 					return banknum;
 				}
@@ -295,16 +424,19 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			break;
 
 		case Qt::DecorationRole:
-			// TODO
+			if (index.column() == COL_ICON) {
+				// Get the icon for this bank.
+				return d->iconForBank(bank);
+			}
 			break;
 
 		case Qt::TextAlignmentRole:
 			switch (index.column()) {
-				case COL_ICON:
 				case COL_TITLE:
 					// Left-align, center vertically.
 					return (int)(Qt::AlignLeft | Qt::AlignVCenter);
 
+				case COL_ICON:
 				case COL_BANKNUM:
 				case COL_GAMEID:
 				case COL_DISCNUM:
@@ -336,16 +468,26 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			// "Deleted" banks should be displayed using a different color.
 			if (entry->is_deleted) {
 				// TODO: Check if the item view is using alternating row colors before using them.
-				if (index.row() & 1)
+				if (bank & 1)
 					return d->style.brush_lostFile_alt;
 				else
 					return d->style.brush_lostFile;
 			}
 			break;
 
-		case Qt::SizeHintRole:
-			// TODO
+		case Qt::SizeHintRole: {
+			if (index.column() == COL_ICON) {
+				// Using 32x32 icons.
+				// (Hi-DPI is handled by Qt automatically.)
+				QSize size(32 + iconWadj, 32);
+				if (entry->type == RVTH_BankType_Wii_DL) {
+					// Double-size the row.
+					size.setHeight(size.height() * 2);
+				}
+				return size;
+			}
 			break;
+		}
 
 		case DualLayerRole:
 			return (entry->type == RVTH_BankType_Wii_DL);

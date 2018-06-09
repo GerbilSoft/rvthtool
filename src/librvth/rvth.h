@@ -197,6 +197,13 @@ unsigned int rvth_get_BankCount(const RvtH *rvth);
 bool rvth_is_hdd(const RvtH *rvth);
 
 /**
+ * Get the RVT-H image type.
+ * @param rvth RVT-H object.
+ * @return RVT-H image type.
+ */
+RvtH_ImageType_e rvth_get_ImageType(const RvtH *rvth);
+
+/**
  * Get a bank table entry.
  * @param rvth	[in] RVT-H disk image.
  * @param bank	[in] Bank number. (0-7)

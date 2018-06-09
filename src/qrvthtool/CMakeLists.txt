@@ -43,6 +43,19 @@ SET(qrvthtool_UIS
 	)
 QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
 
+######################
+# Qt resource files. #
+######################
+
+SET(qrvthtool_RCC_SRCS
+	resources/hw/hw.qrc
+	)
+
+QT5_ADD_RESOURCES(
+	qrvthtool_RCC_O ${qrvthtool_RCC_SRCS}
+	OPTIONS -no-compress
+	)
+
 #########################
 # Build the executable. #
 #########################
@@ -53,6 +66,7 @@ ADD_EXECUTABLE(qrvthtool WIN32 MACOSX_BUNDLE
 	${qrvthtool_SRCS}
 	${qrvthtool_UIS_H}
 	${qrvthtool_MOC_SRCS}
+	${qrvthtool_RCC_O}
 	)
 ADD_DEPENDENCIES(qrvthtool git_version)
 DO_SPLIT_DEBUG(qrvthtool)

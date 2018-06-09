@@ -581,6 +581,21 @@ bool rvth_is_hdd(const RvtH *rvth)
 }
 
 /**
+ * Get the RVT-H image type.
+ * @param rvth RVT-H object.
+ * @return RVT-H image type.
+ */
+RvtH_ImageType_e rvth_get_ImageType(const RvtH *rvth)
+{
+	if (!rvth) {
+		errno = EINVAL;
+		return false;
+	}
+
+	return rvth->type;
+}
+
+/**
  * Get the number of banks in an opened RVT-H disk image.
  * @param rvth RVT-H disk image.
  * @return Number of banks.
