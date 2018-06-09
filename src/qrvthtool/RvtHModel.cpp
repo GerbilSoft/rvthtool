@@ -107,6 +107,42 @@ RvtHModelPrivate::RvtHModelPrivate(RvtHModel *q)
 }
 
 /**
+ * Initialize the style variables.
+ */
+void RvtHModelPrivate::style_t::init(void)
+{
+	// TODO: Call this function if the UI style changes.
+
+	// Initialize the background colors for "lost" files.
+	QPalette pal = QApplication::palette("QTreeView");
+	QColor bgColor_lostFile = pal.base().color();
+	QColor bgColor_lostFile_alt = pal.alternateBase().color();
+
+	// Adjust the colors to have a yellow hue.
+	int h, s, v;
+
+	// "Lost" file. (Main)
+	bgColor_lostFile.getHsv(&h, &s, &v, nullptr);
+	h = 60;
+	s = (255 - s);
+	bgColor_lostFile.setHsv(h, s, v);
+
+	// "Lost" file. (Alternate)
+	bgColor_lostFile_alt.getHsv(&h, &s, &v, nullptr);
+	h = 60;
+	s = (255 - s);
+	bgColor_lostFile_alt.setHsv(h, s, v);
+
+	// Save the background colors in QBrush objects.
+	brush_lostFile = QBrush(bgColor_lostFile);
+	brush_lostFile_alt = QBrush(bgColor_lostFile_alt);
+
+	// Monospaced font.
+	fntMonospace = QFont(QLatin1String("Monospace"));
+	fntMonospace.setStyleHint(QFont::TypeWriter);
+}
+
+/**
  * Load an icon.
  * @param id Icon ID.
  * @return Icon.
@@ -154,42 +190,6 @@ QIcon RvtHModelPrivate::style_t::loadIcon(const QString &dir, const QString &nam
 	}
 
 	return icon;
-}
-
-/**
- * Initialize the style variables.
- */
-void RvtHModelPrivate::style_t::init(void)
-{
-	// TODO: Call this function if the UI style changes.
-
-	// Initialize the background colors for "lost" files.
-	QPalette pal = QApplication::palette("QTreeView");
-	QColor bgColor_lostFile = pal.base().color();
-	QColor bgColor_lostFile_alt = pal.alternateBase().color();
-
-	// Adjust the colors to have a yellow hue.
-	int h, s, v;
-
-	// "Lost" file. (Main)
-	bgColor_lostFile.getHsv(&h, &s, &v, nullptr);
-	h = 60;
-	s = (255 - s);
-	bgColor_lostFile.setHsv(h, s, v);
-
-	// "Lost" file. (Alternate)
-	bgColor_lostFile_alt.getHsv(&h, &s, &v, nullptr);
-	h = 60;
-	s = (255 - s);
-	bgColor_lostFile_alt.setHsv(h, s, v);
-
-	// Save the background colors in QBrush objects.
-	brush_lostFile = QBrush(bgColor_lostFile);
-	brush_lostFile_alt = QBrush(bgColor_lostFile_alt);
-
-	// Monospaced font.
-	fntMonospace = QFont(QLatin1String("Monospace"));
-	fntMonospace.setStyleHint(QFont::TypeWriter);
 }
 
 /**
