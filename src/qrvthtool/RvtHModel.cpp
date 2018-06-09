@@ -22,6 +22,9 @@
 
 #include "librvth/rvth.h"
 
+// C includes. (C++ namespace)
+#include <cassert>
+
 // Qt includes.
 #include <QApplication>
 #include <QtGui/QBrush>
