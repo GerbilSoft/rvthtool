@@ -115,26 +115,6 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 	for (int i = 0; i < num_sections; i++)
 		ui.lstBankList->resizeColumnToContents(i);
 	ui.lstBankList->resizeColumnToContents(num_sections);
-
-	// Show all columns except signature status by default.
-	// TODO: Allow the user to customize the columns, and save the
-	// customized columns somewhere.
-	if (!cols_init) {
-		cols_init = false;
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_BANKNUM, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_TYPE, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_TITLE, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_DISCNUM, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_REVISION, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_REGION, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_IOS_VERSION, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_ENCRYPTION, false);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TICKET, true);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TMD, true);
-		ui.lstBankList->setColumnHidden(RvtHModel::COL_APPLOADER, true);
-		static_assert(RvtHModel::COL_APPLOADER + 1 == RvtHModel::COL_MAX,
-			"Default column visibility status needs to be updated!");
-	}
 }
 
 /**
@@ -307,6 +287,36 @@ void QRvtHToolWindow::changeEvent(QEvent *event)
 
 	// Pass the event to the base class.
 	super::changeEvent(event);
+}
+
+/**
+ * Window show event.
+ * @param event Window show event.
+ */
+void QRvtHToolWindow::showEvent(QShowEvent *event)
+{
+	Q_UNUSED(event);
+	Q_D(QRvtHToolWindow);
+
+	// Show all columns except signature status by default.
+	// TODO: Allow the user to customize the columns, and save the
+	// customized columns somewhere.
+	if (!d->cols_init) {
+		d->cols_init = true;
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_BANKNUM, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_TYPE, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_TITLE, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_DISCNUM, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_REVISION, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_REGION, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_IOS_VERSION, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_ENCRYPTION, false);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TICKET, true);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TMD, true);
+		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_APPLOADER, true);
+		static_assert(RvtHModel::COL_APPLOADER + 1 == RvtHModel::COL_MAX,
+			"Default column visibility status needs to be updated!");
+	}
 }
 
 /** UI widget slots. **/

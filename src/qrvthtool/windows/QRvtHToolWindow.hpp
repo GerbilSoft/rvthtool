@@ -56,6 +56,9 @@ class QRvtHToolWindow : public QMainWindow
 		// State change event. (Used for switching the UI language at runtime.)
 		void changeEvent(QEvent *event) final;
 
+		// Window show event.
+		void showEvent(QShowEvent *event) final;
+
 	protected slots:
 		// Actions.
 		void on_actionOpen_triggered(void);
