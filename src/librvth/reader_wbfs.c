@@ -412,17 +412,15 @@ Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
-		int64_t offset;
-		ret = ref_seeko(file, 0, SEEK_END);
-		if (ret != 0) {
-			// Seek error.
+		int64_t offset = ref_get_size(file);
+		if (offset <= 0) {
+			// Empty file and/or seek error.
 			err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
 			goto fail;
 		}
-		offset = ref_tello(file);
 
 		// NOTE: If not a multiple of the LBA size,
 		// the partial LBA will be ignored.

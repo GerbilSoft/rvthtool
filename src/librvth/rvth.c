@@ -489,32 +489,28 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 	}
 
 	// Determine if this is an HDD image or a disc image.
-	ret = ref_seeko(f_img, 0, SEEK_END);
-	if (ret != 0) {
-		// Seek error.
-		if (errno == 0) {
+	errno = 0;
+	len = ref_get_size(f_img);
+	if (len <= 0) {
+		// File is empty and/or an I/O error occurred.
+		if (errno = 0) {
 			errno = EIO;
 		}
-		goto end;
-	}
-	len = ref_tello(f_img);
-	if (len == 0) {
-		// File is empty.
-		errno = EIO;
+		if (pErr) {
+			*pErr = -errno;
+		}
 	} else if (len <= 2*LBA_TO_BYTES(NHCD_BANK_SIZE_LBA)) {
 		// Two banks or less.
 		// This is most likely a standalone disc image.
+		errno = 0;
 		rvth = rvth_open_gcm(f_img, pErr);
 	} else {
 		// More than two banks.
 		// This is most likely an RVT-H HDD image.
+		errno = 0;
 		rvth = rvth_open_hdd(f_img, pErr);
 	}
 
-end:
-	if (pErr) {
-		*pErr = -errno;
-	}
 	// If the RvtH object was opened, it will have
 	// called ref_dup() to increment the reference count.
 	ref_close(f_img);

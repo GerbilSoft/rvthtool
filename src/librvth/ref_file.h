@@ -90,6 +90,13 @@ bool ref_is_device(RefFile *f);
  */
 int ref_make_sparse(RefFile *f, int64_t size);
 
+/**
+ * Get the size of the file.
+ * @param f RefFile*.
+ * @return Size of file, or -1 on error.
+ */
+int64_t ref_get_size(RefFile *f);
+
 /** Convenience wrappers for stdio functions. **/
 
 static inline size_t ref_read(void *ptr, size_t size, size_t nmemb, RefFile *stream)

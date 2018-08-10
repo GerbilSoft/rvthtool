@@ -97,16 +97,15 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	reader->vtbl = &reader_plain_vtable;
 
 	// Get the file size.
-	ret = ref_seeko(reader->file, 0, SEEK_END);
-	if (ret != 0) {
-		// Seek error.
+	filesize = ref_get_size(reader->file);
+	if (filesize <= 0) {
+		// Empty file or seek error.
 		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
 		goto fail;
 	}
-	filesize = ref_tello(reader->file);
 
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
