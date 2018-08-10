@@ -375,7 +375,6 @@ static int64_t getWbfsDiscSize(const WbfsReader *wbfsReader, const wbfs_disc_t *
 Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
 	WbfsReader *wbfsReader = NULL;
-	int ret;
 	int err = 0;
 
 	// Validate parameters.

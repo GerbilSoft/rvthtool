@@ -62,7 +62,6 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
 	Reader *reader;
 	int64_t filesize;
-	int ret;
 	int err = 0;
 
 	// Validate parameters.
