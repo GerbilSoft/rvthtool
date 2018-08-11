@@ -33,9 +33,13 @@
 # include <io.h>
 # include <winioctl.h>
 #else /* !_WIN32 */
+# include <sys/ioctl.h>
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <unistd.h>
+# ifdef __linux__
+#  include <linux/fs.h>
+# endif /* __linux__ */
 #endif /* !_WIN32 */
 
 // NOTE: Some functions don't check for NULL, since they should
@@ -307,62 +311,60 @@ int ref_make_sparse(RefFile *f, int64_t size)
  */
 int64_t ref_get_size(RefFile *f)
 {
+	int64_t orig_pos, ret;
+	int err;
+
+	// If this is a device, try OS-specific device size functions first.
 	// NOTE: _fseeki64(fp, 0, SEEK_END) isn't working on
 	// device files on Windows for some reason...
+	if (0 && ref_is_device(f)) {
 #ifdef _WIN32
-	HANDLE hDevice;
-	BOOL bRet;
-	GET_LENGTH_INFORMATION gli;
-	DWORD dwBytesReturned = 0;
-
-	if (!ref_is_device(f))
-#endif /* _WIN32 */
-	{
-		// Not a device file. Use ref_seeko()/ref_tello().
-		int64_t orig_pos, ret;
-		int err;
-
-		orig_pos = ref_tello(f);
-		if (orig_pos < 0) {
-			// Error.
-			return -1;
+		// Windows version.
+		HANDLE hDevice = (HANDLE)_get_osfhandle(_fileno(f->file));
+		if (hDevice && hDevice != INVALID_HANDLE_VALUE) {
+			// Reference: https://docs.microsoft.com/en-us/windows/desktop/api/winioctl/ni-winioctl-ioctl_disk_get_length_info
+			GET_LENGTH_INFORMATION gli;
+			DWORD dwBytesReturned = 0;
+			BOOL bRet = DeviceIoControl(hDevice,
+				IOCTL_DISK_GET_LENGTH_INFO,	// dwIoControlCode
+				NULL,				// lpInBuffer
+				0,				// nInBufferSize
+				(LPVOID)&gli,			// output buffer
+				(DWORD)sizeof(gli),		// size of output buffer
+				&dwBytesReturned,		// number of bytes returned
+				NULL);				// OVERLAPPED structure
+			if (bRet && dwBytesReturned == sizeof(gli)) {
+				// Size obtained successfully.
+				return gli.Length.QuadPart;
+			}
 		}
-		err = ref_seeko(f, 0, SEEK_END);
-		if (err != 0) {
-			// Error.
-			return -1;
+#elif defined(__linux__)
+		// Linux version.
+		// Reference: http://www.microhowto.info/howto/get_the_size_of_a_linux_block_special_device_in_c.html
+		if (ioctl(fileno(f->file), BLKGETSIZE64, &ret) == 0) {
+			// Size obtained successfully.
+			return ret;
 		}
-		ret = ref_tello(f);
-		err = ref_seeko(f, orig_pos, SEEK_SET);
-		if (err != 0) {
-			// Error.
-			return -1;
-		}
-		return ret;
+#endif
 	}
 
-#ifdef _WIN32
-	// Win32: Use IOCTL instead of ref_seeko()/ref_tello().
-	hDevice = (HANDLE)_get_osfhandle(_fileno(f->file));
-	if (!hDevice || hDevice == INVALID_HANDLE_VALUE) {
-		// Invalid handle...
-		return 0;
-	}
-
-	// Reference: https://docs.microsoft.com/en-us/windows/desktop/api/winioctl/ni-winioctl-ioctl_disk_get_length_info
-	bRet = DeviceIoControl(hDevice,
-		IOCTL_DISK_GET_LENGTH_INFO,	// dwIoControlCode
-		NULL,				// lpInBuffer
-		0,				// nInBufferSize
-		(LPVOID)&gli,			// output buffer
-		(DWORD)sizeof(gli),		// size of output buffer
-		&dwBytesReturned,		// number of bytes returned
-		NULL);				// OVERLAPPED structure
-	if (!bRet || dwBytesReturned != sizeof(gli)) {
+	// Not a device, or the OS-specific device size function failed.
+	// Use ref_seeko() / ref_tello().
+	orig_pos = ref_tello(f);
+	if (orig_pos < 0) {
 		// Error.
 		return -1;
 	}
-
-	return gli.Length.QuadPart;
-#endif /* _WIN32 */
+	err = ref_seeko(f, 0, SEEK_END);
+	if (err != 0) {
+		// Error.
+		return -1;
+	}
+	ret = ref_tello(f);
+	err = ref_seeko(f, orig_pos, SEEK_SET);
+	if (err != 0) {
+		// Error.
+		return -1;
+	}
+	return ret;
 }
