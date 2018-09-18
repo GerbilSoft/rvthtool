@@ -1,5 +1,10 @@
 # Changes
 
+## v1.1.1 - Brown Paper Bag Release (released 2018/09/17)
+
+* Extracting images broke because it failed when opening a file with 0 bytes
+  length, which always happened when creating new files.
+
 ## v1.1 - More Bug Fixes (released 2018/09/17)
 
 * [Win32] Fixed obtaining the device size. fseek(SEEK_END) worked fine on
