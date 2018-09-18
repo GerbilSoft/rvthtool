@@ -317,7 +317,7 @@ int64_t ref_get_size(RefFile *f)
 	// If this is a device, try OS-specific device size functions first.
 	// NOTE: _fseeki64(fp, 0, SEEK_END) isn't working on
 	// device files on Windows for some reason...
-	if (0 && ref_is_device(f)) {
+	if (ref_is_device(f)) {
 #ifdef _WIN32
 		// Windows version.
 		HANDLE hDevice = (HANDLE)_get_osfhandle(_fileno(f->file));
