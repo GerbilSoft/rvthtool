@@ -50,6 +50,12 @@ int rvth_make_writable(RvtH *rvth)
 		return RVTH_ERROR_NOT_A_DEVICE;
 	}
 
+	// If we're using a fake NHCD table, we can't write to it.
+	if (!rvth->has_NHCD) {
+		// Fake NHCD table is in use.
+		return RVTH_ERROR_NHCD_TABLE_MAGIC;
+	}
+
 	// Make this writable.
 	return ref_make_writable(rvth->f_img);
 }

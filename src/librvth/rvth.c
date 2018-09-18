@@ -237,6 +237,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
 	rvth->f_img = ref_dup(f_img);
+	rvth->has_NHCD = false;
 	entry = rvth->entries;
 	entry->lba_start = reader->lba_start;
 	entry->lba_len = reader->lba_len;
@@ -320,14 +321,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		goto fail;
 	}
 
-	// Check the magic number.
-	if (nhcd_header.magic != be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
-		// Incorrect magic number.
-		err = EIO;
-		ret = RVTH_ERROR_NHCD_TABLE_MAGIC;
-		goto fail;
-	}
-
 	// Allocate memory for the RvtH object
 	rvth = calloc(1, sizeof(RvtH));
 	if (!rvth) {
@@ -338,6 +331,48 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		}
 		ret = -err;
 		goto fail;
+	}
+
+	// Determine the device type.
+	rvth->type = (ref_is_device(f_img)
+		? RVTH_ImageType_HDD_Reader
+		: RVTH_ImageType_HDD_Image);
+
+	// Check the magic number.
+	if (nhcd_header.magic == be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
+		// Magic number is correct.
+		rvth->has_NHCD = true;
+	} else {
+		// Incorrect magic number.
+		// We'll continue with a default bank table.
+		// HDD will be non-writable.
+		uint32_t lba_start;
+
+		rvth->has_NHCD = false;
+		rvth->bank_count = 8;
+		rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
+		if (!rvth->entries) {
+			// Error allocating memory.
+			err = errno;
+			if (err == 0) {
+				err = ENOMEM;
+			}
+			ret = -err;
+			goto fail;
+		}
+
+		rvth->f_img = ref_dup(f_img);
+		rvth_entry = rvth->entries;
+		lba_start = NHCD_BANK_START_LBA(0, 8);
+		for (i = 0; i < rvth->bank_count; i++, rvth_entry++, lba_start += NHCD_BANK_SIZE_LBA) {
+			// Use "Empty" so we can try to detect the actual bank type.
+			rvth_init_BankEntry(rvth_entry, f_img,
+				RVTH_BankType_Empty,
+				lba_start, NHCD_BANK_SIZE_LBA, 0);
+		}
+
+		// RVT-H image loaded.
+		return rvth;
 	}
 
 	// Get the bank count.
@@ -357,9 +392,6 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the 8 RvtH_BankEntry objects.
-	rvth->type = (ref_is_device(f_img)
-		? RVTH_ImageType_HDD_Reader
-		: RVTH_ImageType_HDD_Image);
 	rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -574,6 +606,25 @@ bool rvth_is_hdd(const RvtH *rvth)
 
 	assert(!"Should not get here!");
 	return false;
+}
+
+/**
+ * Is an NHCD table present?
+ *
+ * This is always false for disc images,
+ * and false for wiped RVT-H devices and disk images.
+ *
+ * @param rvth RVT-H object.
+ * @return True if the RVT-H object has an NHCD table; false if not.
+ */
+bool rvth_has_NHCD(const RvtH *rvth)
+{
+	if (!rvth) {
+		errno = EINVAL;
+		return false;
+	}
+
+	return rvth->has_NHCD;
 }
 
 /**

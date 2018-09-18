@@ -22,6 +22,7 @@
 #include "librvth/rvth.h"
 #include "librvth/gcn_structs.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 
@@ -359,6 +360,37 @@ int list_banks(const TCHAR *rvth_filename)
 		fprintf(stderr, "': %s\n", rvth_error(ret));
 		return ret;
 	}
+
+	// Check if this is an HDD image.
+	switch (rvth_get_ImageType(rvth)) {
+		case RVTH_ImageType_HDD_Reader:
+			fputs("Type: RVT-H Reader System\n", stdout);
+			if (!rvth_has_NHCD(rvth)) {
+				fputs("*** WARNING: NHCD table is missing.\n"
+				      "*** Using defaults. Writing will be disabled.\n", stdout);
+			}
+			break;
+		case RVTH_ImageType_HDD_Image:
+			fputs("Type: RVT-H Reader Disk Image\n", stdout);
+			if (!rvth_has_NHCD(rvth)) {
+				fputs("*** WARNING: NHCD table is missing.\n"
+				      "*** Using defaults. Writing will be disabled.\n", stdout);
+			}
+			break;
+		case RVTH_ImageType_GCM:
+			// TODO: CISO/WBFS.
+			fputs("Type: GCM Disc Image\n", stdout);
+			break;
+		case RVTH_ImageType_GCM_SDK:
+			fputs("Type: GCM Disc Image (with SDK headers)\n", stdout);
+			break;
+		default:
+			// Should not get here...
+			assert(!"Should not get here...");
+			rvth_close(rvth);
+			return -EIO;
+	}
+	putchar('\n');
 
 	// Print the bank table.
 	if (rvth_is_hdd(rvth)) {

@@ -197,6 +197,17 @@ unsigned int rvth_get_BankCount(const RvtH *rvth);
 bool rvth_is_hdd(const RvtH *rvth);
 
 /**
+ * Is an NHCD table present?
+ *
+ * This is always false for disc images,
+ * and false for wiped RVT-H devices and disk images.
+ *
+ * @param rvth RVT-H object.
+ * @return True if the RVT-H object has an NHCD table; false if not.
+ */
+bool rvth_has_NHCD(const RvtH *rvth);
+
+/**
  * Get the RVT-H image type.
  * @param rvth RVT-H object.
  * @return RVT-H image type.

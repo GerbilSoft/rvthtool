@@ -40,6 +40,9 @@ struct _RvtH {
 	// Image type.
 	RvtH_ImageType_e type;
 
+	// Is the NHCD header present?
+	bool has_NHCD;
+
 	// BankEntry objects.
 	RvtH_BankEntry *entries;
 };
