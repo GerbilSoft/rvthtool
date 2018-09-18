@@ -1,3 +1,9 @@
+rvthtool (1.1.1-1ppa2~bionic1) bionic; urgency=medium
+
+  * Build for Ubuntu 18.04 "Bionic" Beaver.
+
+ -- David Korth <gerbilsoft@gerbilsoft.com>  Tue, 18 Sep 2018 00:38:37 -0400
+
 rvthtool (1.1.1-1ppa1~xenial1) xenial; urgency=medium
 
   * 1.1.1 release.
