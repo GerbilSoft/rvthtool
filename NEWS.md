@@ -1,5 +1,13 @@
 # Changes
 
+## v1.1 - More Bug Fixes (released 2018/09/17)
+
+* [Win32] Fixed obtaining the device size. fseek(SEEK_END) worked fine on
+  some systems, but not on others.
+* Fixed an incorrect "Success" error message in some cases.
+* Use a fake NHCD table if a real NHCD header can't be found. This should
+  allow recovery of banks on some systems that have a blanked-out NHCD table.
+
 ## v1.0 - Bug Fixes and Recryption (released 2018/06/07)
 
 * Fixed extracting unencrypted images from RVT-H Reader devices. This broke
