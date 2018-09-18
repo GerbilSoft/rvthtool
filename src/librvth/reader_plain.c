@@ -96,9 +96,12 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	reader->vtbl = &reader_plain_vtable;
 
 	// Get the file size.
+	errno = 0;
 	filesize = ref_get_size(reader->file);
-	if (filesize <= 0) {
-		// Empty file or seek error.
+	if (filesize < 0) {
+		// Seek error.
+		// NOTE: Not failing on empty file, since that happens
+		// when creating a new file to extract an image.
 		err = errno;
 		if (err == 0) {
 			err = EIO;
