@@ -493,7 +493,7 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 	len = ref_get_size(f_img);
 	if (len <= 0) {
 		// File is empty and/or an I/O error occurred.
-		if (errno = 0) {
+		if (errno == 0) {
 			errno = EIO;
 		}
 		if (pErr) {
