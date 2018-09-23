@@ -1,6 +1,6 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
- * config.librvth.h.in: librvth configuration. (source file)               *
+ * RVT-H Tool (libwiicrypto)                                               *
+ * priv_key_store.h: Private key store.                                    *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,16 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_CONFIG_H__
-#define __RVTHTOOL_LIBRVTH_CONFIG_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_PRIV_KEY_STORE_H__
+#define __RVTHTOOL_LIBWIICRYPTO_PRIV_KEY_STORE_H__
 
-/* Define to 1 if you have the `ftruncate' function. */
-#cmakedefine HAVE_FTRUNCATE 1
+#include <stdint.h>
+#include "rsaw.h"
 
-/* Define to 1 if udev is present. */
-#cmakedefine HAVE_UDEV 1
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* Define to 1 if query.h is usable. */
-#cmakedefine HAVE_QUERY 1
+// These private keys consist of p, q, a, b, and c.
+// Technically, only p and q are important, but calculating
+// a, b, and c is a pain.
 
-#endif /* __RVTHTOOL_LIBRVTH_CONFIG_H__ */
+extern const RSA2048PrivateKey rvth_privkey_debug_ticket;
+extern const RSA2048PrivateKey rvth_privkey_debug_tmd;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __RVTHTOOL_LIBWIICRYPTO_PRIV_KEY_STORE_H__ */

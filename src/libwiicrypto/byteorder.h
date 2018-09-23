@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * byteorder.h: System byte order header.                                  *
  *                                                                         *
  * Copyright (c) 2011-2018 by David Korth.                                 *
@@ -19,8 +19,8 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.           *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_BYTEORDER_H__
-#define __RVTHTOOL_LIBRVTH_BYTEORDER_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_BYTEORDER_H__
+#define __RVTHTOOL_LIBWIICRYPTO_BYTEORDER_H__
 
 /**
  * Check the system byte order.
@@ -73,4 +73,4 @@
 
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_BYTEORDER_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_BYTEORDER_H__ */

@@ -21,7 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_READER_H__
 #define __RVTHTOOL_LIBRVTH_READER_H__
 
-#include "common.h"
+#include "libwiicrypto/common.h"
 #include "ref_file.h"
 #include "rvth_imagetype.h"
 

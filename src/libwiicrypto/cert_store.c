@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * cert_store.c: Certificate store.                                        *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *

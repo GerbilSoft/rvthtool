@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * secoptions_win8.h: Security options for executables. (Win8)             *
  *                                                                         *
  * Copyright (c) 2016-2018 by David Korth.                                 *
@@ -18,10 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_WIN32_SECOPTIONS_WIN8_H__
-#define __RVTHTOOL_LIBRVTH_WIN32_SECOPTIONS_WIN8_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN8_H__
+#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN8_H__
 
-#ifndef __RVTHTOOL_LIBRVTH_WIN32_SECOPTIONS_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__
 #error secoptions_win8.h should not be included directly - include secoptions.h instead
 #endif
 
@@ -186,4 +186,4 @@ typedef struct _PROCESS_MITIGATION_IMAGE_LOAD_POLICY {
 } PROCESS_MITIGATION_IMAGE_LOAD_POLICY, *PPROCESS_MITIGATION_IMAGE_LOAD_POLICY;
 #endif /* !_WIN32_WINNT_WIN10 */
 
-#endif /* __RVTHTOOL_LIBRVTH_SECOPTIONS_WIN8_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_SECOPTIONS_WIN8_H__ */

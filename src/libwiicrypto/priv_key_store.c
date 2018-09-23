@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * priv_key_store.c: Private key store.                                    *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *

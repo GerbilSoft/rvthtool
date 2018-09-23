@@ -25,7 +25,7 @@
 
 #ifdef HAVE_QUERY
 
-#include "librvth/common.h"
+#include "libwiicrypto/common.h"
 #include "librvth/query.h"
 
 #include <stdio.h>

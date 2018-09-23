@@ -29,7 +29,7 @@
 #define __RVTHTOOL_LIBRVTH_NHCD_STRUCTS_H__
 
 #include <stdint.h>
-#include "common.h"
+#include "libwiicrypto/common.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -29,12 +29,11 @@
 #include <getopt.h>
 
 #include "librvth/config.librvth.h"
-#include "librvth/common.h"
-#include "librvth/byteswap.h"
 #include "librvth/rvth.h"
+#include "libwiicrypto/cert.h"
 
 #ifdef _WIN32
-#include "librvth/win32/secoptions.h"
+# include "libwiicrypto/win32/secoptions.h"
 #endif /* _WIN32 */
 
 #include "list-banks.h"
@@ -54,8 +53,6 @@
 // TODO: Non-Linux systems.
 # define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
-
-#include "librvth/cert.h"
 
 #ifdef __GNUC__
 # define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))

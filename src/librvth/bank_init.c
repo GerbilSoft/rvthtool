@@ -20,8 +20,10 @@
 
 #include "bank_init.h"
 
-#include "byteswap.h"
-#include "cert.h"
+#include "libwiicrypto/byteswap.h"
+#include "libwiicrypto/cert.h"
+#include "libwiicrypto/cert_store.h"
+
 #include "disc_header.h"
 #include "nhcd_structs.h"
 #include "ptbl.h"

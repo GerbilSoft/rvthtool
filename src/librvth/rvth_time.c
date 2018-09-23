@@ -19,7 +19,7 @@
  ***************************************************************************/
 
 #include "rvth_time.h"
-#include "common.h"
+#include "libwiicrypto/common.h"
 
 #include <ctype.h>
 #include <errno.h>

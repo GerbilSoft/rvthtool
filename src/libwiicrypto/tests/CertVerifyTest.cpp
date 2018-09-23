@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth/tests)                                              *
+ * RVT-H Tool (libwiicrypto/tests)                                         *
  * CertVerifyTest.cpp: Certificate verification test.                      *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
@@ -21,8 +21,8 @@
 // Google Test
 #include "gtest/gtest.h"
 
-#include "librvth/cert_store.h"
-#include "librvth/cert.h"
+#include "libwiicrypto/cert_store.h"
+#include "libwiicrypto/cert.h"
 
 // C includes. (C++ namespace)
 #include <cassert>
@@ -35,7 +35,7 @@ using std::string;
 # define final sealed
 #endif
 
-namespace LibRvth { namespace Tests {
+namespace LibWiiCrypto { namespace Tests {
 
 class CertVerifyTest : public ::testing::TestWithParam<RVL_Cert_Issuer>
 {
@@ -140,7 +140,7 @@ INSTANTIATE_TEST_CASE_P(certVerifyTest, CertVerifyTest,
  */
 int RVTH_CDECL main(int argc, char *argv[])
 {
-	fprintf(stderr, "librvth test suite: Certification verification tests.\n\n");
+	fprintf(stderr, "libwiicrypto test suite: Certification verification tests.\n\n");
 	fflush(nullptr);
 
 	// coverity[fun_call_w_exception]: uncaught exceptions cause nonzero exit anyway, so don't warn.

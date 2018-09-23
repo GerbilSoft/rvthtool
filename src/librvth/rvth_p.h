@@ -21,8 +21,6 @@
 #ifndef __RVTHTOOL_LIBRVTH_RVTH_P_H__
 #define __RVTHTOOL_LIBRVTH_RVTH_P_H__
 
-#include "common.h"
-
 #include "rvth.h"
 #include "rvth_imagetype.h"
 #include "ref_file.h"

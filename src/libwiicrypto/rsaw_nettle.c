@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * rsaw_nettle.c: RSA encryption wrapper functions. (Nettle/GMP version)   *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *

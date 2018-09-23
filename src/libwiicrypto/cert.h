@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * cert.h: Certificate management.                                         *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
@@ -18,13 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_CERT_H__
-#define __RVTHTOOL_LIBRVTH_CERT_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_CERT_H__
+#define __RVTHTOOL_LIBWIICRYPTO_CERT_H__
 
 #include <stdint.h>
 #include <stddef.h>
 
-#include "common.h"
 #include "gcn_structs.h"
 #include "rsaw.h"
 
@@ -148,4 +147,4 @@ int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key);
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_CERT_STORE_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_CERT_H__ */

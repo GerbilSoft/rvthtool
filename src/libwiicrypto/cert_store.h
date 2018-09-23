@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * cert_store.h: Certificate store.                                        *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
@@ -18,11 +18,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_CERT_STORE_H__
-#define __RVTHTOOL_LIBRVTH_CERT_STORE_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_CERT_STORE_H__
+#define __RVTHTOOL_LIBWIICRYPTO_CERT_STORE_H__
 
-#include "common.h"
 #include <stdint.h>
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -271,4 +271,4 @@ ASSERT_STRUCT(RVL_Cert_RSA2048_ECC, 0x240);
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_CERT_STORE_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_CERT_STORE_H__ */

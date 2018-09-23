@@ -21,7 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_REF_FILE_H__
 #define __RVTHTOOL_LIBRVTH_REF_FILE_H__
 
-#include "common.h"
+#include "libwiicrypto/common.h"
 #include "tcharx.h"
 
 #include <stdint.h>

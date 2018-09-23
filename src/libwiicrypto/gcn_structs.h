@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * gcn_structs.h: Nintendo GameCube and Wii data structures.               *
  *                                                                         *
  * Copyright (c) 2016-2018 by David Korth.                                 *
@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__
-#define __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_GCN_STRUCTS_H__
+#define __RVTHTOOL_LIBWIICRYPTO_GCN_STRUCTS_H__
 
 #include <stdint.h>
 #include "common.h"
@@ -381,4 +381,4 @@ typedef struct PACKED _RVL_RegionSetting {
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_GCN_STRUCTS_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_GCN_STRUCTS_H__ */

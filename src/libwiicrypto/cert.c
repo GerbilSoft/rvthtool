@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto*
  * cert.c: Certificate management.                                         *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License       *
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
-
-#include "config.librvth.h"
 
 #include "cert.h"
 #include "cert_store.h"

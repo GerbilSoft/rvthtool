@@ -6,36 +6,6 @@ IF(NOT WIN32)
 	CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
 ENDIF(NOT WIN32)
 
-# Find nettle.
-FIND_PACKAGE(Nettle REQUIRED)
-SET(HAVE_NETTLE 1)
-IF(NOT WIN32)
-	# Find GMP.
-	# On Windows, we're using nettle's mini-GMP.
-	FIND_PACKAGE(GMP REQUIRED)
-	SET(HAVE_GMP 1)
-ENDIF(NOT WIN32)
-
-# Check if this is Nettle 3.x.
-# Nettle 3.1 added version.h, which isn't available
-# in older verisons, so we can't simply check that.
-INCLUDE(CheckSymbolExists)
-SET(OLD_CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES}")
-SET(OLD_CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
-SET(CMAKE_REQUIRED_INCLUDES "${CMAKE_REQUIRED_INCLUDES} ${NETTLE_INCLUDE_DIRS}")
-SET(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES} ${NETTLE_LIBRARY}")
-CHECK_SYMBOL_EXISTS(aes128_set_decrypt_key "nettle/aes.h" HAVE_NETTLE_3)
-IF(HAVE_NETTLE_3)
-	# Check for Nettle versioning symbols.
-	# Nettle 3.1 added version.h.
-	CHECK_SYMBOL_EXISTS(NETTLE_VERSION_MAJOR "nettle/version.h" HAVE_NETTLE_VERSION_H)
-	CHECK_SYMBOL_EXISTS(nettle_version_major "nettle/version.h" HAVE_NETTLE_VERSION_FUNCTIONS)
-ENDIF(HAVE_NETTLE_3)
-SET(CMAKE_REQUIRED_INCLUDES "${OLD_CMAKE_REQUIRED_INCLUDES}")
-SET(CMAKE_REQUIRED_LIBRARIES "${OLD_CMAKE_REQUIRED_LIBRARIES}")
-UNSET(OLD_CMAKE_REQUIRED_INCLUDES)
-UNSET(OLD_CMAKE_REQUIRED_LIBRARIES)
-
 IF(ENABLE_UDEV)
 	# Find UDEV.
 	IF(UNIX AND NOT APPLE)
@@ -63,9 +33,6 @@ SET(librvth_SRCS
 	rvth_time.c
 	rvth_recrypt.c
 	ref_file.c
-	cert_store.c
-	cert.c
-	priv_key_store.c
 	disc_header.c
 	query.c
 	ptbl.c
@@ -80,22 +47,13 @@ SET(librvth_SRCS
 	)
 # Headers.
 SET(librvth_H
-	common.h
-	byteorder.h
-	byteswap.h
 	nhcd_structs.h
-	gcn_structs.h
 	rvth.h
 	rvth_p.h
 	rvth_time.h
 	rvth_recrypt.h
 	ref_file.h
 	tcharx.h
-	cert_store.h
-	cert.h
-	rsaw.h
-	aesw.h
-	priv_key_store.h
 	disc_header.h
 	query.h
 	ptbl.h
@@ -109,17 +67,6 @@ SET(librvth_H
 	libwbfs.h
 	reader_wbfs.h
 	)
-IF(HAVE_NETTLE)
-	SET(librvth_RSA_SRCS rsaw_nettle.c)
-ELSE()
-	MESSAGE(FATAL_ERROR "No hash function wrappers for this platform.")
-ENDIF()
-
-IF(HAVE_NETTLE)
-	SET(librvth_AES_SRCS aesw_nettle.c)
-ELSE()
-	MESSAGE(FATAL_ERROR "No AES function wrappers for this platform.")
-ENDIF()
 
 IF(HAVE_UDEV)
 	SET(librvth_QUERY_SRCS query_udev.c)
@@ -154,26 +101,25 @@ IF(TARGET git_version)
 	ADD_DEPENDENCIES(rvth git_version)
 ENDIF(TARGET git_version)
 
-IF(WIN32)
-	TARGET_LINK_LIBRARIES(rvth advapi32)
-ENDIF(WIN32)
+# libwiicrypto
+TARGET_LINK_LIBRARIES(rvth PRIVATE wiicrypto)
 
 # GMP
 IF(HAVE_GMP)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${GMP_INCLUDE_DIR})
-	TARGET_LINK_LIBRARIES(rvth ${GMP_LIBRARIES})
+	TARGET_LINK_LIBRARIES(rvth PRIVATE ${GMP_LIBRARIES})
 ENDIF(HAVE_GMP)
 
 # Nettle
 IF(HAVE_NETTLE)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${NETTLE_INCLUDE_DIRS})
-	TARGET_LINK_LIBRARIES(rvth ${NETTLE_LIBRARIES})
+	TARGET_LINK_LIBRARIES(rvth PRIVATE ${NETTLE_LIBRARIES})
 ENDIF(HAVE_NETTLE)
 
 # UDEV
 IF(HAVE_UDEV)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${UDEV_INCLUDE_DIRS})
-	TARGET_LINK_LIBRARIES(rvth ${UDEV_LIBRARIES})
+	TARGET_LINK_LIBRARIES(rvth PRIVATE ${UDEV_LIBRARIES})
 ENDIF(HAVE_UDEV)
 
 # Unix: Add -fpic/-fPIC in order to use this static library in plugins.
@@ -181,8 +127,3 @@ IF(UNIX AND NOT APPLE)
 	SET(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS} -fpic -fPIC")
 	SET(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -fpic -fPIC")
 ENDIF(UNIX AND NOT APPLE)
-
-# Test suite.
-IF(BUILD_TESTING)
-	ADD_SUBDIRECTORY(tests)
-ENDIF(BUILD_TESTING)

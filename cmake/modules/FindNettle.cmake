@@ -5,6 +5,7 @@
 # NETTLE_LIBRARIES - List of libraries when using libnettle.
 # NETTLE_FOUND - True if libnettle found.
 
+IF(NOT TARGET nettle_dll_target)
 IF(NOT WIN32)
 	if(NETTLE_INCLUDE_DIRS)
 		# Already in cache, be silent
@@ -80,3 +81,4 @@ ELSE(NOT WIN32)
 
 	UNSET(DLL_DESTDIR)
 ENDIF(NOT WIN32)
+ENDIF(NOT TARGET nettle_dll_target)

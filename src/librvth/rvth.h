@@ -21,11 +21,11 @@
 #ifndef __RVTHTOOL_LIBRVTH_RVTH_H__
 #define __RVTHTOOL_LIBRVTH_RVTH_H__
 
-#include "common.h"
+#include "libwiicrypto/common.h"
+#include "libwiicrypto/gcn_structs.h"
+
 #include "ref_file.h"
 #include "reader.h"
-#include "cert_store.h"
-#include "gcn_structs.h"
 
 #include <stdint.h>
 #include <stdio.h>

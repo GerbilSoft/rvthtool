@@ -21,7 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_DISC_HEADER_H__
 #define __RVTHTOOL_LIBRVTH_DISC_HEADER_H__
 
-#include "common.h"
+#include "libwiicrypto/common.h"
 
 #include <stdint.h>
 

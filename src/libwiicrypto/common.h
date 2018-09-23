@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * common.h: Common types and macros.                                      *
  *                                                                         *
  * Copyright (c) 2016-2018 by David Korth.                                 *
@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_COMMON_H__
-#define __RVTHTOOL_LIBRVTH_COMMON_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_COMMON_H__
+#define __RVTHTOOL_LIBWIICRYPTO_COMMON_H__
 
 /**
  * Number of elements in an array.
@@ -45,14 +45,16 @@
  * Also defines a constant of form StructName_SIZE
  */
 // TODO: Check MSVC support for static_assert() in C mode.
-#if defined(__cplusplus)
-# define ASSERT_STRUCT(st,sz) enum { st##_SIZE = (sz), }; \
+#ifndef ASSERT_STRUCT
+# if defined(__cplusplus)
+#  define ASSERT_STRUCT(st,sz) enum { st##_SIZE = (sz), }; \
 	static_assert(sizeof(st)==(sz),#st " is not " #sz " bytes.")
-#elif defined(__GNUC__) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-# define ASSERT_STRUCT(st,sz) enum { st##_SIZE = (sz), }; \
+# elif defined(__GNUC__) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#  define ASSERT_STRUCT(st,sz) enum { st##_SIZE = (sz), }; \
 	_Static_assert(sizeof(st)==(sz),#st " is not " #sz " bytes.")
-#else
-# define ASSERT_STRUCT(st, sz)
+# else
+#  define ASSERT_STRUCT(st, sz)
+# endif
 #endif
 
 // RP equivalent of Q_UNUSED().
@@ -132,4 +134,4 @@ typedef unsigned char bool;
 # endif
 #endif /* __cplusplus */
 
-#endif /* __RVTHTOOL_LIBRVTH_COMMON_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_COMMON_H__ */

@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * secoptions.h: Security options for executables.                         *
  *                                                                         *
  * Copyright (c) 2016-2018 by David Korth.                                 *
@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_WIN32_SECOPTIONS_H__
-#define __RVTHTOOL_LIBRVTH_WIN32_SECOPTIONS_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__
+#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__
 
 #include "Win32_sdk.h"
 #include "sdkddkver.h"
@@ -244,4 +244,4 @@ static INLINE int secoptions_init(void)
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_SECOPTIONS_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_SECOPTIONS_H__ */

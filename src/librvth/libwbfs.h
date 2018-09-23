@@ -9,8 +9,8 @@
 #pragma warning(disable:4200)
 #endif
 
-#include "common.h"
 #include <stdint.h>
+#include "libwiicrypto/common.h"
 
 #ifdef __cplusplus
    extern "C" {

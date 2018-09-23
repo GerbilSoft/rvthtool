@@ -30,7 +30,6 @@
 #include "rsaw.h"
 #include "priv_key_store.h"
 
-#include "common.h"
 #include "byteswap.h"
 
 #include <assert.h>
