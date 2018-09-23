@@ -16,6 +16,8 @@ ELSE()
 	MESSAGE(WARNING "Qt5 not found. Not building qrvthtool.")
 ENDIF()
 
+IF(BUILD_QT5)
+
 # Sources.
 SET(qrvthtool_SRCS
 	qrvthtool.cpp
@@ -60,8 +62,6 @@ QT5_ADD_RESOURCES(
 	qrvthtool_RCC_O ${qrvthtool_RCC_SRCS}
 	OPTIONS -no-compress
 	)
-
-IF(BUILD_QT5)
 
 #########################
 # Build the executable. #
