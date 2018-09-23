@@ -238,8 +238,18 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 			// TODO: Wii icons.
 			// Using NR Reader icon for now.
 			if (imageType == RVTH_ImageType_GCM) {
-				// Standalone GCM. Use the retail icon.
-				return style.getIcon(style_t::ICON_GCN);
+				// Standalone GCM.
+				// Use the retail icon if it's retail-signed.
+				switch (entry->ticket.sig_type) {
+					case RVTH_SigType_Unknown:
+					default:
+						// Should not happen...
+						return QIcon();
+					case RVTH_SigType_Retail:
+						return style.getIcon(style_t::ICON_GCN);
+					case RVTH_SigType_Debug:
+						return style.getIcon(style_t::ICON_NR);
+				}
 			} else {
 				// GCM with SDK header, or RVT-H Reader.
 				// Use the NR Reader icon.
