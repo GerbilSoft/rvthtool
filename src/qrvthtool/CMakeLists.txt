@@ -7,7 +7,14 @@ INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}")
 # FIXME: Figure out a minimum Qt5 version.
 # QtWin::fromHICON was added in Qt 5.2.
 SET(Qt5_NO_LINK_QTMAIN 1)
-FIND_PACKAGE(Qt5 5.2.0 REQUIRED COMPONENTS Core Gui Widgets)
+FIND_PACKAGE(Qt5 5.2.0 COMPONENTS Core Gui Widgets)
+IF(Qt5_FOUND AND Qt5Core_FOUND AND Qt5Gui_FOUND AND Qt5Widgets_FOUND)
+	# Found Qt5.
+	SET(BUILD_QT5 ON)
+ELSE()
+	# Did not find Qt5.
+	MESSAGE(WARNING "Qt5 not found. Not building qrvthtool.")
+ENDIF()
 
 # Sources.
 SET(qrvthtool_SRCS
@@ -53,6 +60,8 @@ QT5_ADD_RESOURCES(
 	qrvthtool_RCC_O ${qrvthtool_RCC_SRCS}
 	OPTIONS -no-compress
 	)
+
+IF(BUILD_QT5)
 
 #########################
 # Build the executable. #
@@ -133,3 +142,5 @@ ELSEIF(SPLIT_DEBUG)
 		)
 ENDIF()
 ENDIF(INSTALL_DEBUG)
+
+ENDIF(BUILD_QT5)
