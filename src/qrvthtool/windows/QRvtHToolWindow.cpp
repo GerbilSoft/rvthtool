@@ -226,10 +226,32 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	d->model->setRvtH(d->rvth);
 
 	// Extract the filename from the path.
+	// TODO: Use QFileInfo or similar?
 	d->displayFilename = filename;
-	int lastSlash = d->displayFilename.lastIndexOf(QChar(L'/'));
-	if (lastSlash >= 0) {
-		d->displayFilename.remove(0, lastSlash + 1);
+	bool removeDir = true;
+#ifdef _WIN32
+	// Does the path start with "\\\\.\\PhysicalDriveN"?
+	// FIXME: How does Qt's native slashes interact with this?
+	if (d->displayFilename.startsWith(QLatin1String("\\\\.\\PhysicalDrive")) ||
+	    d->displayFilename.startsWith(QLatin1String("//./PhysicalDrive")))
+	{
+		// Physical drive.
+		// TODO: Make sure it's all backslashes.
+		removeDir = false;
+	}
+#else /* !_WIN32 */
+	// Does the path start with "/dev/"?
+	if (d->displayFilename.startsWith(QLatin1String("/dev/"))) {
+		// Physical drive.
+		removeDir = false;
+	}
+#endif
+
+	if (removeDir) {
+		int lastSlash = d->displayFilename.lastIndexOf(QChar(L'/'));
+		if (lastSlash >= 0) {
+			d->displayFilename.remove(0, lastSlash + 1);
+		}
 	}
 
 	// Update the UI.
