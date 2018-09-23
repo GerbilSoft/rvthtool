@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>163</width>
-    <height>304</height>
+    <width>192</width>
+    <height>330</height>
    </rect>
   </property>
   <layout class="QFormLayout" name="formLayout">
@@ -83,6 +83,23 @@
     </widget>
    </item>
    <item row="3" column="0">
+    <widget class="QLabel" name="lblTimestampTitle">
+     <property name="text">
+      <string>Timestamp:</string>
+     </property>
+     <property name="textFormat">
+      <enum>Qt::PlainText</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <widget class="QLabel" name="lblTimestamp">
+     <property name="textFormat">
+      <enum>Qt::PlainText</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0">
     <widget class="QLabel" name="lblGameIDTitle">
      <property name="text">
       <string>Game ID:</string>
@@ -92,14 +109,14 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="1">
+   <item row="4" column="1">
     <widget class="QLabel" name="lblGameID">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
+   <item row="5" column="0">
     <widget class="QLabel" name="lblDiscNumTitle">
      <property name="text">
       <string>Disc #:</string>
@@ -109,14 +126,14 @@
      </property>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="5" column="1">
     <widget class="QLabel" name="lblDiscNum">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
+   <item row="6" column="0">
     <widget class="QLabel" name="lblRevisionTitle">
      <property name="text">
       <string>Revision:</string>
@@ -126,14 +143,14 @@
      </property>
     </widget>
    </item>
-   <item row="5" column="1">
+   <item row="6" column="1">
     <widget class="QLabel" name="lblRevision">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="6" column="0">
+   <item row="7" column="0">
     <widget class="QLabel" name="lblRegionTitle">
      <property name="text">
       <string>Region:</string>
@@ -143,14 +160,14 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="1">
+   <item row="7" column="1">
     <widget class="QLabel" name="lblRegion">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="7" column="0">
+   <item row="8" column="0">
     <widget class="QLabel" name="lblIOSVersionTitle">
      <property name="text">
       <string>IOS Version:</string>
@@ -160,14 +177,14 @@
      </property>
     </widget>
    </item>
-   <item row="7" column="1">
+   <item row="8" column="1">
     <widget class="QLabel" name="lblIOSVersion">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="8" column="0">
+   <item row="9" column="0">
     <widget class="QLabel" name="lblEncryptionTitle">
      <property name="text">
       <string>Encryption:</string>
@@ -177,14 +194,14 @@
      </property>
     </widget>
    </item>
-   <item row="8" column="1">
+   <item row="9" column="1">
     <widget class="QLabel" name="lblEncryption">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="9" column="0">
+   <item row="10" column="0">
     <widget class="QLabel" name="lblTicketSigTitle">
      <property name="text">
       <string>Ticket Sig:</string>
@@ -194,14 +211,14 @@
      </property>
     </widget>
    </item>
-   <item row="9" column="1">
+   <item row="10" column="1">
     <widget class="QLabel" name="lblTicketSig">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="10" column="0">
+   <item row="11" column="0">
     <widget class="QLabel" name="lblTMDSigTitle">
      <property name="text">
       <string>TMD Sig:</string>
@@ -211,14 +228,14 @@
      </property>
     </widget>
    </item>
-   <item row="10" column="1">
+   <item row="11" column="1">
     <widget class="QLabel" name="lblTMDSig">
      <property name="textFormat">
       <enum>Qt::PlainText</enum>
      </property>
     </widget>
    </item>
-   <item row="11" column="0" colspan="2">
+   <item row="12" column="0" colspan="2">
     <widget class="QLabel" name="lblAppLoader">
      <property name="textFormat">
       <enum>Qt::RichText</enum>

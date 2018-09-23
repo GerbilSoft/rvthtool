@@ -28,6 +28,7 @@
 
 // Qt includes.
 #include <QtCore/QLocale>
+#include <QtCore/QDateTime>
 
 /** BankEntryViewPrivate **/
 
@@ -244,6 +245,8 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		ui.lblType->hide();
 		ui.lblSizeTitle->hide();
 		ui.lblSize->hide();
+		ui.lblTimestampTitle->hide();
+		ui.lblTimestamp->hide();
 		ui.lblGameIDTitle->hide();
 		ui.lblGameID->hide();
 		ui.lblDiscNumTitle->hide();
@@ -314,6 +317,16 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	ui.lblSize->setText(formatFileSize(LBA_TO_BYTES(bankEntry->lba_len)));
 	ui.lblSize->show();
 	ui.lblSizeTitle->show();
+
+	// Timestamp.
+	if (bankEntry->timestamp >= 0) {
+		QDateTime ts = QDateTime::fromMSecsSinceEpoch((qint64)bankEntry->timestamp * 1000, Qt::UTC);
+		ui.lblTimestamp->setText(ts.toString(Qt::DefaultLocaleShortDate));
+	} else {
+		ui.lblTimestamp->setText(BankEntryView::tr("Unknown"));
+	}
+	ui.lblTimestamp->show();
+	ui.lblTimestampTitle->show();
 
 	// Game ID.
 	ui.lblGameID->setText(QLatin1String(
