@@ -66,6 +66,9 @@ class RvtHModelPrivate
 			enum IconID {
 				ICON_GCN,	// GameCube (retail)
 				ICON_NR,	// NR Reader (debug)
+				ICON_WII,	// Wii (retail)
+				ICON_RVTR,	// RVT-R Reader (debug)
+				ICON_RVTH,	// RVT-H Reader (debug)
 
 				ICON_MAX
 			};
@@ -157,7 +160,7 @@ QIcon RvtHModelPrivate::style_t::getIcon(IconID id) const
 
 	if (m_icons[id].isNull()) {
 		static const char *const names[] = {
-			"gcn", "nr"
+			"gcn", "nr", "wii", "rvtr", "rvth"
 		};
 		static_assert(ARRAY_SIZE(names) == ICON_MAX, "names[] needs to be updated!");
 		m_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
@@ -235,25 +238,34 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
-			// TODO: Wii icons.
-			// Using NR Reader icon for now.
-			if (imageType == RVTH_ImageType_GCM) {
-				// Standalone GCM.
-				// Use the retail icon if it's retail-signed.
-				switch (entry->ticket.sig_type) {
-					case RVTH_SigType_Unknown:
-					default:
-						// Should not happen...
-						return QIcon();
-					case RVTH_SigType_Retail:
-						return style.getIcon(style_t::ICON_GCN);
-					case RVTH_SigType_Debug:
-						return style.getIcon(style_t::ICON_NR);
-				}
-			} else {
-				// GCM with SDK header, or RVT-H Reader.
-				// Use the NR Reader icon.
-				return style.getIcon(style_t::ICON_NR);
+			// Check the signature type.
+			// TODO: Check both ticket and TMD?
+			switch (entry->ticket.sig_type) {
+				default:
+				case RVTH_SigType_Unknown:
+					// Should not happen...
+					return QIcon();
+
+				case RVTH_SigType_Retail:
+					return style.getIcon(style_t::ICON_GCN);
+
+				case RVTH_SigType_Debug:
+					// Check the encryption type.
+					switch (entry->crypto_type) {
+						default:
+						case RVTH_CryptoType_Unknown:
+						case RVTH_CryptoType_Retail:
+						case RVTH_CryptoType_Korean:
+							// Should not happen...
+							return QIcon();
+
+						case RVTH_CryptoType_None:
+							return style.getIcon(style_t::ICON_RVTH);
+
+						case RVTH_CryptoType_Debug:
+							return style.getIcon(style_t::ICON_RVTR);
+					}
+					break;
 			}
 			break;
 	}

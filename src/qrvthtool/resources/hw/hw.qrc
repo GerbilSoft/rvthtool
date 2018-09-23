@@ -9,5 +9,20 @@
     <file>48x48/nr.png</file>
     <file>64x64/nr.png</file>
     <file>128x128/nr.png</file>
+
+    <file>32x32/wii.png</file>
+    <file>48x48/wii.png</file>
+    <file>64x64/wii.png</file>
+    <file>128x128/wii.png</file>
+
+    <file>32x32/rvtr.png</file>
+    <file>48x48/rvtr.png</file>
+    <file>64x64/rvtr.png</file>
+    <file>128x128/rvtr.png</file>
+
+    <file>32x32/rvth.png</file>
+    <file>48x48/rvth.png</file>
+    <file>64x64/rvth.png</file>
+    <file>128x128/rvth.png</file>
   </qresource>
 </RCC>
