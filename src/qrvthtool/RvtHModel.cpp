@@ -24,6 +24,7 @@
 
 // C includes. (C++ namespace)
 #include <cassert>
+#include <cstring>
 
 // Qt includes.
 #include <QApplication>
@@ -394,10 +395,13 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					}
 					return banknum;
 				}
-				case COL_TITLE:
+				case COL_TITLE: {
+					// Remove trailing NULL bytes.
+					size_t len = strnlen(entry->discHeader.game_title, sizeof(entry->discHeader.game_title));
 					// TODO: Convert from Japanese if necessary.
 					// Also cp1252.
-					return QString::fromLatin1(entry->discHeader.game_title, sizeof(entry->discHeader.game_title)).trimmed();
+					return QString::fromLatin1(entry->discHeader.game_title, (int)len).trimmed();
+				}
 				case COL_GAMEID:
 					return QLatin1String(entry->discHeader.id6, sizeof(entry->discHeader.id6));
 				case COL_DISCNUM:

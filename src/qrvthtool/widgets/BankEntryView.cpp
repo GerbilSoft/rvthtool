@@ -24,6 +24,7 @@
 
 // C includes. (C++ namespace)
 #include <cassert>
+#include <cstring>
 
 // Qt includes.
 #include <QtCore/QLocale>
@@ -266,11 +267,13 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	// Set the widget display.
 
 	// Game title.
-	// TODO: Is Shift-JIS permissible in the game title?
-	// TODO: cp1252
+	// Remove trailing NULL bytes.
+	size_t len = strnlen(bankEntry->discHeader.game_title, sizeof(bankEntry->discHeader.game_title));
+	// TODO: Convert from Japanese if necessary.
+	// Also cp1252.
 	QString s_title = QString::fromLatin1(
-		bankEntry->discHeader.game_title,
-		sizeof(bankEntry->discHeader.game_title)).trimmed().toHtmlEscaped();
+		bankEntry->discHeader.game_title, (int)len)
+		.trimmed().toHtmlEscaped();
 	if (bankEntry->is_deleted) {
 		// Indicate that this bank is deleted.
 		s_title += QLatin1String("<br/><b>");
