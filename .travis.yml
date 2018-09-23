@@ -1,9 +1,14 @@
-language: c
+language: cpp
 
-# Compiler selection.
-compiler:
-  - clang
-  - gcc
+# Build matrix.
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      compiler: gcc
+    - os: osx
+      compiler: clang
 
 # Use Ubuntu 14.04 as the build environment.
 sudo: required
