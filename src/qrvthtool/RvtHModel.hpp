@@ -52,10 +52,6 @@ class RvtHModel : public QAbstractListModel
 			COL_REVISION,		// Revision
 			COL_REGION,		// Region
 			COL_IOS_VERSION,	// IOS version (Wii only)
-			COL_ENCRYPTION,		// Encryption type
-			COL_SIG_TICKET,		// Ticket signature
-			COL_SIG_TMD,		// TMD signature
-			COL_APPLOADER,		// AppLoader error
 			
 			COL_MAX
 		};

@@ -432,28 +432,6 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					}
 					break;
 
-				case COL_ENCRYPTION:
-					switch (entry->crypto_type) {
-						case RVTH_CryptoType_Unknown:
-						default:
-							return QString::number(entry->crypto_type);
-						case RVTH_CryptoType_None:
-							return tr("None");
-						case RVTH_CryptoType_Debug:
-							return tr("Debug");
-						case RVTH_CryptoType_Retail:
-							return tr("Retail");
-						case RVTH_CryptoType_Korean:
-							return tr("Korean");
-					}
-					break;
-
-				case COL_SIG_TICKET:
-				case COL_SIG_TMD:
-				case COL_APPLOADER:
-					// TODO
-					break;
-
 				default:
 					break;
 			}
@@ -479,10 +457,6 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 				case COL_REVISION:
 				case COL_REGION:
 				case COL_IOS_VERSION:
-				case COL_ENCRYPTION:
-				case COL_SIG_TICKET:
-				case COL_SIG_TMD:
-				case COL_APPLOADER:
 				default:
 					// Center-align the text.
 					return Qt::AlignCenter;
@@ -552,10 +526,6 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 				case COL_REVISION:	return tr("Revision");
 				case COL_REGION:	return tr("Region");
 				case COL_IOS_VERSION:	return tr("IOS");
-				case COL_ENCRYPTION:	return tr("Encryption");
-				case COL_SIG_TICKET:	return tr("Ticket Sig");
-				case COL_SIG_TMD:	return tr("TMD Sig");
-				case COL_APPLOADER:	return tr("AppLoader");
 
 				default:
 					break;

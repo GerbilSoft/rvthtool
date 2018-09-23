@@ -310,11 +310,7 @@ void QRvtHToolWindow::showEvent(QShowEvent *event)
 		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_REVISION, false);
 		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_REGION, false);
 		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_IOS_VERSION, false);
-		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_ENCRYPTION, false);
-		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TICKET, true);
-		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_SIG_TMD, true);
-		d->ui.lstBankList->setColumnHidden(RvtHModel::COL_APPLOADER, true);
-		static_assert(RvtHModel::COL_APPLOADER + 1 == RvtHModel::COL_MAX,
+		static_assert(RvtHModel::COL_IOS_VERSION + 1 == RvtHModel::COL_MAX,
 			"Default column visibility status needs to be updated!");
 	}
 }
