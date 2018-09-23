@@ -23,6 +23,7 @@
 
 #include "libwiicrypto/common.h"
 #include "libwiicrypto/gcn_structs.h"
+#include "libwiicrypto/wii_structs.h"
 
 #include "ref_file.h"
 #include "reader.h"

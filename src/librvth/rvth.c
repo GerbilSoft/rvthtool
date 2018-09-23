@@ -21,14 +21,14 @@
 #include "rvth.h"
 #include "rvth_p.h"
 
-#include "byteswap.h"
 #include "nhcd_structs.h"
-#include "gcn_structs.h"
-#include "cert_store.h"
-#include "cert.h"
 #include "disc_header.h"
 #include "ptbl.h"
 #include "bank_init.h"
+
+#include "libwiicrypto/byteswap.h"
+#include "libwiicrypto/cert.h"
+#include "libwiicrypto/cert_store.h"
 
 // Disc image reader.
 #include "reader.h"

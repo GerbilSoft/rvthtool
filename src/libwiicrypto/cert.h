@@ -24,8 +24,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "gcn_structs.h"
 #include "rsaw.h"
+#include "wii_structs.h"
 
 #ifdef __cplusplus
 extern "C" {

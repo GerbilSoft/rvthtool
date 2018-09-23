@@ -24,11 +24,13 @@
 #include "ptbl.h"
 
 #include "reader.h"
-#include "gcn_structs.h"
-#include "cert.h"
-#include "aesw.h"
-#include "rsaw.h"
-#include "priv_key_store.h"
+
+#include "libwiicrypto/gcn_structs.h"
+#include "libwiicrypto/wii_structs.h"
+#include "libwiicrypto/cert.h"
+#include "libwiicrypto/aesw.h"
+#include "libwiicrypto/rsaw.h"
+#include "libwiicrypto/priv_key_store.h"
 
 #include "byteswap.h"
 

@@ -19,8 +19,9 @@
  ***************************************************************************/
 
 #include "ptbl.h"
-#include "gcn_structs.h"
-#include "byteswap.h"
+
+#include "libwiicrypto/byteswap.h"
+#include "libwiicrypto/wii_structs.h"
 
 #include <assert.h>
 #include <errno.h>

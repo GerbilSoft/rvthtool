@@ -19,12 +19,14 @@
  ***************************************************************************/
 
 #include "disc_header.h"
-#include "gcn_structs.h"
 #include "rvth_p.h"
-#include "byteswap.h"
 #include "reader.h"
-#include "cert_store.h"
-#include "aesw.h"
+
+#include "libwiicrypto/byteswap.h"
+#include "libwiicrypto/aesw.h"
+#include "libwiicrypto/cert_store.h"
+#include "libwiicrypto/gcn_structs.h"
+#include "libwiicrypto/wii_structs.h"
 
 #include <assert.h>
 #include <errno.h>
