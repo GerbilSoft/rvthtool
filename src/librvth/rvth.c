@@ -507,7 +507,6 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 {
 	RefFile *f_img;
 	RvtH *rvth = NULL;
-	int ret = 0;
 	int64_t len;
 
 	// Open the disk image.
