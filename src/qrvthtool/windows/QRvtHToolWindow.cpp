@@ -151,20 +151,24 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 
 	Q_Q(QRvtHToolWindow);
 	q->setWindowTitle(windowTitle);
-	if (iconID != lastIconID) {
-#ifdef Q_OS_MAC
-		// If there's no image loaded, remove the window icon.
-		// This is a "proxy icon" on Mac OS X.
-		// TODO: Associate with the image file if the file is loaded?
-		if (!rvth) {
-			q->setWindowIcon(QIcon());
-		} else
-#endif /* Q_OS_MAC */
-		{
-			q->setWindowIcon(model->getIcon(iconID));
-		}
-	}
 
+#ifdef Q_OS_MAC
+	// If there's no image loaded, remove the window icon.
+	// This is a "proxy icon" on Mac OS X.
+	// TODO: Associate with the image file if the file is loaded?
+	if (!rvth) {
+		q->setWindowIcon(QIcon());
+		return;
+	} else if (q->windowIcon().isNull()) {
+		// Force an icon update.
+		lastIconID = RvtHModel::ICON_MAX;
+	}
+#endif /* Q_OS_MAC */
+
+	if (iconID != lastIconID) {
+		q->setWindowIcon(model->getIcon(iconID));
+		lastIconID = iconID;
+	}
 }
 
 /** QRvtHToolWindow **/
