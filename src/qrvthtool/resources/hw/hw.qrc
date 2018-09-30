@@ -1,25 +1,40 @@
 <RCC>
   <qresource prefix="hw">
+    <file>16x16/gcn.png</file>
+    <file>22x22/gcn.png</file>
+    <file>24x24/gcn.png</file>
     <file>32x32/gcn.png</file>
     <file>48x48/gcn.png</file>
     <file>64x64/gcn.png</file>
     <file>128x128/gcn.png</file>
 
+    <file>16x16/nr.png</file>
+    <file>22x22/nr.png</file>
+    <file>24x24/nr.png</file>
     <file>32x32/nr.png</file>
     <file>48x48/nr.png</file>
     <file>64x64/nr.png</file>
     <file>128x128/nr.png</file>
 
+    <file>16x16/wii.png</file>
+    <file>22x22/wii.png</file>
+    <file>24x24/wii.png</file>
     <file>32x32/wii.png</file>
     <file>48x48/wii.png</file>
     <file>64x64/wii.png</file>
     <file>128x128/wii.png</file>
 
+    <file>16x16/rvtr.png</file>
+    <file>22x22/rvtr.png</file>
+    <file>24x24/rvtr.png</file>
     <file>32x32/rvtr.png</file>
     <file>48x48/rvtr.png</file>
     <file>64x64/rvtr.png</file>
     <file>128x128/rvtr.png</file>
 
+    <file>16x16/rvth.png</file>
+    <file>22x22/rvth.png</file>
+    <file>24x24/rvth.png</file>
     <file>32x32/rvth.png</file>
     <file>48x48/rvth.png</file>
     <file>64x64/rvth.png</file>

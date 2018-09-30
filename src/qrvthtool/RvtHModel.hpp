@@ -56,6 +56,17 @@ class RvtHModel : public QAbstractListModel
 			COL_MAX
 		};
 
+		// Icon IDs.
+		enum IconID {
+			ICON_GCN,	// GameCube (retail)
+			ICON_NR,	// NR Reader (debug)
+			ICON_WII,	// Wii (retail)
+			ICON_RVTR,	// RVT-R Reader (debug)
+			ICON_RVTH,	// RVT-H Reader (debug)
+
+			ICON_MAX
+		};
+
 		// Dual-layer role.
 		// If true, this is a Wii DL image and should be
 		// represented as taking up two banks.
@@ -73,6 +84,20 @@ class RvtHModel : public QAbstractListModel
 		 * @param rvth RVT-H Reader disk image.
 		 */
 		void setRvtH(struct _RvtH *rvth);
+
+		/**
+		 * Load an icon.
+		 * @param id Icon ID.
+		 * @return Icon.
+		 */
+		static QIcon getIcon(IconID id);
+
+		/**
+		 * Get the icon ID for the first bank.
+		 * Used for the application icon.
+		 * @return Icon ID, or ICON_MAX on error.
+		 */
+		IconID iconIDForBank1(void) const;
 
 	private slots:
 		/**

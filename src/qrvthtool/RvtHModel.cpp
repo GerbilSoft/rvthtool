@@ -62,37 +62,35 @@ class RvtHModelPrivate
 
 			// Monosapced font.
 			QFont fntMonospace;
-
-			// Icon IDs.
-			enum IconID {
-				ICON_GCN,	// GameCube (retail)
-				ICON_NR,	// NR Reader (debug)
-				ICON_WII,	// Wii (retail)
-				ICON_RVTR,	// RVT-R Reader (debug)
-				ICON_RVTH,	// RVT-H Reader (debug)
-
-				ICON_MAX
-			};
-
-			/**
-			 * Load an icon.
-			 * @param id Icon ID.
-			 * @return Icon.
-			 */
-			QIcon getIcon(IconID id) const;
-
-		private:
-			/**
-			 * Load an icon from the Qt resources.
-			 * @param dir Base directory.
-			 * @param name Icon name.
-			 */
-			static QIcon loadIcon(const QString &dir, const QString &name);
-
-			// Icons for COL_TYPE.
-			mutable QIcon m_icons[ICON_MAX];
 		};
 		style_t style;
+
+		/**
+		 * Load an icon.
+		 * @param id Icon ID.
+		 * @return Icon.
+		 */
+		static QIcon getIcon(RvtHModel::IconID id);
+
+	private:
+		/**
+		 * Load an icon from the Qt resources.
+		 * @param dir Base directory.
+		 * @param name Icon name.
+		 */
+		static QIcon loadIcon(const QString &dir, const QString &name);
+
+		// Icons for COL_TYPE.
+		// TODO: QMutexLocker?
+		static QIcon ms_icons[RvtHModel::ICON_MAX];
+
+	public:
+		/**
+		 * Get the icon ID for the specified bank.
+		 * @param bank Bank number.
+		 * @return RvtHModel::IconID, or RvtHModel::ICON_MAX on error.
+		 */
+		RvtHModel::IconID iconIDForBank(unsigned int bank) const;
 
 		/**
 		 * Get the icon for the specified bank.
@@ -101,6 +99,10 @@ class RvtHModelPrivate
 		 */
 		QIcon iconForBank(unsigned int bank) const;
 };
+
+/** RvtHModelPrivate **/
+
+QIcon RvtHModelPrivate::ms_icons[RvtHModel::ICON_MAX];
 
 RvtHModelPrivate::RvtHModelPrivate(RvtHModel *q)
 	: q_ptr(q)
@@ -151,24 +153,24 @@ void RvtHModelPrivate::style_t::init(void)
  * @param id Icon ID.
  * @return Icon.
  */
-QIcon RvtHModelPrivate::style_t::getIcon(IconID id) const
+QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
 {
 	assert(id >= 0);
-	assert(id < ICON_MAX);
-	if (id < 0 || id >= ICON_MAX) {
+	assert(id < RvtHModel::ICON_MAX);
+	if (id < 0 || id >= RvtHModel::ICON_MAX) {
 		return QIcon();
 	}
 
-	if (m_icons[id].isNull()) {
+	if (ms_icons[id].isNull()) {
 		static const char *const names[] = {
 			"gcn", "nr", "wii", "rvtr", "rvth"
 		};
-		static_assert(ARRAY_SIZE(names) == ICON_MAX, "names[] needs to be updated!");
-		m_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
-		assert(!m_icons[id].isNull());
+		static_assert(ARRAY_SIZE(names) == RvtHModel::ICON_MAX, "names[] needs to be updated!");
+		ms_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
+		assert(!ms_icons[id].isNull());
 	}
 
-	return m_icons[id];
+	return ms_icons[id];
 }
 
 /**
@@ -176,13 +178,13 @@ QIcon RvtHModelPrivate::style_t::getIcon(IconID id) const
  * @param dir Base directory.
  * @param name Icon name.
  */
-QIcon RvtHModelPrivate::style_t::loadIcon(const QString &dir, const QString &name)
+QIcon RvtHModelPrivate::loadIcon(const QString &dir, const QString &name)
 {
 	// Icon sizes.
-	static const unsigned int icoSz[] = {32, 48, 64, 128, 0};
+	static const uint8_t icoSz[] = {16, 22, 24, 32, 48, 64, 128, 0};
 
 	QIcon icon;
-	for (const unsigned int *p = icoSz; *p != 0; p++) {
+	for (const uint8_t *p = icoSz; *p != 0; p++) {
 		const QString s_sz = QString::number(*p);
 		QString full_path = QLatin1String(":/") +
 			dir + QChar(L'/') +
@@ -198,22 +200,22 @@ QIcon RvtHModelPrivate::style_t::loadIcon(const QString &dir, const QString &nam
 }
 
 /**
- * Get the icon for the specified bank.
+ * Get the icon ID for the specified bank.
  * @param bank Bank number.
- * @return QIcon.
+ * @return RvtHModel::IconID, or RvtHModel::ICON_MAX on error.
  */
-QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
+RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 {
 	if (!rvth) {
 		// No RVT-H Reader image.
-		return QIcon();
+		return RvtHModel::ICON_MAX;
 	}
 
 	const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, bank, nullptr);
 	assert(entry != nullptr);
 	if (!entry) {
 		// No bank entry here...
-		return QIcon();
+		return RvtHModel::ICON_MAX;
 	}
 	const RvtH_ImageType_e imageType = rvth_get_ImageType(rvth);
 
@@ -223,17 +225,17 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 		case RVTH_BankType_Wii_DL_Bank2:
 		default:
 			// No icon for these banks.
-			return QIcon();
+			return RvtHModel::ICON_MAX;
 
 		case RVTH_BankType_GCN:
 			// GameCube.
 			if (imageType == RVTH_ImageType_GCM) {
 				// Standalone GCM. Use the retail icon.
-				return style.getIcon(style_t::ICON_GCN);
+				return RvtHModel::ICON_GCN;
 			} else {
 				// GCM with SDK header, or RVT-H Reader.
 				// Use the NR Reader icon.
-				return style.getIcon(style_t::ICON_NR);
+				return RvtHModel::ICON_NR;
 			}
 			break;
 
@@ -245,10 +247,10 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 				default:
 				case RVTH_SigType_Unknown:
 					// Should not happen...
-					return QIcon();
+					return RvtHModel::ICON_MAX;
 
 				case RVTH_SigType_Retail:
-					return style.getIcon(style_t::ICON_GCN);
+					return RvtHModel::ICON_GCN;
 
 				case RVTH_SigType_Debug:
 					// Check the encryption type.
@@ -258,13 +260,13 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 						case RVTH_CryptoType_Retail:
 						case RVTH_CryptoType_Korean:
 							// Should not happen...
-							return QIcon();
+							return RvtHModel::ICON_MAX;
 
 						case RVTH_CryptoType_None:
-							return style.getIcon(style_t::ICON_RVTH);
+							return RvtHModel::ICON_RVTH;
 
 						case RVTH_CryptoType_Debug:
-							return style.getIcon(style_t::ICON_RVTR);
+							return RvtHModel::ICON_RVTR;
 					}
 					break;
 			}
@@ -272,7 +274,22 @@ QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 	}
 
 	assert(!"Should not get here!");
-	return QIcon();
+	return RvtHModel::ICON_MAX;
+}
+
+/**
+ * Get the icon for the specified bank.
+ * @param bank Bank number.
+ * @return QIcon.
+ */
+QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
+{
+	const RvtHModel::IconID iconID = iconIDForBank(bank);
+	if (iconID >= RvtHModel::ICON_MAX) {
+		// No icon.
+		return QIcon();
+	}
+	return getIcon(iconID);
 }
 
 /** RvtHModel **/
@@ -585,6 +602,27 @@ void RvtHModel::setRvtH(RvtH *rvth)
 			endInsertRows();
 		}
 	}
+}
+
+/**
+ * Load an icon.
+ * @param id Icon ID.
+ * @return Icon.
+ */
+QIcon RvtHModel::getIcon(IconID id)
+{
+	return RvtHModelPrivate::getIcon(id);
+}
+
+/**
+ * Get the icon ID for the first bank.
+ * Used for the application icon.
+ * @return Icon ID, or ICON_MAX on error.
+ */
+RvtHModel::IconID RvtHModel::iconIDForBank1(void) const
+{
+	Q_D(const RvtHModel);
+	return d->iconIDForBank(0);
 }
 
 /** Slots. **/

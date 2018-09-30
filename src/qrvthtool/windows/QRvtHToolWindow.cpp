@@ -60,6 +60,9 @@ class QRvtHToolWindowPrivate
 		// Initialized columns?
 		bool cols_init;
 
+		// Last icon ID.
+		RvtHModel::IconID lastIconID;
+
 		/**
 		 * Update the RVT-H Reader disk image's QTreeView.
 		 */
@@ -77,6 +80,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, model(new RvtHModel(q))
 	, proxyModel(new RvtHSortFilterProxyModel(q))
 	, cols_init(false)
+	, lastIconID(RvtHModel::ICON_MAX)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -123,14 +127,44 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 void QRvtHToolWindowPrivate::updateWindowTitle(void)
 {
 	QString windowTitle;
+	RvtHModel::IconID iconID;
 	if (rvth) {
 		windowTitle += displayFilename;
 		windowTitle += QLatin1String(" - ");
+		// If it's an RVT-H HDD image, use the RVT-H icon.
+		// Otherwise, get the icon for the first bank.
+		if (rvth_is_hdd(rvth)) {
+			iconID = RvtHModel::ICON_RVTH;
+		} else {
+			// Get the icon for the first bank.
+			iconID = model->iconIDForBank1();
+			if (iconID < RvtHModel::ICON_GCN || iconID >= RvtHModel::ICON_MAX) {
+				// Invalid icon ID. Default to RVT-H.
+				iconID = RvtHModel::ICON_RVTH;
+			}
+		}
+	} else {
+		// Use the RVT-H icon as the default.
+		iconID = RvtHModel::ICON_RVTH;
 	}
 	windowTitle += QApplication::applicationName();
 
 	Q_Q(QRvtHToolWindow);
 	q->setWindowTitle(windowTitle);
+	if (iconID != lastIconID) {
+#ifdef Q_OS_MAC
+		// If there's no image loaded, remove the window icon.
+		// This is a "proxy icon" on Mac OS X.
+		// TODO: Associate with the image file if the file is loaded?
+		if (!rvth) {
+			q->setWindowIcon(QIcon());
+		} else
+#endif /* Q_OS_MAC */
+		{
+			q->setWindowIcon(model->getIcon(iconID));
+		}
+	}
+
 }
 
 /** QRvtHToolWindow **/
