@@ -18,6 +18,9 @@ ENDIF()
 
 IF(BUILD_QT5)
 
+# Create the manifest file.
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/qrvthtool.exe.manifest.in" "${CMAKE_CURRENT_BINARY_DIR}/qrvthtool.exe.manifest" @ONLY)
+
 # Sources.
 SET(qrvthtool_SRCS
 	qrvthtool.cpp
@@ -64,6 +67,13 @@ QT5_ADD_RESOURCES(
 	)
 
 #########################
+# Win32 resource files. #
+#########################
+IF(WIN32)
+        SET(qrvthtool_RC resources/win32/resource.rc)
+ENDIF(WIN32)
+
+#########################
 # Build the executable. #
 #########################
 
@@ -74,6 +84,7 @@ ADD_EXECUTABLE(qrvthtool WIN32 MACOSX_BUNDLE
 	${qrvthtool_UIS_H}
 	${qrvthtool_MOC_SRCS}
 	${qrvthtool_RCC_O}
+	${qrvthtool_RC}
 	)
 ADD_DEPENDENCIES(qrvthtool git_version)
 DO_SPLIT_DEBUG(qrvthtool)
