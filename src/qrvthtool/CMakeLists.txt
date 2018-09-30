@@ -18,8 +18,10 @@ ENDIF()
 
 IF(BUILD_QT5)
 
-# Create the manifest file.
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/qrvthtool.exe.manifest.in" "${CMAKE_CURRENT_BINARY_DIR}/qrvthtool.exe.manifest" @ONLY)
+# Create the Win32 manifest file.
+IF(WIN32)
+	CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/resources/win32/qrvthtool.exe.manifest.in" "${CMAKE_CURRENT_BINARY_DIR}/resources/win32/qrvthtool.exe.manifest" @ONLY)
+ENDIF(WIN32)
 
 # Sources.
 SET(qrvthtool_SRCS

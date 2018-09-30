@@ -25,7 +25,7 @@
 #include "resource.h"
 
 /** Manifest **/
-ISOLATIONAWARE_MANIFEST_RESOURCE_ID	RT_MANIFEST	"qrvthtool.exe.manifest"
+ISOLATIONAWARE_MANIFEST_RESOURCE_ID	RT_MANIFEST	"resources\\win32\\qrvthtool.exe.manifest"
 
 /** Icons **/
-IDI_KEY_VALID	ICON	"qrvthtool.ico"
+IDI_KEY_VALID	ICON	"resources\\win32\\qrvthtool.ico"
