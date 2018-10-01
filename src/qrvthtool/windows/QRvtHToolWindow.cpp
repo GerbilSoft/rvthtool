@@ -199,6 +199,10 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 #endif
 #endif
 
+	// Initialize the Language Menu.
+	// TODO: Load/save the language setting somewhere?
+	d->ui.menuLanguage->setLanguage(QString());
+
 	// Set up the main splitter sizes.
 	// We want the card info panel to be 160px wide at startup.
 	// TODO: Save positioning settings somewhere?

@@ -24,6 +24,9 @@
 #include <QApplication>
 #include <QtCore/QDir>
 
+// TranslationManager
+#include "TranslationManager.hpp"
+
 /**
  * Main entry point.
  * @param argc Number of arguments.
@@ -44,6 +47,10 @@ int main(int argc, char *argv[])
 #endif /* QT_VERSION >= 0x050600 */
 
 	QApplication *app = new QApplication(argc, argv);
+
+	// Initialize the TranslationManager.
+	TranslationManager *const tsm = TranslationManager::instance();
+	tsm->setTranslation(QLocale::system().name());
 
 	// Initialize the QRvtHToolWindow.
 	QRvtHToolWindow *window = new QRvtHToolWindow();

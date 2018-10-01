@@ -110,7 +110,7 @@
     </property>
     <addaction name="actionAbout"/>
    </widget>
-   <widget class="QMenu" name="menuLanguage">
+   <widget class="LanguageMenu" name="menuLanguage">
     <property name="title">
      <string>&amp;Language</string>
     </property>
@@ -193,6 +193,14 @@
    <class>QTreeViewOpt</class>
    <extends>QTreeView</extends>
    <header>widgets/QTreeViewOpt.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>LanguageMenu</class>
+   <extends>QMenu</extends>
+   <header>widgets/LanguageMenu.hpp</header>
+   <slots>
+    <signal>languageChanged(QString)</signal>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -23,13 +23,28 @@ IF(WIN32)
 	CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/resources/win32/qrvthtool.exe.manifest.in" "${CMAKE_CURRENT_BINARY_DIR}/resources/win32/qrvthtool.exe.manifest" @ONLY)
 ENDIF(WIN32)
 
+# Translations directory.
+INCLUDE(DirInstallPaths)
+IF(WIN32 OR APPLE)
+        # Win32 and Mac OS X don't use `make install`.
+        SET(QRVTHTOOL_TRANSLATIONS_DIRECTORY "")
+ELSE()
+        # Unix system.
+        SET(QRVTHTOOL_TRANSLATIONS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${DIR_INSTALL_TRANSLATIONS}")
+ENDIF()
+
+# Write the config.h file.
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.qrvthtool.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.qrvthtool.h")
+
 # Sources.
 SET(qrvthtool_SRCS
 	qrvthtool.cpp
 	RvtHModel.cpp
 	RvtHSortFilterProxyModel.cpp
+	TranslationManager.cpp
 
 	widgets/BankEntryView.cpp
+	widgets/LanguageMenu.cpp
 	widgets/QTreeViewOpt.cpp
 
 	windows/QRvtHToolWindow.cpp
@@ -39,8 +54,10 @@ SET(qrvthtool_SRCS
 SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 	RvtHSortFilterProxyModel.hpp
+	TranslationManager.hpp
 
 	widgets/BankEntryView.hpp
+	widgets/LanguageMenu.hpp
 	widgets/QTreeViewOpt.hpp
 
 	windows/QRvtHToolWindow.hpp
@@ -61,6 +78,7 @@ QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
 
 SET(qrvthtool_RCC_SRCS
 	resources/hw/hw.qrc
+	resources/flags/flags.qrc
 	)
 
 QT5_ADD_RESOURCES(

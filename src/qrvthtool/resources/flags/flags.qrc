@@ -1,0 +1,34 @@
+<RCC>
+  <qresource prefix="flags">
+    <!-- Flag icons are based on KDE 4.13.3's locale icons. -->
+    <!-- EU flag icon is based on Dolphin Emulator 4.0's Flag_Europe.xpm icon. -->
+    <file>ar.png</file>
+    <file>at.png</file>
+    <file>au.png</file>
+    <file>br.png</file>
+    <file>ca.png</file>
+    <file>cl.png</file>
+    <file>cn.png</file>
+    <file>C.png</file>
+    <file>de.png</file>
+    <file>ee.png</file>
+    <file>es.png</file>
+    <file>eu.png</file>
+    <file>fr.png</file>
+    <file>gb.png</file>
+    <file>ie.png</file>
+    <file>il.png</file>
+    <file>it.png</file>
+    <file>jp.png</file>
+    <file>kr.png</file>
+    <file>mx.png</file>
+    <file>pl.png</file>
+    <file>ro.png</file>
+    <file>ru.png</file>
+    <file>sg.png</file>
+    <file>tw.png</file>
+    <file>us.png</file>
+    <file>uy.png</file>
+    <file>za.png</file>
+  </qresource>
+</RCC>
