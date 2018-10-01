@@ -545,7 +545,7 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 				case COL_BANKNUM:	return tr("#");
 				case COL_TYPE:		return tr("Type");
 				case COL_TITLE:		return tr("Title");
-				//: 6-digit game ID, e.g. GALE01.
+				//: 6-character game ID, e.g. GALE01.
 				case COL_GAMEID:	return tr("Game ID");
 				case COL_DISCNUM:	return tr("Disc #");
 				case COL_REVISION:	return tr("Revision");

@@ -89,6 +89,7 @@ QT5_ADD_RESOURCES(
 #########################
 # Win32 resource files. #
 #########################
+
 IF(WIN32)
         SET(qrvthtool_RC resources/win32/resource.rc)
 ENDIF(WIN32)
@@ -147,6 +148,11 @@ ADD_DEFINITIONS(-DQT_USE_FAST_CONCATENATION
 # Win32: image version.
 INCLUDE(Win32ImageVersionLinkerFlags)
 WIN32_IMAGE_VERSION_LINKER_FLAGS(${VERSION_MAJOR} ${VERSION_MINOR})
+
+# Translations.
+IF(ENABLE_NLS)
+	ADD_DEPENDENCIES(qrvthtool translations_target)
+ENDIF(ENABLE_NLS)
 
 #################
 # Installation. #

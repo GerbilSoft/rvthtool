@@ -169,7 +169,7 @@ void TranslationManager::setTranslation(const QString &locale)
 	}
 
 	// Initialize the application translator.
-	QString prgLocale = QLatin1String("mcrecover_") + locale;
+	QString prgLocale = QLatin1String("rvthtool_") + locale;
 	foreach (const QString &path, d->pathList) {
 		if (d->prgTranslator->load(prgLocale, path)) {
 			break;

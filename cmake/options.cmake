@@ -25,3 +25,6 @@ IF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 	# Cannot install debug files if we're not splitting them.
 	SET(INSTALL_DEBUG OFF CACHE "Install the split debug files." INTERNAL FORCE)
 ENDIF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
+
+# Translations.
+OPTION(ENABLE_NLS "Enable NLS using Qt's built-in localization system." ON)
