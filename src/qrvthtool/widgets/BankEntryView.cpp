@@ -193,9 +193,11 @@ QString BankEntryViewPrivate::sigStatusString(
 	QString status;
 
 	switch (sig_type) {
-		case RVTH_SigType_Unknown:
 		default:
 			status = QString::number(sig_type);
+			break;
+		case RVTH_SigType_Unknown:
+			status = BankEntryView::tr("Unknown");
 			break;
 		case RVTH_SigType_Debug:
 			status = BankEntryView::tr("Debug");
@@ -205,23 +207,25 @@ QString BankEntryViewPrivate::sigStatusString(
 			break;
 	}
 
-	switch (sig_status) {
-		case RVTH_SigStatus_Unknown:
-		default:
-			status += QLatin1String(" (") +
-				QString::number(sig_status) +
-				QChar(L')');
-			break;
-		case RVTH_SigStatus_OK:
-			break;
-		case RVTH_SigStatus_Invalid:
-			status += QLatin1String(" (") +
-				BankEntryView::tr("INVALID") + QChar(L')');
-			break;
-		case RVTH_SigStatus_Fake:
-			status += QLatin1String(" (") +
-				BankEntryView::tr("fakesigned") + QChar(L')');
-			break;
+	if (sig_type != RVTH_SigType_Unknown) {
+		switch (sig_status) {
+			default:
+			case RVTH_SigStatus_Unknown:
+				status += QLatin1String(" (") +
+					QString::number(sig_status) +
+					QChar(L')');
+				break;
+			case RVTH_SigStatus_OK:
+				break;
+			case RVTH_SigStatus_Invalid:
+				status += QLatin1String(" (") +
+					BankEntryView::tr("INVALID") + QChar(L')');
+				break;
+			case RVTH_SigStatus_Fake:
+				status += QLatin1String(" (") +
+					BankEntryView::tr("fakesigned") + QChar(L')');
+				break;
+		}
 	}
 
 	return status;
@@ -383,9 +387,11 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		// Encryption.
 		QString s_encryption;
 		switch (bankEntry->crypto_type) {
-			case RVTH_CryptoType_Unknown:
 			default:
 				s_encryption = QString::number(bankEntry->crypto_type);
+				break;
+			case RVTH_CryptoType_Unknown:
+				s_encryption = BankEntryView::tr("Unknown");
 				break;
 			case RVTH_CryptoType_None:
 				s_encryption = BankEntryView::tr("None");
