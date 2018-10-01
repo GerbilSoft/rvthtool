@@ -220,10 +220,10 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 	const RvtH_ImageType_e imageType = rvth_get_ImageType(rvth);
 
 	switch (entry->type) {
+		default:
 		case RVTH_BankType_Empty:
 		case RVTH_BankType_Unknown:
 		case RVTH_BankType_Wii_DL_Bank2:
-		default:
 			// No icon for these banks.
 			return RvtHModel::ICON_MAX;
 
@@ -250,7 +250,7 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 					return RvtHModel::ICON_MAX;
 
 				case RVTH_SigType_Retail:
-					return RvtHModel::ICON_GCN;
+					return RvtHModel::ICON_WII;
 
 				case RVTH_SigType_Debug:
 					// Check the encryption type.
