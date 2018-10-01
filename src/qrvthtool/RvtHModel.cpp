@@ -245,9 +245,13 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 			// TODO: Check both ticket and TMD?
 			switch (entry->ticket.sig_type) {
 				default:
-				case RVTH_SigType_Unknown:
 					// Should not happen...
 					return RvtHModel::ICON_MAX;
+
+				case RVTH_SigType_Unknown:
+					// Something's not quite right with this bank.
+					// Use a retail Wii icon.
+					return RvtHModel::ICON_WII;
 
 				case RVTH_SigType_Retail:
 					return RvtHModel::ICON_WII;
