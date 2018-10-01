@@ -1,11 +1,17 @@
 PROJECT(src)
 
-# C99 compatibility header for MSVC.
+# C++11 compatibility header.
+# NOTE: This must be included regardless of C++11 support in the compiler.
+# gcc-4.6 supports some C++11, but is missing explicit virtual overrides.
 IF(MSVC)
-        SET(C99_COMPAT_HEADER "-FI${CMAKE_CURRENT_SOURCE_DIR}/c99-compat.msvcrt.h")
-        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C99_COMPAT_HEADER}")
-        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${C99_COMPAT_HEADER}")
+	SET(CXX11_COMPAT_HEADER "-FI${CMAKE_CURRENT_SOURCE_DIR}/c++11-compat.h")
+ELSE(MSVC)
+	SET(CXX11_COMPAT_HEADER "-include ${CMAKE_CURRENT_SOURCE_DIR}/c++11-compat.h")
 ENDIF(MSVC)
+
+# Add the C++11 compatibility header to CFLAGS/CXXFLAGS.
+SET(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS} ${CXX11_COMPAT_HEADER}")
+SET(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} ${CXX11_COMPAT_HEADER}")
 
 # Check for hidden visibility flags.
 INCLUDE(CheckHiddenVisibility)
