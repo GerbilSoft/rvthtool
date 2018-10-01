@@ -6,6 +6,7 @@ cmake --version
 cmake .. \
 	-DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_BUILD_TYPE=Release \
+	-DENABLE_NLS=OFF \
 	-DBUILD_TESTING=ON \
 	|| exit 1
 # Build everything.
