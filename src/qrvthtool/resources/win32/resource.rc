@@ -28,4 +28,4 @@
 ISOLATIONAWARE_MANIFEST_RESOURCE_ID	RT_MANIFEST	"resources\\win32\\qrvthtool.exe.manifest"
 
 /** Icons **/
-IDI_KEY_VALID	ICON	"resources\\win32\\qrvthtool.ico"
+IDI_QRVTHTOOL	ICON	"resources\\win32\\qrvthtool.ico"

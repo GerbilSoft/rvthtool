@@ -22,6 +22,6 @@
 #define __RVTHTOOL_QRVTHTOOL_RESOURCES_WIN32_RESOURCE_H__
 
 /** Icons. **/
-#define IDI_APPLICATION         1
+#define IDI_QRVTHTOOL           1
 
 #endif /* __RVTHTOOL_QRVTHTOOL_RESOURCES_WIN32_RESOURCE_H__ */
