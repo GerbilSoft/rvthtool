@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * ref_file.c: Reference-counted FILE*.                                    *
+ * ref_file.cpp: Reference-counted FILE*.                                  *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -20,13 +20,15 @@
 
 #include "config.librvth.h"
 
-#include "ref_file.h"
+#include "ref_file.hpp"
 
-#include <assert.h>
-#include <ctype.h>
-#include <errno.h>
+// C includes.
 #include <stdlib.h>
-#include <string.h>
+
+// C includes. (C++ namespace)
+#include <cctype>
+#include <cerrno>
+#include <cstring>
 
 #ifdef _WIN32
 # include <windows.h>
@@ -42,181 +44,126 @@
 # endif /* __linux__ */
 #endif /* !_WIN32 */
 
-// NOTE: Some functions don't check for NULL, since they should
-// loudly crash if NULL is passed.
-
-/**
- * Open a file as a reference-counted file.
- * The file is opened as a binary file using the specified mode.
- * @param filename Filename.
- * @param mode Mode.
- * @return RefFile*, or NULL if an error occurred.
- */
-static RefFile *ref_open_int(const TCHAR *filename, const TCHAR *mode)
-{
-	int err = 0;
-
-	RefFile *f = calloc(1, sizeof(RefFile));
-	if (!f) {
-		// Unable to allocate memory.
-		return NULL;
-	}
-
-	// Save the filename.
-	f->filename = _tcsdup(filename);
-	if (!f->filename) {
-		// Could not copy the filename.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		goto fail;
-	}
-
-	f->file = _tfopen(filename, mode);
-	if (!f->file) {
-		// Could not open the file.
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		goto fail;
-	}
-
-	// Initialize the reference count.
-	f->ref_count = 1;
-	// File writability depends on the mode.
-	// NOTE: Only checking the first character.
-	f->is_writable = (mode[0] == _T('w'));
-	return f;
-
-fail:
-	// Failed to open the file.
-	if (f->file) {
-		fclose(f->file);
-	}
-	if (f->filename) {
-		free(f->filename);
-	}
-	free(f);
-	if (err != 0) {
-		errno = err;
-	}
-	return NULL;
-}
+// NOTE: Some functions don't check for nullptr, since they should
+// loudly crash if nullptr is passed.
 
 /**
  * Open a file as a reference-counted file.
  * The file is opened as a binary file in read-only mode.
+ *
+ * Check isOpen() after constructing the class to determine
+ * if the file was opened successfully.
+ *
  * @param filename Filename.
+ * @param create If true, create the file if it doesn't exist.
+ *               File will be opened in read/write mode.
+ *               File will be truncated if it already exists.
+ *
  * @return RefFile*, or NULL if an error occurred.
  */
-RefFile *ref_open(const TCHAR *filename)
+RefFile::RefFile(const TCHAR *filename, bool create)
+	: m_refCount(1)
+	, m_lastError(0)
+	, m_file(nullptr)
+	, m_isWritable(false)
 {
-	return ref_open_int(filename, _T("rb"));
+	if (!filename) {
+		// No filename...
+		m_lastError = EINVAL;
+		return;
+	}
+
+	// Save the filename.
+	m_filename = filename;
+
+	// Open the file.
+	const TCHAR *const mode = (create ? _T("wb+") : _T("rb"));
+	m_file = _tfopen(filename, mode);
+	if (!m_file) {
+		// Could not open the file.
+		m_lastError = errno;
+		if (m_lastError == 0) {
+			m_lastError = EIO;
+		}
+		return;
+	}
+
+	// If the file was opened with 'create',
+	// it should be considered writable.
+	m_isWritable = create;
 }
 
-/**
- * Create a file as a reference-counted file.
- * The file is opened as a binary file in read/write mode.
- * NOTE: If the file exists, it will be truncated.
- * @param filename Filename.
- * @return RefFile*, or NULL if an error occurred.
- */
-RefFile *ref_create(const TCHAR *filename)
+RefFile::~RefFile()
 {
-	return ref_open_int(filename, _T("wb+"));
-}
-
-/**
- * Close a reference-counted file.
- * Note that the file isn't actually closed until all references are removed.
- * @param f RefFile*.
- */
-void ref_close(RefFile *f)
-{
-	// TODO: Atomic decrement?
-	assert(f->ref_count > 0);
-	if (--f->ref_count <= 0) {
-		// Close the file.
-		fclose(f->file);
-		free(f->filename);
-		free(f);
+	if (m_file) {
+		fclose(m_file);
 	}
 }
 
 /**
- * Duplicate a reference-counted file.
- * This increments the reference count and returns the pointer.
- * @param f RefFile*.
- * @return f
- */
-RefFile *ref_dup(RefFile *f)
-{
-	// TODO: Atomic increment?
-	f->ref_count++;
-	return f;
-}
-
-/**
- * Reopen a file with write access.
+ * Reopen the file with write access.
  * @param f RefFile*.
  * @return 0 on success; negative POSIX error code on error.
  */
-int ref_make_writable(RefFile *f)
+int RefFile::makeWritable(void)
 {
-	int64_t pos;
-	int ret = 0;
-
-	if (f->is_writable) {
+	if (m_isWritable) {
 		// File is already writable.
 		return 0;
+	} else if (!m_file) {
+		// File is not open.
+		return -EBADF;
 	}
 
 	// Get the current position.
-	pos = ftello(f->file);
+	int64_t pos = ftello(m_file);
 
 	// Close and reopen the file as writable.
 	// TODO: Potential race condition...
-	fclose(f->file);
-	f->file = _tfopen(f->filename, _T("rb+"));
-	if (f->file) {
+	int ret = 0;
+	fclose(m_file);
+	m_file = _tfopen(m_filename.c_str(), _T("rb+"));
+	if (m_file) {
 		// File reopened as writable.
-		f->is_writable = true;
+		m_isWritable = true;
 	} else {
 		// Could not reopen as writable.
 		ret = -errno;
 		// Reopen as read-only.
-		f->file = _tfopen(f->filename, _T("rb"));
-		assert(f->file != NULL);
+		m_file = _tfopen(m_filename.c_str(), _T("rb"));
+		assert(m_file != nullptr);
 		// FIXME: If it's NULL, something's wrong...
 	}
 
 	// Seek to the original position.
 	// TODO: Check for errors.
-	fseeko(f->file, pos, SEEK_SET);
+	fseeko(m_file, pos, SEEK_SET);
 	return ret;
 }
 
 /**
- * Check if a file is a device file.
- * @param f RefFile*.
+ * Check if the file is a device file.
  * @return True if this is a device file; false if it isn't.
  */
-bool ref_is_device(RefFile *f)
+bool RefFile::isDevice(void) const
 {
+	if (!m_file) {
+		// No file...
+		return false;
+	}
+
 #ifdef _WIN32
 	// Windows: Check the beginning of the filename.
-	if (!f->filename) {
+	if (m_filename.empty()) {
 		// No filename...
 		return false;
 	}
 
-	return !_tcsnicmp(f->filename, _T("\\\\.\\PhysicalDrive"), 17);
+	return !_tcsnicmp(m_filename.c_str(), _T("\\\\.\\PhysicalDrive"), 17);
 #else /* !_WIN32 */
 	// Other: Use fstat().
 	struct stat buf;
-	int ret = fstat(fileno(f->file), &buf);
+	int ret = fstat(fileno(m_file), &buf);
 	if (ret != 0) {
 		// fstat() failed.
 		return false;
@@ -230,25 +177,23 @@ bool ref_is_device(RefFile *f)
 
 /**
  * Try to make this file a sparse file.
- * @param f RefFile*.
  * @param size If not zero, try to set the file to this size.
  * @return 0 on success; negative POSIX error code on error.
  */
-int ref_make_sparse(RefFile *f, int64_t size)
+int RefFile::makeSparse(int64_t size)
 {
 #ifdef _WIN32
 	wchar_t root_dir[4];		// Root directory.
 	wchar_t *p_root_dir;		// Pointer to root_dir, or NULL if relative.
-	DWORD dwFileSystemFlags;	// Flags from GetVolumeInformation().
-	BOOL bRet;
 
 	// Check if the file system supports sparse files.
 	// TODO: Handle mount points?
-	if (_istalpha(f->filename[0]) && f->filename[1] == _T(':') &&
-	    (f->filename[2] == _T('\\') || f->filename[2] == _T('/')))
+	if (m_filename.size() >= 3 &&
+	    _istalpha(m_filename[0]) && m_filename[1] == _T(':') &&
+	    (m_filename[2] == _T('\\') || m_filename[2] == _T('/')))
 	{
 		// Absolute pathname.
-		root_dir[0] = f->filename[0];
+		root_dir[0] = m_filename[0];
 		root_dir[1] = L':';
 		root_dir[2] = L'\\';
 		root_dir[3] = 0;
@@ -257,15 +202,16 @@ int ref_make_sparse(RefFile *f, int64_t size)
 	else
 	{
 		// Relative pathname.
-		p_root_dir = NULL;
+		p_root_dir = nullptr;
 	}
 
-	bRet = GetVolumeInformation(p_root_dir, NULL, 0, NULL, NULL,
-		&dwFileSystemFlags, NULL, 0);
+	DWORD dwFileSystemFlags;
+	BOOL bRet = GetVolumeInformation(p_root_dir, nullptr, 0, nullptr, nullptr,
+		&dwFileSystemFlags, nullptr, 0);
 	if (bRet != 0 && (dwFileSystemFlags & FILE_SUPPORTS_SPARSE_FILES)) {
 		// File system supports sparse files.
 		// Mark the file as sparse.
-		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(f->file));
+		HANDLE h_extract = (HANDLE)_get_osfhandle(_fileno(m_file));
 		if (h_extract != NULL && h_extract != INVALID_HANDLE_VALUE) {
 			DWORD bytesReturned;
 			FILE_SET_SPARSE_BUFFER fssb;
@@ -284,7 +230,12 @@ int ref_make_sparse(RefFile *f, int64_t size)
 	// Set the file size.
 	// NOTE: If the underlying file system doesn't support sparse files,
 	// this may take a long time. (TODO: Check this.)
-	int ret = ftruncate(fileno(f->file), size);
+	if (size == 0) {
+		// Nothing to do here.
+		return 0;
+	}
+
+	int ret = ftruncate(fileno(m_file), size);
 	if (ret != 0) {
 		// Error setting the file size.
 		// Allow all errors except for EINVAL or EFBIG,
@@ -293,6 +244,7 @@ int ref_make_sparse(RefFile *f, int64_t size)
 		int err = errno;
 		if (err == EINVAL || err == EFBIG) {
 			// File is too big.
+			m_lastError = err;
 			return -err;
 		} else {
 			// Ignore this error.
@@ -306,33 +258,34 @@ int ref_make_sparse(RefFile *f, int64_t size)
 
 /**
  * Get the size of the file.
- * @param f RefFile*.
  * @return Size of file, or -1 on error.
  */
-int64_t ref_get_size(RefFile *f)
+int64_t RefFile::size(void)
 {
-	int64_t orig_pos, ret;
-	int err;
+	if (!m_file) {
+		// No file...
+		return -1;
+	}
 
 	// If this is a device, try OS-specific device size functions first.
 	// NOTE: _fseeki64(fp, 0, SEEK_END) isn't working on
 	// device files on Windows for some reason...
-	if (ref_is_device(f)) {
+	if (this->isDevice()) {
 #ifdef _WIN32
 		// Windows version.
-		HANDLE hDevice = (HANDLE)_get_osfhandle(_fileno(f->file));
+		HANDLE hDevice = (HANDLE)_get_osfhandle(_fileno(m_file));
 		if (hDevice && hDevice != INVALID_HANDLE_VALUE) {
 			// Reference: https://docs.microsoft.com/en-us/windows/desktop/api/winioctl/ni-winioctl-ioctl_disk_get_length_info
 			GET_LENGTH_INFORMATION gli;
 			DWORD dwBytesReturned = 0;
 			BOOL bRet = DeviceIoControl(hDevice,
 				IOCTL_DISK_GET_LENGTH_INFO,	// dwIoControlCode
-				NULL,				// lpInBuffer
+				nullptr,			// lpInBuffer
 				0,				// nInBufferSize
 				(LPVOID)&gli,			// output buffer
 				(DWORD)sizeof(gli),		// size of output buffer
 				&dwBytesReturned,		// number of bytes returned
-				NULL);				// OVERLAPPED structure
+				nullptr);			// OVERLAPPED structure
 			if (bRet && dwBytesReturned == sizeof(gli)) {
 				// Size obtained successfully.
 				return gli.Length.QuadPart;
@@ -341,7 +294,8 @@ int64_t ref_get_size(RefFile *f)
 #elif defined(__linux__)
 		// Linux version.
 		// Reference: http://www.microhowto.info/howto/get_the_size_of_a_linux_block_special_device_in_c.html
-		if (ioctl(fileno(f->file), BLKGETSIZE64, &ret) == 0) {
+		int ret = -1;
+		if (ioctl(fileno(m_file), BLKGETSIZE64, &ret) == 0) {
 			// Size obtained successfully.
 			return ret;
 		}
@@ -349,19 +303,19 @@ int64_t ref_get_size(RefFile *f)
 	}
 
 	// Not a device, or the OS-specific device size function failed.
-	// Use ref_seeko() / ref_tello().
-	orig_pos = ref_tello(f);
+	// Use this->seeko() / this->tello().
+	int64_t orig_pos = this->tello();
 	if (orig_pos < 0) {
 		// Error.
 		return -1;
 	}
-	err = ref_seeko(f, 0, SEEK_END);
+	int err = this->seeko(0, SEEK_END);
 	if (err != 0) {
 		// Error.
 		return -1;
 	}
-	ret = ref_tello(f);
-	err = ref_seeko(f, orig_pos, SEEK_SET);
+	int64_t ret = this->tello();
+	err = this->seeko(orig_pos, SEEK_SET);
 	if (err != 0) {
 		// Error.
 		return -1;

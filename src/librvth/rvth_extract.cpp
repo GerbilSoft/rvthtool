@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_extract.c: RVT-H extract and import functions.                     *
+ * rvth_extract.cpp: RVT-H extract and import functions.                   *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -107,7 +107,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 	// Process 1 MB at a time.
 	#define BUF_SIZE 1048576
 	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
-	buf = malloc(BUF_SIZE);
+	buf = (uint8_t*)malloc(BUF_SIZE);
 	if (!buf) {
 		// Error allocating memory.
 		err = errno;
@@ -123,11 +123,11 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 
 	// Make this a sparse file.
 	entry_dest = &rvth_dest->entries[0];
-	ret = ref_make_sparse(rvth_dest->f_img, LBA_TO_BYTES(entry_dest->lba_len));
+	ret = rvth_dest->f_img->makeSparse(LBA_TO_BYTES(entry_dest->lba_len));
 	if (ret != 0) {
 		// Error managing the sparse file.
 		// TODO: Delete the file?
-		err = errno;
+		err = rvth_dest->f_img->lastError();
 		if (err == 0) {
 			err = ENOMEM;
 		}
@@ -357,7 +357,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 		// Prepend 32k to the GCM.
 		size_t size;
 		Reader *const reader = rvth_dest->entries[0].reader;
-		uint8_t *sdk_header = calloc(1, SDK_HEADER_SIZE_BYTES);
+		uint8_t *sdk_header = (uint8_t*)calloc(1, SDK_HEADER_SIZE_BYTES);
 		if (!sdk_header) {
 			ret = -errno;
 			if (ret == 0) {
@@ -420,7 +420,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 	if (ret == 0 && recrypt_key > RVTH_CryptoType_Unknown) {
 		// Recrypt the disc image.
 		if (entry->crypto_type != recrypt_key) {
-			ret = rvth_recrypt_partitions(rvth_dest, 0, recrypt_key, callback);
+			ret = rvth_recrypt_partitions(rvth_dest, 0, static_cast<RvtH_CryptoType_e>(recrypt_key), callback);
 		}
 	}
 
@@ -620,7 +620,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	// Process 1 MB at a time.
 	#define BUF_SIZE 1048576
 	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
-	buf = malloc(BUF_SIZE);
+	buf = (uint8_t*)malloc(BUF_SIZE);
 	if (!buf) {
 		// Error allocating memory.
 		err = errno;

@@ -23,6 +23,10 @@
 
 #include "rvth.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Set the region field in an RvtH_BankEntry.
  * The reader field must have already been set.
@@ -60,5 +64,9 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry);
 int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RVTHTOOL_LIBRVTH_BANK_INIT_H__ */

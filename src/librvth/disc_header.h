@@ -25,12 +25,12 @@
 
 #include <stdint.h>
 
-struct _RefFile;
-struct _GCN_DiscHeader;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct RefFile;
+struct _GCN_DiscHeader;
 
 /**
  * Check the magic numbers in a GCN/Wii disc header.
@@ -63,7 +63,7 @@ int rvth_disc_header_identify(const struct _GCN_DiscHeader *discHeader);
  * @param pIsDeleted	[out,opt] Set to true if the image appears to be "deleted".
  * @return Bank type, or negative POSIX error code. (See RvtH_BankType_e.)
  */
-int rvth_disc_header_get(struct _RefFile *f_img, uint32_t lba_start, struct _GCN_DiscHeader *discHeader, bool *pIsDeleted);
+int rvth_disc_header_get(struct RefFile *f_img, uint32_t lba_start, struct _GCN_DiscHeader *discHeader, bool *pIsDeleted);
 
 #ifdef __cplusplus
 }

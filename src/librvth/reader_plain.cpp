@@ -1,9 +1,9 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader_plain.c: Plain disc image reader class.                          *
+ * reader_plain.cpp: Plain disc image reader class.                        *
  * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -72,7 +72,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// Allocate memory for the Reader object.
-	reader = malloc(sizeof(*reader));
+	reader = (Reader*)malloc(sizeof(*reader));
 	if (!reader) {
 		// Error allocating memory.
 		if (errno == 0) {
@@ -81,23 +81,15 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		return NULL;
 	}
 
-	// Duplicate the file.
-	reader->file = ref_dup(file);
-	if (!reader->file) {
-		// Error duplicating the file.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		goto fail;
-	}
+	// ref() the file.
+	reader->file = file->ref();
 
 	// Set the vtable.
 	reader->vtbl = &reader_plain_vtable;
 
 	// Get the file size.
 	errno = 0;
-	filesize = ref_get_size(reader->file);
+	filesize = reader->file->size();
 	if (filesize < 0) {
 		// Seek error.
 		// NOTE: Not failing on empty file, since that happens
@@ -119,7 +111,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	reader->lba_len = lba_len;
 
 	// Set the reader type.
-	if (ref_is_device(reader->file)) {
+	if (reader->file->isDevice()) {
 		// This is an RVT-H Reader.
 		reader->type = RVTH_ImageType_HDD_Reader;
 	} else {
@@ -141,7 +133,7 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 fail:
 	// Failed to initialize the reader.
 	if (reader->file) {
-		ref_close(reader->file);
+		reader->file->unref();
 	}
 	free(reader);
 	errno = err;
@@ -171,7 +163,7 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
 	}
 
 	// Seek to lba_start.
-	ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = reader->file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -181,7 +173,7 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
 	}
 
 	// Read the data.
-	return (uint32_t)ref_read(ptr, LBA_SIZE, lba_len, reader->file);
+	return (uint32_t)reader->file->read(ptr, LBA_SIZE, lba_len);
 }
 
 /**
@@ -207,7 +199,7 @@ static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba
 	}
 
 	// Seek to lba_start.
-	ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = reader->file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -217,7 +209,7 @@ static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba
 	}
 
 	// Write the data.
-	return (uint32_t)ref_write(ptr, LBA_SIZE, lba_len, reader->file);
+	return (uint32_t)reader->file->write(ptr, LBA_SIZE, lba_len);
 }
 
 /**
@@ -226,7 +218,7 @@ static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba
  * */
 static void reader_plain_flush(Reader *reader)
 {
-	ref_flush(reader->file);
+	reader->file->flush();
 }
 
 /**
@@ -235,6 +227,6 @@ static void reader_plain_flush(Reader *reader)
  */
 static void reader_plain_close(Reader *reader)
 {
-	ref_close(reader->file);
+	reader->file->unref();
 	free(reader);
 }

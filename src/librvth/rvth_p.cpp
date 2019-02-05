@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_p.c: RVT-H image handler. (PRIVATE FUNCTIONS)                      *
+ * rvth_p.cpp: RVT-H image handler. (PRIVATE FUNCTIONS)                    *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -35,7 +35,7 @@
  */
 int rvth_make_writable(RvtH *rvth)
 {
-	if (ref_is_writable(rvth->f_img)) {
+	if (rvth->f_img->isWritable()) {
 		// RVT-H is already writable.
 		return 0;
 	}
@@ -44,7 +44,7 @@ int rvth_make_writable(RvtH *rvth)
 	// (Single bank)
 
 	// Make sure this is a device file.
-	if (!ref_is_device(rvth->f_img)) {
+	if (!rvth->f_img->isDevice()) {
 		// This is not a device file.
 		// Cannot make it writable.
 		return RVTH_ERROR_NOT_A_DEVICE;
@@ -57,7 +57,7 @@ int rvth_make_writable(RvtH *rvth)
 	}
 
 	// Make this writable.
-	return ref_make_writable(rvth->f_img);
+	return rvth->f_img->makeWritable();
 }
 
 /**
@@ -181,7 +181,7 @@ int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 
 skip_creating_bank_entry:
 	// Write the bank entry.
-	ret = ref_seeko(rvth->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	ret = rvth->f_img->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -189,7 +189,7 @@ skip_creating_bank_entry:
 		}
 		return -errno;
 	}
-	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth->f_img);
+	size = rvth->f_img->write(&nhcd_entry, 1, sizeof(nhcd_entry));
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
 		if (errno == 0) {

@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_write.c: RVT-H write functions.                                    *
+ * rvth_write.cpp: RVT-H write functions.                                  *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -39,12 +39,12 @@
  * @param filename	[in] Filename.
  * @param lba_len	[in] LBA length. (Will NOT be allocated initially.)
  * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- * @return RvtH on success; NULL on error. (check errno)
+ * @return RvtH on success; nullptr on error. (check errno)
  */
 RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 {
-	RvtH *rvth = NULL;
-	RefFile *f_img = NULL;
+	RvtH *rvth = nullptr;
+	RefFile *f_img = nullptr;
 	RvtH_BankEntry *entry;
 	int err = 0;	// errno setting
 
@@ -56,7 +56,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 
 	// Allocate memory for the RvtH object
 	errno = 0;
-	rvth = calloc(1, sizeof(RvtH));
+	rvth = (RvtH*)calloc(1, sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
 		err = errno;
@@ -69,7 +69,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	// Allocate memory for a single RvtH_BankEntry object.
 	rvth->bank_count = 1;
 	rvth->type = RVTH_ImageType_GCM;
-	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
+	rvth->entries = (RvtH_BankEntry*)calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
 		err = errno;
@@ -80,10 +80,10 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	};
 
 	// Attempt to create the file.
-	f_img = ref_create(filename);
-	if (!f_img) {
+	f_img = new RefFile(filename, true);
+	if (!f_img->isOpen()) {
 		// Error creating the file.
-		err = errno;
+		err = f_img->lastError();
 		if (err == 0) {
 			err = EIO;
 		}
@@ -92,7 +92,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	rvth->f_img = ref_dup(f_img);
+	rvth->f_img = f_img->ref();
 	entry = rvth->entries;
 	entry->lba_start = 0;
 	entry->lba_len = lba_len;
@@ -101,7 +101,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 
 	// Timestamp.
 	// TODO: Update on write.
-	entry->timestamp = time(NULL);
+	entry->timestamp = time(nullptr);
 
 	// Initialize the disc image reader.
 	entry->reader = reader_open(f_img, entry->lba_start, entry->lba_len);
@@ -115,7 +115,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	}
 
 	// We're done here.
-	ref_close(f_img);
+	f_img->unref();
 	return rvth;
 
 fail:
@@ -123,13 +123,13 @@ fail:
 	// TODO: Delete it in case it was partially created?
 	rvth_close(rvth);
 	if (f_img) {
-		ref_close(f_img);
+		f_img->unref();
 	}
 	if (pErr) {
 		*pErr = -err;
 	}
 	errno = err;
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -196,7 +196,7 @@ int rvth_delete(RvtH *rvth, unsigned int bank)
 	// Delete the bank and write the entry.
 	rvth_entry->is_deleted = true;
 	ret = rvth_write_BankEntry(rvth, bank);
-	ref_flush(rvth->f_img);
+	rvth->f_img->flush();
 	if (ret != 0) {
 		// Error deleting the bank...
 		rvth_entry->is_deleted = false;

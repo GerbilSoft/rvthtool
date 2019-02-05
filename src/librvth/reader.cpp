@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader.h: Disc image reader base class.                                 *
+ * reader.cpp: Disc image reader base class.                               *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                  *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -56,7 +56,7 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	size_t size;
 
 	assert(file != NULL);
-	if (ref_is_device(file)) {
+	if (file->isDevice()) {
 		// This is an RVT-H Reader system.
 		// Only plain images are supported.
 		// TODO: Also check for RVT-H Reader HDD images?
@@ -68,7 +68,7 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// if we're opening a file for writing.
 
 	// Check for other disc image formats.
-	ret = ref_seeko(file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -77,7 +77,7 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		return NULL;
 	}
 	errno = 0;
-	size = ref_read(sbuf, 1, sizeof(sbuf), file);
+	size = file->read(sbuf, 1, sizeof(sbuf));
 	if (size != sizeof(sbuf)) {
 		// Short read. May be empty.
 		if (errno != 0) {
@@ -86,11 +86,11 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		} else {
 			// Assume it's a new file.
 			// Use the plain disc image reader.
-			ref_rewind(file);
+			file->rewind();
 			return reader_plain_open(file, lba_start, lba_len);
 		}
 	}
-	ref_rewind(file);
+	file->rewind();
 
 	// Check the magic number.
 	if (reader_ciso_is_supported(sbuf, sizeof(sbuf))) {

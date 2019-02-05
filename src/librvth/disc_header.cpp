@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * disc_header.c: Read a GCN/Wii disc header and determine its type.       *
+ * disc_header.cpp: Read a GCN/Wii disc header and determine its type.     *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -189,13 +189,13 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	memset(discHeader, 0, sizeof(*discHeader));
 
 	// Read the disc header.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -239,7 +239,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	bankType = ret;
 
 	// Get the volume group table.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start) + RVL_VolumeGroupTable_ADDRESS, SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start) + RVL_VolumeGroupTable_ADDRESS, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		ret = -errno;
@@ -249,7 +249,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -270,7 +270,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	// Found the game partition.
 	// Read the partition header.
 	errno = 0;
-	pthdr = malloc(sizeof(*pthdr));
+	pthdr = (RVL_PartitionHeader*)malloc(sizeof(*pthdr));
 	if (!pthdr) {
 		// Cannot allocate memory.
 		ret = -errno;
@@ -279,7 +279,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		}
 		goto end;
 	}
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start + game_lba), SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start + game_lba), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		ret = -errno;
@@ -289,7 +289,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(pthdr, 1, sizeof(*pthdr), f_img);
+	size = f_img->read(pthdr, 1, sizeof(*pthdr));
 	if (size != sizeof(*pthdr)) {
 		// Read error.
 		ret = -errno;
@@ -308,7 +308,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	}
 
 	// Read the first LBA of the partition.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start + game_lba) + data_offset, SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start + game_lba) + data_offset, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		ret = -errno;
@@ -318,7 +318,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -381,7 +381,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	// Read the next LBA. This contains encrypted hashes,
 	// including the IV for the user data.
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -394,7 +394,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 
 	// Read the first LBA of user data.
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;

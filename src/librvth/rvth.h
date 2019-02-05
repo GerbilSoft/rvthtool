@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth.c: RVT-H image handler.                                            *
+ * rvth.h: RVT-H image handler.                                            *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -25,8 +25,8 @@
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
 
-#include "ref_file.h"
 #include "reader.h"
+#include "tcharx.h"
 
 #include <stdint.h>
 #include <stdio.h>

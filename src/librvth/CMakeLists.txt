@@ -26,24 +26,24 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURREN
 
 # Sources.
 SET(librvth_SRCS
-	rvth.c
-	rvth_p.c
-	rvth_write.c
-	rvth_extract.c
+	rvth.cpp
+	rvth_p.cpp
+	rvth_write.cpp
+	rvth_extract.cpp
 	rvth_time.c
 	rvth_recrypt.c
-	ref_file.c
-	disc_header.c
+	ref_file.cpp
+	disc_header.cpp
 	query.c
 	ptbl.c
 	extract_crypt.c
 	bank_init.c
 
 	# Disc image readers
-	reader.c
-	reader_plain.c
-	reader_ciso.c
-	reader_wbfs.c
+	reader.cpp
+	reader_plain.cpp
+	reader_ciso.cpp
+	reader_wbfs.cpp
 	)
 # Headers.
 SET(librvth_H
@@ -52,7 +52,7 @@ SET(librvth_H
 	rvth_p.h
 	rvth_time.h
 	rvth_recrypt.h
-	ref_file.h
+	ref_file.hpp
 	tcharx.h
 	disc_header.h
 	query.h

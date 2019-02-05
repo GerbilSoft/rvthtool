@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader_wbfs.c: WBFS disc image reader class.                            *
+ * reader_wbfs.cpp: WBFS disc image reader class.                          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -132,19 +132,19 @@ static wbfs_t *readWbfsHeader(RefFile *file, uint32_t lba_start)
 
 	// Assume 512-byte sectors initially.
 	hd_sec_sz = 512;
-	head = malloc(hd_sec_sz);
+	head = (wbfs_head_t*)malloc(hd_sec_sz);
 	if (!head) {
 		// ENOMEM
 		goto end;
 	}
 
 	// Read the WBFS header.
-	ret = ref_seeko(file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		goto end;
 	}
-	size = ref_read(head, 1, hd_sec_sz, file);
+	size = file->read(head, 1, hd_sec_sz);
 	if (size != hd_sec_sz) {
 		// Read error.
 		ret = -1;
@@ -159,7 +159,7 @@ static wbfs_t *readWbfsHeader(RefFile *file, uint32_t lba_start)
 	}
 
 	// wbfs_t struct.
-	p = malloc(sizeof(wbfs_t));
+	p = (wbfs_t*)malloc(sizeof(wbfs_t));
 	if (!p) {
 		// ENOMEM
 		ret = -1;
@@ -176,19 +176,19 @@ static wbfs_t *readWbfsHeader(RefFile *file, uint32_t lba_start)
 	if (p->hd_sec_sz != hd_sec_sz) {
 		hd_sec_sz = p->hd_sec_sz;
 		free(head);
-		head = malloc(hd_sec_sz);
+		head = (wbfs_head_t*)malloc(hd_sec_sz);
 		if (!head) {
 			// ENOMEM
 			goto end;
 		}
 
 		// Re-read the WBFS header.
-		ret = ref_seeko(file, LBA_TO_BYTES(lba_start), SEEK_SET);
+		ret = file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 		if (ret != 0) {
 			// Seek error.
 			goto end;
 		}
-		size = ref_read(head, 1, hd_sec_sz, file);
+		size = file->read(head, 1, hd_sec_sz);
 		if (size != hd_sec_sz) {
 			// Read error.
 			ret = -1;
@@ -274,7 +274,7 @@ static wbfs_disc_t *openWbfsDisc(RefFile *file, uint32_t lba_start, wbfs_t *p, u
 				int ret;
 				size_t size;
 
-				wbfs_disc_t *disc = malloc(sizeof(wbfs_disc_t));
+				wbfs_disc_t *disc = (wbfs_disc_t*)malloc(sizeof(wbfs_disc_t));
 				if (!disc) {
 					// ENOMEM
 					return NULL;
@@ -283,20 +283,20 @@ static wbfs_disc_t *openWbfsDisc(RefFile *file, uint32_t lba_start, wbfs_t *p, u
 				disc->i = i;
 
 				// Read the disc header.
-				disc->header = malloc(p->disc_info_sz);
+				disc->header = (wbfs_disc_info_t*)malloc(p->disc_info_sz);
 				if (!disc->header) {
 					// ENOMEM
 					free(disc);
 					return NULL;
 				}
 
-				ret = ref_seeko(file, LBA_TO_BYTES(lba_start) + p->hd_sec_sz + (i*p->disc_info_sz), SEEK_SET);
+				ret = file->seeko(LBA_TO_BYTES(lba_start) + p->hd_sec_sz + (i*p->disc_info_sz), SEEK_SET);
 				if (ret != 0) {
 					// Seek error.
 					free(disc);
 					return NULL;
 				}
-				size = ref_read(disc->header, 1, p->disc_info_sz, file);
+				size = file->read(disc->header, 1, p->disc_info_sz);
 				if (size != p->disc_info_sz) {
 					// Error reading the disc information.
 					free(disc->header);
@@ -385,7 +385,7 @@ Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// Allocate memory for the WbfsReader object.
-	wbfsReader = calloc(1, sizeof(*wbfsReader));
+	wbfsReader = (WbfsReader*)calloc(1, sizeof(*wbfsReader));
 	if (!wbfsReader) {
 		// Error allocating memory.
 		if (errno == 0) {
@@ -394,16 +394,8 @@ Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		return NULL;
 	}
 
-	// Duplicate the file.
-	wbfsReader->reader.file = ref_dup(file);
-	if (!wbfsReader->reader.file) {
-		// Error duplicating the file.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		goto fail;
-	}
+	// ref() the file.
+	wbfsReader->reader.file = file->ref();
 
 	// Set the vtable.
 	wbfsReader->reader.vtbl = &reader_wbfs_vtable;
@@ -411,7 +403,7 @@ Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
-		int64_t offset = ref_get_size(file);
+		int64_t offset = file->size();
 		if (offset <= 0) {
 			// Empty file and/or seek error.
 			err = errno;
@@ -518,7 +510,7 @@ static uint32_t reader_wbfs_read(Reader *reader, void *ptr, uint32_t lba_start, 
 			size_t size;
 			unsigned int blockStart = physBlockIdx * wbfsReader->block_size_lba;
 			unsigned int offset = lba % wbfsReader->block_size_lba;
-			ret = ref_seeko(reader->file, LBA_TO_BYTES(blockStart + offset + reader->lba_start), SEEK_SET);
+			ret = reader->file->seeko(LBA_TO_BYTES(blockStart + offset + reader->lba_start), SEEK_SET);
 			if (ret != 0) {
 				// Seek error.
 				if (errno == 0) {
@@ -526,7 +518,7 @@ static uint32_t reader_wbfs_read(Reader *reader, void *ptr, uint32_t lba_start, 
 				}
 				return 0;
 			}
-			size = ref_read(ptr8, LBA_SIZE, 1, reader->file);
+			size = reader->file->read(ptr8, LBA_SIZE, 1);
 			if (size != 1) {
 				// Read error.
 				if (errno == 0) {
@@ -586,6 +578,6 @@ static void reader_wbfs_close(Reader *reader)
 		freeWbfsHeader(wbfsReader->m_wbfs);
 	}
 
-	ref_close(reader->file);
+	reader->file->unref();
 	free(reader);
 }

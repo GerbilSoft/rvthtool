@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * tcharx.h: TCHAR support for Windows and Linux.                          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -26,12 +26,20 @@
 // Windows: Use the SDK tchar.h.
 #include <tchar.h>
 
+// std::tstring
+#ifdef _UNICODE
+# define tstring wstring
+#else /* !_UNICODE */
+# define tstring string
+#endif /* _UNICODE */
+
 #else /* !_WIN32 */
 
 // Other systems: Define TCHAR and related macros.
 typedef char TCHAR;
 #define _T(x) x
 #define _tmain main
+#define tstring string
 
 // ctype.h
 #define _istalpha(c) isalpha(c)
@@ -57,6 +65,6 @@ typedef char TCHAR;
 // string.h
 #define _tcsdup(s) strdup(s)
 
-#endif
+#endif /* _WIN32 */
 
 #endif /* __RVTHTOOL_LIBRVTH_TCHAR_H__ */

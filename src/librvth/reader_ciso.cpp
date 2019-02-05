@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader_ciso.c: CISO disc image reader class.                            *
+ * reader_ciso.cpp: CISO disc image reader class.                          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -154,7 +154,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// Allocate memory for the CisoReader and CisoHeader objects.
-	cisoReader = malloc(sizeof(*cisoReader));
+	cisoReader = (CisoReader*)malloc(sizeof(*cisoReader));
 	if (!cisoReader) {
 		// Error allocating memory.
 		if (errno == 0) {
@@ -162,7 +162,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		}
 		return NULL;
 	}
-	cisoHeader = malloc(sizeof(*cisoHeader));
+	cisoHeader = (CisoHeader*)malloc(sizeof(*cisoHeader));
 	if (!cisoHeader) {
 		// Error allocating memory.
 		if (errno == 0) {
@@ -172,16 +172,8 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		return NULL;
 	}
 
-	// Duplicate the file.
-	cisoReader->reader.file = ref_dup(file);
-	if (!cisoReader->reader.file) {
-		// Error duplicating the file.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		goto fail;
-	}
+	// ref() the file.
+	cisoReader->reader.file = file->ref();
 
 	// Set the vtable.
 	cisoReader->reader.vtbl = &reader_ciso_vtable;
@@ -189,7 +181,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
-		int64_t offset = ref_get_size(file);
+		int64_t offset = cisoReader->reader.file->size();
 		if (offset <= 0) {
 			// Empty file and/or seek error.
 			err = errno;
@@ -208,7 +200,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	cisoReader->real_lba_len = lba_len;
 
 	// Read the CISO header.
-	ret = ref_seeko(file, lba_start * LBA_SIZE, SEEK_SET);
+	ret = cisoReader->reader.file->seeko(lba_start * LBA_SIZE, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		err = errno;
@@ -217,7 +209,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		}
 		goto fail;
 	}
-	size = ref_read(cisoHeader, 1, sizeof(*cisoHeader), cisoReader->reader.file);
+	size = cisoReader->reader.file->read(cisoHeader, 1, sizeof(*cisoHeader));
 	if (size != sizeof(*cisoHeader)) {
 		// Short read.
 		err = errno;
@@ -230,7 +222,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Validate the CISO header.
 	if (!reader_ciso_is_supported((const uint8_t*)cisoHeader, LBA_SIZE)) {
 		// Not a valid CISO header.
-		return false;
+		return nullptr;
 	}
 	cisoReader->block_size_lba = BYTES_TO_LBA(le32_to_cpu(cisoHeader->block_size));
 
@@ -267,7 +259,7 @@ Reader *reader_ciso_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 fail:
 	// Failed to initialize the reader.
 	if (cisoReader->reader.file) {
-		ref_close(cisoReader->reader.file);
+		cisoReader->reader.file->unref();
 	}
 	free(cisoReader);
 	free(cisoHeader);
@@ -319,7 +311,7 @@ static uint32_t reader_ciso_read(Reader *reader, void *ptr, uint32_t lba_start, 
 			size_t size;
 			unsigned int blockStart = physBlockIdx * cisoReader->block_size_lba;
 			unsigned int offset = lba % cisoReader->block_size_lba;
-			ret = ref_seeko(reader->file, LBA_TO_BYTES(blockStart + offset + reader->lba_start), SEEK_SET);
+			ret = reader->file->seeko(LBA_TO_BYTES(blockStart + offset + reader->lba_start), SEEK_SET);
 			if (ret != 0) {
 				// Seek error.
 				if (errno == 0) {
@@ -327,7 +319,7 @@ static uint32_t reader_ciso_read(Reader *reader, void *ptr, uint32_t lba_start, 
 				}
 				return 0;
 			}
-			size = ref_read(ptr8, LBA_SIZE, 1, reader->file);
+			size = reader->file->read(ptr8, LBA_SIZE, 1);
 			if (size != 1) {
 				// Read error.
 				if (errno == 0) {
@@ -378,6 +370,6 @@ static void reader_ciso_flush(Reader *reader)
  */
 static void reader_ciso_close(Reader *reader)
 {
-	ref_close(reader->file);
+	reader->file->unref();
 	free(reader);
 }

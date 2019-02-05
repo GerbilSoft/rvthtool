@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth_p.h: RVT-H image handler. (PRIVATE HEADER)                         *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -23,7 +23,11 @@
 
 #include "rvth.h"
 #include "rvth_imagetype.h"
-#include "ref_file.h"
+#include "ref_file.hpp"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // RVT-H main struct.
 struct _RvtH {
@@ -67,5 +71,9 @@ bool rvth_is_block_empty(const uint8_t *block, unsigned int size);
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_write_BankEntry(RvtH *rvth, unsigned int bank);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __RVTHTOOL_LIBRVTH_RVTH_P_H__ */

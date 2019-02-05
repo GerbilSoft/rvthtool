@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth.c: RVT-H image handler.                                            *
+ * rvth.cpp: RVT-H image handler.                                          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -29,9 +29,6 @@
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/cert_store.h"
-
-// Disc image reader.
-#include "reader.h"
 
 // C includes.
 #include <assert.h>
@@ -136,12 +133,12 @@ const char *rvth_error(int err)
  */
 static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 {
-	RvtH *rvth = NULL;
+	RvtH *rvth = nullptr;
 	RvtH_BankEntry *entry;
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
 
-	Reader *reader = NULL;
+	Reader *reader = nullptr;
 	int64_t len;
 	uint8_t type;
 
@@ -156,7 +153,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// Get the file length.
 	// FIXME: This is obtained in rvth_open().
 	// Pass it as a parameter?
-	ret = ref_seeko(f_img, 0, SEEK_END);
+	ret = f_img->seeko(0, SEEK_END);
 	if (ret != 0) {
 		// Seek error.
 		err = errno;
@@ -166,10 +163,10 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		ret = -err;
 		goto fail;
 	}
-	len = ref_tello(f_img);
+	len = f_img->tello();
 
 	// Rewind back to the beginning of the file.
-	ret = ref_seeko(f_img, 0, SEEK_SET);
+	ret = f_img->seeko(0, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		err = errno;
@@ -209,7 +206,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the RvtH object
-	rvth = calloc(1, sizeof(RvtH));
+	rvth = (RvtH*)calloc(1, sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
 		err = errno;
@@ -223,7 +220,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// Allocate memory for a single RvtH_BankEntry object.
 	rvth->bank_count = 1;
 	rvth->type = reader->type;
-	rvth->entries = calloc(1, sizeof(RvtH_BankEntry));
+	rvth->entries = (RvtH_BankEntry*)calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
 		err = errno;
@@ -236,7 +233,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	rvth->f_img = ref_dup(f_img);
+	rvth->f_img = f_img->ref();
 	rvth->has_NHCD = false;
 	entry = rvth->entries;
 	entry->lba_start = reader->lba_start;
@@ -278,7 +275,7 @@ fail:
 	if (err != 0) {
 		errno = err;
 	}
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -290,7 +287,7 @@ fail:
 static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 {
 	NHCD_BankTable_Header nhcd_header;
-	RvtH *rvth = NULL;
+	RvtH *rvth = nullptr;
 	RvtH_BankEntry *rvth_entry;
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
@@ -300,7 +297,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	size_t size;
 
 	// Check the bank table header.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		err = errno;
@@ -310,7 +307,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		ret = -err;
 		goto fail;
 	}
-	size = ref_read(&nhcd_header, 1, sizeof(nhcd_header), f_img);
+	size = f_img->read(&nhcd_header, 1, sizeof(nhcd_header));
 	if (size != sizeof(nhcd_header)) {
 		// Short read.
 		err = errno;
@@ -322,7 +319,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the RvtH object
-	rvth = calloc(1, sizeof(RvtH));
+	rvth = (RvtH*)calloc(1, sizeof(RvtH));
 	if (!rvth) {
 		// Error allocating memory.
 		err = errno;
@@ -334,7 +331,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Determine the device type.
-	rvth->type = (ref_is_device(f_img)
+	rvth->type = (f_img->isDevice()
 		? RVTH_ImageType_HDD_Reader
 		: RVTH_ImageType_HDD_Image);
 
@@ -350,7 +347,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 
 		rvth->has_NHCD = false;
 		rvth->bank_count = 8;
-		rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
+		rvth->entries = (RvtH_BankEntry*)calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
 		if (!rvth->entries) {
 			// Error allocating memory.
 			err = errno;
@@ -361,7 +358,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 			goto fail;
 		}
 
-		rvth->f_img = ref_dup(f_img);
+		rvth->f_img = f_img->ref();
 		rvth_entry = rvth->entries;
 		lba_start = NHCD_BANK_START_LBA(0, 8);
 		for (i = 0; i < rvth->bank_count; i++, rvth_entry++, lba_start += NHCD_BANK_SIZE_LBA) {
@@ -392,7 +389,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 	}
 
 	// Allocate memory for the 8 RvtH_BankEntry objects.
-	rvth->entries = calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
+	rvth->entries = (RvtH_BankEntry*)calloc(rvth->bank_count, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
 		err = errno;
@@ -403,7 +400,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 		goto fail;
 	};
 
-	rvth->f_img = ref_dup(f_img);
+	rvth->f_img = f_img->ref();
 	rvth_entry = rvth->entries;
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
 	for (i = 0; i < rvth->bank_count; i++, rvth_entry++, addr += 512) {
@@ -418,7 +415,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 			continue;
 		}
 
-		ret = ref_seeko(f_img, addr, SEEK_SET);
+		ret = f_img->seeko(addr, SEEK_SET);
 		if (ret != 0) {
 			// Seek error.
 			err = errno;
@@ -428,7 +425,7 @@ static RvtH *rvth_open_hdd(RefFile *f_img, int *pErr)
 			ret = -err;
 			goto fail;
 		}
-		size = ref_read(&nhcd_entry, 1, sizeof(nhcd_entry), f_img);
+		size = f_img->read(&nhcd_entry, 1, sizeof(nhcd_entry));
 		if (size != sizeof(nhcd_entry)) {
 			// Short read.
 			err = errno;
@@ -494,7 +491,7 @@ fail:
 	if (err != 0) {
 		errno = err;
 	}
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -506,22 +503,23 @@ fail:
 RvtH *rvth_open(const TCHAR *filename, int *pErr)
 {
 	RefFile *f_img;
-	RvtH *rvth = NULL;
+	RvtH *rvth = nullptr;
 	int64_t len;
 
 	// Open the disk image.
-	f_img = ref_open(filename);
-	if (!f_img) {
+	f_img = new RefFile(filename);
+	if (!f_img->isOpen()) {
 		// Could not open the file.
 		if (pErr) {
-			*pErr = -errno;
+			*pErr = -f_img->lastError();
 		}
-		return NULL;
+		f_img->unref();
+		return nullptr;
 	}
 
 	// Determine if this is an HDD image or a disc image.
 	errno = 0;
-	len = ref_get_size(f_img);
+	len = f_img->size();
 	if (len <= 0) {
 		// File is empty and/or an I/O error occurred.
 		if (errno == 0) {
@@ -543,8 +541,8 @@ RvtH *rvth_open(const TCHAR *filename, int *pErr)
 	}
 
 	// If the RvtH object was opened, it will have
-	// called ref_dup() to increment the reference count.
-	ref_close(f_img);
+	// called f_img->ref() to increment the reference count.
+	f_img->unref();
 	return rvth;
 }
 
@@ -573,7 +571,7 @@ void rvth_close(RvtH *rvth)
 
 	// Clear the main reference.
 	if (rvth->f_img) {
-		ref_close(rvth->f_img);
+		rvth->f_img->unref();
 	}
 
 	free(rvth);
@@ -635,7 +633,7 @@ RvtH_ImageType_e rvth_get_ImageType(const RvtH *rvth)
 {
 	if (!rvth) {
 		errno = EINVAL;
-		return false;
+		return RVTH_ImageType_Unknown;
 	}
 
 	return rvth->type;
@@ -670,13 +668,13 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 		if (pErr) {
 			*pErr = -EINVAL;
 		}
-		return NULL;
+		return nullptr;
 	} else if (bank >= rvth->bank_count) {
 		errno = ERANGE;
 		if (pErr) {
 			*pErr = -EINVAL;
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	return &rvth->entries[bank];
