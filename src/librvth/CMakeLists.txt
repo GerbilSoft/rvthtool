@@ -32,7 +32,7 @@ SET(librvth_SRCS
 	rvth_extract.cpp
 	rvth_time.c
 	rvth_recrypt.c
-	ref_file.cpp
+	RefFile.cpp
 	disc_header.cpp
 	query.c
 	ptbl.c
@@ -52,7 +52,7 @@ SET(librvth_H
 	rvth_p.h
 	rvth_time.h
 	rvth_recrypt.h
-	ref_file.hpp
+	RefFile.hpp
 	tcharx.h
 	disc_header.h
 	query.h

@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * ref_file.hpp: Reference-counted FILE*.                                  *
+ * RefFile.hpp: Reference-counted FILE*.                                   *
  *                                                                         *
  * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
@@ -18,8 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_REF_FILE_HPP__
-#define __RVTHTOOL_LIBRVTH_REF_FILE_HPP__
+#ifndef __RVTHTOOL_LIBRVTH_REFFILE_HPP__
+#define __RVTHTOOL_LIBRVTH_REFFILE_HPP__
 
 #ifdef __cplusplus
 
@@ -188,4 +188,4 @@ struct RefFile;
 typedef struct RefFile RefFile;
 #endif /* __cplusplus */
 
-#endif /* __RVTHTOOL_LIBRVTH_REF_FILE_HPP__ */
+#endif /* __RVTHTOOL_LIBRVTH_REFFILE_HPP__ */

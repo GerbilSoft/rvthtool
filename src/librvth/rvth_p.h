@@ -23,7 +23,7 @@
 
 #include "rvth.h"
 #include "rvth_imagetype.h"
-#include "ref_file.hpp"
+#include "RefFile.hpp"
 
 #ifdef __cplusplus
 extern "C" {

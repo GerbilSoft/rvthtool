@@ -22,7 +22,7 @@
 #define __RVTHTOOL_LIBRVTH_READER_H__
 
 #include "libwiicrypto/common.h"
-#include "ref_file.hpp"
+#include "RefFile.hpp"
 #include "rvth_imagetype.h"
 
 #include <stdint.h>

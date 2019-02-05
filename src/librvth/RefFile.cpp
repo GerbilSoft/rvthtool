@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * ref_file.cpp: Reference-counted FILE*.                                  *
+ * RefFile.cpp: Reference-counted FILE*.                                   *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -20,7 +20,7 @@
 
 #include "config.librvth.h"
 
-#include "ref_file.hpp"
+#include "RefFile.hpp"
 
 // C includes.
 #include <stdlib.h>
