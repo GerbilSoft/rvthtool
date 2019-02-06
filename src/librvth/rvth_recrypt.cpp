@@ -763,12 +763,11 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			entry->tmd.sig_status = RVTH_SigStatus_Fake;
 			break;
 		case RVL_KEY_DEBUG:
-			// TODO: Real signing.
 			entry->crypto_type = RVTH_CryptoType_Debug;
 			entry->ticket.sig_type = RVTH_SigType_Debug;
-			entry->ticket.sig_status = RVTH_SigStatus_Fake;
+			entry->ticket.sig_status = RVTH_SigStatus_OK;
 			entry->tmd.sig_type = RVTH_SigType_Debug;
-			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			entry->tmd.sig_status = RVTH_SigStatus_OK;
 			break;
 		default:
 			// Should not happen...
