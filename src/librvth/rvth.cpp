@@ -61,8 +61,6 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 		uint8_t sbuf[LBA_SIZE];
 	} discHeader;
 
-	// TODO: Detect CISO and WBFS.
-
 	// Get the file length.
 	// FIXME: This is obtained in rvth_open().
 	// Pass it as a parameter?
