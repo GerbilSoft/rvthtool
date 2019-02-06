@@ -21,6 +21,7 @@
 #include "extract.h"
 #include "list-banks.h"
 #include "librvth/rvth.h"
+#include "librvth/rvth_error.h"
 
 #include <assert.h>
 #include <errno.h>

@@ -24,6 +24,7 @@
 #include "rvth_recrypt.h"
 #include "disc_header.h"
 #include "ptbl.h"
+#include "rvth_error.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"

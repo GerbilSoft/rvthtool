@@ -22,6 +22,7 @@
 #include "rvth.h"
 #include "rvth_p.h"
 #include "ptbl.h"
+#include "rvth_error.h"
 
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"

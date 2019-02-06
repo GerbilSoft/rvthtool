@@ -20,6 +20,7 @@
 
 #include "rvth_p.h"
 #include "rvth_time.h"
+#include "rvth_error.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"

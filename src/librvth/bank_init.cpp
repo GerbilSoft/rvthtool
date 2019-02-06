@@ -28,6 +28,7 @@
 #include "nhcd_structs.h"
 #include "ptbl.h"
 #include "rvth_time.h"
+#include "rvth_error.h"
 #include "reader/Reader.hpp"
 
 // C includes. (C++ namespace)

@@ -22,6 +22,7 @@
 #include "rvth_p.h"
 #include "rvth_recrypt.h"
 #include "ptbl.h"
+#include "rvth_error.h"
 #include "extract_crypt.h"
 
 #include "byteswap.h"

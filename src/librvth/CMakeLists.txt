@@ -38,6 +38,7 @@ SET(librvth_SRCS
 	ptbl.cpp
 	extract_crypt.cpp
 	bank_init.cpp
+	rvth_error.c
 
 	# Disc image readers
 	reader/Reader.cpp
@@ -59,6 +60,7 @@ SET(librvth_H
 	ptbl.h
 	extract_crypt.h
 	bank_init.h
+	rvth_error.h
 
 	# Disc image readers
 	reader/Reader.hpp

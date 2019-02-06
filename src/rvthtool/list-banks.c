@@ -20,6 +20,7 @@
 
 #include "list-banks.h"
 #include "librvth/rvth.h"
+#include "librvth/rvth_error.h"
 #include "libwiicrypto/gcn_structs.h"
 
 #include <assert.h>

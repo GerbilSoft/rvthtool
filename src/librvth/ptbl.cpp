@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "ptbl.h"
+#include "rvth_error.h"
 
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/wii_structs.h"

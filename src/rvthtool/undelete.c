@@ -21,6 +21,7 @@
 #include "undelete.h"
 #include "list-banks.h"
 #include "librvth/rvth.h"
+#include "librvth/rvth_error.h"
 
 #include <errno.h>
 #include <stdlib.h>
