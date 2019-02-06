@@ -585,7 +585,7 @@ const RvtH_BankEntry *rvth_get_BankEntry(const RvtH *rvth, unsigned int bank, in
 	} else if (bank >= rvth->bank_count) {
 		errno = ERANGE;
 		if (pErr) {
-			*pErr = -EINVAL;
+			*pErr = -ERANGE;
 		}
 		return nullptr;
 	}
