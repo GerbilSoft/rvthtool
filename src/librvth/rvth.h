@@ -288,8 +288,8 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 
 /**
  * Copy a bank from an RVT-H HDD or standalone disc image to an RVT-H system.
- * @param rvth_dest	[out] Destination RvtH object.
- * @param bank_dest	[out] Destination bank number. (0-7)
+ * @param rvth_dest	[in] Destination RvtH object.
+ * @param bank_dest	[in] Destination bank number. (0-7)
  * @param rvth_src	[in] Source RvtH object.
  * @param bank_src	[in] Source bank number. (0-7)
  * @param callback	[in,opt] Progress callback.
