@@ -24,9 +24,10 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 /**
  * Make an RVT-H object writable.

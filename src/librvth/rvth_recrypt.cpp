@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_recrypt.c: RVT-H "recryption" functions.                           *
+ * rvth_recrypt.cpp: RVT-H "recryption" functions.                         *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -23,7 +23,11 @@
 #include "rvth_p.h"
 #include "ptbl.h"
 
-#include "reader.h"
+// For LBA_TO_BYTES()
+#include "nhcd_structs.h"
+
+// Reader class
+#include "reader/Reader.hpp"
 
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
@@ -146,12 +150,8 @@ static int rvth_create_id(uint8_t *id, size_t size, const GCN_DiscHeader *gcn, c
 int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 {
 	RvtH_BankEntry *entry;
-	Reader *reader;
 	bool is_wii = false;
 	unsigned int lba_size;
-
-	int ret = 0;	// errno or RvtH_Errors
-	int err = 0;	// errno setting
 
 	// Sector buffer.
 	sbuf1_t sbuf;
@@ -191,57 +191,60 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 	}
 
 	// Make the RVT-H object writable.
-	ret = rvth_make_writable(rvth);
+	int ret = rvth_make_writable(rvth);
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
+		int err;
 		if (ret < 0) {
 			err = -ret;
 		} else {
 			err = EROFS;
+			ret = -EROFS;
 		}
-		goto end;
+		errno = err;
+		return ret;
 	}
 
 	// Get the GCN disc header.
-	reader = entry->reader;
+	Reader *const reader = entry->reader;
 	errno = 0;
-	lba_size = reader_read(reader, &sbuf.u8, 0, 1);
+	lba_size = reader->read(&sbuf.u8, 0, 1);
 	if (lba_size != 1) {
 		// Unable to read the disc header.
-		err = errno;
+		int err = errno;
 		if (err == 0) {
 			err = EIO;
+			errno = err;
 		}
-		ret = -err;
-		goto end;
+		return -err;
 	}
 
 	memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
 	if (!is_wii) {
 		// GCN. Write at 0x480.
 		errno = 0;
-		lba_size = reader_read(reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+		lba_size = reader->read(&sbuf.u8, BYTES_TO_LBA(0x400), 1);
 		if (lba_size != 1) {
-			err = errno;
+			int err = errno;
 			if (err == 0) {
 				err = EIO;
+				errno = err;
 			}
-			ret = -err;
-			goto end;
+			return -err;
 		}
 
 		// Only if this area is empty!
 		if (rvth_is_block_empty(&sbuf.u8[0x80], 256)) {
 			rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
 			errno = 0;
-			lba_size = reader_write(reader, &sbuf.u8, BYTES_TO_LBA(0x400), 1);
+			lba_size = reader->write(&sbuf.u8, BYTES_TO_LBA(0x400), 1);
 			if (lba_size != 1) {
-				err = errno;
+				int err = errno;
 				if (err == 0) {
 					err = EIO;
+					errno = err;
 				}
-				ret = -err;
-				goto end;
+				return -err;
 			}
 		}
 	} else {
@@ -251,11 +254,11 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 		unsigned int i;
 
 		// Make sure the partition table is loaded.
-		ret = rvth_ptbl_load(entry);
+		int ret = rvth_ptbl_load(entry);
 		if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
 			// Unable to load the partition table.
-			err = -ret;
-			goto end;
+			errno = -ret;
+			return ret;
 		}
 
 		// Write the ID at the end of each partition header.
@@ -266,15 +269,15 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 
 			// Read the last LBA of the partition header.
 			errno = 0;
-			lba_size = reader_read(reader, id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
+			lba_size = reader->read(id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
 			if (lba_size != BYTES_TO_LBA(sizeof(id_buf))) {
 				// Read error.
-				err = errno;
+				int err = errno;
 				if (err == 0) {
 					err = EIO;
+					errno = err;
 				}
-				ret = -err;
-				goto end;
+				return -err;
 			}
 
 			// Only if this area is empty!
@@ -289,24 +292,20 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 
 			// Write the updated LBA.
 			errno = 0;
-			lba_size = reader_write(reader, id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
+			lba_size = reader->write(id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
 			if (lba_size != BYTES_TO_LBA(sizeof(id_buf))) {
 				// Write error.
-				err = errno;
+				int err = errno;
 				if (err == 0) {
 					err = EIO;
+					errno = err;
 				}
-				ret = -err;
-				goto end;
+				return -err;
 			}
 		}
 	}
 
-end:
-	if (err != 0) {
-		errno = err;
-	}
-	return ret;
+	return 0;
 }
 
 static inline uint32_t toNext64(uint32_t n)
@@ -432,13 +431,9 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	RvtH_CryptoType_e cryptoType, RvtH_Progress_Callback callback)
 {
 	RvtH_BankEntry *entry;
-	Reader *reader;
 	RVL_AES_Keys_e toKey;
 	uint32_t lba_size;
 	unsigned int i;
-
-	int ret = 0;	// errno or RvtH_Errors
-	int err = 0;	// errno setting
 
 	// Certificates.
 	const RVL_Cert_RSA2048 *cert_ticket;
@@ -522,15 +517,18 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	// since we're doing that for each partition individually.
 
 	// Make the RVT-H object writable.
-	ret = rvth_make_writable(rvth);
+	int ret = rvth_make_writable(rvth);
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
+		int err;
 		if (ret < 0) {
 			err = -ret;
 		} else {
 			err = EROFS;
+			ret = -EROFS;
 		}
-		goto end;
+		errno = err;
+		return ret;
 	}
 
 	if (callback) {
@@ -549,17 +547,17 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 
 	// Get the GCN disc header.
-	reader = entry->reader;
+	Reader *const reader = entry->reader;
 	errno = 0;
-	lba_size = reader_read(reader, &sbuf.u8, 0, 1);
+	lba_size = reader->read(&sbuf.u8, 0, 1);
 	if (lba_size != 1) {
 		// Read error.
-		err = errno;
+		int err = errno;
 		if (err == 0) {
 			err = EIO;
+			errno = err;
 		}
-		ret = -err;
-		goto end;
+		return -err;
 	}
 	memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
 
@@ -567,8 +565,8 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	ret = rvth_ptbl_load(entry);
 	if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
 		// Unable to load the partition table.
-		err = -ret;
-		goto end;
+		errno = -ret;
+		return ret;
 	}
 
 	// Remove update partitions.
@@ -577,16 +575,16 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	ret = rvth_ptbl_RemoveUpdates(entry);
 	if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
 		// Unable to remove update partitions.
-		err = -ret;
-		goto end;
+		errno = -ret;
+		return ret;
 	}
 
 	// Write the updated partition table.
 	ret = rvth_ptbl_write(entry);
 	if (ret != 0) {
 		// Unable to write the updated partition table.
-		err = -ret;
-		goto end;
+		errno = -ret;
+		return ret;
 	}
 
 	// Get the certificates.
@@ -619,15 +617,15 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 
 		// Read the partition header.
 		errno = 0;
-		lba_size = reader_read(reader, &hdr_orig, pte->lba_start, BYTES_TO_LBA(sizeof(hdr_orig.u8)));
+		lba_size = reader->read(&hdr_orig, pte->lba_start, BYTES_TO_LBA(sizeof(hdr_orig.u8)));
 		if (lba_size != BYTES_TO_LBA(sizeof(hdr_orig))) {
 			// Read error.
-			err = errno;
+			int err = errno;
 			if (err == 0) {
 				err = EIO;
+				errno = err;
 			}
-			ret = -err;
-			goto end;
+			return -err;
 		}
 
 		// TODO: Check if the partition is already encrypted with the target keys.
@@ -640,11 +638,12 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		ret = rvth_recrypt_ticket(&hdr_new.ticket, toKey);
 		if (ret != 0) {
 			// Error recrypting the ticket.
-			err = errno;
+			int err = errno;
 			if (err == 0) {
 				err = EIO;
+				errno = err;
 			}
-			goto end;
+			return -err;
 		}
 		// Sign the ticket.
 		// TODO: Error checking.
@@ -666,9 +665,8 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		tmd_offset_orig = be32_to_cpu(hdr_orig.tmd_offset) << 2;
 		if (data_pos + tmd_size > sizeof(hdr_new)) {
 			// Invalid...
-			err = EIO;
-			ret = RVTH_ERROR_PARTITION_HEADER_CORRUPTED;
-			goto end;
+			errno = EIO;
+			return RVTH_ERROR_PARTITION_HEADER_CORRUPTED;
 		}
 		memcpy(&hdr_new.u8[data_pos], &hdr_orig.u8[tmd_offset_orig], tmd_size);
 
@@ -699,9 +697,8 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		cert_chain_size_new = sizeof(*cert_ticket) + sizeof(*cert_CA) + sizeof(*cert_TMD);
 		if (data_pos + cert_chain_size_new > sizeof(hdr_new)) {
 			// Invalid...
-			err = EIO;
-			ret = RVTH_ERROR_PARTITION_HEADER_CORRUPTED;
-			goto end;
+			errno = EIO;
+			return RVTH_ERROR_PARTITION_HEADER_CORRUPTED;
 		}
 
 		// Certificate chain order for retail is Ticket, CA, TMD.
@@ -736,15 +733,15 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 
 		// Write the new partition header.
 		errno = 0;
-		lba_size = reader_write(reader, &hdr_new, pte->lba_start, BYTES_TO_LBA(sizeof(hdr_new.u8)));
+		lba_size = reader->write(&hdr_new, pte->lba_start, BYTES_TO_LBA(sizeof(hdr_new.u8)));
 		if (lba_size != BYTES_TO_LBA(sizeof(hdr_new))) {
 			// Write error.
-			err = errno;
+			int err = errno;
 			if (err == 0) {
 				err = EIO;
+				errno = err;
 			}
-			ret = -err;
-			goto end;
+			return -err;
 		}
 	}
 
@@ -785,16 +782,12 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 
 	// Finished processing the disc image.
-	reader_flush(reader);
+	reader->flush();
 
 	if (callback) {
 		state.lba_processed = 1;
 		callback(&state);
 	}
 
-end:
-	if (err != 0) {
-		errno = err;
-	}
-	return ret;
+	return 0;
 }

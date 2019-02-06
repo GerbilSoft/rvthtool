@@ -22,6 +22,9 @@
 
 #include "librvth/rvth.h"
 
+// For LBA_TO_BYTES()
+#include "nhcd_structs.h"
+
 // C includes. (C++ namespace)
 #include <cassert>
 #include <cstring>

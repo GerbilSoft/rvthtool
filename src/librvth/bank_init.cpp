@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * bank_init.c: RvtH_BankEntry initialization functions.                   *
+ * bank_init.cpp: RvtH_BankEntry initialization functions.                 *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -28,11 +28,12 @@
 #include "nhcd_structs.h"
 #include "ptbl.h"
 #include "rvth_time.h"
+#include "reader/Reader.hpp"
 
-// C includes.
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 /**
  * Set the region field in an RvtH_BankEntry.
@@ -89,7 +90,7 @@ int rvth_init_BankEntry_region(RvtH_BankEntry *entry)
 	}
 
 	// Read the LBA containing the region code.
-	lba_size = reader_read(entry->reader, sector_buf.u8, lba_region, 1);
+	lba_size = entry->reader->read(sector_buf.u8, lba_region, 1);
 	if (lba_size != 1) {
 		// Error reading the region code.
 		return -EIO;
@@ -170,7 +171,7 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 
 	// Found the game partition.
 	// Read the partition header.
-	lba_size = reader_read(entry->reader, &header, game_pte->lba_start, BYTES_TO_LBA(sizeof(header)));
+	lba_size = entry->reader->read(&header, game_pte->lba_start, BYTES_TO_LBA(sizeof(header)));
 	if (lba_size != BYTES_TO_LBA(sizeof(header))) {
 		// Error reading the partition header.
 		return -EIO;
@@ -427,7 +428,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 		// Read the partition header to determine the data offset.
 		// 0x2B8: Data offset >> 2 (LBA 1)
 		uint64_t data_offset;
-		lba_size = reader_read(entry->reader, sector_buf, lba_start + 1, 1);
+		lba_size = entry->reader->read(sector_buf, lba_start + 1, 1);
 		if (lba_size != 1) {
 			// Error reading the boot block and boot info.
 			return -EIO;
@@ -444,7 +445,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 
 	// Read the boot block and boot info.
 	// Start address: 0x420 (LBA 2)
-	lba_size = reader_read(entry->reader, sector_buf, lba_start + 2, 1);
+	lba_size = entry->reader->read(sector_buf, lba_start + 2, 1);
 	if (lba_size != 1) {
 		// Error reading the boot block and boot info.
 		return -EIO;
@@ -502,7 +503,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 
 	// Load the DOL header.
 	dolOffset = (int64_t)be32_to_cpu(boot.bb2.bootFilePosition) << shift;
-	lba_size = reader_read(entry->reader, sector_buf, lba_start + BYTES_TO_LBA(dolOffset), 2);
+	lba_size = entry->reader->read(sector_buf, lba_start + BYTES_TO_LBA(dolOffset), 2);
 	if (lba_size != 2) {
 		// Error reading the DOL header.
 		return -EIO;
@@ -708,7 +709,8 @@ int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 	entry->lba_len = lba_len;
 
 	// Initialize the disc image reader.
-	entry->reader = reader_open(f_img, lba_start, reader_lba_len);
+	// TODO: Error handling.
+	entry->reader = Reader::open(f_img, lba_start, reader_lba_len);
 
 	if (type == RVTH_BankType_Empty) {
 		// We're done here.

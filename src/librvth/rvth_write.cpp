@@ -25,14 +25,16 @@
 #include "nhcd_structs.h"
 
 // Disc image reader.
-#include "reader.h"
+#include "reader/Reader.hpp"
 
 // C includes.
-#include <assert.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+#include <ctime>
 
 /**
  * Create a writable disc image object.
@@ -104,7 +106,7 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	entry->timestamp = time(nullptr);
 
 	// Initialize the disc image reader.
-	entry->reader = reader_open(f_img, entry->lba_start, entry->lba_len);
+	entry->reader = Reader::open(f_img, entry->lba_start, entry->lba_len);
 	if (!entry->reader) {
 		// Error creating the disc image reader.
 		err = errno;
@@ -270,7 +272,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 	}
 
 	// Restore the disc header if necessary.
-	lba_size = reader_read(rvth_entry->reader, sbuf, 0, 1);
+	lba_size = rvth_entry->reader->read(sbuf, 0, 1);
 	if (lba_size == 1) {
 		// Check if the disc header is correct.
 		if (memcmp(sbuf, &rvth_entry->discHeader, sizeof(rvth_entry->discHeader)) != 0) {
@@ -278,7 +280,7 @@ int rvth_undelete(RvtH *rvth, unsigned int bank)
 			// Restore it.
 			memcpy(sbuf, &rvth_entry->discHeader, sizeof(rvth_entry->discHeader));
 			// TODO: Check for errors.
-			reader_write(rvth_entry->reader, sbuf, 0, 1);
+			rvth_entry->reader->write(sbuf, 0, 1);
 		}
 	}
 

@@ -25,12 +25,22 @@
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
 
-#include "reader.h"
 #include "tcharx.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <time.h>
+
+// Image types
+#include "rvth_imagetype.h"
+
+// Reader class
+#ifdef __cplusplus
+class Reader;
+#else
+struct Reader;
+typedef struct Reader Reader;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

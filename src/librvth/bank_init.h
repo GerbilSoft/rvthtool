@@ -23,6 +23,14 @@
 
 #include "rvth.h"
 
+// RefFile class
+#ifdef __cplusplus
+class RefFile;
+#else
+struct RefFile;
+typedef struct RefFile RefFile;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -28,14 +28,16 @@
 #include "nhcd_structs.h"
 
 // Disc image reader.
-#include "reader.h"
+#include "reader/Reader.hpp"
 
 // C includes.
-#include <assert.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+#include <ctime>
 
 /**
  * Copy a bank from an RVT-H HDD or standalone disc image to a writable standalone disc image.
@@ -168,7 +170,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		state.lba_total = lba_copy_len;
 	}
 
-	// TODO: Optimize seeking? (reader_write() seeks every time.)
+	// TODO: Optimize seeking? (Reader::write() seeks every time.)
 	lba_buf_max = entry_dest->lba_len & ~(LBA_COUNT_BUF-1);
 	lba_nonsparse = 0;
 	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
@@ -184,7 +186,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		}
 
 		// TODO: Error handling.
-		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);
+		entry_src->reader->read(buf, lba_count, LBA_COUNT_BUF);
 
 		if (lba_count == 0) {
 			// Make sure we copy the disc header in if the
@@ -205,7 +207,7 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 			if (!rvth_is_block_empty(&buf[sprs], 4096)) {
 				// 4 KB block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
-				reader_write(entry_dest->reader, &buf[sprs], lba_nonsparse, 8);
+				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 8);
 				lba_nonsparse += 7;
 			}
 		}
@@ -226,14 +228,14 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 				goto end;
 			}
 		}
-		reader_read(entry_src->reader, buf, lba_count, lba_left);
+		entry_src->reader->read(buf, lba_count, lba_left);
 
 		// Check for empty 512-byte blocks.
 		for (sprs = 0; sprs < sz_left; sprs += 512) {
 			if (!rvth_is_block_empty(&buf[sprs], 512)) {
 				// 512-byte block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
-				reader_write(entry_dest->reader, &buf[sprs], lba_nonsparse, 1);
+				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 1);
 			}
 		}
 	}
@@ -256,11 +258,11 @@ int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_sr
 		// TODO: Maybe not needed if ftruncate() succeeded?
 		// TODO: Check for errors.
 		memset(buf, 0, 512);
-		reader_write(entry_dest->reader, buf, lba_copy_len-1, 1);
+		entry_dest->reader->write(buf, lba_copy_len-1, 1);
 	}
 
 	// Finished extracting the disc image.
-	reader_flush(entry_dest->reader);
+	entry_dest->reader->flush();
 
 end:
 	free(buf);
@@ -395,7 +397,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 				goto end;
 		}
 
-		size = reader_write(reader, sdk_header, 0, SDK_HEADER_SIZE_LBA);
+		size = reader->write(sdk_header, 0, SDK_HEADER_SIZE_LBA);
 		if (size != SDK_HEADER_SIZE_LBA) {
 			// Write error.
 			ret = -errno;
@@ -407,8 +409,7 @@ int rvth_extract(const RvtH *rvth, unsigned int bank, const TCHAR *filename,
 		free(sdk_header);
 
 		// Remove the SDK header from the reader's offsets.
-		reader->lba_start += SDK_HEADER_SIZE_LBA;
-		reader->lba_len -= SDK_HEADER_SIZE_LBA;
+		reader->lba_adjust(SDK_HEADER_SIZE_LBA);
 	}
 
 	// Copy the bank from the source image to the destination GCM.
@@ -605,7 +606,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 
 	// If no reader is set up for the destination bank, set one up now.
 	if (!entry_dest->reader) {
-		entry_dest->reader = reader_open(rvth_dest->f_img,
+		entry_dest->reader = Reader::open(rvth_dest->f_img,
 			entry_dest->lba_start, entry_dest->lba_len);
 		if (!entry_dest->reader) {
 			// Cannot create a reader...
@@ -667,7 +668,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	// TODO: Special indicator.
-	// TODO: Optimize seeking? (reader_write() seeks every time.)
+	// TODO: Optimize seeking? (Reader::write() seeks every time.)
 	lba_buf_max = entry_dest->lba_len & ~(LBA_COUNT_BUF-1);
 	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
 		if (callback) {
@@ -686,15 +687,15 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 		// 16 KB zeroed out...
 
 		// TODO: Error handling.
-		reader_read(entry_src->reader, buf, lba_count, LBA_COUNT_BUF);
-		reader_write(entry_dest->reader, buf, lba_count, LBA_COUNT_BUF);
+		entry_src->reader->read(buf, lba_count, LBA_COUNT_BUF);
+		entry_dest->reader->write(buf, lba_count, LBA_COUNT_BUF);
 	}
 
 	// Process any remaining LBAs.
 	if (lba_count < lba_copy_len) {
 		const unsigned int lba_left = lba_copy_len - lba_count;
-		reader_read(entry_src->reader, buf, lba_count, lba_left);
-		reader_write(entry_dest->reader, buf, lba_count, lba_left);
+		entry_src->reader->read(buf, lba_count, lba_left);
+		entry_dest->reader->write(buf, lba_count, lba_left);
 	}
 
 	if (callback) {
@@ -709,7 +710,7 @@ int rvth_copy_to_hdd(RvtH *rvth_dest, unsigned int bank_dest, const RvtH *rvth_s
 	}
 
 	// Flush the buffers.
-	reader_flush(entry_dest->reader);
+	entry_dest->reader->flush();
 
 	// Update the bank table.
 	// TODO: Check for errors.

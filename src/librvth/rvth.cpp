@@ -25,6 +25,7 @@
 #include "disc_header.h"
 #include "ptbl.h"
 #include "bank_init.h"
+#include "reader/Reader.hpp"
 
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/cert.h"
@@ -180,7 +181,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// Initialize the disc image reader.
 	// We need to do this before anything else in order to
 	// handle CISO and WBFS images.
-	reader = reader_open(f_img, 0, BYTES_TO_LBA(len));
+	reader = Reader::open(f_img, 0, BYTES_TO_LBA(len));
 	if (!reader) {
 		// Unable to open the reader.
 		goto fail;
@@ -189,7 +190,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// Read the GCN disc header.
 	// NOTE: Since this is a standalone disc image, we'll just
 	// read the header directly.
-	ret = reader_read(reader, discHeader.sbuf, 0, 1);
+	ret = reader->read(discHeader.sbuf, 0, 1);
 	if (ret < 0) {
 		// Error...
 		err = -ret;
@@ -199,7 +200,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	// Identify the disc type.
 	type = rvth_disc_header_identify(&discHeader.gcn);
 	if (type == RVTH_BankType_Wii_SL &&
-	    reader->lba_len > NHCD_BANK_WII_SL_SIZE_RVTR_LBA)
+	    reader->lba_len() > NHCD_BANK_WII_SL_SIZE_RVTR_LBA)
 	{
 		// Dual-layer image.
 		type = RVTH_BankType_Wii_DL;
@@ -219,7 +220,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 
 	// Allocate memory for a single RvtH_BankEntry object.
 	rvth->bank_count = 1;
-	rvth->type = reader->type;
+	rvth->type = reader->type();
 	rvth->entries = (RvtH_BankEntry*)calloc(1, sizeof(RvtH_BankEntry));
 	if (!rvth->entries) {
 		// Error allocating memory.
@@ -236,8 +237,8 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 	rvth->f_img = f_img->ref();
 	rvth->has_NHCD = false;
 	entry = rvth->entries;
-	entry->lba_start = reader->lba_start;
-	entry->lba_len = reader->lba_len;
+	entry->lba_start = reader->lba_start();
+	entry->lba_len = reader->lba_len();
 	entry->type = type;
 	entry->is_deleted = false;
 	entry->reader = reader;
@@ -265,7 +266,7 @@ static RvtH *rvth_open_gcm(RefFile *f_img, int *pErr)
 fail:
 	// Failed to open the disc image.
 	if (reader) {
-		reader_close(reader);
+		delete reader;
 	}
 
 	rvth_close(rvth);
@@ -561,7 +562,7 @@ void rvth_close(RvtH *rvth)
 	// RefFile has a reference count, so we have to clear the count.
 	for (i = 0; i < rvth->bank_count; i++) {
 		if (rvth->entries[i].reader) {
-			reader_close(rvth->entries[i].reader);
+			delete rvth->entries[i].reader;
 		}
 		free(rvth->entries[i].ptbl);
 	}

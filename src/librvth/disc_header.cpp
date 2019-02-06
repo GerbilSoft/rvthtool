@@ -20,7 +20,6 @@
 
 #include "disc_header.h"
 #include "rvth_p.h"
-#include "reader.h"
 
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/aesw.h"
@@ -28,10 +27,17 @@
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// For LBA_TO_BYTES()
+#include "nhcd_structs.h"
+
+// C includes.
 #include <stdlib.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+#include <cstdlib>
 
 // NDDEMO header.
 // Used in early GameCube tech demos.

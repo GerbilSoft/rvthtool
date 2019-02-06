@@ -31,19 +31,19 @@ SET(librvth_SRCS
 	rvth_write.cpp
 	rvth_extract.cpp
 	rvth_time.c
-	rvth_recrypt.c
+	rvth_recrypt.cpp
 	RefFile.cpp
 	disc_header.cpp
 	query.c
-	ptbl.c
-	extract_crypt.c
-	bank_init.c
+	ptbl.cpp
+	extract_crypt.cpp
+	bank_init.cpp
 
 	# Disc image readers
-	reader.cpp
-	reader_plain.cpp
-	reader_ciso.cpp
-	reader_wbfs.cpp
+	reader/Reader.cpp
+	reader/PlainReader.cpp
+	reader/CisoReader.cpp
+	reader/WbfsReader.cpp
 	)
 # Headers.
 SET(librvth_H
@@ -61,11 +61,11 @@ SET(librvth_H
 	bank_init.h
 
 	# Disc image readers
-	reader.h
-	reader_plain.h
-	reader_ciso.h
-	libwbfs.h
-	reader_wbfs.h
+	reader/Reader.hpp
+	reader/PlainReader.hpp
+	reader/CisoReader.hpp
+	reader/libwbfs.h
+	reader/WbfsReader.hpp
 	)
 
 IF(HAVE_UDEV)

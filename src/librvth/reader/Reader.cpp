@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader.cpp: Disc image reader base class.                               *
+ * Reader.cpp: Disc image reader base class.                               *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                  *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,21 +18,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "reader.h"
-#include "reader_plain.h"
-#include "reader_ciso.h"
-#include "reader_wbfs.h"
+#include "Reader.hpp"
+#include "PlainReader.hpp"
+#include "CisoReader.hpp"
+#include "WbfsReader.hpp"
 
-// C includes.
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// For LBA_TO_BYTES()
+#include "nhcd_structs.h"
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 // SDK header values.
 // TODO: Verify GC1L, NN2L. (These are all NN1L images.)
 // TODO: Checksum at 0x0830.
 static const uint8_t sdk_0x0000[4] = {0xFF,0xFF,0x00,0x00};
 static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
+
+Reader::Reader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+	: m_file(nullptr)
+	, m_lba_start(lba_start)
+	, m_lba_len(lba_len)
+	, m_type(RVTH_ImageType_Unknown)
+{
+	// Validate parameters.
+	assert(file != nullptr);
+	assert(lba_start == 0 || lba_len != 0);
+	if (!file || (lba_start > 0 && lba_len == 0)) {
+		// Invalid parameters.
+		errno = EINVAL;
+		return;
+	}
+
+	// ref() the file.
+	m_file = file->ref();
+}
+
+Reader::~Reader()
+{
+	if (m_file) {
+		m_file->unref();
+	}
+}
 
 /**
  * Create a Reader object for a disc image.
@@ -49,18 +78,14 @@ static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
  * @param lba_len	[in] Length, in LBAs.
  * @return Reader*, or NULL on error.
  */
-Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
-	uint8_t sbuf[4096];
-	int ret;
-	size_t size;
-
 	assert(file != NULL);
 	if (file->isDevice()) {
 		// This is an RVT-H Reader system.
 		// Only plain images are supported.
 		// TODO: Also check for RVT-H Reader HDD images?
-		return reader_plain_open(file, lba_start, lba_len);
+		return new PlainReader(file, lba_start, lba_len);
 	}
 
 	// This is a disc image file.
@@ -68,37 +93,38 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// if we're opening a file for writing.
 
 	// Check for other disc image formats.
-	ret = file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
+	uint8_t sbuf[4096];
+	int ret = file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
 			errno = EIO;
 		}
-		return NULL;
+		return nullptr;
 	}
 	errno = 0;
-	size = file->read(sbuf, 1, sizeof(sbuf));
+	size_t size = file->read(sbuf, 1, sizeof(sbuf));
 	if (size != sizeof(sbuf)) {
 		// Short read. May be empty.
 		if (errno != 0) {
 			// Actual error.
-			return NULL;
+			return nullptr;
 		} else {
 			// Assume it's a new file.
 			// Use the plain disc image reader.
 			file->rewind();
-			return reader_plain_open(file, lba_start, lba_len);
+			return new PlainReader(file, lba_start, lba_len);
 		}
 	}
 	file->rewind();
 
 	// Check the magic number.
-	if (reader_ciso_is_supported(sbuf, sizeof(sbuf))) {
+	if (CisoReader::isSupported(sbuf, sizeof(sbuf))) {
 		// This is a supported CISO image.
-		return reader_ciso_open(file, lba_start, lba_len);
-	} else if (reader_wbfs_is_supported(sbuf, sizeof(sbuf))) {
+		return new CisoReader(file, lba_start, lba_len);
+	} else if (WbfsReader::isSupported(sbuf, sizeof(sbuf))) {
 		// This is a supported WBFS image.
-		return reader_wbfs_open(file, lba_start, lba_len);
+		return new WbfsReader(file, lba_start, lba_len);
 	}
 
 	// Check for SDK headers.
@@ -116,5 +142,13 @@ Reader *reader_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// Use the plain disc image reader.
-	return reader_plain_open(file, lba_start, lba_len);
+	return new PlainReader(file, lba_start, lba_len);
+}
+
+/**
+ * Flush the file buffers.
+ */
+void Reader::flush(void)
+{
+	m_file->flush();
 }
