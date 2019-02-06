@@ -22,6 +22,7 @@
 #include "libwiicrypto/common.h"
 
 // C includes.
+#include <assert.h>
 #include <string.h>
 
 /**
