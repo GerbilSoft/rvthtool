@@ -37,9 +37,9 @@
 #define __swab64(x) _byteswap_uint64(x)
 
 /* `inline` might not be defined in older versions. */
-#ifndef inline
+#if !defined(__cplusplus) && !defined(inline)
 # define inline __inline
-#endif
+#endif /* !__cplusplus && !inline */
 
 #elif defined(__GNUC__)
 
