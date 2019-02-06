@@ -72,16 +72,6 @@ class WbfsReader : public Reader
 		 */
 		uint32_t read(void *ptr, uint32_t lba_start, uint32_t lba_len) final;
 
-		/**
-		 * Write data to the disc image.
-		 * NOTE: Not supported for WBFS; this will return an error.
-		 * @param ptr		[in] Write buffer.
-		 * @param lba_start	[in] Starting LBA.
-		 * @param lba_len	[in] Length, in LBAs.
-		 * @return Number of LBAs read, or 0 on error.
-		 */
-		uint32_t write(const void *ptr, uint32_t lba_start, uint32_t lba_len) final;
-
 	private:
 		// NOTE: reader.lba_len is the virtual image size.
 		// real_lba_len is the actual image size.

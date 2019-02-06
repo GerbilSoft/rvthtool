@@ -146,6 +146,29 @@ Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 }
 
 /**
+ * Write data to a disc image.
+ *
+ * Base class implementation returns an error.
+ * This is useful for read-only subclasses, since they won't
+ * have to implement this function.
+ *
+ * @param ptr		[in] Write buffer.
+ * @param lba_start	[in] Starting LBA.
+ * @param lba_len	[in] Length, in LBAs.
+ * @return Number of LBAs read, or 0 on error.
+ */
+uint32_t Reader::write(const void *ptr, uint32_t lba_start, uint32_t lba_len)
+{
+	// Base class is not writable.
+	UNUSED(ptr);
+	UNUSED(lba_start);
+	UNUSED(lba_len);
+
+	errno = EROFS;
+	return 0;
+}
+
+/**
  * Flush the file buffers.
  */
 void Reader::flush(void)

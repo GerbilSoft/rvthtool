@@ -63,16 +63,6 @@ class CisoReader : public Reader
 		 */
 		uint32_t read(void *ptr, uint32_t lba_start, uint32_t lba_len) final;
 
-		/**
-		 * Write data to the disc image.
-		 * NOTE: Not supported for CISO; this will return an error.
-		 * @param ptr		[in] Write buffer.
-		 * @param lba_start	[in] Starting LBA.
-		 * @param lba_len	[in] Length, in LBAs.
-		 * @return Number of LBAs read, or 0 on error.
-		 */
-		uint32_t write(const void *ptr, uint32_t lba_start, uint32_t lba_len) final;
-
 	private:
 		#define CISO_HEADER_SIZE 0x8000
 		#define CISO_MAP_SIZE (CISO_HEADER_SIZE - sizeof(uint32_t) - (sizeof(char) * 4))

@@ -495,22 +495,3 @@ uint32_t WbfsReader::read(void *ptr, uint32_t lba_start, uint32_t lba_len)
 
 	return lbas_read;
 }
-
-/**
- * Write data to a disc image.
- * NOTE: Not supported for WBFS; this will return an error.
- * @param ptr		[in] Write buffer.
- * @param lba_start	[in] Starting LBA.
- * @param lba_len	[in] Length, in LBAs.
- * @return Number of LBAs read, or 0 on error.
- */
-uint32_t WbfsReader::write(const void *ptr, uint32_t lba_start, uint32_t lba_len)
-{
-	// WBFS is not writable.
-	UNUSED(ptr);
-	UNUSED(lba_start);
-	UNUSED(lba_len);
-
-	errno = EROFS;
-	return 0;
-}

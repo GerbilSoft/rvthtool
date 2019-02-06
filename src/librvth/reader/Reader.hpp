@@ -96,7 +96,7 @@ class Reader
 		 * @param lba_len	[in] Length, in LBAs.
 		 * @return Number of LBAs read, or 0 on error.
 		 */
-		virtual uint32_t write(const void *ptr, uint32_t lba_start, uint32_t lba_len) = 0;
+		virtual uint32_t write(const void *ptr, uint32_t lba_start, uint32_t lba_len);
 
 		/**
 		 * Flush the file buffers.
