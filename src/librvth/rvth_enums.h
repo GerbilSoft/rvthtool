@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_imagetype.h: Disc image type enumeration.                          *
+ * rvth_enums.h: RVT-H enums.                                              *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,15 +18,57 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_RVTH_IMAGETYPE_H__
-#define __RVTHTOOL_LIBRVTH_RVTH_IMAGETYPE_H__
-
-// This file is separate in order to allow usage by the Reader
-// classes without including the whole rvth.h file.
+#ifndef __LIBRVTH_RVTH_ENUMS_H__
+#define __LIBRVTH_RVTH_ENUMS_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define RVTH_BANK_COUNT 8	/* Standard RVT-H HDD bank count. */
+#define RVTH_BLOCK_SIZE 512
+
+// RVT-H bank types.
+typedef enum {
+	RVTH_BankType_Empty		= 0,	// Magic is 0.
+	RVTH_BankType_Unknown		= 1,	// Unknown magic.
+	RVTH_BankType_GCN		= 2,
+	RVTH_BankType_Wii_SL		= 3,
+	RVTH_BankType_Wii_DL		= 4,
+	RVTH_BankType_Wii_DL_Bank2	= 5,	// Bank 2 for DL images.
+
+	RVTH_BankType_MAX
+} RvtH_BankType_e;
+
+// Encryption types.
+typedef enum {
+	RVTH_CryptoType_Unknown	= 0,	// Unknown encryption.
+	RVTH_CryptoType_None	= 1,	// No encryption.
+	RVTH_CryptoType_Debug	= 2,	// RVT-R encryption.
+	RVTH_CryptoType_Retail	= 3,	// Retail encryption.
+	RVTH_CryptoType_Korean	= 4,	// Korean retail encryption.
+
+	RVTH_CryptoType_MAX
+} RvtH_CryptoType_e;
+
+// Signature types.
+typedef enum {
+	RVTH_SigType_Unknown	= 0,	// Unknown signature.
+	RVTH_SigType_Debug	= 1,	// Debug signature.
+	RVTH_SigType_Retail	= 2,	// Retail signature.
+
+	RVTH_SigType_MAX
+} RvtH_SigType_e;
+
+// Signature status.
+typedef enum {
+	RVTH_SigStatus_Unknown	= 0,	// Unknown signature status.
+	RVTH_SigStatus_OK	= 1,	// Valid
+	RVTH_SigStatus_Invalid	= 2,	// Invalid
+	RVTH_SigStatus_Fake	= 3,	// Fakesigned
+
+	RVTH_SigStatus_MAX
+} RvtH_SigStatus_e;
 
 // RVT-H image type.
 typedef enum {
@@ -44,8 +86,15 @@ typedef enum {
 	RVTH_ImageType_MAX
 } RvtH_ImageType_e;
 
+// RVT-H extraction flags.
+typedef enum {
+	// Prepend a 32 KB SDK header.
+	// Required for rvtwriter, NDEV ODEM, etc.
+	RVTH_EXTRACT_PREPEND_SDK_HEADER		= (1 << 0),
+} RvtH_Extract_Flags;
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_RVTH_IMAGETYPE_H__ */
+#endif /* __LIBRVTH_RVTH_ENUMS_H__ */

@@ -31,8 +31,8 @@
 #include <stdio.h>
 #include <time.h>
 
-// Image types
-#include "rvth_imagetype.h"
+// Enums
+#include "rvth_enums.h"
 
 // Reader class
 #ifdef __cplusplus
@@ -87,48 +87,6 @@ typedef struct _RvtH_BankEntry {
 	unsigned int pt_count;		// Number of entries in ptbl.
 	struct _pt_entry_t *ptbl;	// Partition table.
 } RvtH_BankEntry;
-
-// RVT-H bank types.
-typedef enum {
-	RVTH_BankType_Empty		= 0,	// Magic is 0.
-	RVTH_BankType_Unknown		= 1,	// Unknown magic.
-	RVTH_BankType_GCN		= 2,
-	RVTH_BankType_Wii_SL		= 3,
-	RVTH_BankType_Wii_DL		= 4,
-	RVTH_BankType_Wii_DL_Bank2	= 5,	// Bank 2 for DL images.
-
-	RVTH_BankType_MAX
-} RvtH_BankType_e;
-
-// Encryption types.
-typedef enum {
-	RVTH_CryptoType_Unknown	= 0,	// Unknown encryption.
-	RVTH_CryptoType_None	= 1,	// No encryption.
-	RVTH_CryptoType_Debug	= 2,	// RVT-R encryption.
-	RVTH_CryptoType_Retail	= 3,	// Retail encryption.
-	RVTH_CryptoType_Korean	= 4,	// Korean retail encryption.
-
-	RVTH_CryptoType_MAX
-} RvtH_CryptoType_e;
-
-// Signature types.
-typedef enum {
-	RVTH_SigType_Unknown	= 0,	// Unknown signature.
-	RVTH_SigType_Debug	= 1,	// Debug signature.
-	RVTH_SigType_Retail	= 2,	// Retail signature.
-
-	RVTH_SigType_MAX
-} RvtH_SigType_e;
-
-// Signature status.
-typedef enum {
-	RVTH_SigStatus_Unknown	= 0,	// Unknown signature status.
-	RVTH_SigStatus_OK	= 1,	// Valid
-	RVTH_SigStatus_Invalid	= 2,	// Invalid
-	RVTH_SigStatus_Fake	= 3,	// Fakesigned
-
-	RVTH_SigStatus_MAX
-} RvtH_SigStatus_e;
 
 /** Functions. **/
 
@@ -262,15 +220,6 @@ RvtH *rvth_create_gcm(const TCHAR *filename, uint32_t lba_len, int *pErr);
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int rvth_copy_to_gcm(RvtH *rvth_dest, const RvtH *rvth_src, unsigned int bank_src, RvtH_Progress_Callback callback);
-
-/**
- * RVT-H extraction flags.
- */
-typedef enum {
-	// Prepend a 32k SDK header.
-	// Required for rvtwriter, NDEV ODEM, etc.
-	RVTH_EXTRACT_PREPEND_SDK_HEADER		= (1 << 0),
-} RvtH_Extract_Flags;
 
 /**
  * Extract a disc image from the RVT-H disk image.

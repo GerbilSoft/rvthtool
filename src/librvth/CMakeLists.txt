@@ -61,6 +61,7 @@ SET(librvth_H
 	extract_crypt.h
 	bank_init.h
 	rvth_error.h
+	rvth_enums.h
 
 	# Disc image readers
 	reader/Reader.hpp

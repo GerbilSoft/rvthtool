@@ -22,7 +22,6 @@
 #define __RVTHTOOL_LIBRVTH_RVTH_P_H__
 
 #include "rvth.h"
-#include "rvth_imagetype.h"
 #include "RefFile.hpp"
 
 #ifdef __cplusplus

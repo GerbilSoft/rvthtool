@@ -23,7 +23,7 @@
 
 #include "libwiicrypto/common.h"
 #include "RefFile.hpp"
-#include "rvth_imagetype.h"
+#include "rvth_enums.h"
 
 #include <stdint.h>
 
