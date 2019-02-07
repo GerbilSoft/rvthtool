@@ -43,7 +43,7 @@ class RefFile
 		 * Open a file as a reference-counted file.
 		 * The file is opened as a binary file in read-only mode.
 		 *
-		 * Check isOpen() after constructing the class to determine
+		 * Check isOpen() after constructing the object to determine
 		 * if the file was opened successfully.
 		 *
 		 * @param filename Filename.

@@ -21,7 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_BANK_INIT_H__
 #define __RVTHTOOL_LIBRVTH_BANK_INIT_H__
 
-#include "rvth.h"
+#include "rvth.hpp"
 
 // RefFile class
 #ifdef __cplusplus

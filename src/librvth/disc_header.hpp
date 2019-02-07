@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * disc_header.h: Read a GCN/Wii disc header and determine its type.       *
+ * disc_header.hpp: Read a GCN/Wii disc header and determine its type.     *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -25,11 +25,7 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-struct RefFile;
+class RefFile;
 struct _GCN_DiscHeader;
 
 /**
@@ -63,10 +59,7 @@ int rvth_disc_header_identify(const struct _GCN_DiscHeader *discHeader);
  * @param pIsDeleted	[out,opt] Set to true if the image appears to be "deleted".
  * @return Bank type, or negative POSIX error code. (See RvtH_BankType_e.)
  */
-int rvth_disc_header_get(struct RefFile *f_img, uint32_t lba_start, struct _GCN_DiscHeader *discHeader, bool *pIsDeleted);
-
-#ifdef __cplusplus
-}
-#endif
+int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
+	struct _GCN_DiscHeader *discHeader, bool *pIsDeleted);
 
 #endif /* __RVTHTOOL_LIBRVTH_DISC_HEADER_H__ */

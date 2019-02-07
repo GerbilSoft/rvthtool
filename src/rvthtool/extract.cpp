@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool                                                              *
- * extract.c: Extract/import a bank from/to an RVT-H disk image.           *
+ * extract.cpp: Extract/import a bank from/to an RVT-H disk image.         *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -19,13 +19,14 @@
  ***************************************************************************/
 
 #include "extract.h"
-#include "list-banks.h"
-#include "librvth/rvth.h"
+#include "list-banks.hpp"
+#include "librvth/rvth.hpp"
 #include "librvth/rvth_error.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <stdlib.h>
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstdlib>
 
 /**
  * RVT-H progress callback.
@@ -83,13 +84,9 @@ static bool progress_callback(const RvtH_Progress_State *state)
  */
 int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key, uint32_t flags)
 {
-	RvtH *rvth;
-	TCHAR *endptr;
-	unsigned int bank;
+	// Open the RVT-H device or disk image.
 	int ret;
-
-	// Open the disk image.
-	rvth = rvth_open(rvth_filename, &ret);
+	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
@@ -97,24 +94,26 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		return ret;
 	}
 
+	unsigned int bank;
 	if (s_bank) {
 		// Validate the bank number.
+		TCHAR *endptr;
 		bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
-		if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+		if (*endptr != 0 || bank > rvth->bankCount()) {
 			fputs("*** ERROR: Invalid bank number '", stderr);
 			_fputts(s_bank, stderr);
 			fputs("'.\n", stderr);
-			rvth_close(rvth);
+			delete rvth;
 			return -EINVAL;
 		}
 	} else {
 		// No bank number specified.
 		// Assume 1 bank if this is a standalone disc image.
 		// For HDD images or RVT-H Readers, this is an error.
-		if (rvth_get_BankCount(rvth) != 1) {
+		if (rvth->bankCount() != 1) {
 			fprintf(stderr, "*** ERROR: Must specify a bank number for this RVT-H Reader%s.\n",
-				rvth_is_hdd(rvth) ? "" : " disk image");
-			rvth_close(rvth);
+				rvth->isHDD() ? "" : " disk image");
+			delete rvth;
 			return -EINVAL;
 		}
 		bank = 0;
@@ -128,7 +127,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	printf("Extracting Bank %u into '", bank+1);
 	_fputts(gcm_filename, stdout);
 	fputs("'...\n", stdout);
-	ret = rvth_extract(rvth, bank, gcm_filename, recrypt_key, flags, progress_callback);
+	ret = rvth->extract(bank, gcm_filename, recrypt_key, flags, progress_callback);
 	if (ret == 0) {
 		printf("Bank %u extracted to '", bank+1);
 		_fputts(gcm_filename, stdout);
@@ -138,7 +137,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		fprintf(stderr, "*** ERROR: rvth_extract() failed: %s\n", rvth_error(ret));
 	}
 
-	rvth_close(rvth);
+	delete rvth;
 	return ret;
 }
 
@@ -151,16 +150,11 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
  */
 int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename)
 {
-	RvtH *rvth;
-	TCHAR *endptr;
-	unsigned int bank;
-	int ret;
-
 	// TODO: Verification for overwriting images.
-	// TODO: Special identification.
 
-	// Open the disk image.
-	rvth = rvth_open(rvth_filename, &ret);
+	// Open the RVT-H device or disk image.
+	int ret;
+	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
@@ -169,12 +163,13 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	}
 
 	// Validate the bank number.
-	bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
-	if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+	TCHAR *endptr;
+	unsigned int bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
+	if (*endptr != 0 || bank > rvth->bankCount()) {
 		fputs("*** ERROR: Invalid bank number '", stderr);
 		_fputts(s_bank, stderr);
 		fputs("'.\n", stderr);
-		rvth_close(rvth);
+		delete rvth;
 		return -EINVAL;
 	}
 
@@ -188,7 +183,7 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	fputs("Importing '", stdout);
 	_fputts(gcm_filename, stdout);
 	printf("' into Bank %u...\n", bank+1);
-	ret = rvth_import(rvth, bank, gcm_filename, progress_callback);
+	ret = rvth->import(bank, gcm_filename, progress_callback);
 	if (ret == 0) {
 		fputc('\'', stdout);
 		_fputts(gcm_filename, stdout);
@@ -198,6 +193,6 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 		fprintf(stderr, "*** ERROR: rvth_import() failed: %s\n", rvth_error(ret));
 	}
 
-	rvth_close(rvth);
+	delete rvth;
 	return ret;
 }

@@ -28,10 +28,10 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURREN
 SET(librvth_SRCS
 	rvth.cpp
 	rvth_p.cpp
-	rvth_write.cpp
-	rvth_extract.cpp
+	write.cpp
+	extract.cpp
 	rvth_time.c
-	rvth_recrypt.cpp
+	recrypt.cpp
 	RefFile.cpp
 	disc_header.cpp
 	query.c
@@ -49,16 +49,13 @@ SET(librvth_SRCS
 # Headers.
 SET(librvth_H
 	nhcd_structs.h
-	rvth.h
-	rvth_p.h
+	rvth.hpp
 	rvth_time.h
-	rvth_recrypt.h
 	RefFile.hpp
 	tcharx.h
-	disc_header.h
+	disc_header.hpp
 	query.h
 	ptbl.h
-	extract_crypt.h
 	bank_init.h
 	rvth_error.h
 	rvth_enums.h

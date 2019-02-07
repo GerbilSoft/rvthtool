@@ -24,7 +24,7 @@
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/cert_store.h"
 
-#include "disc_header.h"
+#include "disc_header.hpp"
 #include "nhcd_structs.h"
 #include "ptbl.h"
 #include "rvth_time.h"

@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_recrypt.cpp: RVT-H "recryption" functions.                         *
+ * recrypt.cpp: RVT-H "recryption" functions.                              *
  *                                                                         *
  * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
@@ -18,9 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "rvth_recrypt.h"
-#include "rvth.h"
-#include "rvth_p.h"
+#include "rvth.hpp"
 #include "ptbl.h"
 #include "rvth_error.h"
 
@@ -30,20 +28,25 @@
 // Reader class
 #include "reader/Reader.hpp"
 
+// libwiicrypto
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
 #include "libwiicrypto/cert.h"
+#include "libwiicrypto/cert_store.h"
 #include "libwiicrypto/aesw.h"
 #include "libwiicrypto/rsaw.h"
 #include "libwiicrypto/priv_key_store.h"
 
 #include "byteswap.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <stddef.h>
+// C includes.
 #include <stdlib.h>
-#include <string.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstddef>
+#include <cstring>
 
 // Sector buffer. (1 LBA)
 typedef union _sbuf1_t {
@@ -92,7 +95,8 @@ static const uint8_t id_pub[256] = {
  * @param gcn GameCube disc header.
  * @param extra Extra string.
  */
-static int rvth_create_id(uint8_t *id, size_t size, const GCN_DiscHeader *gcn, const char *extra)
+static int rvth_create_id(uint8_t *id, size_t size,
+	const GCN_DiscHeader *gcn, const char *extra)
 {
 	// Leaving 16 bytes for the PKCS#1 header.
 	static const uint8_t id_hdr[] = {0x1B,0x1F,0x1D,0x01,0x1D,0x06,0x06,0x05,0x53,0x49};
@@ -148,24 +152,24 @@ static int rvth_create_id(uint8_t *id, size_t size, const GCN_DiscHeader *gcn, c
 	return rsaw_encrypt(id, size, id_pub, sizeof(id_pub), id_exp, buf, sizeof(buf));
 }
 
-int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
+int RvtH::recryptID(unsigned int bank)
 {
-	RvtH_BankEntry *entry;
-	bool is_wii = false;
-	unsigned int lba_size;
+	int err = 0;	// errno
 
 	// Sector buffer.
+	unsigned int lba_size;
 	sbuf1_t sbuf;
 	GCN_DiscHeader gcn;
 
-	if (bank >= rvth->bank_count) {
+	if (bank >= m_bankCount) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
 	}
 
 	// Check the bank type.
-	entry = &rvth->entries[bank];
+	RvtH_BankEntry *const entry = &m_entries[bank];
+	bool is_wii;
 	switch (entry->type) {
 		case RVTH_BankType_GCN:
 			is_wii = false;
@@ -192,15 +196,13 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 	}
 
 	// Make the RVT-H object writable.
-	int ret = rvth_make_writable(rvth);
+	int ret = this->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
-		int err;
 		if (ret < 0) {
 			err = -ret;
 		} else {
 			err = EROFS;
-			ret = -EROFS;
 		}
 		errno = err;
 		return ret;
@@ -212,12 +214,12 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 	lba_size = reader->read(&sbuf.u8, 0, 1);
 	if (lba_size != 1) {
 		// Unable to read the disc header.
-		int err = errno;
+		err = errno;
 		if (err == 0) {
 			err = EIO;
-			errno = err;
 		}
-		return -err;
+		errno = err;
+		return ret;
 	}
 
 	memcpy(&gcn, &sbuf.gcn, sizeof(gcn));
@@ -226,45 +228,43 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 		errno = 0;
 		lba_size = reader->read(&sbuf.u8, BYTES_TO_LBA(0x400), 1);
 		if (lba_size != 1) {
-			int err = errno;
+			err = errno;
 			if (err == 0) {
 				err = EIO;
-				errno = err;
 			}
-			return -err;
+			errno = err;
+			return ret;
 		}
 
 		// Only if this area is empty!
-		if (rvth_is_block_empty(&sbuf.u8[0x80], 256)) {
+		if (isBlockEmpty(&sbuf.u8[0x80], 256)) {
 			rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
 			errno = 0;
 			lba_size = reader->write(&sbuf.u8, BYTES_TO_LBA(0x400), 1);
 			if (lba_size != 1) {
-				int err = errno;
+				err = errno;
 				if (err == 0) {
 					err = EIO;
-					errno = err;
 				}
-				return -err;
+				errno = err;
+				return ret;
 			}
 		}
 	} else {
 		// Wii. Write at the end of the partition header.
-		const pt_entry_t *pte;
-		char ptid_buf[24];
-		unsigned int i;
 
 		// Make sure the partition table is loaded.
-		int ret = rvth_ptbl_load(entry);
+		ret = rvth_ptbl_load(entry);
 		if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
 			// Unable to load the partition table.
-			errno = -ret;
+			err = -ret;
+			errno = err;
 			return ret;
 		}
 
 		// Write the ID at the end of each partition header.
-		pte = entry->ptbl;
-		for (i = 0; i < entry->pt_count; i++, pte++) {
+		const pt_entry_t *pte = entry->ptbl;
+		for (unsigned int i = 0; i < entry->pt_count; i++, pte++) {
 			uint8_t id_buf[512];	// need to read the LBA
 			const uint32_t lba_id = pte->lba_start + BYTES_TO_LBA(0x7E00);
 
@@ -273,19 +273,20 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 			lba_size = reader->read(id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
 			if (lba_size != BYTES_TO_LBA(sizeof(id_buf))) {
 				// Read error.
-				int err = errno;
+				err = errno;
 				if (err == 0) {
 					err = EIO;
-					errno = err;
 				}
+				errno = err;
 				return -err;
 			}
 
 			// Only if this area is empty!
-			if (!rvth_is_block_empty(&id_buf[256], 256))
+			if (!isBlockEmpty(&id_buf[256], 256))
 				continue;
 
 			// Write the identifier.
+			char ptid_buf[24];
 			snprintf(ptid_buf, sizeof(ptid_buf), "%up%u -> %up%u",
 				pte->vg, pte->pt_orig,
 				pte->vg, pte->pt);
@@ -296,7 +297,7 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 			lba_size = reader->write(id_buf, lba_id, BYTES_TO_LBA(sizeof(id_buf)));
 			if (lba_size != BYTES_TO_LBA(sizeof(id_buf))) {
 				// Write error.
-				int err = errno;
+				err = errno;
 				if (err == 0) {
 					err = EIO;
 					errno = err;
@@ -306,7 +307,7 @@ int rvth_recrypt_id(RvtH *rvth, unsigned int bank)
 		}
 	}
 
-	return 0;
+	return ret;
 }
 
 static inline uint32_t toNext64(uint32_t n)
@@ -422,19 +423,18 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
  * NOTE 2: Any partitions that are already encrypted with the specified key
  * will be left as-is; however, the tickets and TMDs wlil be re-signed.
  *
- * @param rvth		[in] RVT-H disk image.
  * @param bank		[in] Bank number. (0-7)
  * @param cryptoType	[in] New encryption type.
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
-	RvtH_CryptoType_e cryptoType, RvtH_Progress_Callback callback)
+int RvtH::recryptWiiPartitions(unsigned int bank,
+	RvtH_CryptoType_e cryptoType,
+	RvtH_Progress_Callback callback)
 {
-	RvtH_BankEntry *entry;
-	RVL_AES_Keys_e toKey;
 	uint32_t lba_size;
-	unsigned int i;
+
+	int ret = 0;	// errno or RvtH_Errors
 
 	// Certificates.
 	const RVL_Cert_RSA2048 *cert_ticket;
@@ -451,22 +451,23 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	// The actual partition length is in the partition header.
 	// TODO: Unencrypted partitions will need special handling.
 	const pt_entry_t *pte;
-	char ptid_buf[24];
 
 	// Callback state.
 	RvtH_Progress_State state;
 
-	if (!rvth || cryptoType < RVTH_CryptoType_Debug || cryptoType >= RVTH_CryptoType_MAX) {
+	if (cryptoType < RVTH_CryptoType_Debug ||
+	    cryptoType >= RVTH_CryptoType_MAX)
+	{
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank >= rvth->bank_count) {
+	} else if (bank >= m_bankCount) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
 	}
 
 	// Check the bank type.
-	entry = &rvth->entries[bank];
+	RvtH_BankEntry *const entry = &m_entries[bank];
 	switch (entry->type) {
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -499,6 +500,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 
 	// Determine the key index.
+	RVL_AES_Keys_e toKey;
 	switch (cryptoType) {
 		case RVTH_CryptoType_Debug:
 			toKey = RVL_KEY_DEBUG;
@@ -518,7 +520,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	// since we're doing that for each partition individually.
 
 	// Make the RVT-H object writable.
-	int ret = rvth_make_writable(rvth);
+	ret = this->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		int err;
@@ -526,7 +528,6 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			err = -ret;
 		} else {
 			err = EROFS;
-			ret = -EROFS;
 		}
 		errno = err;
 		return ret;
@@ -535,7 +536,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	if (callback) {
 		// Initialize the callback state.
 		state.type = RVTH_PROGRESS_RECRYPT;
-		state.rvth = rvth;
+		state.rvth = this;
 		state.rvth_gcm = NULL;
 		state.bank_rvth = bank;
 		state.bank_gcm = ~0;
@@ -556,7 +557,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
-			errno = err;
+			errno = EIO;
 		}
 		return -err;
 	}
@@ -605,7 +606,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 
 	// Process the other partitions.
 	pte = entry->ptbl;
-	for (i = 0; i < entry->pt_count; i++, pte++) {
+	for (unsigned int i = 0; i < entry->pt_count; i++, pte++) {
 		RVL_PartitionHeader hdr_orig;	// Original header
 		RVL_PartitionHeader hdr_new;	// Rebuilt header
 		uint32_t data_pos;		// Current position in hdr_new.u8[].
@@ -624,7 +625,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
-				errno = err;
+				errno = EIO;
 			}
 			return -err;
 		}
@@ -642,7 +643,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
-				errno = err;
+				errno = EIO;
 			}
 			return -err;
 		}
@@ -725,7 +726,8 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 
 		// Write the identifier.
 		// (Only if this area is empty!)
-		if (rvth_is_block_empty(&hdr_new.data[sizeof(hdr_new.data)-256], 256)) {
+		if (isBlockEmpty(&hdr_new.data[sizeof(hdr_new.data)-256], 256)) {
+			char ptid_buf[24];
 			snprintf(ptid_buf, sizeof(ptid_buf), "%up%u -> %up%u",
 				pte->vg, pte->pt_orig,
 				pte->vg, pte->pt);
@@ -740,7 +742,7 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
-				errno = err;
+				errno = EIO;
 			}
 			return -err;
 		}
@@ -776,9 +778,9 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 	}
 
 	// If this is an HDD, write the bank table entry.
-	if (rvth_is_hdd(rvth)) {
+	if (isHDD()) {
 		// TODO: Check for errors.
-		rvth_write_BankEntry(rvth, bank);
+		this->writeBankEntry(bank);
 	}
 
 	// Finished processing the disc image.
@@ -789,5 +791,5 @@ int rvth_recrypt_partitions(RvtH *rvth, unsigned int bank,
 		callback(&state);
 	}
 
-	return 0;
+	return ret;
 }

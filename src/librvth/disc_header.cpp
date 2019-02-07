@@ -18,17 +18,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "disc_header.h"
-#include "rvth_p.h"
+#include "disc_header.hpp"
+#include "nhcd_structs.h"
+#include "rvth_enums.h"
+#include "rvth.hpp"	// for RvtH::isBlockEmpty()
+
+#include "RefFile.hpp"
 
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/aesw.h"
 #include "libwiicrypto/cert_store.h"
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
-
-// For LBA_TO_BYTES()
-#include "nhcd_structs.h"
 
 // C includes.
 #include <stdlib.h>
@@ -115,25 +116,21 @@ int rvth_disc_header_identify(const GCN_DiscHeader *discHeader)
  */
 static uint32_t rvth_find_GamePartition_int(const ptbl_t *pt)
 {
-	unsigned int i;
-	uint32_t ptcount;
-	int64_t addr;
-
 	// Game partition is always in volume group 0.
 	// TODO: Use uint32_t arithmetic instead of int64_t?
-	addr = ((int64_t)be32_to_cpu(pt->vgtbl.vg[0].addr) << 2);
+	int64_t addr = ((int64_t)be32_to_cpu(pt->vgtbl.vg[0].addr) << 2);
 	if (addr != (RVL_VolumeGroupTable_ADDRESS + sizeof(pt->vgtbl))) {
 		// Partition table offset isn't supported right now.
 		return 0;
 	}
 
-	ptcount = be32_to_cpu(pt->vgtbl.vg[0].count);
+	uint32_t ptcount = be32_to_cpu(pt->vgtbl.vg[0].count);
 	if (ptcount > ARRAY_SIZE(pt->ptbl)) {
 		// Can't check this many partitions.
 		// Reduce it to the maximum we can check.
 		ptcount = ARRAY_SIZE(pt->ptbl);
 	}
-	for (i = 0; i < ptcount; i++) {
+	for (unsigned int i = 0; i < ptcount; i++) {
 		if (pt->ptbl[i].type == cpu_to_be32(0)) {
 			// Found the game partition.
 			return (be32_to_cpu(pt->ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
@@ -161,7 +158,8 @@ static uint32_t rvth_find_GamePartition_int(const ptbl_t *pt)
  * @param pIsDeleted	[out,opt] Set to true if the image appears to be "deleted".
  * @return Bank type, or negative POSIX error code. (See RvtH_BankType_e.)
  */
-int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *discHeader, bool *pIsDeleted)
+int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
+	GCN_DiscHeader *discHeader, bool *pIsDeleted)
 {
 	int ret = 0;	// errno setting
 	size_t size;
@@ -225,7 +223,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 
 	// If unknown, check if the entire sector is empty.
 	if (ret == RVTH_BankType_Unknown) {
-		if (rvth_is_block_empty(sbuf.u8, sizeof(sbuf.u8))) {
+		if (RvtH::isBlockEmpty(sbuf.u8, sizeof(sbuf.u8))) {
 			// Empty sector.
 			ret = RVTH_BankType_Empty;
 		}

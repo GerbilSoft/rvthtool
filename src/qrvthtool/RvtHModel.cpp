@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -20,7 +20,7 @@
 
 #include "RvtHModel.hpp"
 
-#include "librvth/rvth.h"
+#include "librvth/rvth.hpp"
 
 // C includes. (C++ namespace)
 #include <cassert>
@@ -211,13 +211,13 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 		return RvtHModel::ICON_MAX;
 	}
 
-	const RvtH_BankEntry *entry = rvth_get_BankEntry(rvth, bank, nullptr);
+	const RvtH_BankEntry *entry = rvth->bankEntry(bank, nullptr);
 	assert(entry != nullptr);
 	if (!entry) {
 		// No bank entry here...
 		return RvtHModel::ICON_MAX;
 	}
-	const RvtH_ImageType_e imageType = rvth_get_ImageType(rvth);
+	const RvtH_ImageType_e imageType = rvth->imageType();
 
 	switch (entry->type) {
 		default:
@@ -322,7 +322,7 @@ int RvtHModel::rowCount(const QModelIndex& parent) const
 	Q_UNUSED(parent);
 	Q_D(const RvtHModel);
 	if (d->rvth) {
-		return rvth_get_BankCount(d->rvth);
+		return d->rvth->bankCount();
 	}
 	return 0;
 }
@@ -347,7 +347,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 
 	// Get the bank entry.
 	const unsigned int bank = static_cast<unsigned int>(index.row());
-	const RvtH_BankEntry *const entry = rvth_get_BankEntry(d->rvth, bank, nullptr);
+	const RvtH_BankEntry *const entry = d->rvth->bankEntry(bank);
 	if (!entry) {
 		// No entry...
 		return QVariant();
@@ -579,7 +579,7 @@ void RvtHModel::setRvtH(RvtH *rvth)
 	// Disconnect the Card's changed() signal if a Card is already set.
 	if (d->rvth) {
 		// Notify the view that we're about to remove all rows.
-		const int bankCount = rvth_get_BankCount(d->rvth);
+		const int bankCount = d->rvth->bankCount();
 		if (bankCount > 0) {
 			beginRemoveRows(QModelIndex(), 0, (bankCount - 1));
 		}
@@ -594,7 +594,7 @@ void RvtHModel::setRvtH(RvtH *rvth)
 
 	if (rvth) {
 		// Notify the view that we're about to add rows.
-		const int bankCount = rvth_get_BankCount(rvth);
+		const int bankCount = rvth->bankCount();
 		if (bankCount > 0) {
 			beginInsertRows(QModelIndex(), 0, (bankCount - 1));
 		}

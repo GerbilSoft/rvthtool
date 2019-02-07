@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -21,7 +21,7 @@
 #ifndef __RVTHTOOL_QRVTHTOOL_RVTHMODEL_HPP__
 #define __RVTHTOOL_QRVTHTOOL_RVTHMODEL_HPP__
 
-struct _RvtH;
+class RvtH;
 
 // Qt includes.
 #include <QtCore/QAbstractListModel>
@@ -83,7 +83,7 @@ class RvtHModel : public QAbstractListModel
 		 * Set the RVT-H Reader disk image to use in this model.
 		 * @param rvth RVT-H Reader disk image.
 		 */
-		void setRvtH(struct _RvtH *rvth);
+		void setRvtH(RvtH *rvth);
 
 		/**
 		 * Load an icon.

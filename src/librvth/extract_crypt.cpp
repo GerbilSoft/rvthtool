@@ -18,11 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "extract_crypt.h"
-
-#include "rvth_p.h"
-#include "rvth_recrypt.h"
-#include "disc_header.h"
+#include "rvth.hpp"
+#include "disc_header.hpp"
 #include "ptbl.h"
 #include "rvth_error.h"
 
@@ -31,6 +28,9 @@
 
 // Reader class
 #include "reader/Reader.hpp"
+
+// libwiicrypto
+#include "libwiicrypto/cert_store.h"
 
 // C includes.
 #include <stdlib.h>
@@ -307,23 +307,20 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 }
 
 /**
- * Copy a bank from an RVT-H HDD or standalone disc image to a writable standalone disc image.
+ * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
  *
  * This function copies an unencrypted Game Partition and encrypts it
  * using the existing title key. It does *not* change the encryption
  * method or signature, so recryption will be needed afterwards.
  *
  * @param rvth_dest	[out] Destination RvtH object.
- * @param rvth_src	[in] Source RvtH object.
  * @param bank_src	[in] Source bank number. (0-7)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
+int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 	unsigned int bank_src, RvtH_Progress_Callback callback)
 {
-	RvtH_BankEntry *entry_src;
-	const pt_entry_t *game_pte;
 	uint32_t data_lba_src;	// Game partition, data offset LBA. (source, unencrypted)
 	uint32_t data_lba_dest;	// Game partition, data offset LBA. (dest, encrypted)
 	uint32_t lba_copy_len;	// Number of LBAs to copy. (game partition size)
@@ -362,13 +359,13 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	AesCtx *aesw = NULL;
 	uint8_t titleKey[16];
 
-	if (!rvth_dest || !rvth_src) {
+	if (!rvth_dest) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank_src >= rvth_src->bank_count) {
+	} else if (bank_src >= m_bankCount) {
 		errno = ERANGE;
 		return -ERANGE;
-	} else if (rvth_is_hdd(rvth_dest) || rvth_dest->bank_count != 1) {
+	} else if (rvth_dest->isHDD() || rvth_dest->bankCount() != 1) {
 		// Destination is not a standalone disc image.
 		// Copying to HDDs will be handled differently.
 		errno = EIO;
@@ -376,7 +373,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	}
 
 	// Check if the source bank can be extracted.
-	entry_src = &rvth_src->entries[bank_src];
+	RvtH_BankEntry *const entry_src = &m_entries[bank_src];
 	switch (entry_src->type) {
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -410,7 +407,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	// TODO: Copy other partitions later?
 	// TODO: Include disc headers in lba_copy_len?
 	// TODO: Verify lba_copy_len.
-	game_pte = rvth_ptbl_find_game(entry_src);
+	const pt_entry_t *const game_pte = rvth_ptbl_find_game(entry_src);
 	if (!game_pte) {
 		// Cannot find the game partition.
 		err = EIO;
@@ -458,7 +455,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	// tell the file system what the file's size will be.
 
 	// Copy the bank table information.
-	entry_dest = &rvth_dest->entries[0];
+	entry_dest = &rvth_dest->m_entries[0];
 	entry_dest->type	= entry_src->type;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
@@ -528,7 +525,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 		// Initialize the callback state.
 		// TODO: Fields for source vs. destination sizes?
 		state.type = RVTH_PROGRESS_EXTRACT;
-		state.rvth = rvth_src;
+		state.rvth = this;
 		state.rvth_gcm = rvth_dest;
 		state.bank_rvth = bank_src;
 		state.bank_gcm = 0;

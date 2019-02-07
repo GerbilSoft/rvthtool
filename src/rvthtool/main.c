@@ -2,7 +2,7 @@
  * RVT-H Tool                                                              *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -29,14 +29,14 @@
 #include <getopt.h>
 
 #include "librvth/config.librvth.h"
-#include "librvth/rvth.h"
+#include "librvth/rvth.hpp"
 #include "libwiicrypto/cert.h"
 
 #ifdef _WIN32
 # include "libwiicrypto/win32/secoptions.h"
 #endif /* _WIN32 */
 
-#include "list-banks.h"
+#include "list-banks.hpp"
 #include "extract.h"
 #include "undelete.h"
 #include "query.h"

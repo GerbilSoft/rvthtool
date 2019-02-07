@@ -21,7 +21,7 @@
 #ifndef __RVTHTOOL_LIBRVTH_PTBL_H__
 #define __RVTHTOOL_LIBRVTH_PTBL_H__
 
-#include "rvth.h"
+#include "rvth.hpp"
 #include <stdint.h>
 
 #ifdef __cplusplus
