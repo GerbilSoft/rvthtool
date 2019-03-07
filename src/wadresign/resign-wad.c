@@ -90,7 +90,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Certificates.
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
-	const RVL_Cert_RSA2048 *cert_ticket, *cert_TMD;
+	const RVL_Cert_RSA2048 *cert_TMD, *cert_ticket;
 	const RVL_Cert_RSA2048_ECC *cert_dev;
 	const char *issuer_TMD;
 
@@ -369,26 +369,26 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Get the certificates.
 	if (toKey != RVL_KEY_DEBUG) {
 		// Retail certificates.
-		// Order: CA, Ticket, TMD
-		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
-		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
-		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
+		// Order: CA, TMD, Ticket
+		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_CA);
+		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_TMD);
+		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_TICKET);
 		cert_dev	= NULL;
 		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TMD];
 		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
-			sizeof(*cert_CA) + sizeof(*cert_ticket) +
-			sizeof(*cert_TMD)));
+			sizeof(*cert_CA) + sizeof(*cert_TMD) +
+			sizeof(*cert_ticket)));
 	} else {
 		// Debug certificates.
-		// Order: CA, Ticket, TMD
+		// Order: CA, TMD, Ticket
 		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
-		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
 		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
+		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
 		cert_dev	= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DEBUG_DEV);
 		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TMD];
 		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
-			sizeof(*cert_CA) + sizeof(*cert_ticket) +
-			sizeof(*cert_TMD) + sizeof(*cert_dev)));
+			sizeof(*cert_CA) + sizeof(*cert_TMD) +
+			sizeof(*cert_ticket) + sizeof(*cert_dev)));
 	}
 
 	// Write the WAD header.
@@ -420,8 +420,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 	errno = 0;
-	size = fwrite(cert_ticket, 1, sizeof(*cert_ticket), f_dest_wad);
-	if (size != sizeof(*cert_ticket)) {
+	size = fwrite(cert_TMD, 1, sizeof(*cert_TMD), f_dest_wad);
+	if (size != sizeof(*cert_TMD)) {
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
@@ -431,8 +431,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 	errno = 0;
-	size = fwrite(cert_TMD, 1, sizeof(*cert_TMD), f_dest_wad);
-	if (size != sizeof(*cert_TMD)) {
+	size = fwrite(cert_ticket, 1, sizeof(*cert_ticket), f_dest_wad);
+	if (size != sizeof(*cert_ticket)) {
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
