@@ -218,7 +218,7 @@ int print_wad_info(const TCHAR *wad_filename)
 	}
 
 	// Load the ticket and TMD.
-	fseek(f_wad, wadInfo.ticket_address, SEEK_SET);
+	fseeko(f_wad, wadInfo.ticket_address, SEEK_SET);
 	size = fread(&ticket, 1, sizeof(ticket), f_wad);
 	if (size != sizeof(ticket)) {
 		// Read error.
@@ -234,7 +234,7 @@ int print_wad_info(const TCHAR *wad_filename)
 		ret = 7;
 		goto end;
 	}
-	fseek(f_wad, wadInfo.tmd_address, SEEK_SET);
+	fseeko(f_wad, wadInfo.tmd_address, SEEK_SET);
 	size = fread(tmd, 1, wadInfo.tmd_size, f_wad);
 	if (size != wadInfo.tmd_size) {
 		// Read error.
