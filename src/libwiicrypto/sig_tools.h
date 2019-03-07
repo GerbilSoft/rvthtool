@@ -22,6 +22,7 @@
 #define __RVTHTOOL_LIBWIICRYPTO_SIG_TOOLS_H__
 
 #include "wii_structs.h"
+#include "cert_store.h"
 
 // C includes.
 #include <stddef.h>
@@ -106,6 +107,20 @@ const char *RVL_SigStatus_toString_stsAppend(RVL_SigStatus_e sigStatus);
  * @return RVL_SigStatus_e
  */
 RVL_SigStatus_e sig_verify(const uint8_t *data, size_t size);
+
+/**
+ * Re-encrypt a ticket's title key.
+ * This will also change the issuer if necessary.
+ *
+ * NOTE: This function will NOT fakesign the ticket.
+ * Call cert_fakesign_ticket() afterwards.
+ * TODO: Real signing for debug.
+ *
+ * @param ticket Ticket.
+ * @param toKey New key.
+ * @return 0 on success; non-zero on error.
+ */
+int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey);
 
 #ifdef __cplusplus
 }

@@ -33,7 +33,6 @@
 #include "libwiicrypto/wii_structs.h"
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/cert_store.h"
-#include "libwiicrypto/aesw.h"
 #include "libwiicrypto/rsaw.h"
 #include "libwiicrypto/priv_key_store.h"
 #include "libwiicrypto/sig_tools.h"
@@ -317,101 +316,6 @@ static inline uint32_t toNext64(uint32_t n)
 }
 
 /**
- * Re-encrypt a ticket's title key.
- * This will also change the issuer if necessary.
- *
- * NOTE: This function will NOT fakesign the ticket.
- * Call cert_fakesign_tmd() afterwards.
- * TODO: Real signing for debug.
- *
- * @param ticket Ticket.
- * @param toKey New key.
- * @return 0 on success; non-zero on error.
- */
-static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
-{
-	// Common keys.
-	RVL_AES_Keys_e fromKey;
-	const uint8_t *key_from, *key_to;
-	const char *issuer;
-	uint8_t iv[16];	// based on Title ID
-
-	// TODO: Error checking.
-	// TODO: Pass in an aesw context for less overhead.
-	AesCtx *aesw;
-
-	// Check the 'from' key.
-	if (!strncmp(ticket->issuer,
-	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
-	{
-		// Retail. Use RVL_KEY_RETAIL unless the Korean key is selected.
-		fromKey = (ticket->common_key_index != 1
-			? RVL_KEY_RETAIL
-			: RVL_KEY_KOREAN);
-	}
-	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET], sizeof(ticket->issuer)))
-	{
-		// Debug. Use RVL_KEY_DEBUG.
-		fromKey = RVL_KEY_DEBUG;
-	}
-	else
-	{
-		// Unknown issuer.
-		errno = EIO;
-		return RVTH_ERROR_ISSUER_UNKNOWN;
-	}
-
-	// TODO: Determine the 'from' key by checking the
-	// original issuer and key index.
-	if (fromKey == toKey) {
-		// No recryption needed.
-		return 0;
-	}
-
-	// Key data and 'To' issuer.
-	key_from = RVL_AES_Keys[fromKey];
-	key_to = RVL_AES_Keys[toKey];
-	if (likely(toKey != RVL_KEY_DEBUG)) {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET];
-	} else {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET];
-	}
-
-	// Initialize the AES context.
-	errno = 0;
-	aesw = aesw_new();
-	if (!aesw) {
-		int ret = -errno;
-		if (ret == 0) {
-			ret = -EIO;
-		}
-		return ret;
-	}
-
-	// IV is the 64-bit title ID, followed by zeroes.
-	memcpy(iv, &ticket->title_id, 8);
-	memset(&iv[8], 0, 8);
-
-	// Decrypt the key with the original common key.
-	aesw_set_key(aesw, key_from, 16);
-	aesw_set_iv(aesw, iv, sizeof(iv));
-	aesw_decrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
-
-	// Encrypt the key with the new common key.
-	aesw_set_key(aesw, key_to, 16);
-	aesw_set_iv(aesw, iv, sizeof(iv));
-	aesw_encrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
-
-	// Update the issuer.
-	strncpy(ticket->issuer, issuer, sizeof(ticket->issuer));
-
-	// We're done here
-	aesw_free(aesw);
-	return 0;
-}
-
-/**
  * Re-encrypt partitions in a Wii disc image.
  *
  * This operation will *wipe* the update partition, since installing
@@ -638,7 +542,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		// Copy in the ticket.
 		memcpy(&hdr_new.ticket, &hdr_orig.ticket, sizeof(hdr_new.ticket));
 		// Recrypt the ticket. (This also updates the issuer.)
-		ret = rvth_recrypt_ticket(&hdr_new.ticket, toKey);
+		ret = sig_recrypt_ticket(&hdr_new.ticket, toKey);
 		if (ret != 0) {
 			// Error recrypting the ticket.
 			int err = errno;
