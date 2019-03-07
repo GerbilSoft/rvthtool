@@ -83,6 +83,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Files.
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
+	int64_t src_file_size, offset;
 
 	// Certificates.
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
@@ -92,11 +93,16 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Read buffer.
 	rdbuf_t *buf = NULL;
+	uint32_t data_sz;
 
 	// Open the source WAD file.
+	errno = 0;
 	f_src_wad = _tfopen(src_wad, _T("rb"));
 	if (!f_src_wad) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fputs("*** ERROR opening source WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "': %s\n", strerror(err));
@@ -112,9 +118,13 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Re-read the WAD header and parse the addresses.
 	rewind(f_src_wad);
+	errno = 0;
 	size = fread(&header, 1, sizeof(header), f_src_wad);
 	if (size != sizeof(header)) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fputs("*** ERROR reading WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "': %s\n", strerror(err));
@@ -177,11 +187,56 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 
+	// Verify the data size.
+	fseeko(f_src_wad, 0, SEEK_END);
+	src_file_size = (uint32_t)ftello(f_src_wad);
+	if (isEarly) {
+		// Data size is the rest of the file.
+		if (src_file_size < wadInfo.data_address) {
+			// Not valid...
+			fputs("*** ERROR: WAD file '", stderr);
+			_fputts(src_wad, stderr);
+			fputs("' data size is invalid.\n", stderr);
+			ret = 6;
+			goto end;
+		}
+		wadInfo.data_size = (uint32_t)src_file_size - wadInfo.data_address;
+	} else {
+		// Verify the data size.
+		if (src_file_size < wadInfo.data_address) {
+			// File is too small.
+			fputs("*** ERROR: WAD file '", stderr);
+			_fputts(src_wad, stderr);
+			fputs("' data address is invalid.\n", stderr);
+			ret = 7;
+			goto end;
+		} else if (src_file_size - wadInfo.data_address < wadInfo.data_size) {
+			// Data size is too small.
+			fputs("*** ERROR: WAD file '", stderr);
+			_fputts(src_wad, stderr);
+			fputs("' data size is invalid.\n", stderr);
+			ret = 8;
+			goto end;
+		}
+
+		// TODO: More checks?
+	}
+
+	if (wadInfo.data_size > 128*1024*1024) {
+		// Maximum of 128 MB.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' data size is too big. (%u; should be less than 128 MB)\n",
+			wadInfo.data_size);
+		ret = 9;
+		goto end;
+	}
+
 	// Allocate the memory buffer.
 	buf = malloc(sizeof(*buf));
 	if (!buf) {
 		fputs("*** ERROR: Unable to allocate memory buffer.\n", stderr);
-		ret = 6;
+		ret = 10;
 		goto end;
 	}
 
@@ -193,7 +248,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fputs("': Unable to read the ticket.\n", stderr);
-		ret = 7;
+		ret = 11;
 		goto end;
 	}
 
@@ -236,7 +291,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("': Unknown issuer.\n", stderr);
-			ret = 8;
+			ret = 12;
 			goto end;
 	}
 
@@ -254,14 +309,14 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 				// Should not happen...
 				assert(!"src_key: Invalid cryptoType.");
 				fputs("*** ERROR: Unable to select encryption key.\n", stderr);
-				ret = 9;
+				ret = 13;
 				goto end;
 		}
 	} else {
 		if ((RVL_CryptoType_e)recrypt_key == src_key) {
 			// No point in recrypting to the same key...
 			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
-			ret = 10;
+			ret = 14;
 			goto end;
 		}
 	}
@@ -282,14 +337,18 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			// This should not happen...
 			assert(!"recrypt_key: Invalid key index.");
 			fputs("*** ERROR: Invalid recrypt_key value.\n", stderr);
-			ret = 11;
+			ret = 15;
 			goto end;
 	}
 
 	// Open the destination WAD file.
+	errno = 0;
 	f_dest_wad = _tfopen(dest_wad, _T("wb"));
 	if (!f_dest_wad) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fputs("*** ERROR opening destination WAD file '", stderr);
 		_fputts(dest_wad, stderr);
 		fprintf(stderr, "' for write: %s\n", strerror(err));
@@ -326,9 +385,13 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Write the WAD header.
+	errno = 0;
 	size = fwrite(&header.wad, 1, sizeof(header.wad), f_dest_wad);
 	if (size != sizeof(header.wad)) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR writing destination WAD header: %s\n", strerror(err));
 		ret = -err;
 		goto end;
@@ -338,31 +401,47 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	fpAlign(f_dest_wad);
 
 	// Write the certificates.
+	errno = 0;
 	size = fwrite(cert_CA, 1, sizeof(*cert_CA), f_dest_wad);
 	if (size != sizeof(*cert_CA)) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
+	errno = 0;
 	size = fwrite(cert_ticket, 1, sizeof(*cert_ticket), f_dest_wad);
 	if (size != sizeof(*cert_ticket)) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
+	errno = 0;
 	size = fwrite(cert_TMD, 1, sizeof(*cert_TMD), f_dest_wad);
 	if (size != sizeof(*cert_TMD)) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
 	if (cert_dev) {
+		errno = 0;
 		size = fwrite(cert_dev, 1, sizeof(*cert_dev), f_dest_wad);
 		if (size != sizeof(*cert_dev)) {
 			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
 			fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 			ret = -err;
 			goto end;
@@ -378,6 +457,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	printf("Recrypting the ticket and TMD...\n");
 
 	// Ticket is already loaded, so recrypt and resign it.
+	errno = 0;
 	ret = sig_recrypt_ticket(&buf->ticket, toKey);
 	if (ret != 0) {
 		// Error recrypting the ticket.
@@ -402,9 +482,13 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Write the ticket.
+	errno = 0;
 	size = fwrite(&buf->ticket, 1, sizeof(buf->ticket), f_dest_wad);
 	if (size != sizeof(buf->ticket)) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR writing destination WAD ticket: %s\n", strerror(err));
 		ret = -err;
 		goto end;
@@ -415,9 +499,13 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Load the TMD.
 	fseek(f_src_wad, wadInfo.tmd_address, SEEK_SET);
+	errno = 0;
 	size = fread(buf->u8, 1, wadInfo.tmd_size, f_src_wad);
 	if (size != wadInfo.tmd_size) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR reading source WAD TMD: %s\n", strerror(err));
 		ret = -err;
 		goto end;
@@ -442,9 +530,13 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Write the TMD.
+	errno = 0;
 	size = fwrite(buf->u8, 1, wadInfo.tmd_size, f_dest_wad);
 	if (size != wadInfo.tmd_size) {
 		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
 		fprintf(stderr, "*** ERROR writing destination WAD TMD: %s\n", strerror(err));
 		ret = -err;
 		goto end;
@@ -453,6 +545,87 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// 64-byte alignment.
 	fpAlign(f_dest_wad);
 
+	// Copy the data, one megabyte at a time.
+	// TODO: Show progress? (WADs are small enough that this probably isn't needed...)
+	printf("Copying the WAD data...\n");
+	data_sz = wadInfo.data_size;
+	for (; data_sz >= sizeof(buf->u8); data_sz -= sizeof(buf->u8)) {
+		errno = 0;
+		size = fread(buf->u8, 1, sizeof(buf->u8), f_src_wad);
+		if (size != sizeof(buf->u8)) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR reading source WAD data: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+
+		errno = 0;
+		size = fwrite(buf->u8, 1, sizeof(buf->u8), f_dest_wad);
+		if (size != sizeof(buf->u8)) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR writing destination WAD data: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+	}
+
+	// Remaining data.
+	if (data_sz > 0) {
+		errno = 0;
+		size = fread(buf->u8, 1, data_sz, f_src_wad);
+		if (size != data_sz) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR reading source WAD data: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+
+		errno = 0;
+		size = fwrite(buf->u8, 1, data_sz, f_dest_wad);
+		if (size != data_sz) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR writing destination WAD data: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+	}
+
+	// Make sure the file is 64-byte aligned.
+	offset = ftello(f_dest_wad);
+	if (offset % 64 != 0) {
+		const unsigned int count = 64 - (unsigned int)(offset % 64);
+
+		// Using a fixed memset() for performance reasons.
+		memset(buf->u8, 0, 64);
+
+		errno = 0;
+		size = fwrite(buf->u8, 1, count, f_dest_wad);
+		if (size != count) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR writing destination WAD padding: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+	}
+
+	// TODO: Copy the footer.
+
+	printf("WAD resigning complete.\n");
 	ret = 0;
 
 end:
