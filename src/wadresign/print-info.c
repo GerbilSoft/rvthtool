@@ -121,11 +121,12 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly
 
 /**
  * 'info' command. (internal function)
- * @param f_wad WAD file.
- * @param wad_filename WAD filename. (for error messages)
+ * @param f_wad		[in] Opened WAD file.
+ * @param wad_filename	[in] WAD filename. (for error messages)
+ * @param verify	[in] If true, verify the contents.
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename)
+int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 {
 	int ret;
 	size_t size;
@@ -143,6 +144,11 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename)
 	// Certificate validation.
 	const char *issuer_ticket, *issuer_tmd;
 	RVL_SigStatus_e sig_status_ticket, sig_status_tmd;
+
+	// Contents.
+	unsigned int nbr_cont, nbr_cont_actual;
+	uint16_t boot_index;
+	const RVL_Content_Entry *content;
 
 	// Read the WAD header.
 	rewind(f_wad);
@@ -280,6 +286,38 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename)
 		issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
 	putchar('\n');
+
+	// Print the contents.
+	fputs("Contents:\n", stderr);
+	nbr_cont = be16_to_cpu(tmdHeader->nbr_cont);
+	boot_index = be16_to_cpu(tmdHeader->boot_index);
+
+	// Make sure the TMD is big enough.
+	// TODO: Show an error if it's not?
+	content = (const RVL_Content_Entry*)(&tmd[sizeof(*tmdHeader)]);
+	nbr_cont_actual = (wadInfo.tmd_size - sizeof(*tmdHeader)) / sizeof(*content);
+	if (nbr_cont > nbr_cont_actual) {
+		nbr_cont = nbr_cont_actual;
+	}
+
+	for (; nbr_cont > 0; nbr_cont--, content++) {
+		// TODO: Show the actual table index, or just the
+		// index field in the entry?
+		uint16_t content_index = be16_to_cpu(content->index);
+		printf("#%d: ID=%08x, type=%04X, size=%u",
+			be16_to_cpu(content->index),
+			be32_to_cpu(content->content_id),
+			be16_to_cpu(content->type),
+			(uint32_t)be64_to_cpu(content->size));
+		if (content_index == boot_index) {
+			fputs(", bootable", stdout);
+		}
+		putchar('\n');
+
+		// TODO: If verify is set, verify the SHA-1.
+	}
+
+	putchar('\n');
 	ret = 0;
 
 end:
@@ -289,10 +327,11 @@ end:
 
 /**
  * 'info' command.
- * @param wad_filename WAD filename.
+ * @param wad_filename	[in] WAD filename.
+ * @param verify	[in] If true, verify the contents.
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int print_wad_info(const TCHAR *wad_filename)
+int print_wad_info(const TCHAR *wad_filename, bool verify)
 {
 	int ret;
 
@@ -307,7 +346,7 @@ int print_wad_info(const TCHAR *wad_filename)
 	}
 
 	// Print the WAD info.
-	ret = print_wad_info_FILE(f_wad, wad_filename);
+	ret = print_wad_info_FILE(f_wad, wad_filename, verify);
 	fclose(f_wad);
 	return ret;
 }

@@ -113,7 +113,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Print the WAD information.
-	ret = print_wad_info_FILE(f_src_wad, src_wad);
+	// TODO: Should we verify the SHA-1s?
+	ret = print_wad_info_FILE(f_src_wad, src_wad, false);
 	if (ret != 0) {
 		// Error printing the WAD information.
 		return ret;

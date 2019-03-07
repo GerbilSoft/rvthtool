@@ -56,18 +56,20 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly
 
 /**
  * 'info' command. (internal function)
- * @param f_wad Opened WAD file.
- * @param wad_filename WAD filename. (for error messages)
+ * @param f_wad		[in] Opened WAD file.
+ * @param wad_filename	[in] WAD filename. (for error messages)
+ * @param verify	[in] If true, verify the contents.
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename);
+int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify);
 
 /**
  * 'info' command.
- * @param wad_filename WAD filename.
+ * @param wad_filename	[in] WAD filename.
+ * @param verify	[in] If true, verify the contents.
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int print_wad_info(const TCHAR *wad_filename);
+int print_wad_info(const TCHAR *wad_filename, bool verify);
 
 #ifdef __cplusplus
 }

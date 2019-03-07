@@ -95,6 +95,9 @@ static void print_help(const TCHAR *argv0)
 		"   Default converts Retail/Korean WADs to Debug, and\n"
 		"   Debug WADs to Retail.\n"
 		"\n"
+		"verify file.wad\n"
+		" - Verify the content hashes.\n"
+		"\n"
 		"Options:\n"
 		"\n"
 		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
@@ -201,7 +204,14 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = print_wad_info(argv[optind+1]);
+		ret = print_wad_info(argv[optind+1], false);
+	} else if (!_tcscmp(argv[optind], _T("verify"))) {
+		// Verify a WAD.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("WAD filename not specified"));
+			return EXIT_FAILURE;
+		}
+		ret = print_wad_info(argv[optind+1], true);
 	} else if (!_tcscmp(argv[optind], _T("resign"))) {
 		// Resign a WAD.
 		if (argc < optind+2) {
@@ -235,7 +245,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 
 		if (isFilename) {
 			// Probably a filename.
-			ret = print_wad_info(argv[optind]);
+			ret = print_wad_info(argv[optind], false);
 		} else {
 			// Not a filename.
 			print_error(argv[0], _T("unrecognized command '%s'"), argv[optind]);
