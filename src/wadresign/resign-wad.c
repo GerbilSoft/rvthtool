@@ -27,6 +27,7 @@
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/wii_wad.h"
 #include "libwiicrypto/sig_tools.h"
+#include "libwiicrypto/priv_key_store.h"
 
 // C includes.
 #include <assert.h>
@@ -78,6 +79,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	WAD_Header header;
 	WAD_Info_t wadInfo;
 	RVL_CryptoType_e src_key;
+	RVL_AES_Keys_e toKey;
 
 	// Files.
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
@@ -248,7 +250,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 				break;
 			default:
 				// Should not happen...
-				assert(!"This shouldn't happen!");
+				assert(!"src_key: Invalid cryptoType.");
 				fputs("*** ERROR: Unable to select encryption key.\n", stderr);
 				ret = 9;
 				goto end;
@@ -260,6 +262,26 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			ret = 10;
 			goto end;
 		}
+	}
+
+	// Determine the key index.
+	switch (recrypt_key) {
+		case RVL_CryptoType_Debug:
+			toKey = RVL_KEY_DEBUG;
+			break;
+		case RVL_CryptoType_Retail:
+			toKey = RVL_KEY_RETAIL;
+			break;
+		case RVL_CryptoType_Korean:
+			toKey = RVL_KEY_KOREAN;
+			break;
+		default:
+			// Invalid key index.
+			// This should not happen...
+			assert(!"recrypt_key: Invalid key index.");
+			fputs("*** ERROR: Invalid recrypt_key value.\n", stderr);
+			ret = 11;
+			goto end;
 	}
 
 	// Open the destination WAD file.
@@ -277,7 +299,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	printf("Writing certificate chain...\n");
 
 	// Get the certificates.
-	if (recrypt_key != RVL_CryptoType_Debug) {
+	if (toKey != RVL_KEY_DEBUG) {
 		// Retail certificates.
 		// Order: CA, Ticket, TMD
 		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
@@ -346,8 +368,47 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// 64-byte alignment.
 	fpAlign(f_dest_wad);
 
-	// TODO: Read and handle ticket, TMD, data, and footer/name.
+	// TODO: Copy data and footer/name.
+
+	// Recrypt the ticket and TMD.
 	printf("Recrypting the ticket and TMD...\n");
+
+	// Ticket is already loaded, so recrypt and resign it.
+	ret = sig_recrypt_ticket(&buf->ticket, toKey);
+	if (ret != 0) {
+		// Error recrypting the ticket.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		fprintf(stderr, "*** ERROR recrypting the ticket: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+	// Sign the ticket.
+	// TODO: Error checking.
+	if (likely(toKey != RVL_KEY_DEBUG)) {
+		// Retail: Fakesign the ticket.
+		// Dolphin and cIOSes ignore the signature anyway.
+		cert_fakesign_ticket(&buf->ticket);
+	} else {
+		// Debug: Use the real signing keys.
+		// Debug IOS requires a valid signature.
+		cert_realsign_ticket(&buf->ticket, &rvth_privkey_debug_ticket);
+	}
+
+	// Write the ticket.
+	size = fwrite(&buf->ticket, 1, sizeof(buf->ticket), f_dest_wad);
+	if (size != sizeof(buf->ticket)) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR writing WAD ticket: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+
+	// 64-byte alignment.
+	fpAlign(f_dest_wad);
+
 	ret = 0;
 
 end:
