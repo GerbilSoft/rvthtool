@@ -243,12 +243,12 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	memcpy(iv, &ticket->title_id, 8);
 	memset(&iv[8], 0, 8);
 
-	// Decrypt the key with the original common key.
+	// Decrypt the title key with the original common key.
 	aesw_set_key(aesw, key_from, 16);
 	aesw_set_iv(aesw, iv, sizeof(iv));
 	aesw_decrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
 
-	// Encrypt the key with the new common key.
+	// Encrypt the title key with the new common key.
 	aesw_set_key(aesw, key_to, 16);
 	aesw_set_iv(aesw, iv, sizeof(iv));
 	aesw_encrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
