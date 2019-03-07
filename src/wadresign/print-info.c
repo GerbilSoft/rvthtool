@@ -288,8 +288,10 @@ int print_wad_info(const TCHAR *wad_filename)
 		issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
 	putchar('\n');
+	ret = 0;
+
 end:
 	free(tmd);
 	fclose(f_wad);
-	return 0;
+	return ret;
 }
