@@ -633,6 +633,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// TODO: Copy the footer.
+	// TODO: Make sure the file is a multiple of 64 bytes.
 
 	printf("WAD resigning complete.\n");
 	ret = 0;

@@ -22,10 +22,14 @@
 #include "wad-fns.h"
 
 // libwiicrypto
+#include "libwiicrypto/aesw.h"
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/cert.h"
-#include "libwiicrypto/wii_wad.h"
 #include "libwiicrypto/sig_tools.h"
+#include "libwiicrypto/wii_wad.h"
+
+// Nettle SHA-1
+#include <nettle/sha1.h>
 
 // C includes.
 #include <ctype.h>
@@ -123,15 +127,136 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly
  * Verify a content entry.
  * @param f_wad		[in] Opened WAD file.
  * @param encKey	[in] Encryption key.
- * @param content_addr	[in] Content address.
+ * @param ticket	[in] Ticket.
  * @param content	[in] Content entry.
- * @return 0 if the content is verified; non-zero if not.
+ * @param content_addr	[in] Content address.
+ * @return 0 if the content is verified; 1 if not; negative POSIX error code on error.
  */
 static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
-	uint32_t content_addr, const RVL_Content_Entry *content)
+	const RVL_Ticket *ticket, const RVL_Content_Entry *content,
+	uint32_t content_addr)
 {
-	// TODO
-	return 0;
+	int ret = 0;
+	size_t size;
+
+	struct sha1_ctx sha1;
+	uint8_t iv[16];
+	uint8_t title_key[16];
+	uint32_t data_sz;
+
+	// AES context.
+	AesCtx *aesw;
+
+#define BUF_SZ (1024*1024)
+	uint8_t *buf = NULL;	// 1 MB buffer
+	uint8_t digest[SHA1_DIGEST_SIZE];
+
+	// TODO: Pass in an aesw context for less overhead.
+	errno = 0;
+	aesw = aesw_new();
+	if (!aesw) {
+		int ret = -errno;
+		if (ret == 0) {
+			ret = -EIO;
+		}
+		return ret;
+	}
+
+	// IV is the 64-bit title ID, followed by zeroes.
+	memcpy(iv, &ticket->title_id, 8);
+	memset(&iv[8], 0, 8);
+
+	// Decrypt the title key with the common key.
+	memcpy(title_key, ticket->enc_title_key, sizeof(title_key));
+	aesw_set_key(aesw, RVL_AES_Keys[encKey], sizeof(RVL_AES_Keys[encKey]));
+	aesw_set_iv(aesw, iv, sizeof(iv));
+	aesw_decrypt(aesw, title_key, sizeof(title_key));
+
+	// Set the title key and new IV.
+	// IV is the 2-byte content index, followed by zeroes.
+	memcpy(iv, &content->index, 2);
+	memset(&iv[2], 0, 14);
+	aesw_set_key(aesw, title_key, sizeof(title_key));
+	aesw_set_iv(aesw, iv, sizeof(iv));
+
+	// Allocate memory.
+	buf = malloc(BUF_SZ);
+	if (!buf) {
+		aesw_free(aesw);
+		return -ENOMEM;
+	}
+
+	// Read the content, decrypt it, and hash it.
+	// TODO: Verify size; check fseeko() errors.
+	sha1_init(&sha1);
+	data_sz = (uint32_t)be64_to_cpu(content->size);
+	fseeko(f_wad, content_addr, SEEK_SET);
+	for (; data_sz >= BUF_SZ; data_sz -= BUF_SZ) {
+		errno = 0;
+		size = fread(buf, 1, BUF_SZ, f_wad);
+		if (size != BUF_SZ) {
+			ret = errno;
+			if (ret == 0) {
+				ret = -EIO;
+			}
+			goto end;
+		}
+
+		// Decrypt the data.
+		aesw_decrypt(aesw, buf, BUF_SZ);
+
+		// Update the SHA-1.
+		sha1_update(&sha1, BUF_SZ, buf);
+	}
+
+	// Remaining data.
+	if (data_sz > 0) {
+		// NOTE: AES works on 16-byte blocks, so we have to
+		// read and decrypt the full 16-byte block. The SHA-1
+		// is only taken for the actual used data, though.
+		uint32_t data_sz_align = ALIGN(16, data_sz);
+
+		errno = 0;
+		size = fread(buf, 1, data_sz_align, f_wad);
+		if (size != data_sz_align) {
+			ret = errno;
+			if (ret == 0) {
+				ret = -EIO;
+			}
+			goto end;
+		}
+
+		// Decrypt the data.
+		aesw_decrypt(aesw, buf, data_sz_align);
+
+		// Update the SHA-1.
+		// NOTE: Only uses the actual content, not the
+		// aligned data required for decryption.
+		sha1_update(&sha1, data_sz, buf);
+	}
+
+	// Finalize the SHA-1 and compare it.
+	sha1_digest(&sha1, sizeof(digest), digest);
+	fputs("- Expected SHA-1: ", stdout);
+	for (size = 0; size < sizeof(content->sha1_hash); size++) {
+		printf("%02x", content->sha1_hash[size]);
+	}
+	putchar('\n');
+	printf("- Actual SHA-1:   ");
+	for (size = 0; size < sizeof(digest); size++) {
+		printf("%02x", digest[size]);
+	}
+	if (!memcmp(digest, content->sha1_hash, SHA1_DIGEST_SIZE)) {
+		fputs(" [OK]\n", stdout);
+	} else {
+		fputs(" [ERROR]\n", stdout);
+		ret = 1;
+	}
+
+end:
+	free(buf);
+	aesw_free(aesw);
+	return ret;
 }
 
 /**
@@ -373,6 +498,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	// TODO: Validate against data_size.
 	content_addr = wadInfo.data_address;
+	ret = 0;
 	for (; nbr_cont > 0; nbr_cont--, content++) {
 		// TODO: Show the actual table index, or just the
 		// index field in the entry?
@@ -390,7 +516,11 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		if (verify) {
 			// Verify the content.
 			// TODO: Only decrypt the title key once?
-			verify_content(f_wad, encKey, content_addr, content);
+			// TODO: Return failure if any contents fail.
+			int vret = verify_content(f_wad, encKey, &ticket, content, content_addr);
+			if (vret != 0) {
+				ret = 1;
+			}
 		}
 
 		// Next content.
@@ -399,9 +529,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			content_addr = ALIGN(64, content_addr);
 		}
 	}
-
 	putchar('\n');
-	ret = 0;
 
 end:
 	free(tmd);
