@@ -81,6 +81,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	RVL_CryptoType_e src_key;
 	RVL_AES_Keys_e toKey;
 
+	// Key names.
+	const char *s_fromKey, *s_toKey;
+
 	// Files.
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
 	int64_t src_file_size, offset;
@@ -259,9 +262,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			switch (buf->ticket.common_key_index) {
 				case 0:
 					src_key = RVL_CryptoType_Retail;
+					s_fromKey = "retail";
 					break;
 				case 1:
 					src_key = RVL_CryptoType_Korean;
+					s_fromKey = "Korean";
 					break;
 				default: {
 					const char *s_key;
@@ -275,9 +280,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 					if (buf->ticket.title_id.u8[7] == 'K') {
 						s_key = "Korean";
 						src_key = RVL_CryptoType_Korean;
+						s_fromKey = "Korean";
 					} else {
 						s_key = "retail";
 						src_key = RVL_CryptoType_Retail;
+						s_fromKey = "retail";
 					}
 					fprintf(stderr, "*** Assuming %s common key based on game ID.\n\n", s_key);
 					break;
@@ -286,6 +293,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			break;
 		case RVL_CERT_ISSUER_DEBUG_TICKET:
 			src_key = RVL_CryptoType_Debug;
+			s_fromKey = "debug";
 			break;
 		default:
 			fputs("*** ERROR: WAD file '", stderr);
@@ -325,12 +333,15 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	switch (recrypt_key) {
 		case RVL_CryptoType_Debug:
 			toKey = RVL_KEY_DEBUG;
+			s_toKey = "debug";
 			break;
 		case RVL_CryptoType_Retail:
 			toKey = RVL_KEY_RETAIL;
+			s_toKey = "retail (fakesigned)";
 			break;
 		case RVL_CryptoType_Korean:
 			toKey = RVL_KEY_KOREAN;
+			s_toKey = "Korean (fakesigned)";
 			break;
 		default:
 			// Invalid key index.
@@ -340,6 +351,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			ret = 15;
 			goto end;
 	}
+
+	printf("Converting from %s to %s...\n", s_fromKey, s_toKey);
 
 	// Open the destination WAD file.
 	errno = 0;
