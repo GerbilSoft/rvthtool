@@ -270,24 +270,17 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 					s_fromKey = "Korean";
 					break;
 				default: {
-					const char *s_key;
 					// NOTE: A good number of retail WADs have an
 					// incorrect common key index for some reason.
-					fputs("*** WARNING: WAD file '", stderr);
-					_fputts(src_wad, stderr);
-					fprintf(stderr, "': Invalid common key index %u.\n",
-						buf->ticket.common_key_index);
-					
+					// NOTE 2: Warning is already printed by
+					// print_wad_info(), so don't print one here.
 					if (buf->ticket.title_id.u8[7] == 'K') {
-						s_key = "Korean";
 						src_key = RVL_CryptoType_Korean;
 						s_fromKey = "Korean";
 					} else {
-						s_key = "retail";
 						src_key = RVL_CryptoType_Retail;
 						s_fromKey = "retail";
 					}
-					fprintf(stderr, "*** Assuming %s common key based on game ID.\n\n", s_key);
 					break;
 				}
 			}

@@ -120,6 +120,21 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly
 }
 
 /**
+ * Verify a content entry.
+ * @param f_wad		[in] Opened WAD file.
+ * @param encKey	[in] Encryption key.
+ * @param content_addr	[in] Content address.
+ * @param content	[in] Content entry.
+ * @return 0 if the content is verified; non-zero if not.
+ */
+static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
+	uint32_t content_addr, const RVL_Content_Entry *content)
+{
+	// TODO
+	return 0;
+}
+
+/**
  * 'info' command. (internal function)
  * @param f_wad		[in] Opened WAD file.
  * @param wad_filename	[in] WAD filename. (for error messages)
@@ -142,13 +157,20 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	uint8_t ios_version = 0;
 
 	// Certificate validation.
-	const char *issuer_ticket, *issuer_tmd;
+	RVL_Cert_Issuer issuer_ticket;
+	const char *s_issuer_ticket, *s_issuer_tmd;
 	RVL_SigStatus_e sig_status_ticket, sig_status_tmd;
+
+	// Encryption key.
+	RVL_AES_Keys_e encKey;
+	const char *s_encKey;
+	const char *s_invalidKey = NULL;
 
 	// Contents.
 	unsigned int nbr_cont, nbr_cont_actual;
 	uint16_t boot_index;
 	const RVL_Content_Entry *content;
+	uint32_t content_addr;
 
 	// Read the WAD header.
 	rewind(f_wad);
@@ -273,19 +295,68 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	}
 	printf("- IOS version:   %u\n", ios_version);
 
+	// Determine the encryption key in use.
+	issuer_ticket = cert_get_issuer_from_name(ticket.issuer);
+	switch (issuer_ticket) {
+		default:	// TODO: Show an error instead?
+		case RVL_CERT_ISSUER_RETAIL_TICKET:
+			// Retail may be either Common Key or Korean Key.
+			switch (ticket.common_key_index) {
+				case 0:
+					encKey = RVL_KEY_RETAIL;
+					s_encKey = "Retail";
+					break;
+				case 1:
+					encKey = RVL_KEY_KOREAN;
+					s_encKey = "Korean";
+					break;
+				default: {
+					// NOTE: A good number of retail WADs have an
+					// incorrect common key index for some reason.
+					if (ticket.title_id.u8[7] == 'K') {
+						s_invalidKey = "Korean";
+						s_encKey = "Korean";
+						encKey = RVL_KEY_KOREAN;
+					} else {
+						s_invalidKey = "retail";
+						s_encKey = "Retail";
+						encKey = RVL_KEY_RETAIL;
+					}
+					break;
+				}
+			}
+			break;
+		case RVL_CERT_ISSUER_DEBUG_TICKET:
+			encKey = RVL_KEY_DEBUG;
+			s_encKey = "Debug";
+			break;
+	}
+	printf("- Encryption:    %s\n", s_encKey);
+
 	// Check the ticket issuer and signature.
-	issuer_ticket = issuer_type(cert_get_issuer_from_name(ticket.issuer));
+	s_issuer_ticket = issuer_type(issuer_ticket);
 	sig_status_ticket = sig_verify((const uint8_t*)&ticket, sizeof(ticket));
 	printf("- Ticket Signature: %s%s\n",
-		issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
+		s_issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
 	// Check the ticket issuer and signature.
-	issuer_tmd = issuer_type(cert_get_issuer_from_name(tmdHeader->issuer));
+	s_issuer_tmd = issuer_type(cert_get_issuer_from_name(tmdHeader->issuer));
 	sig_status_tmd = sig_verify(tmd, wadInfo.tmd_size);
 	printf("- TMD Signature:    %s%s\n",
-		issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
+		s_issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
 	putchar('\n');
+
+	if (s_invalidKey) {
+		// Invalid common key index for retail.
+		// NOTE: A good number of retail WADs have an
+		// incorrect common key index for some reason.
+		fputs("*** WARNING: WAD file '", stderr);
+		_fputts(wad_filename, stderr);
+		fprintf(stderr, "': Invalid common key index %u.\n",
+			ticket.common_key_index);
+		fprintf(stderr, "*** Assuming %s common key based on game ID.\n\n", s_invalidKey);
+	}
 
 	// Print the contents.
 	fputs("Contents:\n", stderr);
@@ -300,6 +371,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		nbr_cont = nbr_cont_actual;
 	}
 
+	// TODO: Validate against data_size.
+	content_addr = wadInfo.data_address;
 	for (; nbr_cont > 0; nbr_cont--, content++) {
 		// TODO: Show the actual table index, or just the
 		// index field in the entry?
@@ -314,7 +387,17 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		}
 		putchar('\n');
 
-		// TODO: If verify is set, verify the SHA-1.
+		if (verify) {
+			// Verify the content.
+			// TODO: Only decrypt the title key once?
+			verify_content(f_wad, encKey, content_addr, content);
+		}
+
+		// Next content.
+		content_addr += (uint32_t)be64_to_cpu(content->size);
+		if (likely(!isEarly)) {
+			content_addr = ALIGN(64, content_addr);
+		}
 	}
 
 	putchar('\n');
