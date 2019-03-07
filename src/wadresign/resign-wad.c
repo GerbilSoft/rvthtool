@@ -58,7 +58,7 @@ typedef union _rdbuf_t {
 static inline void fpAlign(FILE *fp)
 {
 	int64_t offset = ftello(fp);
-	if ((offset & 63) != 0) {
+	if ((offset % 64) != 0) {
 		offset = ALIGN(64, offset);
 		fseeko(fp, offset, SEEK_SET);
 	}
@@ -458,7 +458,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// 64-byte alignment.
 	fpAlign(f_dest_wad);
 
-	// TODO: Copy data and footer/name.
+	// TODO: Copy the footer/name.
 
 	// Recrypt the ticket and TMD.
 	printf("Recrypting the ticket and TMD...\n");
@@ -554,8 +554,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Copy the data, one megabyte at a time.
 	// TODO: Show progress? (WADs are small enough that this probably isn't needed...)
+	// TODO: Check for fseeko() errors.
 	printf("Copying the WAD data...\n");
 	data_sz = wadInfo.data_size;
+	fseeko(f_src_wad, wadInfo.data_address, SEEK_SET);
 	for (; data_sz >= sizeof(buf->u8); data_sz -= sizeof(buf->u8)) {
 		errno = 0;
 		size = fread(buf->u8, 1, sizeof(buf->u8), f_src_wad);
