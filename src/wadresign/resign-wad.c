@@ -88,6 +88,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
 	const RVL_Cert_RSA2048 *cert_ticket, *cert_TMD;
 	const RVL_Cert_RSA2048_ECC *cert_dev;
+	const char *issuer_TMD;
 
 	// Read buffer.
 	rdbuf_t *buf = NULL;
@@ -167,6 +168,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	} else if (wadInfo.tmd_size > 1*1024*1024) {
 		// Too big.
+		// TODO: Define a maximum TMD size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
@@ -306,6 +308,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
 		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
 		cert_dev	= NULL;
+		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TMD];
 		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
 			sizeof(*cert_CA) + sizeof(*cert_ticket) +
 			sizeof(*cert_TMD)));
@@ -316,6 +319,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
 		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
 		cert_dev	= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DEBUG_DEV);
+		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TMD];
 		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
 			sizeof(*cert_CA) + sizeof(*cert_ticket) +
 			sizeof(*cert_TMD) + sizeof(*cert_dev)));
@@ -325,7 +329,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	size = fwrite(&header.wad, 1, sizeof(header.wad), f_dest_wad);
 	if (size != sizeof(header.wad)) {
 		int err = errno;
-		fprintf(stderr, "*** ERROR writing WAD header: %s\n", strerror(err));
+		fprintf(stderr, "*** ERROR writing destination WAD header: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
@@ -337,21 +341,21 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	size = fwrite(cert_CA, 1, sizeof(*cert_CA), f_dest_wad);
 	if (size != sizeof(*cert_CA)) {
 		int err = errno;
-		fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+		fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
 	size = fwrite(cert_ticket, 1, sizeof(*cert_ticket), f_dest_wad);
 	if (size != sizeof(*cert_ticket)) {
 		int err = errno;
-		fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+		fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
 	size = fwrite(cert_TMD, 1, sizeof(*cert_TMD), f_dest_wad);
 	if (size != sizeof(*cert_TMD)) {
 		int err = errno;
-		fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+		fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
@@ -359,7 +363,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		size = fwrite(cert_dev, 1, sizeof(*cert_dev), f_dest_wad);
 		if (size != sizeof(*cert_dev)) {
 			int err = errno;
-			fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+			fprintf(stderr, "*** ERROR writing destination WAD certificate chain: %s\n", strerror(err));
 			ret = -err;
 			goto end;
 		}
@@ -401,7 +405,47 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	size = fwrite(&buf->ticket, 1, sizeof(buf->ticket), f_dest_wad);
 	if (size != sizeof(buf->ticket)) {
 		int err = errno;
-		fprintf(stderr, "*** ERROR writing WAD ticket: %s\n", strerror(err));
+		fprintf(stderr, "*** ERROR writing destination WAD ticket: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+
+	// 64-byte alignment.
+	fpAlign(f_dest_wad);
+
+	// Load the TMD.
+	fseek(f_src_wad, wadInfo.tmd_address, SEEK_SET);
+	size = fread(buf->u8, 1, wadInfo.tmd_size, f_src_wad);
+	if (size != wadInfo.tmd_size) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR reading source WAD TMD: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+
+	// Change the issuer.
+	// NOTE: MSVC Secure Overloads will change strncpy() to strncpy_s(),
+	// which doesn't clear the buffer. Hence, we'll need to explicitly
+	// clear the buffer first.
+	memset(buf->tmdHeader.issuer, 0, sizeof(buf->tmdHeader.issuer));
+	strncpy(buf->tmdHeader.issuer, issuer_TMD, sizeof(buf->tmdHeader.issuer));
+	// Sign the TMD.
+	// TODO: Error checking.
+	if (likely(toKey != RVL_KEY_DEBUG)) {
+		// Retail: Fakesign the TMD.
+		// Dolphin and cIOSes ignore the signature anyway.
+		cert_fakesign_tmd(buf->u8, wadInfo.tmd_size);
+	} else {
+		// Debug: Use the real signing keys.
+		// Debug IOS requires a valid signature.
+		cert_realsign_tmd(buf->u8, wadInfo.tmd_size, &rvth_privkey_debug_tmd);
+	}
+
+	// Write the TMD.
+	size = fwrite(buf->u8, 1, wadInfo.tmd_size, f_dest_wad);
+	if (size != wadInfo.tmd_size) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR writing destination WAD TMD: %s\n", strerror(err));
 		ret = -err;
 		goto end;
 	}
