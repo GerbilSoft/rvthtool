@@ -171,11 +171,30 @@ typedef enum {
 typedef struct PACKED _RVL_Content_Entry {
 	uint32_t content_id;		// [0x000] Content ID
 	uint16_t index;			// [0x004] Index
-	uint16_t type;			// [0x006] Type
+	uint16_t type;			// [0x006] Type (see RVL_Content_Type_e)
 	uint64_t size;			// [0x008] Size
 	uint8_t sha1_hash[20];		// [0x010] SHA-1 hash of the H3 table
 } RVL_Content_Entry;
 ASSERT_STRUCT(RVL_Content_Entry, 0x24);
+
+/**
+ * Content type (bitfield)
+ */
+typedef enum {
+	RVL_CONTENT_TYPE_DEFAULT	= 0x0001,
+	RVL_CONTENT_TYPE_UNKNOWN_0x04	= 0x0004,
+
+	// Used for DLC titles.
+	RVL_CONTENT_TYPE_DATA		= 0x0008,
+	RVL_CONTENT_TYPE_UNKNOWN_0x10	= 0x0010,
+
+	// Seems to be used for WFS titles.
+	RVL_CONTENT_TYPE_MAYBE_WFS	= 0x0020,
+	RVL_CONTENT_TYPE_UNKNOWN_CT	= 0x0040,
+
+	// Seen in Pop Europe (WiiWare).
+	RVL_CONTENT_TYPE_UNKNOWN_0x8000	= 0x8000,
+} RVL_Content_Type_e;
 
 /**
  * Wii partition header.
