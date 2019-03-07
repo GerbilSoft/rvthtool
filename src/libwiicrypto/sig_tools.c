@@ -254,6 +254,10 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	aesw_encrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
 
 	// Update the issuer.
+	// NOTE: MSVC Secure Overloads will change strncpy() to strncpy_s(),
+	// which doesn't clear the buffer. Hence, we'll need to explicitly
+	// clear the buffer first.
+	memset(ticket->issuer, 0, sizeof(ticket->issuer));
 	strncpy(ticket->issuer, issuer, sizeof(ticket->issuer));
 
 	// We're done here

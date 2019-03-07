@@ -579,6 +579,10 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 		// Change the issuer.
 		tmdHeader = (RVL_TMD_Header*)&hdr_new.u8[data_pos];
+		// NOTE: MSVC Secure Overloads will change strncpy() to strncpy_s(),
+		// which doesn't clear the buffer. Hence, we'll need to explicitly
+		// clear the buffer first.
+		memset(tmdHeader->issuer, 0, sizeof(tmdHeader->issuer));
 		strncpy(tmdHeader->issuer, issuer_TMD, sizeof(tmdHeader->issuer));
 		// Sign the TMD.
 		// TODO: Error checking.
