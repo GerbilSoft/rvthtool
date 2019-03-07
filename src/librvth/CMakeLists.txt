@@ -26,46 +26,46 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURREN
 
 # Sources.
 SET(librvth_SRCS
-	rvth.c
-	rvth_p.c
-	rvth_write.c
-	rvth_extract.c
+	rvth.cpp
+	rvth_p.cpp
+	write.cpp
+	extract.cpp
 	rvth_time.c
-	rvth_recrypt.c
-	ref_file.c
-	disc_header.c
+	recrypt.cpp
+	RefFile.cpp
+	disc_header.cpp
 	query.c
-	ptbl.c
-	extract_crypt.c
-	bank_init.c
+	ptbl.cpp
+	extract_crypt.cpp
+	bank_init.cpp
+	rvth_error.c
 
 	# Disc image readers
-	reader.c
-	reader_plain.c
-	reader_ciso.c
-	reader_wbfs.c
+	reader/Reader.cpp
+	reader/PlainReader.cpp
+	reader/CisoReader.cpp
+	reader/WbfsReader.cpp
 	)
 # Headers.
 SET(librvth_H
 	nhcd_structs.h
-	rvth.h
-	rvth_p.h
+	rvth.hpp
 	rvth_time.h
-	rvth_recrypt.h
-	ref_file.h
+	RefFile.hpp
 	tcharx.h
-	disc_header.h
+	disc_header.hpp
 	query.h
 	ptbl.h
-	extract_crypt.h
 	bank_init.h
+	rvth_error.h
+	rvth_enums.h
 
 	# Disc image readers
-	reader.h
-	reader_plain.h
-	reader_ciso.h
-	libwbfs.h
-	reader_wbfs.h
+	reader/Reader.hpp
+	reader/PlainReader.hpp
+	reader/CisoReader.hpp
+	reader/libwbfs.h
+	reader/WbfsReader.hpp
 	)
 
 IF(HAVE_UDEV)

@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool                                                              *
- * undelete.c: Delete or undelete a bank in an RVT-H disk image.           *
+ * undelete.cpp: Delete or undelete a bank in an RVT-H disk image.         *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -19,8 +19,9 @@
  ***************************************************************************/
 
 #include "undelete.h"
-#include "list-banks.h"
-#include "librvth/rvth.h"
+#include "list-banks.hpp"
+#include "librvth/rvth.hpp"
+#include "librvth/rvth_error.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -33,27 +34,25 @@
  */
 int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 {
-	RvtH *rvth;
-	TCHAR *endptr;
-	unsigned int bank;
-	int ret;
-
 	// Open the disk image.
-	rvth = rvth_open(rvth_filename, &ret);
-	if (!rvth) {
+	int ret;
+	RvtH *const rvth = new RvtH(rvth_filename, &ret);
+	if (!rvth->isOpen()) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
 		fprintf(stderr, "': %s\n", rvth_error(ret));
+		delete rvth;
 		return ret;
 	}
 
 	// Validate the bank number.
-	bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
-	if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+	TCHAR *endptr;
+	unsigned int bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
+	if (*endptr != 0 || bank > rvth->bankCount()) {
 		fputs("*** ERROR: Invalid bank number '", stderr);
 		_fputts(s_bank, stderr);
 		fputs("'.\n", stderr);
-		rvth_close(rvth);
+		delete rvth;
 		return -EINVAL;
 	}
 
@@ -63,7 +62,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	putchar('\n');
 
 	// Delete the bank.
-	ret = rvth_delete(rvth, bank);
+	ret = rvth->deleteBank(bank);
 	if (ret == 0) {
 		printf("Bank %u deleted.\n", bank+1);
 	} else {
@@ -71,7 +70,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		fprintf(stderr, "*** ERROR: rvth_delete() failed: %s\n", rvth_error(ret));
 	}
 
-	rvth_close(rvth);
+	delete rvth;
 	return ret;
 }
 
@@ -83,13 +82,9 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
  */
 int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 {
-	RvtH *rvth;
-	TCHAR *endptr;
-	unsigned int bank;
-	int ret;
-
 	// Open the disk image.
-	rvth = rvth_open(rvth_filename, &ret);
+	int ret;
+	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (!rvth) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
@@ -98,12 +93,13 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	}
 
 	// Validate the bank number.
-	bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
-	if (*endptr != 0 || bank > rvth_get_BankCount(rvth)) {
+	TCHAR *endptr;
+	unsigned int bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
+	if (*endptr != 0 || bank > rvth->bankCount()) {
 		fputs("*** ERROR: Invalid bank number '", stderr);
 		_fputts(s_bank, stderr);
 		fputs("'.\n", stderr);
-		rvth_close(rvth);
+		delete rvth;
 		return -EINVAL;
 	}
 
@@ -113,7 +109,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	putchar('\n');
 
 	// Undelete the bank.
-	ret = rvth_undelete(rvth, bank);
+	ret = rvth->undeleteBank(bank);
 	if (ret == 0) {
 		printf("Bank %u undeleted.\n", bank+1);
 	} else {
@@ -121,6 +117,6 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		fprintf(stderr, "*** ERROR: rvth_undelete() failed: %s\n", rvth_error(ret));
 	}
 
-	rvth_close(rvth);
+	delete rvth;
 	return ret;
 }

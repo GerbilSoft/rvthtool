@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_p.c: RVT-H image handler. (PRIVATE FUNCTIONS)                      *
+ * rvth_p.cpp: RVT-H image handler. (PRIVATE FUNCTIONS)                    *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,24 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "rvth_p.h"
+#include "rvth.hpp"
+
+#include "RefFile.hpp"
 #include "rvth_time.h"
+#include "rvth_error.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 /**
- * Make an RVT-H object writable.
- * @param rvth	[in] RVT-H disk image.
+ * Make the RVT-H object writable.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_make_writable(RvtH *rvth)
+int RvtH::makeWritable(void)
 {
-	if (ref_is_writable(rvth->f_img)) {
+	if (m_file->isWritable()) {
 		// RVT-H is already writable.
 		return 0;
 	}
@@ -44,20 +47,20 @@ int rvth_make_writable(RvtH *rvth)
 	// (Single bank)
 
 	// Make sure this is a device file.
-	if (!ref_is_device(rvth->f_img)) {
+	if (!m_file->isDevice()) {
 		// This is not a device file.
 		// Cannot make it writable.
 		return RVTH_ERROR_NOT_A_DEVICE;
 	}
 
 	// If we're using a fake NHCD table, we can't write to it.
-	if (!rvth->has_NHCD) {
+	if (!m_has_NHCD) {
 		// Fake NHCD table is in use.
 		return RVTH_ERROR_NHCD_TABLE_MAGIC;
 	}
 
 	// Make this writable.
-	return ref_make_writable(rvth->f_img);
+	return m_file->makeWritable();
 }
 
 /**
@@ -66,7 +69,7 @@ int rvth_make_writable(RvtH *rvth)
  * @param size Block size. (Must be a multiple of 64 bytes.)
  * @return True if the block is all zeroes; false if not.
  */
-bool rvth_is_block_empty(const uint8_t *block, unsigned int size)
+bool RvtH::isBlockEmpty(const uint8_t *block, unsigned int size)
 {
 	// Process the block using 64-bit pointers.
 	const uint64_t *block64 = (const uint64_t*)block;
@@ -93,48 +96,39 @@ bool rvth_is_block_empty(const uint8_t *block, unsigned int size)
 
 /**
  * Write a bank table entry to disk.
- * @param rvth	[in] RvtH device.
  * @param bank	[in] Bank number. (0-7)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
+int RvtH::writeBankEntry(unsigned int bank)
 {
-	int ret;
-	size_t size;
-	NHCD_BankEntry nhcd_entry;
-	RvtH_BankEntry *rvth_entry;
-
-	if (!rvth) {
-		errno = EINVAL;
-		return -EINVAL;
-	} else if (!rvth_is_hdd(rvth)) {
+	if (!isHDD()) {
 		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= rvth->bank_count) {
+	} else if (bank >= m_bankCount) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
 	}
 
 	// Make the RVT-H object writable.
-	ret = rvth_make_writable(rvth);
+	int ret = makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		return ret;
 	}
 
 	// Create a new NHCD bank entry.
+	NHCD_BankEntry nhcd_entry;
 	memset(&nhcd_entry, 0, sizeof(nhcd_entry));
 
 	// If the bank entry is deleted, then it should be
 	// all zeroes, so skip all of this.
-	rvth_entry = &rvth->entries[bank];
+	RvtH_BankEntry *const rvth_entry = &m_entries[bank];
 	if (rvth_entry->is_deleted)
 		goto skip_creating_bank_entry;
 
 	// Check the bank type.
-	rvth_entry = &rvth->entries[bank];
 	switch (rvth_entry->type) {
 		// These bank entries can be written.
 		case RVTH_BankType_Empty:
@@ -181,7 +175,7 @@ int rvth_write_BankEntry(RvtH *rvth, unsigned int bank)
 
 skip_creating_bank_entry:
 	// Write the bank entry.
-	ret = ref_seeko(rvth->f_img, LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	ret = m_file->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -189,7 +183,7 @@ skip_creating_bank_entry:
 		}
 		return -errno;
 	}
-	size = ref_write(&nhcd_entry, 1, sizeof(nhcd_entry), rvth->f_img);
+	size_t size = m_file->write(&nhcd_entry, 1, sizeof(nhcd_entry));
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
 		if (errno == 0) {

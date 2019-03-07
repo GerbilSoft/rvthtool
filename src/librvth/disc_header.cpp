@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * disc_header.c: Read a GCN/Wii disc header and determine its type.       *
+ * disc_header.cpp: Read a GCN/Wii disc header and determine its type.     *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,9 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "disc_header.h"
-#include "rvth_p.h"
-#include "reader.h"
+#include "disc_header.hpp"
+#include "nhcd_structs.h"
+#include "rvth_enums.h"
+#include "rvth.hpp"	// for RvtH::isBlockEmpty()
+
+#include "RefFile.hpp"
 
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/aesw.h"
@@ -28,10 +31,14 @@
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// C includes.
 #include <stdlib.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
+#include <cstdlib>
 
 // NDDEMO header.
 // Used in early GameCube tech demos.
@@ -109,25 +116,21 @@ int rvth_disc_header_identify(const GCN_DiscHeader *discHeader)
  */
 static uint32_t rvth_find_GamePartition_int(const ptbl_t *pt)
 {
-	unsigned int i;
-	uint32_t ptcount;
-	int64_t addr;
-
 	// Game partition is always in volume group 0.
 	// TODO: Use uint32_t arithmetic instead of int64_t?
-	addr = ((int64_t)be32_to_cpu(pt->vgtbl.vg[0].addr) << 2);
+	int64_t addr = ((int64_t)be32_to_cpu(pt->vgtbl.vg[0].addr) << 2);
 	if (addr != (RVL_VolumeGroupTable_ADDRESS + sizeof(pt->vgtbl))) {
 		// Partition table offset isn't supported right now.
 		return 0;
 	}
 
-	ptcount = be32_to_cpu(pt->vgtbl.vg[0].count);
+	uint32_t ptcount = be32_to_cpu(pt->vgtbl.vg[0].count);
 	if (ptcount > ARRAY_SIZE(pt->ptbl)) {
 		// Can't check this many partitions.
 		// Reduce it to the maximum we can check.
 		ptcount = ARRAY_SIZE(pt->ptbl);
 	}
-	for (i = 0; i < ptcount; i++) {
+	for (unsigned int i = 0; i < ptcount; i++) {
 		if (pt->ptbl[i].type == cpu_to_be32(0)) {
 			// Found the game partition.
 			return (be32_to_cpu(pt->ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
@@ -155,7 +158,8 @@ static uint32_t rvth_find_GamePartition_int(const ptbl_t *pt)
  * @param pIsDeleted	[out,opt] Set to true if the image appears to be "deleted".
  * @return Bank type, or negative POSIX error code. (See RvtH_BankType_e.)
  */
-int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *discHeader, bool *pIsDeleted)
+int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
+	GCN_DiscHeader *discHeader, bool *pIsDeleted)
 {
 	int ret = 0;	// errno setting
 	size_t size;
@@ -189,13 +193,13 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	memset(discHeader, 0, sizeof(*discHeader));
 
 	// Read the disc header.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start), SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -219,7 +223,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 
 	// If unknown, check if the entire sector is empty.
 	if (ret == RVTH_BankType_Unknown) {
-		if (rvth_is_block_empty(sbuf.u8, sizeof(sbuf.u8))) {
+		if (RvtH::isBlockEmpty(sbuf.u8, sizeof(sbuf.u8))) {
 			// Empty sector.
 			ret = RVTH_BankType_Empty;
 		}
@@ -239,7 +243,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	bankType = ret;
 
 	// Get the volume group table.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start) + RVL_VolumeGroupTable_ADDRESS, SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start) + RVL_VolumeGroupTable_ADDRESS, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		ret = -errno;
@@ -249,7 +253,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -270,7 +274,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	// Found the game partition.
 	// Read the partition header.
 	errno = 0;
-	pthdr = malloc(sizeof(*pthdr));
+	pthdr = (RVL_PartitionHeader*)malloc(sizeof(*pthdr));
 	if (!pthdr) {
 		// Cannot allocate memory.
 		ret = -errno;
@@ -279,7 +283,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		}
 		goto end;
 	}
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start + game_lba), SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start + game_lba), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		ret = -errno;
@@ -289,7 +293,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(pthdr, 1, sizeof(*pthdr), f_img);
+	size = f_img->read(pthdr, 1, sizeof(*pthdr));
 	if (size != sizeof(*pthdr)) {
 		// Read error.
 		ret = -errno;
@@ -308,7 +312,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	}
 
 	// Read the first LBA of the partition.
-	ret = ref_seeko(f_img, LBA_TO_BYTES(lba_start + game_lba) + data_offset, SEEK_SET);
+	ret = f_img->seeko(LBA_TO_BYTES(lba_start + game_lba) + data_offset, SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		ret = -errno;
@@ -318,7 +322,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 		goto end;
 	}
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -381,7 +385,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 	// Read the next LBA. This contains encrypted hashes,
 	// including the IV for the user data.
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;
@@ -394,7 +398,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start, GCN_DiscHeader *dis
 
 	// Read the first LBA of user data.
 	errno = 0;
-	size = ref_read(sbuf.u8, 1, sizeof(sbuf.u8), f_img);
+	size = f_img->read(sbuf.u8, 1, sizeof(sbuf.u8));
 	if (size != sizeof(sbuf.u8)) {
 		// Read error.
 		ret = -errno;

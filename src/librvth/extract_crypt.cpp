@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * extract_crypt.c: Extract and encrypt an unencrypted image.              *
+ * extract_crypt.cpp: Extract and encrypt an unencrypted image.            *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,23 +18,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "rvth.h"
-#include "rvth_p.h"
-#include "rvth_recrypt.h"
-#include "disc_header.h"
+#include "rvth.hpp"
+#include "disc_header.hpp"
 #include "ptbl.h"
+#include "rvth_error.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-// Disc image reader.
-#include "reader.h"
+// Reader class
+#include "reader/Reader.hpp"
+
+// libwiicrypto
+#include "libwiicrypto/cert_store.h"
 
 // C includes.
-#include <assert.h>
-#include <errno.h>
 #include <stdlib.h>
-#include <string.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 // Encryption.
 #include "aesw.h"
@@ -303,23 +307,20 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 }
 
 /**
- * Copy a bank from an RVT-H HDD or standalone disc image to a writable standalone disc image.
+ * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
  *
  * This function copies an unencrypted Game Partition and encrypts it
  * using the existing title key. It does *not* change the encryption
  * method or signature, so recryption will be needed afterwards.
  *
  * @param rvth_dest	[out] Destination RvtH object.
- * @param rvth_src	[in] Source RvtH object.
  * @param bank_src	[in] Source bank number. (0-7)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
+int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 	unsigned int bank_src, RvtH_Progress_Callback callback)
 {
-	RvtH_BankEntry *entry_src;
-	const pt_entry_t *game_pte;
 	uint32_t data_lba_src;	// Game partition, data offset LBA. (source, unencrypted)
 	uint32_t data_lba_dest;	// Game partition, data offset LBA. (dest, encrypted)
 	uint32_t lba_copy_len;	// Number of LBAs to copy. (game partition size)
@@ -358,13 +359,13 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	AesCtx *aesw = NULL;
 	uint8_t titleKey[16];
 
-	if (!rvth_dest || !rvth_src) {
+	if (!rvth_dest) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank_src >= rvth_src->bank_count) {
+	} else if (bank_src >= m_bankCount) {
 		errno = ERANGE;
 		return -ERANGE;
-	} else if (rvth_is_hdd(rvth_dest) || rvth_dest->bank_count != 1) {
+	} else if (rvth_dest->isHDD() || rvth_dest->bankCount() != 1) {
 		// Destination is not a standalone disc image.
 		// Copying to HDDs will be handled differently.
 		errno = EIO;
@@ -372,7 +373,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	}
 
 	// Check if the source bank can be extracted.
-	entry_src = &rvth_src->entries[bank_src];
+	RvtH_BankEntry *const entry_src = &m_entries[bank_src];
 	switch (entry_src->type) {
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -406,7 +407,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	// TODO: Copy other partitions later?
 	// TODO: Include disc headers in lba_copy_len?
 	// TODO: Verify lba_copy_len.
-	game_pte = rvth_ptbl_find_game(entry_src);
+	const pt_entry_t *const game_pte = rvth_ptbl_find_game(entry_src);
 	if (!game_pte) {
 		// Cannot find the game partition.
 		err = EIO;
@@ -420,11 +421,12 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	// isn't an update partition, fail.
 
 	// Process 64 sectors at a time.
+	// TODO: Use unique_ptr<>?
 	#define LBA_COUNT_DEC BYTES_TO_LBA(GROUP_SIZE_DEC)
 	#define LBA_COUNT_ENC BYTES_TO_LBA(GROUP_SIZE_ENC)
-	buf_dec = malloc(GROUP_SIZE_DEC);
-	buf_enc = malloc(GROUP_SIZE_ENC);
-	H3_tbl = calloc(1, sizeof(*H3_tbl));	// zero initialized
+	buf_dec = static_cast<uint8_t*>(malloc(GROUP_SIZE_DEC));
+	buf_enc = static_cast<uint8_t*>(malloc(GROUP_SIZE_ENC));
+	H3_tbl = static_cast<Wii_Disc_H3_t*>(calloc(1, sizeof(*H3_tbl)));	// zero initialized
 	if (!buf_dec || !buf_enc || !H3_tbl) {
 		// Error allocating memory.
 		err = errno;
@@ -453,7 +455,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	// tell the file system what the file's size will be.
 
 	// Copy the bank table information.
-	entry_dest = &rvth_dest->entries[0];
+	entry_dest = &rvth_dest->m_entries[0];
 	entry_dest->type	= entry_src->type;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;
@@ -474,10 +476,10 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 
 	// Copy the disc header.
 	// TODO: Error handling.
-	reader_read(entry_src->reader, buf_dec, 0, 1);
+	entry_src->reader->read(buf_dec, 0, 1);
 	buf_dec[0x60] = 0;	// Hashes are enabled
 	buf_dec[0x61] = 0;	// Disc is encrypted
-	reader_write(entry_dest->reader, buf_dec, 0, 1);
+	entry_dest->reader->write(buf_dec, 0, 1);
 
 	// Create a volume group and partition table with a single entry.
 	// TODO: Error handling.
@@ -491,22 +493,22 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 		pt->addr = cpu_to_be32((uint32_t)(LBA_TO_BYTES(game_pte->lba_start) >> 2));
 		pt->type = cpu_to_be32(0);
 
-		reader_write(entry_dest->reader, buf_dec, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
+		entry_dest->reader->write(buf_dec, BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS), 1);
 	}
 
 	// Copy the region information.
-	reader_read(entry_src->reader, buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
-	reader_write(entry_dest->reader, buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
+	entry_src->reader->read(buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
+	entry_dest->reader->write(buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
 
 	// Copy the region information.
 	// TODO: Error handling.
-	reader_read(entry_src->reader, buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
-	reader_write(entry_dest->reader, buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
+	entry_src->reader->read(buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
+	entry_dest->reader->write(buf_dec, BYTES_TO_LBA(RVL_RegionSetting_ADDRESS), 1);
 
 	// Read the partition header.
 	// This will be rewritten later, since we need to update the
 	// content SHA-1 in the TMD.
-	reader_read(entry_src->reader, &pthdr, game_pte->lba_start, BYTES_TO_LBA(sizeof(pthdr)));
+	entry_src->reader->read(&pthdr, game_pte->lba_start, BYTES_TO_LBA(sizeof(pthdr)));
 	data_offset = be32_to_cpu(pthdr.data_offset) << 2;
 	assert(data_offset == 0x8000);
 	if (data_offset != 0x8000) {
@@ -523,7 +525,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 		// Initialize the callback state.
 		// TODO: Fields for source vs. destination sizes?
 		state.type = RVTH_PROGRESS_EXTRACT;
-		state.rvth = rvth_src;
+		state.rvth = this;
 		state.rvth_gcm = rvth_dest;
 		state.bank_rvth = bank_src;
 		state.bank_gcm = 0;
@@ -539,7 +541,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	}
 	aesw_set_key(aesw, titleKey, sizeof(titleKey));
 
-	// TODO: Optimize seeking? (reader_write() seeks every time.)
+	// TODO: Optimize seeking? (Reader::write() seeks every time.)
 	lba_max_dec = lba_copy_len - (lba_copy_len % LBA_COUNT_DEC);
 	pH3 = H3_tbl->h3[0];
 	for (lba_count_dec = 0, lba_count_enc = 0;
@@ -560,13 +562,13 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 		// TODO: Error handling.
 
 		// Read 64 decrypted sectors.
-		reader_read(entry_src->reader, buf_dec, data_lba_src + lba_count_dec, LBA_COUNT_DEC);
+		entry_src->reader->read(buf_dec, data_lba_src + lba_count_dec, LBA_COUNT_DEC);
 
 		// Encrypt the sectors. (64*31k -> 64*32k)
 		rvth_encrypt_group(aesw, buf_dec, GROUP_SIZE_DEC, buf_enc, GROUP_SIZE_ENC, pH3, SHA1_DIGEST_SIZE);
 
 		// Write 64 encrypted sectors.
-		reader_write(entry_dest->reader, buf_enc, data_lba_dest + lba_count_enc, LBA_COUNT_ENC);
+		entry_dest->reader->write(buf_enc, data_lba_dest + lba_count_enc, LBA_COUNT_ENC);
 	}
 
 	// If we have leftover, write a padded group.
@@ -585,14 +587,14 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 		}
 
 		// Read and pad the sectors.
-		reader_read(entry_src->reader, buf_dec, data_lba_src + lba_count_dec, lba_left);
+		entry_src->reader->read(buf_dec, data_lba_src + lba_count_dec, lba_left);
 		memset(&buf_dec[LBA_TO_BYTES(LBA_COUNT_DEC - lba_left)], 0, LBA_TO_BYTES(lba_left));
 
 		// Encrypt the sectors. (64*31k -> 64*32k)
 		rvth_encrypt_group(aesw, buf_dec, GROUP_SIZE_DEC, buf_enc, GROUP_SIZE_ENC, pH3, SHA1_DIGEST_SIZE);
 
 		// Write 64 encrypted sectors.
-		reader_write(entry_dest->reader, buf_enc, data_lba_dest + lba_count_enc, LBA_COUNT_ENC);
+		entry_dest->reader->write(buf_enc, data_lba_dest + lba_count_enc, LBA_COUNT_ENC);
 	}
 
 	/** Update the partition header. **/
@@ -620,9 +622,9 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 
 	// Write the partition header and H3 table.
 	// TODO: Specific callback notice?
-	reader_write(entry_dest->reader, &pthdr,
+	entry_dest->reader->write(&pthdr,
 		game_pte->lba_start, BYTES_TO_LBA(sizeof(pthdr)));
-	reader_write(entry_dest->reader, H3_tbl,
+	entry_dest->reader->write(H3_tbl,
 		game_pte->lba_start + BYTES_TO_LBA(sizeof(pthdr)),
 		BYTES_TO_LBA(sizeof(*H3_tbl)));
 
@@ -638,7 +640,7 @@ int rvth_copy_to_gcm_doCrypt(RvtH *rvth_dest, const RvtH *rvth_src,
 	}
 
 	// Finished extracting the disc image.
-	reader_flush(entry_dest->reader);
+	entry_dest->reader->flush();
 
 end:
 	free(buf_dec);

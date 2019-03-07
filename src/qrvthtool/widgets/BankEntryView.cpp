@@ -20,7 +20,10 @@
 
 #include "BankEntryView.hpp"
 
-#include "librvth/rvth.h"
+#include "librvth/rvth.hpp"
+
+// For LBA_TO_BYTES()
+#include "nhcd_structs.h"
 
 // C includes. (C++ namespace)
 #include <cassert>

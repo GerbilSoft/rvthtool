@@ -1,9 +1,9 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * reader_plain.c: Plain disc image reader class.                          *
+ * PlainReader.cpp: Plain disc image reader class.                         *
  * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -19,33 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "reader_plain.h"
+#include "PlainReader.hpp"
 
-#include <assert.h>
-#include <errno.h>
+// For LBA_TO_BYTES()
+#include "nhcd_structs.h"
+
+// C includes.
 #include <stdlib.h>
 
-#ifndef LBA_TO_BYTES
-# define LBA_TO_BYTES(x) ((int64_t)(x) * LBA_SIZE)
-#endif
-
-// Functions.
-static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len);
-static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len);
-static void reader_plain_flush(Reader *reader);
-static void reader_plain_close(Reader *reader);
-
-// vtable
-static const Reader_Vtbl reader_plain_vtable = {
-	reader_plain_read,
-	reader_plain_write,
-	reader_plain_flush,
-	reader_plain_close,
-};
-
-// We're not using an internal struct for reader_plain,
-// since we don't need to maintain any internal state
-// other than what's provided by Reader*.
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
 
 /**
  * Create a plain reader for a disc image.
@@ -58,55 +42,27 @@ static const Reader_Vtbl reader_plain_vtable = {
  * @param lba_len	[in] Length, in LBAs.
  * @return Reader*, or NULL on error.
  */
-Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+PlainReader::PlainReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+	: super(file, lba_start, lba_len)
 {
-	Reader *reader;
-	int64_t filesize;
-	int err = 0;
-
-	// Validate parameters.
-	if (!file || (lba_start > 0 && lba_len == 0)) {
-		// Invalid parameters.
-		errno = EINVAL;
-		return NULL;
+	if (!isOpen()) {
+		// File wasn't opened.
+		return;
 	}
-
-	// Allocate memory for the Reader object.
-	reader = malloc(sizeof(*reader));
-	if (!reader) {
-		// Error allocating memory.
-		if (errno == 0) {
-			errno = ENOMEM;
-		}
-		return NULL;
-	}
-
-	// Duplicate the file.
-	reader->file = ref_dup(file);
-	if (!reader->file) {
-		// Error duplicating the file.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		goto fail;
-	}
-
-	// Set the vtable.
-	reader->vtbl = &reader_plain_vtable;
 
 	// Get the file size.
 	errno = 0;
-	filesize = ref_get_size(reader->file);
+	int64_t filesize = m_file->size();
 	if (filesize < 0) {
 		// Seek error.
 		// NOTE: Not failing on empty file, since that happens
 		// when creating a new file to extract an image.
-		err = errno;
-		if (err == 0) {
-			err = EIO;
+		if (errno == 0) {
+			errno = EIO;
 		}
-		goto fail;
+		m_file->unref();
+		m_file = nullptr;
+		return;
 	}
 
 	// Set the LBAs.
@@ -115,63 +71,53 @@ Reader *reader_plain_open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 		// the partial LBA will be ignored.
 		lba_len = (uint32_t)(filesize / LBA_SIZE);
 	}
-	reader->lba_start = lba_start;
-	reader->lba_len = lba_len;
+	m_lba_start = lba_start;
+	m_lba_len = lba_len;
 
 	// Set the reader type.
-	if (ref_is_device(reader->file)) {
+	if (m_file->isDevice()) {
 		// This is an RVT-H Reader.
-		reader->type = RVTH_ImageType_HDD_Reader;
+		m_type = RVTH_ImageType_HDD_Reader;
 	} else {
 		// If the file is larger than 10 GB, assume it's an RVT-H Reader disk image.
 		// Otherwise, it's a standalone disc image.
 		if (filesize > 10LL*1024LL*1024LL*1024LL) {
 			// RVT-H Reader disk image.
-			reader->type = RVTH_ImageType_HDD_Image;
+			m_type = RVTH_ImageType_HDD_Image;
 		} else {
 			// If the starting LBA is 0, it's a standard GCM.
 			// Otherwise, it has an SDK header.
-			reader->type = (lba_start == 0 ? RVTH_ImageType_GCM : RVTH_ImageType_GCM_SDK);
+			m_type = (lba_start == 0
+				? RVTH_ImageType_GCM
+				: RVTH_ImageType_GCM_SDK);
 		}
 	}
 
 	// Reader initialized.
-	return reader;
-
-fail:
-	// Failed to initialize the reader.
-	if (reader->file) {
-		ref_close(reader->file);
-	}
-	free(reader);
-	errno = err;
-	return NULL;
 }
 
 /**
- * Read data from a disc image.
+ * Read data from the disc image.
  * @param reader	[in] Reader*
  * @param ptr		[out] Read buffer.
  * @param lba_start	[in] Starting LBA.
  * @param lba_len	[in] Length, in LBAs.
  * @return Number of LBAs read, or 0 on error.
  */
-static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start, uint32_t lba_len)
+uint32_t PlainReader::read(void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
-	int ret;
-
 	// LBA bounds checking.
 	// TODO: Check for overflow?
-	lba_start += reader->lba_start;
-	assert(lba_start + lba_len <= reader->lba_start + reader->lba_len);
-	if (lba_start + lba_len > reader->lba_start + reader->lba_len) {
+	lba_start += m_lba_start;
+	assert(lba_start + lba_len <= m_lba_start + m_lba_len);
+	if (lba_start + lba_len > m_lba_start + m_lba_len) {
 		// Out of range.
 		errno = EIO;
 		return 0;
 	}
 
 	// Seek to lba_start.
-	ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	int ret = m_file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -181,33 +127,31 @@ static uint32_t reader_plain_read(Reader *reader, void *ptr, uint32_t lba_start,
 	}
 
 	// Read the data.
-	return (uint32_t)ref_read(ptr, LBA_SIZE, lba_len, reader->file);
+	return (uint32_t)m_file->read(ptr, LBA_SIZE, lba_len);
 }
 
 /**
- * Write data to a disc image.
+ * Write data to the disc image.
  * @param reader	[in] Reader*
  * @param ptr		[in] Write buffer.
  * @param lba_start	[in] Starting LBA.
  * @param lba_len	[in] Length, in LBAs.
  * @return Number of LBAs read, or 0 on error.
  */
-static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba_start, uint32_t lba_len)
+uint32_t PlainReader::write(const void *ptr, uint32_t lba_start, uint32_t lba_len)
 {
-	int ret;
-
 	// LBA bounds checking.
 	// TODO: Check for overflow?
-	lba_start += reader->lba_start;
-	assert(lba_start + lba_len <= reader->lba_start + reader->lba_len);
-	if (lba_start + lba_len > reader->lba_start + reader->lba_len) {
+	lba_start += m_lba_start;
+	assert(lba_start + lba_len <= m_lba_start + m_lba_len);
+	if (lba_start + lba_len > m_lba_start + m_lba_len) {
 		// Out of range.
 		errno = EIO;
 		return 0;
 	}
 
 	// Seek to lba_start.
-	ret = ref_seeko(reader->file, LBA_TO_BYTES(lba_start), SEEK_SET);
+	int ret = m_file->seeko(LBA_TO_BYTES(lba_start), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -217,24 +161,5 @@ static uint32_t reader_plain_write(Reader *reader, const void *ptr, uint32_t lba
 	}
 
 	// Write the data.
-	return (uint32_t)ref_write(ptr, LBA_SIZE, lba_len, reader->file);
-}
-
-/**
- * Flush the file buffers.
- * @param reader	[in] Reader*
- * */
-static void reader_plain_flush(Reader *reader)
-{
-	ref_flush(reader->file);
-}
-
-/**
- * Close a disc image.
- * @param reader	[in] Reader*
- */
-static void reader_plain_close(Reader *reader)
-{
-	ref_close(reader->file);
-	free(reader);
+	return (uint32_t)m_file->write(ptr, LBA_SIZE, lba_len);
 }

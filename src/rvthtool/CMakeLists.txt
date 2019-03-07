@@ -10,14 +10,14 @@ ENDIF(WIN32)
 # Sources.
 SET(rvthtool_SRCS
 	main.c
-	list-banks.c
-	extract.c
-	undelete.c
+	list-banks.cpp
+	extract.cpp
+	undelete.cpp
 	query.c
 	)
 # Headers.
 SET(rvthtool_H
-	list-banks.h
+	list-banks.hpp
 	extract.h
 	undelete.h
 	query.h

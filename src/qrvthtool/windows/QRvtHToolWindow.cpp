@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * QRvtHToolWindow.cpp: Main window.                                       *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -20,7 +20,7 @@
 
 #include "QRvtHToolWindow.hpp"
 
-#include "librvth/rvth.h"
+#include "librvth/rvth.hpp"
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
 
@@ -94,7 +94,7 @@ QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 	// NOTE: Delete the MemCardModel first to prevent issues later.
 	delete model;
 	if (rvth) {
-		rvth_close(rvth);
+		delete rvth;
 	}
 }
 
@@ -133,7 +133,7 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 		windowTitle += QLatin1String(" - ");
 		// If it's an RVT-H HDD image, use the RVT-H icon.
 		// Otherwise, get the icon for the first bank.
-		if (rvth_is_hdd(rvth)) {
+		if (rvth->isHDD()) {
 			iconID = RvtHModel::ICON_RVTH;
 		} else {
 			// Get the icon for the first bank.
@@ -250,14 +250,14 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 
 	if (d->rvth) {
 		d->model->setRvtH(nullptr);
-		rvth_close(d->rvth);
+		delete d->rvth;
 	}
 
 	// Open the specified RVT-H Reader disk image.
 #ifdef _WIN32
-	d->rvth = rvth_open(reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
+	d->rvth = new RvtH(reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
 #else /* !_WIN32 */
-	d->rvth = rvth_open(filename.toUtf8().constData(), nullptr);
+	d->rvth = new RvtH(filename.toUtf8().constData(), nullptr);
 #endif
 	if (!d->rvth) {
 		// FIXME: Show an error message?
@@ -317,7 +317,7 @@ void QRvtHToolWindow::closeRvtH(void)
 	}
 
 	d->model->setRvtH(nullptr);
-	rvth_close(d->rvth);
+	delete d->rvth;
 	d->rvth = nullptr;
 
 	// Clear the filenames.
@@ -509,7 +509,7 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 			// TODO: Sort proxy model like in mcrecover.
 			bank = d->proxyModel->mapToSource(index).row();
 			// TODO: Check for errors?
-			entry = rvth_get_BankEntry(d->rvth, bank, nullptr);
+			entry = d->rvth->bankEntry(bank, nullptr);
 		}
 	}
 

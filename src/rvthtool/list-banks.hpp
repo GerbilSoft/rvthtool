@@ -1,6 +1,6 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
- * reader_wbfs.c: WBFS disc image reader class.                            *
+ * RVT-H Tool                                                              *
+ * list-banks.h: List banks in an RVT-H disk image.                        *
  *                                                                         *
  * Copyright (c) 2018 by David Korth.                                      *
  *                                                                         *
@@ -18,38 +18,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_READER_WBFS_H__
-#define __RVTHTOOL_LIBRVTH_READER_WBFS_H__
+#ifndef __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__
+#define __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__
 
-#include "reader.h"
+#include "librvth/tcharx.h"
+#include "librvth/rvth.hpp"
+
+#ifdef __cplusplus
+/**
+ * Print information for the specified bank.
+ * @param rvth	[in] RVT-H disk image.
+ * @param bank	[in] Bank number. (0-7)
+ * @return 0 on success; non-zero on error.
+ */
+int print_bank(const RvtH *rvth, unsigned int bank);
+#endif /* __cplusplus */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Is a given disc image supported by the WBFS reader?
- * @param sbuf	[in] Sector buffer. (first LBA of the disc)
- * @param size	[in] Size of sbuf. (should be 512 or larger)
- * @return True if supported; false if not.
+ * 'list-banks' command.
+ * @param rvth_filename RVT-H device or disk image filename.
+ * @return 0 on success; non-zero on error.
  */
-bool reader_wbfs_is_supported(const uint8_t *sbuf, size_t size);
-
-/**
- * Create a WBFS reader for a disc image.
- *
- * NOTE: If lba_start == 0 and lba_len == 0, the entire file
- * will be used.
- *
- * @param file		RefFile*.
- * @param lba_start	[in] Starting LBA,
- * @param lba_len	[in] Length, in LBAs.
- * @return Reader*, or NULL on error.
- */
-Reader *reader_wbfs_open(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+int list_banks(const TCHAR *rvth_filename);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __RVTHTOOL_LIBRVTH_READER_WBFS_H__ */
+#endif /* __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__ */

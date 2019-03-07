@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool                                                              *
- * list-banks.c: List banks in an RVT-H disk image.                        *
+ * list-banks.cpp: List banks in an RVT-H disk image.                      *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,13 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#include "list-banks.h"
-#include "librvth/rvth.h"
+#include "list-banks.hpp"
+#include "librvth/rvth.hpp"
+#include "librvth/rvth_error.h"
 #include "libwiicrypto/gcn_structs.h"
 
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 /**
  * Trim a game title.
@@ -49,28 +51,23 @@ static void trim_title(char *title, int size)
  */
 int print_bank(const RvtH *rvth, unsigned int bank)
 {
-	const RvtH_BankEntry *entry;
-	const char *s_type;
-	bool is_hdd;
-	char game_title[65];
-	int ret = 0;
-
 	// Region codes.
 	static const char region_code_tbl[5][4] = {
 		"JPN", "USA", "EUR", "ALL", "KOR"
 	};
 
-	const unsigned int bank_count = rvth_get_BankCount(rvth);
+	const unsigned int bank_count = rvth->bankCount();
 	if (bank >= bank_count) {
 		// Out of range...
 		return -ERANGE;
 	}
 
 	// Check if this is an HDD image.
-	is_hdd = rvth_is_hdd(rvth);
+	const bool is_hdd = rvth->isHDD();
 
 	// TODO: Check the error code.
-	entry = rvth_get_BankEntry(rvth, bank, &ret);
+	int ret = 0;
+	const RvtH_BankEntry *const entry = rvth->bankEntry(bank, &ret);
 	if (!entry) {
 		// NOTE: Should not return NULL for empty banks anymore...
 		if (ret != 0 && ret != RVTH_ERROR_BANK_EMPTY) {
@@ -94,6 +91,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 		return 0;
 	}
 
+	const char *s_type;
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
 			s_type = "Empty";
@@ -154,6 +152,7 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	printf("- Game ID:     %.6s\n", entry->discHeader.id6);
 
 	// Game title.
+	char game_title[65];
 	memcpy(game_title, entry->discHeader.game_title, 64);
 	game_title[64] = 0;
 	trim_title(game_title, 64);
@@ -323,13 +322,12 @@ int print_bank(const RvtH *rvth, unsigned int bank)
  */
 static int print_bank_table(const RvtH *rvth)
 {
-	unsigned int bank;
-	const unsigned int bank_count = rvth_get_BankCount(rvth);
+	const unsigned int bank_count = rvth->bankCount();
 
 	// Print the entries.
-	for (bank = 0; bank < bank_count; bank++) {
+	for (unsigned int bank = 0; bank < bank_count; bank++) {
 		// TODO: Check for errors?
-		const RvtH_BankEntry *const entry = rvth_get_BankEntry(rvth, bank, NULL);
+		const RvtH_BankEntry *const entry = rvth->bankEntry(bank, nullptr);
 		print_bank(rvth, bank);
 
 		// Nothing is printed for the second bank of dual-layer Wii discs,
@@ -349,30 +347,29 @@ static int print_bank_table(const RvtH *rvth)
  */
 int list_banks(const TCHAR *rvth_filename)
 {
-	RvtH *rvth;
-	int ret;
-
 	// Open the disk image.
-	rvth = rvth_open(rvth_filename, &ret);
-	if (!rvth) {
+	int ret;
+	RvtH *const rvth = new RvtH(rvth_filename, &ret);
+	if (!rvth->isOpen()) {
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
 		fprintf(stderr, "': %s\n", rvth_error(ret));
+		delete rvth;
 		return ret;
 	}
 
 	// Check if this is an HDD image.
-	switch (rvth_get_ImageType(rvth)) {
+	switch (rvth->imageType()) {
 		case RVTH_ImageType_HDD_Reader:
 			fputs("Type: RVT-H Reader System\n", stdout);
-			if (!rvth_has_NHCD(rvth)) {
+			if (!rvth->hasNHCD()) {
 				fputs("*** WARNING: NHCD table is missing.\n"
 				      "*** Using defaults. Writing will be disabled.\n", stdout);
 			}
 			break;
 		case RVTH_ImageType_HDD_Image:
 			fputs("Type: RVT-H Reader Disk Image\n", stdout);
-			if (!rvth_has_NHCD(rvth)) {
+			if (!rvth->hasNHCD()) {
 				fputs("*** WARNING: NHCD table is missing.\n"
 				      "*** Using defaults. Writing will be disabled.\n", stdout);
 			}
@@ -387,15 +384,15 @@ int list_banks(const TCHAR *rvth_filename)
 		default:
 			// Should not get here...
 			assert(!"Should not get here...");
-			rvth_close(rvth);
+			delete rvth;
 			return -EIO;
 	}
 	putchar('\n');
 
 	// Print the bank table.
-	if (rvth_is_hdd(rvth)) {
+	if (rvth->isHDD()) {
 		// HDD image and/or device.
-		const unsigned int bank_count = rvth_get_BankCount(rvth);
+		const unsigned int bank_count = rvth->bankCount();
 		fputs("RVT-H Bank Table: [", stdout);
 		if (bank_count > RVTH_BANK_COUNT) {
 			// Bank table is larger than standard.
@@ -409,6 +406,6 @@ int list_banks(const TCHAR *rvth_filename)
 
 	putchar('\n');
 	print_bank_table(rvth);
-	rvth_close(rvth);
+	delete rvth;
 	return 0;
 }

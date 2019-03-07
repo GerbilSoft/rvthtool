@@ -57,8 +57,21 @@
 # endif
 #endif
 
-// RP equivalent of Q_UNUSED().
+// rvthtool equivalent of Q_UNUSED().
 #define UNUSED(x) ((void)x)
+
+// rvthtool equivalent of Q_DISABLE_COPY().
+#ifdef __cplusplus
+# if __cplusplus >= 201103L
+#  define DISABLE_COPY(klass) \
+	klass(const klass &) = delete; \
+	klass &operator=(const klass &) = delete;
+# else /* __cplusplus < 201103L */
+#  define DISABLE_COPY(klass) \
+	klass(const klass &); \
+	klass &operator=(const klass &);
+# endif /* __cplusplus >= 201103L */
+#endif /* __cplusplus */
 
 // Deprecated function attribute.
 #ifndef DEPRECATED

@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * ptbl.c: Load and manage a Wii disc's partition tables.                  *
+ * ptbl.cpp: Load and manage a Wii disc's partition tables.                *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -19,14 +19,24 @@
  ***************************************************************************/
 
 #include "ptbl.h"
+#include "rvth_error.h"
 
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/wii_structs.h"
 
-#include <assert.h>
-#include <errno.h>
+// Reader class
+#include "reader/Reader.hpp"
+
+// For BYTES_TO_LBA()
+#include "nhcd_structs.h"
+
+// C includes.
 #include <stdlib.h>
-#include <string.h>
+
+// C includes. (C++ namespace)
+#include <cassert>
+#include <cerrno>
+#include <cstring>
 
 // Volume group and partition tables.
 typedef union _ptbl_t {
@@ -69,12 +79,7 @@ static int compar_pt_entry_t(const void *a, const void *b)
  */
 int rvth_ptbl_load(RvtH_BankEntry *entry)
 {
-	ptbl_t pt;			// On-disc partition table.
-	pt_entry_t *ptbl = NULL;	// In-memory partition table.
-	uint32_t lba_size;
-	unsigned int pt_total;
-	unsigned int pt_total_proc = 0;	// Partitions actually processed.
-	unsigned int vg_idx, pt_idx;	// Current indexes.
+	ptbl_t pt;	// On-disc partition table.
 
 	assert(entry != NULL);
 	assert(entry->reader != NULL);
@@ -97,7 +102,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 
 	// Load the volume group table and partition table from the disc image.
 	errno = 0;
-	lba_size = reader_read(entry->reader, &pt,
+	uint32_t lba_size = entry->reader->read(&pt,
 		BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS),
 		BYTES_TO_LBA(sizeof(pt)));
 	if (lba_size != BYTES_TO_LBA(sizeof(pt))) {
@@ -109,10 +114,10 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 	}
 
 	// Count the total number of partitions.
-	pt_total = be32_to_cpu(pt.vgtbl.vg[0].count) +
-		   be32_to_cpu(pt.vgtbl.vg[1].count) +
-		   be32_to_cpu(pt.vgtbl.vg[2].count) +
-		   be32_to_cpu(pt.vgtbl.vg[3].count);
+	unsigned int pt_total = be32_to_cpu(pt.vgtbl.vg[0].count) +
+	                        be32_to_cpu(pt.vgtbl.vg[1].count) +
+	                        be32_to_cpu(pt.vgtbl.vg[2].count) +
+	                        be32_to_cpu(pt.vgtbl.vg[3].count);
 	if (pt_total == 0) {
 		// No partitions...
 		return 0;
@@ -124,7 +129,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 
 	// Allocate memory for the partition table.
 	errno = 0;
-	ptbl = calloc(pt_total, sizeof(*ptbl));
+	pt_entry_t *ptbl = static_cast<pt_entry_t*>(calloc(pt_total, sizeof(*ptbl)));
 	if (!ptbl) {
 		// Error allocating memory.
 		if (errno == 0) {
@@ -134,7 +139,8 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 	}
 
 	// Process the partition table.
-	for (vg_idx = 0; vg_idx < ARRAY_SIZE(pt.vgtbl.vg); vg_idx++) {
+	unsigned int pt_total_proc = 0;	// Partitions actually processed.
+	for (unsigned int vg_idx = 0; vg_idx < ARRAY_SIZE(pt.vgtbl.vg); vg_idx++) {
 		// Partition indexes for the current volume group.
 		unsigned int ptcount;			// Number of partitions in the current VG.
 		// PTE pointers. (first, one past the last, current)
@@ -187,14 +193,14 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 
 	// Calculate the size of each partition.
 	// TODO: Use the data size in the partition header if it's available?
-	for (pt_idx = 0; pt_idx < pt_total_proc-1; pt_idx++) {
+	for (unsigned int pt_idx = 0; pt_idx < pt_total_proc-1; pt_idx++) {
 		ptbl[pt_idx].lba_len = ptbl[pt_idx+1].lba_start - ptbl[pt_idx].lba_start;
 	}
 	// Last partition.
 	ptbl[pt_total_proc-1].lba_len = entry->lba_len - ptbl[pt_total_proc-1].lba_start;
 
 	// Save the original per-table addresses and counts.
-	for (vg_idx = 0; vg_idx < 4; vg_idx++) {
+	for (unsigned int vg_idx = 0; vg_idx < 4; vg_idx++) {
 		entry->vg_orig.vg[vg_idx].addr = be32_to_cpu(pt.vgtbl.vg[vg_idx].addr);
 		entry->vg_orig.vg[vg_idx].count = (uint8_t)be32_to_cpu(pt.vgtbl.vg[vg_idx].count);
 	}
@@ -216,10 +222,6 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
  */
 int rvth_ptbl_RemoveUpdates(RvtH_BankEntry *entry)
 {
-	int ret;
-	unsigned int i;
-	pt_entry_t *pte;
-
 	assert(entry != NULL);
 	assert(entry->reader != NULL);
 	if (!entry || !entry->reader) {
@@ -227,15 +229,15 @@ int rvth_ptbl_RemoveUpdates(RvtH_BankEntry *entry)
 	}
 
 	// Make sure the partition table is loaded.
-	ret = rvth_ptbl_load(entry);
+	int ret = rvth_ptbl_load(entry);
 	if (ret != 0) {
 		// Error loading the partition table.
 		return ret;
 	}
 
 	// Look for update partitions.
-	pte = entry->ptbl;
-	for (i = 0; i < entry->pt_count; i++, pte++) {
+	pt_entry_t *pte = entry->ptbl;
+	for (unsigned int i = 0; i < entry->pt_count; i++, pte++) {
 		if (pte->type != 1) {
 			// Not an update partition.
 			continue;
@@ -316,7 +318,7 @@ int rvth_ptbl_write(RvtH_BankEntry *entry)
 	}
 
 	// Write the partition information to the disc image.
-	lba_size = reader_write(entry->reader, &pt,
+	lba_size = entry->reader->write(&pt,
 		BYTES_TO_LBA(RVL_VolumeGroupTable_ADDRESS),
 		BYTES_TO_LBA(sizeof(pt)));
 	if (lba_size != BYTES_TO_LBA(sizeof(pt))) {

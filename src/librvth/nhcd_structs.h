@@ -144,6 +144,17 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 #define SDK_HEADER_SIZE_BYTES	32768
 #define SDK_HEADER_SIZE_LBA	(SDK_HEADER_SIZE_BYTES / NHCD_BLOCK_SIZE)
 
+/** LBA macros **/
+
+// LBA size.
+#define LBA_SIZE 512
+
+// Convert LBA values to bytes.
+#define LBA_TO_BYTES(x) ((int64_t)(x) * LBA_SIZE)
+// Convert bytes to an LBA value.
+// NOTE: Partial LBAs will be truncated!
+#define BYTES_TO_LBA(x) ((uint32_t)((x) / LBA_SIZE))
+
 #pragma pack()
 
 #ifdef __cplusplus
