@@ -27,11 +27,22 @@
 #include "librvth/tcharx.h"
 
 // TODO: Custom stdbool.x instead of libwiicrypto/common.h.
+#include "libwiicrypto/cert_store.h"
 #include "libwiicrypto/common.h"
+
+// TODO: Move signature status to libwiicrypto?
+#include "librvth/rvth_enums.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Is an issuer retail or debug?
+ * @param issuer RVL_Cert_Issuer
+ * @return "Retail", "Debug", or "Unknown".
+ */
+const char *issuer_type(RVL_Cert_Issuer issuer);
 
 /**
  * Identify a WAD file's type.
