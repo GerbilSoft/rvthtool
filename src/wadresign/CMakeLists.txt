@@ -10,11 +10,13 @@ SET(wadresign_SRCS
 	main.c
 	print-info.c
 	wad-fns.c
+	resign-wad.c
 	)
 # Headers.
 SET(wadresign_H
 	print-info.h
 	wad-fns.h
+	resign-wad.h
 	)
 IF(WIN32)
 	SET(wadresign_RC resource.rc)

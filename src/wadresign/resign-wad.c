@@ -1,0 +1,363 @@
+/***************************************************************************
+ * RVT-H Tool: WAD Resigner                                                *
+ * print-info.c: Print WAD information.                                    *
+ *                                                                         *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
+ *                                                                         *
+ * This program is free software; you can redistribute it and/or modify it *
+ * under the terms of the GNU General Public License as published by the   *
+ * Free Software Foundation; either version 2 of the License, or (at your  *
+ * option) any later version.                                              *
+ *                                                                         *
+ * This program is distributed in the hope that it will be useful, but     *
+ * WITHOUT ANY WARRANTY; without even the implied warranty of              *
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
+ * GNU General Public License for more details.                            *
+ *                                                                         *
+ * You should have received a copy of the GNU General Public License       *
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ ***************************************************************************/
+
+#include "resign-wad.h"
+#include "print-info.h"
+#include "wad-fns.h"
+
+// libwiicrypto
+#include "libwiicrypto/byteswap.h"
+#include "libwiicrypto/cert.h"
+#include "libwiicrypto/wii_wad.h"
+#include "libwiicrypto/sig_tools.h"
+
+// C includes.
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ISALNUM(c) isalnum((unsigned char)c)
+
+typedef union _WAD_Header {
+	Wii_WAD_Header wad;
+	Wii_WAD_Header_EARLY wadE;
+} WAD_Header;
+
+// Read buffer.
+typedef union _rdbuf_t {
+	uint8_t u8[1024*1024];
+	RVL_Ticket ticket;
+	RVL_TMD_Header tmdHeader;
+} rdbuf_t;
+
+/**
+ * Align the file pointer to the next 64-byte boundary.
+ * @param fp File pointer.
+ */
+static inline void fpAlign(FILE *fp)
+{
+	int64_t offset = ftello(fp);
+	if ((offset & 63) != 0) {
+		offset = ALIGN(64, offset);
+		fseeko(fp, offset, SEEK_SET);
+	}
+}
+
+/**
+ * 'resign' command.
+ * @param src_wad	[in] Source WAD.
+ * @param dest_wad	[in] Destination WAD.
+ * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @return 0 on success; negative POSIX error code or positive ID code on error.
+ */
+int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
+{
+	int ret;
+	size_t size;
+	bool isEarly = false;
+	WAD_Header header;
+	WAD_Info_t wadInfo;
+	RVL_CryptoType_e src_key;
+
+	// Files.
+	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
+
+	// Certificates.
+	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
+	const RVL_Cert_RSA2048 *cert_ticket, *cert_TMD;
+	const RVL_Cert_RSA2048_ECC *cert_dev;
+
+	// Read buffer.
+	rdbuf_t *buf = NULL;
+
+	// Open the source WAD file.
+	f_src_wad = _tfopen(src_wad, _T("rb"));
+	if (!f_src_wad) {
+		int err = errno;
+		fputs("*** ERROR opening source WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "': %s\n", strerror(err));
+		return -err;
+	}
+
+	// Print the WAD information.
+	ret = print_wad_info_FILE(f_src_wad, src_wad);
+	if (ret != 0) {
+		// Error printing the WAD information.
+		return ret;
+	}
+
+	// Re-read the WAD header and parse the addresses.
+	rewind(f_src_wad);
+	size = fread(&header, 1, sizeof(header), f_src_wad);
+	if (size != sizeof(header)) {
+		int err = errno;
+		fputs("*** ERROR reading WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "': %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+
+	// Identify the WAD type.
+	// TODO: More extensive error handling?
+	// NOTE: Not saving the string, since we only need to knwo if
+	// it's an early WAD or not.
+	if (identify_wad_type((const uint8_t*)&header, sizeof(header), &isEarly) == NULL) {
+		// Unrecognized WAD type.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' is not valid.\n");
+		ret = 1;
+		goto end;
+	}
+
+	// Determine the sizes and addresses of various components.
+	if (!isEarly) {
+		ret = getWadInfo(&header.wad, &wadInfo);
+	} else {
+		ret = getWadInfo_early(&header.wadE, &wadInfo);
+	}
+	if (ret != 0) {
+		// Unable to get WAD information.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' is not valid.");
+		ret = 2;
+		goto end;
+	}
+
+	// Verify the ticket and TMD sizes.
+	if (wadInfo.ticket_size != sizeof(RVL_Ticket)) {
+		// Incorrect ticket size.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' ticket size is incorrect. (%u; should be %u)\n",
+			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+		ret = 3;
+		goto end;
+	} else if (wadInfo.tmd_size < sizeof(RVL_TMD_Header)) {
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' TMD size is too small. (%u; should be at least %u)\n",
+			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
+		ret = 4;
+		goto end;
+	} else if (wadInfo.tmd_size > 1*1024*1024) {
+		// Too big.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
+			wadInfo.tmd_size);
+		ret = 5;
+		goto end;
+	}
+
+	// Allocate the memory buffer.
+	buf = malloc(sizeof(*buf));
+	if (!buf) {
+		fputs("*** ERROR: Unable to allocate memory buffer.\n", stderr);
+		ret = 6;
+		goto end;
+	}
+
+	// Load the ticket.
+	fseek(f_src_wad, wadInfo.ticket_address, SEEK_SET);
+	size = fread(&buf->ticket, 1, sizeof(buf->ticket), f_src_wad);
+	if (size != sizeof(RVL_Ticket)) {
+		// Read error.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fputs("': Unable to read the ticket.\n", stderr);
+		ret = 7;
+		goto end;
+	}
+
+	// Check the encryption key.
+	switch (cert_get_issuer_from_name(buf->ticket.issuer)) {
+		case RVL_CERT_ISSUER_RETAIL_TICKET:
+			// Retail may be either Common Key or Korean Key.
+			switch (buf->ticket.common_key_index) {
+				case 0:
+					src_key = RVL_CryptoType_Retail;
+					break;
+				case 1:
+					src_key = RVL_CryptoType_Korean;
+					break;
+				default: {
+					const char *s_key;
+					// NOTE: A good number of retail WADs have an
+					// incorrect common key index for some reason.
+					fputs("*** WARNING: WAD file '", stderr);
+					_fputts(src_wad, stderr);
+					fprintf(stderr, "': Invalid common key index %u.\n",
+						buf->ticket.common_key_index);
+					
+					if (buf->ticket.title_id.u8[7] == 'K') {
+						s_key = "Korean";
+						src_key = RVL_CryptoType_Korean;
+					} else {
+						s_key = "retail";
+						src_key = RVL_CryptoType_Retail;
+					}
+					fprintf(stderr, "*** Assuming %s common key based on game ID.\n\n", s_key);
+					break;
+				}
+			}
+			break;
+		case RVL_CERT_ISSUER_DEBUG_TICKET:
+			src_key = RVL_CryptoType_Debug;
+			break;
+		default:
+			fputs("*** ERROR: WAD file '", stderr);
+			_fputts(src_wad, stderr);
+			fputs("': Unknown issuer.\n", stderr);
+			ret = 8;
+			goto end;
+	}
+
+	if (recrypt_key == -1) {
+		// Select the "opposite" key.
+		switch (src_key) {
+			case RVL_CryptoType_Retail:
+			case RVL_CryptoType_Korean:
+				recrypt_key = RVL_CryptoType_Debug;
+				break;
+			case RVL_CryptoType_Debug:
+				recrypt_key = RVL_CryptoType_Retail;
+				break;
+			default:
+				// Should not happen...
+				assert(!"This shouldn't happen!");
+				fputs("*** ERROR: Unable to select encryption key.\n", stderr);
+				ret = 9;
+				goto end;
+		}
+	} else {
+		if ((RVL_CryptoType_e)recrypt_key == src_key) {
+			// No point in recrypting to the same key...
+			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
+			ret = 10;
+			goto end;
+		}
+	}
+
+	// Open the destination WAD file.
+	f_dest_wad = _tfopen(dest_wad, _T("wb"));
+	if (!f_dest_wad) {
+		int err = errno;
+		fputs("*** ERROR opening destination WAD file '", stderr);
+		_fputts(dest_wad, stderr);
+		fprintf(stderr, "' for write: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+
+	// TODO: Convert early WAD header to final WAD.
+	printf("Writing certificate chain...\n");
+
+	// Get the certificates.
+	if (recrypt_key != RVL_CryptoType_Debug) {
+		// Retail certificates.
+		// Order: CA, Ticket, TMD
+		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
+		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
+		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
+		cert_dev	= NULL;
+		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
+			sizeof(*cert_CA) + sizeof(*cert_ticket) +
+			sizeof(*cert_TMD)));
+	} else {
+		// Debug certificates.
+		// Order: CA, Ticket, TMD
+		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
+		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
+		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
+		cert_dev	= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DEBUG_DEV);
+		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
+			sizeof(*cert_CA) + sizeof(*cert_ticket) +
+			sizeof(*cert_TMD) + sizeof(*cert_dev)));
+	}
+
+	// Write the WAD header.
+	size = fwrite(&header.wad, 1, sizeof(header.wad), f_dest_wad);
+	if (size != sizeof(header.wad)) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR writing WAD header: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+
+	// 64-byte alignment.
+	fpAlign(f_dest_wad);
+
+	// Write the certificates.
+	size = fwrite(cert_CA, 1, sizeof(*cert_CA), f_dest_wad);
+	if (size != sizeof(*cert_CA)) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+	size = fwrite(cert_ticket, 1, sizeof(*cert_ticket), f_dest_wad);
+	if (size != sizeof(*cert_ticket)) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+	size = fwrite(cert_TMD, 1, sizeof(*cert_TMD), f_dest_wad);
+	if (size != sizeof(*cert_TMD)) {
+		int err = errno;
+		fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+		ret = -err;
+		goto end;
+	}
+	if (cert_dev) {
+		size = fwrite(cert_dev, 1, sizeof(*cert_dev), f_dest_wad);
+		if (size != sizeof(*cert_dev)) {
+			int err = errno;
+			fprintf(stderr, "*** ERROR writing WAD certificate chain: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+	}
+
+	// 64-byte alignment.
+	fpAlign(f_dest_wad);
+
+	// TODO: Read and handle ticket, TMD, data, and footer/name.
+	printf("Recrypting the ticket and TMD...\n");
+	ret = 0;
+
+end:
+	free(buf);
+	if (f_dest_wad) {
+		// TODO: Delete if an error occurred?
+		fclose(f_dest_wad);
+	}
+	if (f_src_wad) {
+		fclose(f_src_wad);
+	}
+	return ret;
+}

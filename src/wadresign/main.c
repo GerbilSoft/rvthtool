@@ -36,6 +36,7 @@
 #endif /* _WIN32 */
 
 #include "print-info.h"
+#include "resign-wad.h"
 
 #ifdef _MSC_VER
 # define RVTH_CDECL __cdecl
@@ -88,6 +89,11 @@ static void print_help(const TCHAR *argv0)
 		"\n"
 		"info file.wad\n"
 		"- Print information about the specified WAD file.\n"
+		"\n"
+		"resign source.wad dest.wad\n"
+		" - Resigns source.wad and creates dest.wad using the new key.\n"
+		"   Default converts Retail/Korean WADs to Debug, and\n"
+		"   Debug WADs to Retail.\n"
 		"\n"
 		"Options:\n"
 		"\n"
@@ -196,9 +202,20 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = print_wad_info(argv[optind+1]);
+	} else if (!_tcscmp(argv[optind], _T("resign"))) {
+		// Resign a WAD.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("WAD filenames not specified"));
+			return EXIT_FAILURE;
+		} else if (argc < optind+3) {
+			print_error(argv[0], _T("Output WAD filename not specified"));
+			return EXIT_FAILURE;
+		}
+		ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key);
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'info'.
+		// TODO: If two filenames are specified, handle it as 'resign'.
 		const TCHAR *p;
 		bool isFilename = false;
 		for (p = argv[optind]; *p != 0; p++) {

@@ -120,11 +120,12 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly
 }
 
 /**
- * 'info' command.
- * @param wad_filename WAD filename.
+ * 'info' command. (internal function)
+ * @param f_wad WAD file.
+ * @param wad_filename WAD filename. (for error messages)
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int print_wad_info(const TCHAR *wad_filename)
+int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename)
 {
 	int ret;
 	size_t size;
@@ -143,17 +144,8 @@ int print_wad_info(const TCHAR *wad_filename)
 	const char *issuer_ticket, *issuer_tmd;
 	RVL_SigStatus_e sig_status_ticket, sig_status_tmd;
 
-	// Open the WAD file.
-	FILE *f_wad = _tfopen(wad_filename, _T("rb"));
-	if (!f_wad) {
-		int err = errno;
-		fputs("*** ERROR opening WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "': %s\n", strerror(err));
-		return -err;
-	}
-
 	// Read the WAD header.
+	rewind(f_wad);
 	size = fread(&header, 1, sizeof(header), f_wad);
 	if (size != sizeof(header)) {
 		int err = errno;
@@ -292,6 +284,30 @@ int print_wad_info(const TCHAR *wad_filename)
 
 end:
 	free(tmd);
+	return ret;
+}
+
+/**
+ * 'info' command.
+ * @param wad_filename WAD filename.
+ * @return 0 on success; negative POSIX error code or positive ID code on error.
+ */
+int print_wad_info(const TCHAR *wad_filename)
+{
+	int ret;
+
+	// Open the WAD file.
+	FILE *f_wad = _tfopen(wad_filename, _T("rb"));
+	if (!f_wad) {
+		int err = errno;
+		fputs("*** ERROR opening WAD file '", stderr);
+		_fputts(wad_filename, stderr);
+		fprintf(stderr, "': %s\n", strerror(err));
+		return -err;
+	}
+
+	// Print the WAD info.
+	ret = print_wad_info_FILE(f_wad, wad_filename);
 	fclose(f_wad);
 	return ret;
 }

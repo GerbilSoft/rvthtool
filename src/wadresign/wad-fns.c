@@ -19,7 +19,9 @@
  ***************************************************************************/
 
 #include "wad-fns.h"
+
 #include "libwiicrypto/byteswap.h"
+#include "libwiicrypto/common.h"
 
 /**
  * Get WAD info for a standard WAD file.

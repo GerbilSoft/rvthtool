@@ -610,6 +610,9 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 		// Certificate chain order for retail is Ticket, CA, TMD.
 		// TODO: Verify for debug! (and write the dev cert?)
+		// NOTE: WAD cert chain order is CA, Ticket, TMD...
+		// (CA, Ticket, TMD, Dev for debug)
+		// TODO: Verify all of this.
 		p_cert_chain = &hdr_new.u8[data_pos];
 		memcpy(p_cert_chain, cert_ticket, sizeof(*cert_ticket));
 		p_cert_chain += sizeof(*cert_ticket);

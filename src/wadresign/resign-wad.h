@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool: WAD Resigner                                                *
- * print-info.h: Print WAD information.                                    *
+ * resign-wad.h: Re-sign a WAD file.                                       *
  *                                                                         *
  * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
@@ -18,56 +18,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_WADRESIGN_PRINT_INFO_H__
-#define __RVTHTOOL_WADRESIGN_PRINT_INFO_H__
-
-#include <stdint.h>
-#include <stdio.h>
+#ifndef __RVTHTOOL_WADRESIGN_RESIGN_WAD_H__
+#define __RVTHTOOL_WADRESIGN_RESIGN_WAD_H__
 
 #include "librvth/tcharx.h"
-
-// TODO: Custom stdbool.x instead of libwiicrypto/common.h.
-#include "libwiicrypto/cert_store.h"
-#include "libwiicrypto/common.h"
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /**
- * Is an issuer retail or debug?
- * @param issuer RVL_Cert_Issuer
- * @return "Retail", "Debug", or "Unknown".
- */
-const char *issuer_type(RVL_Cert_Issuer issuer);
-
-/**
- * Identify a WAD file's type.
- *
- * This is mostly for informational purposes, except for early devkit WAD files,
- * in which case the format is slightly different.
- *
- * @param pBuf		[in] Header data.
- * @param buf_len	[in] Length of buf. (Should be at least 64.)
- * @param pIsEarly 	[out] `bool` to store if the WAD file is an early devkit WAD file or not.
- * @return WAD file type as a string, or NULL on error.
- */
-const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly);
-
-/**
- * 'info' command. (internal function)
- * @param f_wad Opened WAD file.
- * @param wad_filename WAD filename. (for error messages)
+ * 'resign' command.
+ * @param src_wad	[in] Source WAD.
+ * @param dest_wad	[in] Destination WAD.
+ * @param recrypt_key	[in] Key for recryption. (-1 for default)
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename);
-
-/**
- * 'info' command.
- * @param wad_filename WAD filename.
- * @return 0 on success; negative POSIX error code or positive ID code on error.
- */
-int print_wad_info(const TCHAR *wad_filename);
+int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key);
 
 #ifdef __cplusplus
 }
