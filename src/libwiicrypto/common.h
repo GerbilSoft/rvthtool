@@ -119,7 +119,8 @@
 #define RESTRICT __restrict
 
 // typeof() for MSVC.
-#ifdef _MSC_VER
+// FIXME: Doesn't work in C mode.
+#if defined(_MSC_VER) && defined(__cplusplus)
 # define __typeof__(x) decltype(x)
 #endif
 
@@ -128,7 +129,12 @@
  * @param a	Alignment value.
  * @param x	Byte count to align.
  */
-#define ALIGN(a, x)	(((x)+((a)-1))&~((__typeof__(x))((a)-1)))
+// FIXME: No __typeof__ in MSVC's C mode...
+#if defined(_MSC_VER) && !defined(__cplusplus)
+# define ALIGN(a, x)   (((x)+((a)-1))&~((uint64_t)((a)-1)))
+#else
+# define ALIGN(a, x)	(((x)+((a)-1))&~((__typeof__(x))((a)-1)))
+#endif
 
 /**
  * Alignment assertion macro.
