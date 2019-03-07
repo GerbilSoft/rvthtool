@@ -21,7 +21,9 @@
 #include "list-banks.hpp"
 #include "librvth/rvth.hpp"
 #include "librvth/rvth_error.h"
+
 #include "libwiicrypto/gcn_structs.h"
+#include "libwiicrypto/sig_tools.h"
 
 // C includes. (C++ namespace)
 #include <cassert>
@@ -173,79 +175,22 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	if (entry->type == RVTH_BankType_Wii_SL ||
 	    entry->type == RVTH_BankType_Wii_DL)
 	{
-		const char *s_crypto_type;
-		const char *s_sig_type, *s_sig_status;
-
-		static const char *const crypto_type_tbl[] = {
-			// tr: RVTH_CryptoType_Unknown
-			"Unknown",
-			// tr: RVTH_CryptoType_None
-			"None",
-			// tr: RVTH_CryptoType_Debug
-			"Debug",
-			// tr: RVTH_CryptoType_Retail
-			"Retail",
-			// tr: RVTH_CryptoType_Korean
-			"Korean",
-		};
-
-		static const char *const sig_type_tbl[] = {
-			// tr: RVTH_SigType_Unknown
-			"Unknown",
-			// tr: RVTH_SigType_Debug
-			"Debug",
-			// tr: RVTH_SigType_Retail
-			"Retail",
-		};
-
-		static const char *const sig_status_tbl[] = {
-			// tr: RVTH_SigStatus_Unknown
-			" (unknown)",
-			// tr: RVTH_SigStatus_OK
-			"",
-			// tr: RVTH_SigStatus_Invalid
-			" (INVALID)",
-			// tr: RVTH_SigStatus_Fake
-			" (fakesigned)",
-		};
-
 		// IOS version.
 		// TODO: If 0, print an error message.
 		printf("- IOS version: %u\n", entry->ios_version);
 
 		// Encryption type.
-		// TODO: static_assert() implementation.
-		//static_assert(ARRAY_SIZE(crypto_type_tbl) == RVTH_CryptoType_MAX, "Update crypto_type_tbl[]");
-		s_crypto_type = (entry->crypto_type < ARRAY_SIZE(crypto_type_tbl)
-			? crypto_type_tbl[entry->crypto_type]
-			: crypto_type_tbl[RVTH_CryptoType_Unknown]);
-		printf("- Encryption:  %s\n", s_crypto_type);
+		printf("- Encryption:  %s\n", RVL_CryptoType_toString((RVL_CryptoType_e)entry->crypto_type));
 
 		// Ticket signature.
-		// TODO: static_assert() implementation.
-		//static_assert(ARRAY_SIZE(sig_type_tbl) == RVTH_SigType_MAX, "Update sig_type_tbl[]");
-		s_sig_type = (entry->ticket.sig_type < ARRAY_SIZE(sig_type_tbl)
-			? sig_type_tbl[entry->ticket.sig_type]
-			: sig_type_tbl[RVTH_SigType_Unknown]);
-		// TODO: static_assert() implementation.
-		//static_assert(ARRAY_SIZE(sig_status_tbl) == RVTH_SigStatus_MAX, "Update sig_status_tbl[]");
-		s_sig_status = (entry->ticket.sig_status < ARRAY_SIZE(sig_status_tbl)
-			? sig_status_tbl[entry->ticket.sig_status]
-			: sig_status_tbl[RVTH_SigStatus_Unknown]);
-		printf("- Ticket Signature: %s%s\n", s_sig_type, s_sig_status);
+		printf("- Ticket Signature: %s%s\n",
+			RVL_SigType_toString((RVL_SigType_e)entry->ticket.sig_type),
+			RVL_SigStatus_toString_stsAppend((RVL_SigStatus_e)entry->ticket.sig_status));
 
 		// TMD signature.
-		// TODO: static_assert() implementation.
-		//static_assert(ARRAY_SIZE(sig_type_tbl) == RVTH_SigType_MAX, "Update sig_type_tbl[]");
-		s_sig_type = (entry->tmd.sig_type < ARRAY_SIZE(sig_type_tbl)
-			? sig_type_tbl[entry->tmd.sig_type]
-			: sig_type_tbl[RVTH_SigType_Unknown]);
-		// TODO: static_assert() implementation.
-		//static_assert(ARRAY_SIZE(sig_status_tbl) == RVTH_SigStatus_MAX, "Update sig_status_tbl[]");
-		s_sig_status = (entry->tmd.sig_status < ARRAY_SIZE(sig_status_tbl)
-			? sig_status_tbl[entry->tmd.sig_status]
-			: sig_status_tbl[RVTH_SigStatus_Unknown]);
-		printf("- TMD Signature:    %s%s\n", s_sig_type, s_sig_status);
+		printf("- TMD Signature:    %s%s\n",
+			RVL_SigType_toString((RVL_SigType_e)entry->tmd.sig_type),
+			RVL_SigStatus_toString_stsAppend((RVL_SigStatus_e)entry->tmd.sig_status));
 	}
 
 	// Check the AppLoader status.

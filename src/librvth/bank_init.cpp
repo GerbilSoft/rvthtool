@@ -23,6 +23,7 @@
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/cert_store.h"
+#include "libwiicrypto/sig_tools.h"
 
 #include "disc_header.hpp"
 #include "nhcd_structs.h"
@@ -117,7 +118,6 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	const pt_entry_t *game_pte;	// Game partition entry.
 	uint32_t lba_size;
 	uint32_t tmd_size;
-	int ret;
 
 	// Partition header.
 	RVL_PartitionHeader header;
@@ -141,7 +141,7 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 		case RVTH_BankType_GCN:
 			// GameCube image. No encryption.
 			// TODO: Technically no signature either...
-			entry->crypto_type = RVTH_CryptoType_None;
+			entry->crypto_type = RVL_CryptoType_None;
 			return 0;
 		case RVTH_BankType_Wii_DL_Bank2:
 			// Second bank of a dual-layer Wii disc image.
@@ -159,7 +159,7 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 		// Unencrypted.
 		// TODO: I haven't seen any images where only one of these
 		// is zero or non-zero, but that may show up...
-		entry->crypto_type = RVTH_CryptoType_None;
+		entry->crypto_type = RVL_CryptoType_None;
 	}
 
 	// Find the game partition.
@@ -182,11 +182,11 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	switch (cert_get_issuer_from_name(header.ticket.issuer)) {
 		case RVL_CERT_ISSUER_RETAIL_TICKET:
 			// Retail certificate.
-			entry->ticket.sig_type = RVTH_SigType_Retail;
+			entry->ticket.sig_type = RVL_SigType_Retail;
 			break;
 		case RVL_CERT_ISSUER_DEBUG_TICKET:
 			// Debug certificate.
-			entry->ticket.sig_type = RVTH_SigType_Debug;
+			entry->ticket.sig_type = RVL_SigType_Debug;
 			break;
 		default:
 			// Unknown issuer, or not valid for ticket.
@@ -194,22 +194,8 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	}
 
 	// Validate the signature.
-	ret = cert_verify((const uint8_t*)&header.ticket, sizeof(header.ticket));
-	if (ret != 0) {
-		// Signature verification error.
-		if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
-			// Invalid signature.
-			entry->ticket.sig_status = ((ret & SIG_FAIL_HASH_FAKE)
-				? RVTH_SigStatus_Fake
-				: RVTH_SigStatus_Invalid);
-		} else {
-			// Other error.
-			entry->ticket.sig_status = RVTH_SigStatus_Unknown;
-		}
-	} else {
-		// Signature is valid.
-		entry->ticket.sig_status = RVTH_SigStatus_OK;
-	}
+	entry->ticket.sig_status = sig_verify(
+		(const uint8_t*)&header.ticket, sizeof(header.ticket));
 
 	// Check the TMD signature issuer.
 	// TODO: Verify header.tmd_offset?
@@ -217,11 +203,11 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	switch (cert_get_issuer_from_name(tmdHeader->issuer)) {
 		case RVL_CERT_ISSUER_RETAIL_TMD:
 			// Retail certificate.
-			entry->tmd.sig_type = RVTH_SigType_Retail;
+			entry->tmd.sig_type = RVL_SigType_Retail;
 			break;
 		case RVL_CERT_ISSUER_DEBUG_TMD:
 			// Debug certificate.
-			entry->tmd.sig_type = RVTH_SigType_Debug;
+			entry->tmd.sig_type = RVL_SigType_Debug;
 			break;
 		default:
 			// Unknown issuer, or not valid for TMD.
@@ -232,22 +218,7 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	tmd_size = be32_to_cpu(header.tmd_size);
 	if (tmd_size <= sizeof(header.data)) {
 		// TMD is not too big. We can validate the signature.
-		ret = cert_verify(header.data, tmd_size);
-		if (ret != 0) {
-			// Signature verification error.
-			if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
-				// Invalid signature.
-				entry->tmd.sig_status = ((ret & SIG_FAIL_HASH_FAKE)
-					? RVTH_SigStatus_Fake
-					: RVTH_SigStatus_Invalid);
-			} else {
-				// Other error.
-				entry->tmd.sig_status = RVTH_SigStatus_Unknown;
-			}
-		} else {
-			// Signature is valid.
-			entry->tmd.sig_status = RVTH_SigStatus_OK;
-		}
+		entry->tmd.sig_status = sig_verify(header.data, tmd_size);
 	}
 
 	// Get the required IOS version.
@@ -263,35 +234,35 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	// FIXME: Common key index seems to have wacky values in homebrew WADs.
 	// - USB Loader GX UNEO Forwarder v5.1: 0x06
 	// - Nintendont forwarder: 0xB7
-	if (entry->crypto_type != RVTH_CryptoType_None) {
+	if (entry->crypto_type != RVL_CryptoType_None) {
 		switch (entry->ticket.sig_type) {
-			case RVTH_SigType_Retail:
+			case RVL_SigType_Retail:
 				// Retail may be either Common Key or Korean Key.
 				switch (header.ticket.common_key_index) {
 					case 0:
-						entry->crypto_type = RVTH_CryptoType_Retail;
+						entry->crypto_type = RVL_CryptoType_Retail;
 						break;
 					case 1:
-						entry->crypto_type = RVTH_CryptoType_Korean;
+						entry->crypto_type = RVL_CryptoType_Korean;
 						break;
 					default:
-						entry->crypto_type = RVTH_CryptoType_Unknown;
+						entry->crypto_type = RVL_CryptoType_Unknown;
 						break;
 				}
 				break;
 
-			case RVTH_SigType_Debug:
+			case RVL_SigType_Debug:
 				// There's only one debug key.
 				if (header.ticket.common_key_index == 0) {
-					entry->crypto_type = RVTH_CryptoType_Debug;
+					entry->crypto_type = RVL_CryptoType_Debug;
 				} else {
-					entry->crypto_type = RVTH_CryptoType_Unknown;
+					entry->crypto_type = RVL_CryptoType_Unknown;
 				}
 				break;
 
 			default:
 				// Should not happen...
-				entry->crypto_type = RVTH_CryptoType_Unknown;
+				entry->crypto_type = RVL_CryptoType_Unknown;
 				break;
 		}
 	}
@@ -421,7 +392,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	}
 
 	// TODO: Need to manually decrypt the Wii sectors.
-	if (entry->crypto_type != RVTH_CryptoType_None) {
+	if (entry->crypto_type != RVL_CryptoType_None) {
 		return RVTH_ERROR_IS_ENCRYPTED;
 	}
 

@@ -30,9 +30,6 @@
 #include "libwiicrypto/cert_store.h"
 #include "libwiicrypto/common.h"
 
-// TODO: Move signature status to libwiicrypto?
-#include "librvth/rvth_enums.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

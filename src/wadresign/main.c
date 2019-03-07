@@ -29,7 +29,7 @@
 #include <string.h>
 #include <getopt.h>
 
-#include "librvth/rvth_enums.h"
+#include "libwiicrypto/sig_tools.h"
 
 #ifdef _WIN32
 # include "libwiicrypto/win32/secoptions.h"
@@ -105,7 +105,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 
 	// Key to use for recryption.
 	// -1 == default; no recryption, except when importing retail to RVT-H.
-	// Other values are from RvtH_CryptoType_e.
+	// Other values are from RVL_CryptoType_e.
 	int recrypt_key = -1;
 
 	((void)argc);
@@ -155,11 +155,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				if (!_tcsicmp(optarg, _T("default"))) {
 					recrypt_key = -1;
 				} else if (!_tcsicmp(optarg, _T("debug"))) {
-					recrypt_key = RVTH_CryptoType_Debug;
+					recrypt_key = RVL_CryptoType_Debug;
 				} else if (!_tcsicmp(optarg, _T("retail"))) {
-					recrypt_key = RVTH_CryptoType_Retail;
+					recrypt_key = RVL_CryptoType_Retail;
 				} else if (!_tcsicmp(optarg, _T("korean"))) {
-					recrypt_key = RVTH_CryptoType_Korean;
+					recrypt_key = RVL_CryptoType_Korean;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
 					return EXIT_FAILURE;

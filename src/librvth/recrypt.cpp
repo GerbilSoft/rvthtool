@@ -36,6 +36,7 @@
 #include "libwiicrypto/aesw.h"
 #include "libwiicrypto/rsaw.h"
 #include "libwiicrypto/priv_key_store.h"
+#include "libwiicrypto/sig_tools.h"
 
 #include "byteswap.h"
 
@@ -429,7 +430,7 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::recryptWiiPartitions(unsigned int bank,
-	RvtH_CryptoType_e cryptoType,
+	RVL_CryptoType_e cryptoType,
 	RvtH_Progress_Callback callback)
 {
 	uint32_t lba_size;
@@ -455,8 +456,8 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// Callback state.
 	RvtH_Progress_State state;
 
-	if (cryptoType < RVTH_CryptoType_Debug ||
-	    cryptoType >= RVTH_CryptoType_MAX)
+	if (cryptoType < RVL_CryptoType_Debug ||
+	    cryptoType >= RVL_CryptoType_MAX)
 	{
 		errno = EINVAL;
 		return -EINVAL;
@@ -494,7 +495,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	}
 
 	// Is the disc encrypted?
-	if (entry->crypto_type <= RVTH_CryptoType_None) {
+	if (entry->crypto_type <= RVL_CryptoType_None) {
 		// Not encrypted. Cannot process it.
 		return RVTH_ERROR_IS_UNENCRYPTED;
 	}
@@ -502,13 +503,13 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// Determine the key index.
 	RVL_AES_Keys_e toKey;
 	switch (cryptoType) {
-		case RVTH_CryptoType_Debug:
+		case RVL_CryptoType_Debug:
 			toKey = RVL_KEY_DEBUG;
 			break;
-		case RVTH_CryptoType_Retail:
+		case RVL_CryptoType_Retail:
 			toKey = RVL_KEY_RETAIL;
 			break;
-		case RVTH_CryptoType_Korean:
+		case RVL_CryptoType_Korean:
 			toKey = RVL_KEY_KOREAN;
 			break;
 		default:
@@ -751,25 +752,25 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// Update the bank entry.
 	switch (toKey) {
 		case RVL_KEY_RETAIL:
-			entry->crypto_type = RVTH_CryptoType_Retail;
-			entry->ticket.sig_type = RVTH_SigType_Retail;
-			entry->ticket.sig_status = RVTH_SigStatus_Fake;
-			entry->tmd.sig_type = RVTH_SigType_Retail;
-			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			entry->crypto_type = RVL_CryptoType_Retail;
+			entry->ticket.sig_type = RVL_SigType_Retail;
+			entry->ticket.sig_status = RVL_SigStatus_Fake;
+			entry->tmd.sig_type = RVL_SigType_Retail;
+			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
 		case RVL_KEY_KOREAN:
-			entry->crypto_type = RVTH_CryptoType_Korean;
-			entry->ticket.sig_type = RVTH_SigType_Retail;
-			entry->ticket.sig_status = RVTH_SigStatus_Fake;
-			entry->tmd.sig_type = RVTH_SigType_Retail;
-			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			entry->crypto_type = RVL_CryptoType_Korean;
+			entry->ticket.sig_type = RVL_SigType_Retail;
+			entry->ticket.sig_status = RVL_SigStatus_Fake;
+			entry->tmd.sig_type = RVL_SigType_Retail;
+			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
 		case RVL_KEY_DEBUG:
-			entry->crypto_type = RVTH_CryptoType_Debug;
-			entry->ticket.sig_type = RVTH_SigType_Debug;
-			entry->ticket.sig_status = RVTH_SigStatus_OK;
-			entry->tmd.sig_type = RVTH_SigType_Debug;
-			entry->tmd.sig_status = RVTH_SigStatus_OK;
+			entry->crypto_type = RVL_CryptoType_Debug;
+			entry->ticket.sig_type = RVL_SigType_Debug;
+			entry->ticket.sig_status = RVL_SigStatus_OK;
+			entry->tmd.sig_type = RVL_SigType_Debug;
+			entry->tmd.sig_status = RVL_SigStatus_OK;
 			break;
 		default:
 			// Should not happen...

@@ -21,9 +21,11 @@
 #include "print-info.h"
 #include "wad-fns.h"
 
+// libwiicrypto
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/wii_wad.h"
+#include "libwiicrypto/sig_tools.h"
 
 // C includes.
 #include <ctype.h>
@@ -139,19 +141,7 @@ int print_wad_info(const TCHAR *wad_filename)
 
 	// Certificate validation.
 	const char *issuer_ticket, *issuer_tmd;
-	RvtH_SigStatus_e sig_ticket, sig_tmd;
-
-	// Signature status table.
-	static const char *const sig_status_tbl[] = {
-		// tr: RVTH_SigStatus_Unknown
-		" (unknown)",
-		// tr: RVTH_SigStatus_OK
-		"",
-		// tr: RVTH_SigStatus_Invalid
-		" (INVALID)",
-		// tr: RVTH_SigStatus_Fake
-		" (fakesigned)",
-	};
+	RVL_SigStatus_e sig_status_ticket, sig_status_tmd;
 
 	// Open the WAD file.
 	FILE *f_wad = _tfopen(wad_filename, _T("rb"));
@@ -286,46 +276,16 @@ int print_wad_info(const TCHAR *wad_filename)
 	printf("- IOS version:   %u\n", ios_version);
 
 	// Check the ticket issuer and signature.
-	// TODO: Consolidate SigStatus in libwiicrypto.
 	issuer_ticket = issuer_type(cert_get_issuer_from_name(ticket.issuer));
-	ret = cert_verify((const uint8_t*)&ticket, sizeof(ticket));
-	if (ret != 0) {
-		// Signature verification error.
-		if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
-			// Invalid signature.
-			sig_ticket = ((ret & SIG_FAIL_HASH_FAKE)
-				? RVTH_SigStatus_Fake
-				: RVTH_SigStatus_Invalid);
-		} else {
-			// Other error.
-			sig_ticket = RVTH_SigStatus_Unknown;
-		}
-	} else {
-		// Signature is valid.
-		sig_ticket = RVTH_SigStatus_OK;
-	}
-	printf("- Ticket Signature: %s%s\n", issuer_ticket, sig_status_tbl[sig_ticket]);
+	sig_status_ticket = sig_verify((const uint8_t*)&ticket, sizeof(ticket));
+	printf("- Ticket Signature: %s%s\n",
+		issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
 	// Check the ticket issuer and signature.
-	// TODO: Consolidate SigStatus in libwiicrypto.
 	issuer_tmd = issuer_type(cert_get_issuer_from_name(tmdHeader->issuer));
-	ret = cert_verify(tmd, wadInfo.tmd_size);
-	if (ret != 0) {
-		// Signature verification error.
-		if (ret > 0 && ((ret & SIG_ERROR_MASK) == SIG_ERROR_INVALID)) {
-			// Invalid signature.
-			sig_tmd = ((ret & SIG_FAIL_HASH_FAKE)
-				? RVTH_SigStatus_Fake
-				: RVTH_SigStatus_Invalid);
-		} else {
-			// Other error.
-			sig_tmd = RVTH_SigStatus_Unknown;
-		}
-	} else {
-		// Signature is valid.
-		sig_tmd = RVTH_SigStatus_OK;
-	}
-	printf("- TMD Signature:    %s%s\n", issuer_tmd, sig_status_tbl[sig_tmd]);
+	sig_status_tmd = sig_verify(tmd, wadInfo.tmd_size);
+	printf("- TMD Signature:    %s%s\n",
+		issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
 	putchar('\n');
 end:

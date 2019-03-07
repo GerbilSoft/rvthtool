@@ -69,7 +69,7 @@ class BankEntryViewPrivate
 		 * @param sig_status Signature status.
 		 * @return String for ticket/TMD status.
 		 */
-		static QString sigStatusString(RvtH_SigType_e sig_type, RvtH_SigStatus_e sig_status);
+		static QString sigStatusString(RVL_SigType_e sig_type, RVL_SigStatus_e sig_status);
 
 		/**
 		 * Update the widget display.
@@ -191,7 +191,7 @@ QString BankEntryViewPrivate::formatFileSize(quint64 size)
  * @return String for ticket/TMD status.
  */
 QString BankEntryViewPrivate::sigStatusString(
-	RvtH_SigType_e sig_type, RvtH_SigStatus_e sig_status)
+	RVL_SigType_e sig_type, RVL_SigStatus_e sig_status)
 {
 	QString status;
 
@@ -199,32 +199,32 @@ QString BankEntryViewPrivate::sigStatusString(
 		default:
 			status = QString::number(sig_type);
 			break;
-		case RVTH_SigType_Unknown:
+		case RVL_SigType_Unknown:
 			status = BankEntryView::tr("Unknown");
 			break;
-		case RVTH_SigType_Debug:
+		case RVL_SigType_Debug:
 			status = BankEntryView::tr("Debug");
 			break;
-		case RVTH_SigType_Retail:
+		case RVL_SigType_Retail:
 			status = BankEntryView::tr("Retail");
 			break;
 	}
 
-	if (sig_type != RVTH_SigType_Unknown) {
+	if (sig_type != RVL_SigType_Unknown) {
 		switch (sig_status) {
 			default:
-			case RVTH_SigStatus_Unknown:
+			case RVL_SigStatus_Unknown:
 				status += QLatin1String(" (") +
 					QString::number(sig_status) +
 					QChar(L')');
 				break;
-			case RVTH_SigStatus_OK:
+			case RVL_SigStatus_OK:
 				break;
-			case RVTH_SigStatus_Invalid:
+			case RVL_SigStatus_Invalid:
 				status += QLatin1String(" (") +
 					BankEntryView::tr("INVALID") + QChar(L')');
 				break;
-			case RVTH_SigStatus_Fake:
+			case RVL_SigStatus_Fake:
 				status += QLatin1String(" (") +
 					BankEntryView::tr("fakesigned") + QChar(L')');
 				break;
@@ -393,19 +393,19 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 			default:
 				s_encryption = QString::number(bankEntry->crypto_type);
 				break;
-			case RVTH_CryptoType_Unknown:
+			case RVL_CryptoType_Unknown:
 				s_encryption = BankEntryView::tr("Unknown");
 				break;
-			case RVTH_CryptoType_None:
+			case RVL_CryptoType_None:
 				s_encryption = BankEntryView::tr("None");
 				break;
-			case RVTH_CryptoType_Debug:
+			case RVL_CryptoType_Debug:
 				s_encryption = BankEntryView::tr("Debug");
 				break;
-			case RVTH_CryptoType_Retail:
+			case RVL_CryptoType_Retail:
 				s_encryption = BankEntryView::tr("Retail");
 				break;
-			case RVTH_CryptoType_Korean:
+			case RVL_CryptoType_Korean:
 				s_encryption = BankEntryView::tr("Korean");
 				break;
 		}
@@ -415,15 +415,15 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 
 		// Ticket signature status.
 		ui.lblTicketSig->setText(sigStatusString(
-			static_cast<RvtH_SigType_e>(bankEntry->ticket.sig_type),
-			static_cast<RvtH_SigStatus_e>(bankEntry->ticket.sig_status)));
+			static_cast<RVL_SigType_e>(bankEntry->ticket.sig_type),
+			static_cast<RVL_SigStatus_e>(bankEntry->ticket.sig_status)));
 		ui.lblTicketSig->show();
 		ui.lblTicketSigTitle->show();
 
 		// TMD signature status.
 		ui.lblTMDSig->setText(sigStatusString(
-			static_cast<RvtH_SigType_e>(bankEntry->tmd.sig_type),
-			static_cast<RvtH_SigStatus_e>(bankEntry->tmd.sig_status)));
+			static_cast<RVL_SigType_e>(bankEntry->tmd.sig_type),
+			static_cast<RVL_SigStatus_e>(bankEntry->tmd.sig_status)));
 		ui.lblTMDSig->show();
 		ui.lblTMDSigTitle->show();
 	} else {

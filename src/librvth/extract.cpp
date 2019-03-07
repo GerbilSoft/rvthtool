@@ -28,6 +28,9 @@
 // Disc image reader.
 #include "reader/Reader.hpp"
 
+// libwiicrypto
+#include "libwiicrypto/sig_tools.h"
+
 // C includes.
 #include <stdlib.h>
 
@@ -273,7 +276,7 @@ end:
  * using the GCM constructor and then copyToGcm().
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Destination filename.
- * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RvtH_CryptoType_e)
+ * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RVL_CryptoType_e)
  * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @param callback	[in,opt] Progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
@@ -299,8 +302,8 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	// Create a standalone disc image.
 	RvtH_BankEntry *const entry = &m_entries[bank];
 	const bool unenc_to_enc = (entry->type >= RVTH_BankType_Wii_SL &&
-				   entry->crypto_type == RVTH_CryptoType_None &&
-				   recrypt_key > RVTH_CryptoType_Unknown);
+				   entry->crypto_type == RVL_CryptoType_None &&
+				   recrypt_key > RVL_CryptoType_Unknown);
 	uint32_t gcm_lba_len;
 	if (unenc_to_enc) {
 		// Converting from unencrypted to encrypted.
@@ -410,10 +413,10 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	} else {
 		ret = copyToGcm(rvth_dest, bank, callback);
 	}
-	if (ret == 0 && recrypt_key > RVTH_CryptoType_Unknown) {
+	if (ret == 0 && recrypt_key > RVL_CryptoType_Unknown) {
 		// Recrypt the disc image.
 		if (entry->crypto_type != recrypt_key) {
-			ret = rvth_dest->recryptWiiPartitions(0, static_cast<RvtH_CryptoType_e>(recrypt_key), callback);
+			ret = rvth_dest->recryptWiiPartitions(0, static_cast<RVL_CryptoType_e>(recrypt_key), callback);
 		}
 	}
 
@@ -762,14 +765,14 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 		if (entry &&
 			(entry->type == RVTH_BankType_Wii_SL ||
 			 entry->type == RVTH_BankType_Wii_DL) &&
-			(entry->crypto_type == RVTH_CryptoType_Retail ||
-			 entry->crypto_type == RVTH_CryptoType_Korean ||
-		         entry->ticket.sig_status != RVTH_SigStatus_OK ||
-			 entry->tmd.sig_status != RVTH_SigStatus_OK))
+			(entry->crypto_type == RVL_CryptoType_Retail ||
+			 entry->crypto_type == RVL_CryptoType_Korean ||
+		         entry->ticket.sig_status != RVL_SigStatus_OK ||
+			 entry->tmd.sig_status != RVL_SigStatus_OK))
 		{
 			// Retail or Korean encryption, or invalid signature.
 			// Convert to Debug.
-			ret = recryptWiiPartitions(bank, RVTH_CryptoType_Debug, callback);
+			ret = recryptWiiPartitions(bank, RVL_CryptoType_Debug, callback);
 		}
 		else
 		{

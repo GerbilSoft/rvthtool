@@ -40,36 +40,6 @@ typedef enum {
 	RVTH_BankType_MAX
 } RvtH_BankType_e;
 
-// Encryption types.
-typedef enum {
-	RVTH_CryptoType_Unknown	= 0,	// Unknown encryption.
-	RVTH_CryptoType_None	= 1,	// No encryption.
-	RVTH_CryptoType_Debug	= 2,	// RVT-R encryption.
-	RVTH_CryptoType_Retail	= 3,	// Retail encryption.
-	RVTH_CryptoType_Korean	= 4,	// Korean retail encryption.
-
-	RVTH_CryptoType_MAX
-} RvtH_CryptoType_e;
-
-// Signature types.
-typedef enum {
-	RVTH_SigType_Unknown	= 0,	// Unknown signature.
-	RVTH_SigType_Debug	= 1,	// Debug signature.
-	RVTH_SigType_Retail	= 2,	// Retail signature.
-
-	RVTH_SigType_MAX
-} RvtH_SigType_e;
-
-// Signature status.
-typedef enum {
-	RVTH_SigStatus_Unknown	= 0,	// Unknown signature status.
-	RVTH_SigStatus_OK	= 1,	// Valid
-	RVTH_SigStatus_Invalid	= 2,	// Invalid
-	RVTH_SigStatus_Fake	= 3,	// Fakesigned
-
-	RVTH_SigStatus_MAX
-} RvtH_SigStatus_e;
-
 // RVT-H image type.
 typedef enum {
 	RVTH_ImageType_Unknown = 0,

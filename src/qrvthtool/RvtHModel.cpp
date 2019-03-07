@@ -248,28 +248,28 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 					// Should not happen...
 					return RvtHModel::ICON_MAX;
 
-				case RVTH_SigType_Unknown:
+				case RVL_SigType_Unknown:
 					// Something's not quite right with this bank.
 					// Use a retail Wii icon.
 					return RvtHModel::ICON_WII;
 
-				case RVTH_SigType_Retail:
+				case RVL_SigType_Retail:
 					return RvtHModel::ICON_WII;
 
-				case RVTH_SigType_Debug:
+				case RVL_SigType_Debug:
 					// Check the encryption type.
 					switch (entry->crypto_type) {
 						default:
-						case RVTH_CryptoType_Unknown:
-						case RVTH_CryptoType_Retail:
-						case RVTH_CryptoType_Korean:
+						case RVL_CryptoType_Unknown:
+						case RVL_CryptoType_Retail:
+						case RVL_CryptoType_Korean:
 							// Should not happen...
 							return RvtHModel::ICON_MAX;
 
-						case RVTH_CryptoType_None:
+						case RVL_CryptoType_None:
 							return RvtHModel::ICON_RVTH;
 
-						case RVTH_CryptoType_Debug:
+						case RVL_CryptoType_Debug:
 							return RvtHModel::ICON_RVTR;
 					}
 					break;

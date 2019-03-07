@@ -11,6 +11,7 @@ SET(libwiicrypto_SRCS
 	cert_store.c
 	cert.c
 	priv_key_store.c
+	sig_tools.c
 	)
 # Headers.
 SET(libwiicrypto_H
@@ -23,6 +24,7 @@ SET(libwiicrypto_H
 	rsaw.h
 	aesw.h
 	priv_key_store.h
+	sig_tools.h
 	)
 
 IF(WIN32)
