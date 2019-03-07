@@ -560,7 +560,8 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		}
 
 		// Starting position.
-		data_pos = ALIGN(64, offsetof(RVL_PartitionHeader, data));
+		data_pos = offsetof(RVL_PartitionHeader, data);
+		data_pos = ALIGN(64, data_pos);
 
 		// Copy in the TMD.
 		tmd_size = be32_to_cpu(hdr_orig.tmd_size);
