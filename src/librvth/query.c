@@ -20,7 +20,63 @@
 
 #include "query.h"
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+/**
+ * Create a full serial number string.
+ *
+ * Converts 10xxxxxx to "HUA10xxxxxxY" and 20xxxxxx to "HMA20xxxxxxY".
+ * This includes the check digit.
+ *
+ * @param serial Serial number as provided by the RVT-H Reader.
+ * @return Allocated serial number string.
+ */
+char *rvth_create_full_serial_number(unsigned int serial)
+{
+	TCHAR buf[16];
+	unsigned int serial_tmp = serial;
+	unsigned int even = 0, odd = 0;
+	int i;
+
+	if (serial < 10000000 || serial > 29999999) {
+		// Serial number is out of range.
+		// Print it as-is.
+		_sntprintf(buf, sizeof(buf), "%08u", serial);
+		return _tcsdup(buf);
+	}
+
+	// Calculate the check digit.
+	// Reference: https://www.3dbrew.org/wiki/Serials
+	// - Add even digits together.
+	// - Add odd digits together.
+	// - Calculate: ((even * 3) + odd) % 10
+	for (i = 0; i < 8; i += 2) {
+		// The first digit we're processing here is actually
+		// the last digit in the serial number, so it's
+		// considered an even digit.
+		even += (serial_tmp % 10);
+		serial_tmp /= 10;
+		odd += (serial_tmp % 10);
+		serial_tmp /= 10;
+	}
+	even *= 3;
+	serial_tmp = (even + odd) % 10;
+	if (serial_tmp != 0) {
+		// Subtract from 10.
+		serial_tmp = 10 - serial_tmp;
+	}
+
+	if (serial < 20000000) {
+		// 10xxxxxx: RVT-H Reader (Wired)
+		snprintf(buf, sizeof(buf), "HUA%08u%01u", serial, serial_tmp);
+	} else {
+		// 20xxxxxx: RVT-H Reader (Wireless)
+		snprintf(buf, sizeof(buf), "HMA%08u%01u", serial, serial_tmp);
+	}
+	return _tcsdup(buf);
+}
 
 /**
  * Free a list of queried devices.

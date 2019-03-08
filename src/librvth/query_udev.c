@@ -74,6 +74,8 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		unsigned int vid, pid;
 
 		const char *s_blk_size;
+		const char *s_usb_serial;
+		unsigned int hw_serial;
 
 		// Get the filename of the /sys entry for the device
 		// and create a udev_device object (dev) representing it.
@@ -152,11 +154,27 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		// TODO: Get the actual LBA size.
 		s_blk_size = udev_device_get_sysattr_value(dev, "size");
 
+		// Get the serial number.
+		s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
+		if (!s_usb_serial) {
+			// No serial number...
+			continue;
+		}
+		hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
+
+		// Is the serial number valid?
+		// - Wired:    10xxxxxx
+		// - Wireless: 20xxxxxx
+		if (hw_serial < 10000000 || hw_serial > 29999999) {
+			// Not a valid serial number.
+			continue;
+		}
+
 		// Copy the strings.
 		list_tail->device_name = strdup(s_devnode);
 		list_tail->usb_vendor = strdup_null(udev_device_get_sysattr_value(usb_dev, "manufacturer"));
 		list_tail->usb_product = strdup_null(udev_device_get_sysattr_value(usb_dev, "product"));
-		list_tail->usb_serial = strdup_null(udev_device_get_sysattr_value(usb_dev, "serial"));
+		list_tail->usb_serial = rvth_create_full_serial_number(hw_serial);
 		list_tail->hdd_vendor = strdup_null(udev_device_get_sysattr_value(scsi_dev, "vendor"));
 		list_tail->hdd_model = strdup_null(udev_device_get_sysattr_value(scsi_dev, "model"));
 		list_tail->hdd_fwver = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));

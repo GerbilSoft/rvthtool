@@ -320,9 +320,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 #endif
 
 		// RVT-H Reader serial number.
-		// TODO: Prepend "HMA" or "HUA" to the serial number?
-		_sntprintf(buf.tcs, sizeof(buf.tcs), _T("%08u"), hw_serial);
-		list_tail->usb_serial = _tcsdup(buf.tcs);
+		list_tail->usb_serial = rvth_create_full_serial_number(hw_serial);
 
 		// Get more drive information.
 		// References:

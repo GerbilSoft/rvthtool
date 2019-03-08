@@ -63,6 +63,17 @@ typedef struct _RvtH_QueryEntry {
 } RvtH_QueryEntry;
 
 /**
+ * Create a full serial number string.
+ *
+ * Converts 10xxxxxx to "HUA10xxxxxxY" and 20xxxxxx to "HMA20xxxxxxY".
+ * This includes the check digit.
+ *
+ * @param serial Serial number as provided by the RVT-H Reader.
+ * @return Allocated serial number string.
+ */
+char *rvth_create_full_serial_number(unsigned int serial);
+
+/**
  * Scan all USB devices for RVT-H Readers.
  * @param pErr	[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
  * @return List of matching devices, or NULL if none were found.
