@@ -246,7 +246,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Load the ticket.
-	fseek(f_src_wad, wadInfo.ticket_address, SEEK_SET);
+	fseeko(f_src_wad, wadInfo.ticket_address, SEEK_SET);
 	size = fread(&buf->ticket, 1, sizeof(buf->ticket), f_src_wad);
 	if (size != sizeof(RVL_Ticket)) {
 		// Read error.
@@ -524,7 +524,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	fpAlign(f_dest_wad);
 
 	// Load the TMD.
-	fseek(f_src_wad, wadInfo.tmd_address, SEEK_SET);
+	fseeko(f_src_wad, wadInfo.tmd_address, SEEK_SET);
 	errno = 0;
 	size = fread(buf->u8, 1, wadInfo.tmd_size, f_src_wad);
 	if (size != wadInfo.tmd_size) {
