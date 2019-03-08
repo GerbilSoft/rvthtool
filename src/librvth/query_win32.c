@@ -107,6 +107,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 		// USB ID
 		uint16_t vid = 0, pid = 0;
+		unsigned int hw_serial = 0;
 
 		// DeviceIoControl()
 		HANDLE hDrive;
@@ -115,9 +116,16 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			STORAGE_PROPERTY_QUERY spq;
 			GET_LENGTH_INFORMATION gli;
 		} io;
-		BYTE spqBuf[4096];
+		union {
+			BYTE spq[4096];
+			TCHAR tcs[4096/sizeof(TCHAR)];
+		} buf;
 		DWORD cbBytesReturned;
 		BOOL bRet;
+
+		// for CM_Get_DevNode_Registry_Property()
+		ULONG ulLength;
+		ULONG ulRegDataType;
 
 		// Increment the device index here.
 		devIndex++;
@@ -133,8 +141,9 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		if (ret != CR_SUCCESS)
 			continue;
 
-		// Format: "USB\\VID_%04X&PID_%04X"
+		// Format: "USB\\VID_%04X&PID_%04X\\%08u"
 		// NOTE: Needs to be converted to uppercase, since "Vid" and "Pid" might show up.
+		// Last %08u is the serial number.
 		p = s_usbInstanceID;
 		while (*p != _T('\0')) {
 			*p = _totupper(*p);
@@ -142,13 +151,21 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		}
 
 		// Try sscanf().
-		ret = _stscanf(s_usbInstanceID, _T("USB\\VID_%04hX&PID_%04hX"), &vid, &pid);
-		if (ret != 2)
+		ret = _stscanf(s_usbInstanceID, _T("USB\\VID_%04hX&PID_%04hX\\%08u"), &vid, &pid, &hw_serial);
+		if (ret != 3)
 			continue;
 
 		// Does the USB device ID match?
 		if (vid != RVTH_READER_VID || pid != RVTH_READER_PID) {
 			// Not an RVT-H Reader.
+			continue;
+		}
+
+		// Is the serial number valid?
+		// - Wired:    10xxxxxx
+		// - Wireless: 20xxxxxx
+		if (hw_serial < 10000000 || hw_serial > 29999999) {
+			// Not a valid serial number.
 			continue;
 		}
 
@@ -236,8 +253,48 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			_T("\\\\.\\PhysicalDrive%u"), io.sdn.DeviceNumber);
 		list_tail->device_name = _tcsdup(s_devicePath);
 
+		// Get USB information.
+		// Reference: https://docs.microsoft.com/en-us/windows/desktop/api/cfgmgr32/nf-cfgmgr32-cm_get_devnode_registry_propertyw
+		ulLength = sizeof(buf.tcs);
+		ret = CM_Get_DevNode_Registry_Property(dnDevInstParent,
+			CM_DRP_MFG,		// ulProperty
+			&ulRegDataType,		// pulRegDataType
+			(PVOID)&buf.tcs,	// Buffer
+			&ulLength,		// pulLength
+			0);			// ulFlags
+		if (bRet && ulRegDataType == REG_SZ) {
+			// For some reason, this shows up as
+			// "Compatible USB storage device" on Windows,
+			// even though it should be "Nintendo Co., Ltd.".
+			if (!_tcscmp(buf.tcs, _T("Compatible USB storage device"))) {
+				list_tail->usb_vendor = _tcsdup(_T("Nintendo Co., Ltd."));
+			} else {
+				list_tail->usb_vendor = _tcsdup(buf.tcs);
+			}
+		} else {
+			list_tail->usb_vendor = NULL;
+		}
+
+		// NOTE: LOCATION_INFORMATION seems to have "RVT-H READER"...
+		ulLength = sizeof(buf.tcs);
+		ret = CM_Get_DevNode_Registry_Property(dnDevInstParent,
+			CM_DRP_LOCATION_INFORMATION,	// ulProperty
+			NULL,			// pulRegDataType
+			(PVOID)&buf.tcs,	// Buffer
+			&ulLength,		// pulLength
+			0);			// ulFlags
+		if (bRet && ulRegDataType == REG_SZ) {
+			list_tail->usb_product = _tcsdup(buf.tcs);
+		} else {
+			list_tail->usb_product = NULL;
+		}
+
+		// RVT-H Reader serial number.
+		// TODO: Prepend "HMA" or "HUA" to the serial number?
+		_sntprintf(buf.tcs, sizeof(buf.tcs), _T("%08u"), hw_serial);
+		list_tail->usb_serial = _tcsdup(buf.tcs);
+
 		// Get more drive information.
-		// TODO: Also get USB information.
 		// References:
 		// - https://stackoverflow.com/questions/327718/how-to-list-physical-disks
 		// - https://stackoverflow.com/a/18183115
@@ -247,30 +304,30 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		bRet = DeviceIoControl(hDrive,
 			IOCTL_STORAGE_QUERY_PROPERTY,	// dwIoControlCode
 			&io.spq, sizeof(io.spq),	// input buffer
-			&spqBuf, sizeof(spqBuf),	// output buffer
+			&buf.spq, sizeof(buf.spq),	// output buffer
 			&cbBytesReturned,		// # bytes returned
 			NULL);				// synchronous I/O
 		if (bRet) {
-			const STORAGE_DEVICE_DESCRIPTOR *const psdp = (const STORAGE_DEVICE_DESCRIPTOR*)spqBuf;
+			const STORAGE_DEVICE_DESCRIPTOR *const psdp = (const STORAGE_DEVICE_DESCRIPTOR*)buf.spq;
 			if (psdp->VendorIdOffset) {
-				list_tail->hdd_vendor = A2T_dup(&spqBuf[psdp->VendorIdOffset], -1);
+				list_tail->hdd_vendor = A2T_dup(&buf.spq[psdp->VendorIdOffset], -1);
 			} else {
 				list_tail->hdd_vendor = NULL;
 			}
 			if (psdp->ProductIdOffset) {
-				list_tail->hdd_model = A2T_dup(&spqBuf[psdp->ProductIdOffset], -1);
+				list_tail->hdd_model = A2T_dup(&buf.spq[psdp->ProductIdOffset], -1);
 			} else {
 				list_tail->hdd_model = NULL;
 			}
 			if (psdp->ProductRevisionOffset) {
-				list_tail->hdd_fwver = A2T_dup(&spqBuf[psdp->ProductRevisionOffset], -1);
+				list_tail->hdd_fwver = A2T_dup(&buf.spq[psdp->ProductRevisionOffset], -1);
 			} else {
 				list_tail->hdd_fwver = NULL;
 			}
 
 #ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
 			if (psdp->SerialNumberOffset) {
-				list_tail->hdd_serial = A2T_dup(&spqBuf[psdp->SerialNumberOffset], -1);
+				list_tail->hdd_serial = A2T_dup(&buf.spq[psdp->SerialNumberOffset], -1);
 			} else {
 				list_tail->hdd_serial = NULL;
 			}
@@ -291,11 +348,6 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			// Unable to obtain the size.
 			list_tail->size = 0;
 		}
-
-		// TODO
-		list_tail->usb_vendor = NULL;
-		list_tail->usb_product = NULL;
-		list_tail->usb_serial = NULL;
 
 		CloseHandle(hDrive);
 	}
