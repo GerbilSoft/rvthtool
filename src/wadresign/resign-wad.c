@@ -25,9 +25,10 @@
 // libwiicrypto
 #include "libwiicrypto/byteswap.h"
 #include "libwiicrypto/cert.h"
-#include "libwiicrypto/wii_wad.h"
-#include "libwiicrypto/sig_tools.h"
+#include "libwiicrypto/common.h"
 #include "libwiicrypto/priv_key_store.h"
+#include "libwiicrypto/sig_tools.h"
+#include "libwiicrypto/wii_wad.h"
 
 // C includes.
 #include <assert.h>
@@ -363,9 +364,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 
-	// TODO: Convert early WAD header to final WAD.
-	printf("Writing certificate chain...\n");
-
 	// Get the certificates.
 	if (toKey != RVL_KEY_DEBUG) {
 		// Retail certificates.
@@ -391,6 +389,26 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			sizeof(*cert_ticket) + sizeof(*cert_dev)));
 	}
 
+	if (isEarly) {
+		// Convert the WAD header to the standard format.
+		printf("Converting the early devkit WAD header to standard WAD format...\n");
+		// Type is 'Is' for most WADs, 'ib' for boot2.
+		if (unlikely(
+			buf->ticket.title_id.hi == cpu_to_be32(0x00000001) &&
+			buf->ticket.title_id.lo == cpu_to_be32(0x00000001)))
+		{
+			header.wad.type = cpu_to_be32(WII_WAD_TYPE_ib);
+		} else {
+			header.wad.type = cpu_to_be32(WII_WAD_TYPE_Is);
+		}
+
+		header.wad.reserved = 0;
+		header.wad.ticket_size = cpu_to_be32(wadInfo.ticket_size);
+		header.wad.tmd_size = cpu_to_be32(wadInfo.tmd_size);
+		header.wad.data_size = cpu_to_be32(wadInfo.data_size);
+		header.wad.footer_size = cpu_to_be32(wadInfo.footer_size);
+	}
+
 	// Write the WAD header.
 	errno = 0;
 	size = fwrite(&header.wad, 1, sizeof(header.wad), f_dest_wad);
@@ -408,6 +426,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	fpAlign(f_dest_wad);
 
 	// Write the certificates.
+	printf("Writing certificate chain...\n");
 	errno = 0;
 	size = fwrite(cert_CA, 1, sizeof(*cert_CA), f_dest_wad);
 	if (size != sizeof(*cert_CA)) {
