@@ -4,7 +4,7 @@
 
 New features:
 * GUI frontend written using the Qt Toolkit.
-* [TODO] Added device querying on Windows.
+* [Win32] Implemented the `query` command.
 * wadresign: Command line tool to recrypt and resign WAD files.
   * Can read retail, Korean, debug, and early devkit WADs.
   * Can create retail (fakesigned), Korean (fakesigned), and debug
