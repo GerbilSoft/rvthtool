@@ -510,12 +510,16 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 	// This will be rewritten later, since we need to update the
 	// content SHA-1 in the TMD.
 	entry_src->reader->read(&pthdr, game_pte->lba_start, BYTES_TO_LBA(sizeof(pthdr)));
+
+	// Data offset should be 0x8000 for unencrypted partitions.
 	data_offset = be32_to_cpu(pthdr.data_offset) << 2;
 	assert(data_offset == 0x8000);
 	if (data_offset != 0x8000) {
 		err = EIO;
 		ret = RVTH_ERROR_PARTITION_HEADER_CORRUPTED;
+		goto end;
 	}
+
 	// Calculate the data offset LBAs and adjust
 	// lba_copy_len to skip the partition header.
 	data_lba_src = game_pte->lba_start + BYTES_TO_LBA(data_offset);
@@ -538,7 +542,8 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 	ret = decrypt_title_key(&pthdr.ticket, titleKey, &entry_dest->crypto_type);
 	if (ret != 0) {
 		// Error decrypting the title key.
-		return ret;
+		err = EIO;
+		goto end;
 	}
 	aesw_set_key(aesw, titleKey, sizeof(titleKey));
 
