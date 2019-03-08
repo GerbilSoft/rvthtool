@@ -66,9 +66,10 @@ static inline TCHAR *A2T_dup(const char *str, int len)
 
 /**
  * Scan all USB devices for RVT-H Readers.
+ * @param pErr	[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
  * @return List of matching devices, or NULL if none were found.
  */
-RvtH_QueryEntry *rvth_query_devices(void)
+RvtH_QueryEntry *rvth_query_devices(int *pErr)
 {
 	RvtH_QueryEntry *list_head = NULL;
 	RvtH_QueryEntry *list_tail = NULL;
@@ -95,6 +96,10 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 	if (!hDevInfoSet || hDevInfoSet == INVALID_HANDLE_VALUE) {
 		// SetupDiGetClassDevs() failed.
+		if (pErr) {
+			// TODO: Convert GetLastError()?
+			*pErr = EIO;
+		}
 		return NULL;
 	}
 
@@ -205,8 +210,28 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			OPEN_EXISTING,		// dwCreationDisposition
 			FILE_ATTRIBUTE_NORMAL,	// dwFlagsAndAttributes
 			NULL);			// hTemplateFile
-		if (!hDevice || hDevice == INVALID_HANDLE_VALUE)
+		if (!hDevice || hDevice == INVALID_HANDLE_VALUE) {
+			// Can't open this device for some reason...
+			DWORD dwErr = GetLastError();
+			if (dwErr == ERROR_ACCESS_DENIED) {
+				// Access denied.
+				// User is probably not Administrator.
+				// Stop enumerating devices and return an error.
+				if (pErr) {
+					*pErr = EACCES;
+				}
+				if (list_head) {
+					rvth_query_free(list_head);
+					list_head = NULL;
+					list_tail = NULL;
+				}
+				break;
+			}
+
+			// Other error. Continue enumerating.
+			// TODO: Return for certain errors?
 			continue;
+		}
 
 		bRet = DeviceIoControl(hDevice,
 			IOCTL_STORAGE_GET_DEVICE_NUMBER,// dwIoControlCode

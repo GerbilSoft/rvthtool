@@ -20,6 +20,7 @@
 
 #include "query.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -33,9 +34,10 @@ static inline char *strdup_null(const char *s)
 
 /**
  * Scan all USB devices for RVT-H Readers.
+ * @param pErr	[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
  * @return List of matching devices, or NULL if none were found.
  */
-RvtH_QueryEntry *rvth_query_devices(void)
+RvtH_QueryEntry *rvth_query_devices(int *pErr)
 {
 	RvtH_QueryEntry *list_head = NULL;
 	RvtH_QueryEntry *list_tail = NULL;
@@ -50,6 +52,9 @@ RvtH_QueryEntry *rvth_query_devices(void)
 	udev = udev_new();
 	if (!udev) {
 		// Unable to create a udev object.
+		if (pErr) {
+			*pErr = ENOMEM;
+		}
 		return NULL;
 	}
 
@@ -170,7 +175,10 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 	// Free the enumerator object.
 	udev_enumerate_unref(enumerate);
-
 	udev_unref(udev);
+
+	if (pErr) {
+		*pErr = 0;
+	}
 	return list_head;
 }

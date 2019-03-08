@@ -64,9 +64,10 @@ typedef struct _RvtH_QueryEntry {
 
 /**
  * Scan all USB devices for RVT-H Readers.
+ * @param pErr	[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
  * @return List of matching devices, or NULL if none were found.
  */
-RvtH_QueryEntry *rvth_query_devices(void);
+RvtH_QueryEntry *rvth_query_devices(int *pErr);
 
 /**
  * Free a list of queried devices.

@@ -28,7 +28,13 @@
 #include "libwiicrypto/common.h"
 #include "librvth/query.h"
 
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
+
+#ifdef _WIN32
+# include <windows.h>
+#endif
 
 static inline int calc_frac_part(int64_t size, int64_t mask)
 {
@@ -135,9 +141,34 @@ int query(void)
 	RvtH_QueryEntry *devs, *p;
 	char hdd_size[32];
 	bool did_one = false;
+	int err = 0;
 
-	devs = rvth_query_devices();
+	devs = rvth_query_devices(&err);
 	if (!devs) {
+		// If err is non-zero, may be a permissions issue.
+		if (err != 0) {
+			printf("*** ERROR enumerating RVT-H Reader devices: %s\n", strerror(err));
+			if (err == EACCES) {
+#ifdef _WIN32
+				OSVERSIONINFO osvi;
+				osvi.dwOSVersionInfoSize = sizeof(osvi);
+				if (!GetVersionEx(&osvi)) {
+					// GetVersionEx() failed.
+					// Assume it's an old version of Windows.
+					osvi.dwMajorVersion = 0;
+				}
+				if (osvi.dwMajorVersion >= 6) {
+					printf("*** Try rerunning rvthtool using an elevated command prompt.\n");
+				} else {
+					printf("*** Try rerunning rvthtool using an Administrator account.\n");
+				}
+#else /* _WIN32 */
+				printf("*** Try rerunning rvthtool as root.\n");
+#endif /* _WIN32 */
+			}
+			return err;
+		}
+
 		printf("No RVT-H Reader devices found.\n");
 		return 0;
 	}
