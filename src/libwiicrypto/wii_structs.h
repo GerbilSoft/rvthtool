@@ -192,6 +192,9 @@ typedef enum {
 	RVL_CONTENT_TYPE_MAYBE_WFS	= 0x0020,
 	RVL_CONTENT_TYPE_UNKNOWN_CT	= 0x0040,
 
+	// Seen in CoD:MW3 DLC.
+	RVL_CONTENT_TYPE_UNKNOWN_0x4000	= 0x4000,
+
 	// Seen in Pop Europe (WiiWare).
 	RVL_CONTENT_TYPE_UNKNOWN_0x8000	= 0x8000,
 } RVL_Content_Type_e;
