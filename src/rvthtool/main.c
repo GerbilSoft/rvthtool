@@ -162,7 +162,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	setlocale(LC_ALL, "");
 
 	puts("RVT-H Tool v" VERSION_STRING "\n"
-		"Copyright (c) 2018 by David Korth.");
+		"Copyright (c) 2018-2019 by David Korth.");
 #ifdef RP_GIT_VERSION
 	puts(RP_GIT_VERSION);
 # ifdef RP_GIT_DESCRIBE
