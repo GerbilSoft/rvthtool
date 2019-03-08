@@ -88,6 +88,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Files.
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
 	int64_t src_file_size, offset;
+	const char *s_footer_name;	// "footer" or "name"
 
 	// Certificates.
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
@@ -102,7 +103,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Open the source WAD file.
 	errno = 0;
 	f_src_wad = _tfopen(src_wad, _T("rb"));
-	if (!f_src_wad) {
+	if (unlikely(!f_src_wad)) {
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
@@ -151,10 +152,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Determine the sizes and addresses of various components.
-	if (!isEarly) {
+	if (unlikely(!isEarly)) {
 		ret = getWadInfo(&header.wad, &wadInfo);
+		s_footer_name = "footer";
 	} else {
 		ret = getWadInfo_early(&header.wadE, &wadInfo);
+		s_footer_name = "name";
 	}
 	if (ret != 0) {
 		// Unable to get WAD information.
@@ -165,7 +168,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 
-	// Verify the ticket and TMD sizes.
+	// Verify the various sizes.
 	if (wadInfo.ticket_size != sizeof(RVL_Ticket)) {
 		// Incorrect ticket size.
 		fputs("*** ERROR: WAD file '", stderr);
@@ -181,7 +184,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
 		ret = 4;
 		goto end;
-	} else if (wadInfo.tmd_size > 1*1024*1024) {
+	} else if (wadInfo.tmd_size > 1024*1024) {
 		// Too big.
 		// TODO: Define a maximum TMD size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
@@ -189,6 +192,15 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
 			wadInfo.tmd_size);
 		ret = 5;
+		goto end;
+	} else if (wadInfo.footer_size > 128*1024) {
+		// Too big.
+		// TODO: Define a maximum footer size somewhere.
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' %s size is too big. (%u; should be less than 128 KB)\n",
+			s_footer_name, wadInfo.tmd_size);
+		ret = 6;
 		goto end;
 	}
 
@@ -202,7 +214,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("' data size is invalid.\n", stderr);
-			ret = 6;
+			ret = 7;
 			goto end;
 		}
 		wadInfo.data_size = (uint32_t)src_file_size - wadInfo.data_address;
@@ -213,14 +225,14 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("' data address is invalid.\n", stderr);
-			ret = 7;
+			ret = 8;
 			goto end;
 		} else if (src_file_size - wadInfo.data_address < wadInfo.data_size) {
 			// Data size is too small.
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("' data size is invalid.\n", stderr);
-			ret = 8;
+			ret = 9;
 			goto end;
 		}
 
@@ -233,7 +245,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' data size is too big. (%u; should be less than 128 MB)\n",
 			wadInfo.data_size);
-		ret = 9;
+		ret = 10;
 		goto end;
 	}
 
@@ -241,7 +253,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	buf = malloc(sizeof(*buf));
 	if (!buf) {
 		fputs("*** ERROR: Unable to allocate memory buffer.\n", stderr);
-		ret = 10;
+		ret = 11;
 		goto end;
 	}
 
@@ -253,7 +265,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fputs("': Unable to read the ticket.\n", stderr);
-		ret = 11;
+		ret = 12;
 		goto end;
 	}
 
@@ -294,7 +306,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("': Unknown issuer.\n", stderr);
-			ret = 12;
+			ret = 13;
 			goto end;
 	}
 
@@ -312,14 +324,14 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 				// Should not happen...
 				assert(!"src_key: Invalid cryptoType.");
 				fputs("*** ERROR: Unable to select encryption key.\n", stderr);
-				ret = 13;
+				ret = 14;
 				goto end;
 		}
 	} else {
 		if ((RVL_CryptoType_e)recrypt_key == src_key) {
 			// No point in recrypting to the same key...
 			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
-			ret = 14;
+			ret = 15;
 			goto end;
 		}
 	}
@@ -343,7 +355,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			// This should not happen...
 			assert(!"recrypt_key: Invalid key index.");
 			fputs("*** ERROR: Invalid recrypt_key value.\n", stderr);
-			ret = 15;
+			ret = 16;
 			goto end;
 	}
 
@@ -476,8 +488,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// 64-byte alignment.
 	fpAlign(f_dest_wad);
-
-	// TODO: Copy the footer/name.
 
 	// Recrypt the ticket and TMD.
 	printf("Recrypting the ticket and TMD...\n");
@@ -630,6 +640,43 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		}
 	}
 
+	// Copy the footer/name.
+	if (wadInfo.footer_size != 0) {
+		if (likely(!isEarly)) {
+			printf("Copying the WAD footer...\n");
+		} else {
+			printf("Converting the WAD name to a footer...\n");
+		}
+
+		fseeko(f_src_wad, wadInfo.footer_address, SEEK_SET);
+		errno = 0;
+		size = fread(buf->u8, 1, wadInfo.footer_size, f_src_wad);
+		if (size != wadInfo.footer_size) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR reading source WAD %s: %s\n",
+				s_footer_name, strerror(err));
+			ret = -err;
+			goto end;
+		}
+
+		// 64-byte alignment.
+		fpAlign(f_dest_wad);
+
+		size = fwrite(buf->u8, 1, wadInfo.footer_size, f_dest_wad);
+		if (size != wadInfo.footer_size) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR writing destination WAD footer: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+	}
+
 	// Make sure the file is 64-byte aligned.
 	offset = ftello(f_dest_wad);
 	if (offset % 64 != 0) {
@@ -650,9 +697,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			goto end;
 		}
 	}
-
-	// TODO: Copy the footer.
-	// TODO: Make sure the file is a multiple of 64 bytes.
 
 	printf("WAD resigning complete.\n");
 	ret = 0;
