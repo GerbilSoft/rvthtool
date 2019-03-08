@@ -114,7 +114,7 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 #define NHCD_BANK_START_LBA(bank, bank_count) \
 	((bank) > 0 \
 		? (NHCD_BANKTABLE_ADDRESS_LBA + 9U + (NHCD_BANK_SIZE_LBA * (bank))) \
-		: ((bank_count <= 8) \
+		: (((bank_count) <= 8) \
 			? (NHCD_BANKTABLE_ADDRESS_LBA + 9U) \
 			: (NHCD_BANKTABLE_ADDRESS_LBA - NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA) \
 		) \
