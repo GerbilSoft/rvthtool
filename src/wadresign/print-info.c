@@ -147,7 +147,6 @@ static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
 	// AES context.
 	AesCtx *aesw;
 
-#define BUF_SZ (1024*1024)
 	uint8_t *buf = NULL;	// 1 MB buffer
 	uint8_t digest[SHA1_DIGEST_SIZE];
 
@@ -180,7 +179,7 @@ static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
 	aesw_set_iv(aesw, iv, sizeof(iv));
 
 	// Allocate memory.
-	buf = malloc(BUF_SZ);
+	buf = malloc(READ_BUFFER_SIZE);
 	if (!buf) {
 		aesw_free(aesw);
 		return -ENOMEM;
@@ -191,10 +190,10 @@ static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
 	sha1_init(&sha1);
 	data_sz = (uint32_t)be64_to_cpu(content->size);
 	fseeko(f_wad, content_addr, SEEK_SET);
-	for (; data_sz >= BUF_SZ; data_sz -= BUF_SZ) {
+	for (; data_sz >= READ_BUFFER_SIZE; data_sz -= READ_BUFFER_SIZE) {
 		errno = 0;
-		size = fread(buf, 1, BUF_SZ, f_wad);
-		if (size != BUF_SZ) {
+		size = fread(buf, 1, READ_BUFFER_SIZE, f_wad);
+		if (size != READ_BUFFER_SIZE) {
 			ret = errno;
 			if (ret == 0) {
 				ret = -EIO;
@@ -203,10 +202,10 @@ static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
 		}
 
 		// Decrypt the data.
-		aesw_decrypt(aesw, buf, BUF_SZ);
+		aesw_decrypt(aesw, buf, READ_BUFFER_SIZE);
 
 		// Update the SHA-1.
-		sha1_update(&sha1, BUF_SZ, buf);
+		sha1_update(&sha1, READ_BUFFER_SIZE, buf);
 	}
 
 	// Remaining data.
@@ -352,7 +351,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
 		ret = 4;
 		goto end;
-	} else if (wadInfo.tmd_size > 1*1024*1024) {
+	} else if (wadInfo.tmd_size > WAD_TMD_SIZE_MAX) {
 		// Too big.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(wad_filename, stderr);

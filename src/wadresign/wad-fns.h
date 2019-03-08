@@ -29,6 +29,18 @@
 extern "C" {
 #endif
 
+// Read buffer size.
+#define READ_BUFFER_SIZE (1024*1024)
+
+// Maximum TMD size supported by wadresign.
+#define WAD_TMD_SIZE_MAX (1024*1024)
+
+// Maximum data size supported by wadresign.
+#define WAD_DATA_SIZE_MAX (128*1024*1024)
+
+// Maximum footer size supported by wadresign.
+#define WAD_FOOTER_SIZE_MAX (128*1024)
+
 /**
  * Struct of WAD section addresses and sizes.
  * Parsed from the WAD header.

@@ -47,7 +47,7 @@ typedef union _WAD_Header {
 
 // Read buffer.
 typedef union _rdbuf_t {
-	uint8_t u8[1024*1024];
+	uint8_t u8[READ_BUFFER_SIZE];
 	RVL_Ticket ticket;
 	RVL_TMD_Header tmdHeader;
 } rdbuf_t;
@@ -140,7 +140,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Identify the WAD type.
 	// TODO: More extensive error handling?
-	// NOTE: Not saving the string, since we only need to knwo if
+	// NOTE: Not saving the string, since we only need to know if
 	// it's an early WAD or not.
 	if (identify_wad_type((const uint8_t*)&header, sizeof(header), &isEarly) == NULL) {
 		// Unrecognized WAD type.
@@ -184,16 +184,15 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
 		ret = 4;
 		goto end;
-	} else if (wadInfo.tmd_size > 1024*1024) {
+	} else if (wadInfo.tmd_size > WAD_TMD_SIZE_MAX) {
 		// Too big.
-		// TODO: Define a maximum TMD size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
 			wadInfo.tmd_size);
 		ret = 5;
 		goto end;
-	} else if (wadInfo.footer_size > 128*1024) {
+	} else if (wadInfo.footer_size > WAD_FOOTER_SIZE_MAX) {
 		// Too big.
 		// TODO: Define a maximum footer size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
@@ -239,7 +238,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		// TODO: More checks?
 	}
 
-	if (wadInfo.data_size > 128*1024*1024) {
+	if (wadInfo.data_size > WAD_DATA_SIZE_MAX) {
 		// Maximum of 128 MB.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
