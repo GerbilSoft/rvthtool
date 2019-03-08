@@ -33,7 +33,7 @@ This is an open-source tool for managing RVT-H Reader consoles.
   to retail, unencrypted to debug, etc. Conversion to retail will result
   in a fakesigned image.
 * Querying all available RVT-H Reader devices to determine which device name
-  is associated with which reader. (Linux with UDEV only at the moment.)
+  is associated with which reader.
 * Converting unencrypted debug-signed disc images to retail fake-signed and
   debug-encrypted debug-signed.
 
@@ -89,7 +89,7 @@ $ ./rvthtool query
 /dev/sdb
 - Manufacturer:  Nintendo Co., Ltd.
 - Product Name:  RVT-H READER
-- Serial Number: abcdefgh
+- Serial Number: 20xxxxxx
 - HDD Firmware:  01.0
 - HDD Vendor:    WDC     
 - HDD Model:     WD800BEVE-00UYT0

@@ -28,7 +28,13 @@
 #include "libwiicrypto/common.h"
 #include "librvth/query.h"
 
+#include <errno.h>
 #include <stdio.h>
+#include <string.h>
+
+#ifdef _WIN32
+# include <windows.h>
+#endif
 
 static inline int calc_frac_part(int64_t size, int64_t mask)
 {
@@ -135,9 +141,34 @@ int query(void)
 	RvtH_QueryEntry *devs, *p;
 	char hdd_size[32];
 	bool did_one = false;
+	int err = 0;
 
-	devs = rvth_query_devices();
+	devs = rvth_query_devices(&err);
 	if (!devs) {
+		// If err is non-zero, may be a permissions issue.
+		if (err != 0) {
+			printf("*** ERROR enumerating RVT-H Reader devices: %s\n", strerror(err));
+			if (err == EACCES) {
+#ifdef _WIN32
+				OSVERSIONINFO osvi;
+				osvi.dwOSVersionInfoSize = sizeof(osvi);
+				if (!GetVersionEx(&osvi)) {
+					// GetVersionEx() failed.
+					// Assume it's an old version of Windows.
+					osvi.dwMajorVersion = 0;
+				}
+				if (osvi.dwMajorVersion >= 6) {
+					printf("*** Try rerunning rvthtool using an elevated command prompt.\n");
+				} else {
+					printf("*** Try rerunning rvthtool using an Administrator account.\n");
+				}
+#else /* _WIN32 */
+				printf("*** Try rerunning rvthtool as root.\n");
+#endif /* _WIN32 */
+			}
+			return err;
+		}
+
 		printf("No RVT-H Reader devices found.\n");
 		return 0;
 	}
@@ -157,18 +188,21 @@ int query(void)
 			did_one = true;
 		}
 
-		printf("%s\n", p->device_name);
-		printf("- Manufacturer:  %s\n", (p->usb_vendor ? p->usb_vendor : "(unknown)"));
-		printf("- Product Name:  %s\n", (p->usb_product ? p->usb_product : "(unknown)"));
-		printf("- Serial Number: %s\n", (p->serial_number ? p->serial_number : "(unknown)"));
-		printf("- HDD Firmware:  %s\n", (p->fw_version ? p->fw_version : "(unknown)"));
+		_tprintf(_T("%s\n"), p->device_name);
+		_tprintf(_T("- Manufacturer:      %s\n"), (p->usb_vendor ? p->usb_vendor : _T("(unknown)")));
+		_tprintf(_T("- Product Name:      %s\n"), (p->usb_product ? p->usb_product : _T("(unknown)")));
+		_tprintf(_T("- Serial Number:     %s\n"), (p->usb_serial ? p->usb_serial : _T("(unknown)")));
 		// TODO: Trim the vendor/model fields if necessary.
-		printf("- HDD Vendor:    %s\n", (p->hdd_vendor ? p->hdd_vendor : "(unknown)"));
-		printf("- HDD Model:     %s\n", (p->hdd_model ? p->hdd_model : "(unknown)"));
+		_tprintf(_T("- HDD Vendor:        %s\n"), (p->hdd_vendor ? p->hdd_vendor : _T("(unknown)")));
+		_tprintf(_T("- HDD Model:         %s\n"), (p->hdd_model ? p->hdd_model : _T("(unknown)")));
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+		_tprintf(_T("- HDD Serial Number: %s\n"), (p->hdd_serial ? p->hdd_serial : _T("(unknown)")));
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
+		_tprintf(_T("- HDD Firmware Ver:  %s\n"), (p->hdd_fwver ? p->hdd_fwver : _T("(unknown)")));
 
 		// Format and print the HDD size.
 		format_size(hdd_size, sizeof(hdd_size), p->size);
-		printf("- HDD Size:      %s\n", hdd_size);
+		printf("- HDD Size:          %s\n", hdd_size);
 	}
 
 	rvth_query_free(devs);

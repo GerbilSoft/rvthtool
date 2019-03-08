@@ -56,9 +56,9 @@ TARGET_INCLUDE_DIRECTORIES(rvthtool
 		$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
 	)
 
-TARGET_LINK_LIBRARIES(rvthtool rvth wiicrypto)
+TARGET_LINK_LIBRARIES(rvthtool PRIVATE rvth wiicrypto)
 IF(MSVC)
-	TARGET_LINK_LIBRARIES(rvthtool getopt_msvc)
+	TARGET_LINK_LIBRARIES(rvthtool PRIVATE getopt_msvc)
 ENDIF(MSVC)
 
 # CMake-3.7.2 doesn't add include paths to windres.
