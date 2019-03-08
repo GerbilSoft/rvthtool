@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool                                                              *
+ * RVT-H Tool: WAD Resigner                                                *
  * main.c: Main program file.                                              *
  *                                                                         *
  * Copyright (c) 2018-2019 by David Korth.                                 *
@@ -24,35 +24,24 @@
 // C includes.
 #include <locale.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
 
-#include "librvth/config.librvth.h"
-#include "librvth/rvth.hpp"
-#include "libwiicrypto/cert.h"
 #include "libwiicrypto/sig_tools.h"
 
 #ifdef _WIN32
 # include "libwiicrypto/win32/secoptions.h"
 #endif /* _WIN32 */
 
-#include "list-banks.hpp"
-#include "extract.h"
-#include "undelete.h"
-#include "query.h"
+#include "print-info.h"
+#include "resign-wad.h"
 
 #ifdef _MSC_VER
 # define RVTH_CDECL __cdecl
 #else
 # define RVTH_CDECL
-#endif
-
-#ifdef _WIN32
-# define DEVICE_NAME_EXAMPLE "\\\\.\\PhysicalDriveN"
-#else
-// TODO: Non-Linux systems.
-# define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
 
 #ifdef __GNUC__
@@ -98,43 +87,22 @@ static void print_help(const TCHAR *argv0)
 		"\n"
 		"Supported commands:\n"
 		"\n"
-		"list rvth.img\n"
-		"- List banks in the specified RVT-H device or disk image.\n"
+		"info file.wad\n"
+		"- Print information about the specified WAD file.\n"
 		"\n"
-		"extract " DEVICE_NAME_EXAMPLE " bank# disc.gcm\n"
-		"- Extract the specified bank number from rvth.img to disc.gcm.\n"
+		"resign source.wad dest.wad\n"
+		" - Resigns source.wad and creates dest.wad using the new key.\n"
+		"   Default converts Retail/Korean WADs to Debug, and\n"
+		"   Debug WADs to Retail.\n"
 		"\n"
-		"import " DEVICE_NAME_EXAMPLE " bank# disc.gcm\n"
-		"- Import disc.gcm into rvth.img at the specified bank number.\n"
-		"  The destination bank must be either empty or deleted.\n"
-		"  [This command only works with RVT-H Readers, not disk images.]\n"
-		"\n"
-		"delete " DEVICE_NAME_EXAMPLE " bank#\n"
-		"- Delete the specified bank number from the specified RVT-H device.\n"
-		"  This does NOT wipe the disc image.\n"
-		"  [This command only works with RVT-H Readers, not disk images.]\n"
-		"\n"
-		"undelete " DEVICE_NAME_EXAMPLE " bank#\n"
-		"- Undelete the specified bank number from the specified RVT-H device.\n"
-		"  [This command only works with RVT-H Readers, not disk images.]\n"
-		"\n"
-		"query\n"
-		"- Query all available RVT-H Reader devices and list them.\n"
-#ifndef HAVE_QUERY
-		"  [NOTE: Not available on this system.]\n"
-#endif /* HAVE_QUERY */
-		"\n"
-		"help\n"
-		"- Display this help and exit.\n"
+		"verify file.wad\n"
+		" - Verify the content hashes.\n"
 		"\n"
 		"Options:\n"
 		"\n"
-		"  -k, --recrypt=KEY         Recrypt the image using the specified KEY:\n"
+		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
 		"                            default, retail, korean, debug\n"
 		"                            Recrypting to retail will use fakesigning.\n"
-		"                            Importing to RVT-H will always use debug keys.\n"
-		"  -N, --ndev                Prepend extracted images with a 32 KB header\n"
-		"                            required by official SDK tools.\n"
 		"  -h, --help                Display this help and exit.\n"
 		"\n"
 		, stdout);
@@ -143,7 +111,6 @@ static void print_help(const TCHAR *argv0)
 int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 {
 	int ret;
-	uint32_t flags = 0;
 
 	// Key to use for recryption.
 	// -1 == default; no recryption, except when importing retail to RVT-H.
@@ -161,8 +128,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Set the C locale.
 	setlocale(LC_ALL, "");
 
-	puts("RVT-H Tool v" VERSION_STRING "\n"
-		"Copyright (c) 2018 by David Korth.");
+	puts("WAD Resigner v" VERSION_STRING "\n"
+		"Copyright (c) 2018-2019 by David Korth.");
 #ifdef RP_GIT_VERSION
 	puts(RP_GIT_VERSION);
 # ifdef RP_GIT_DESCRIBE
@@ -171,10 +138,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 #endif
 	putchar('\n');
 
-	// TODO: getopt().
-	// Unicode getopt() for Windows:
+	// Using Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
-
 	while (true) {
 		static const struct option long_options[] = {
 			{_T("recrypt"),	required_argument,	0, _T('k')},
@@ -210,12 +175,6 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				}
 				break;
 
-			case 'N':
-				// Prepend the SDK header.
-				// TODO: Show error if not using 'extract'?
-				flags |= RVTH_EXTRACT_PREPEND_SDK_HEADER;
-				break;
-
 			case 'h':
 				print_help(argv[0]);
 				return EXIT_SUCCESS;
@@ -239,57 +198,34 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		// Display help.
 		print_help(argv[0]);
 		return EXIT_FAILURE;
-	} else if (!_tcscmp(argv[optind], _T("list")) || !_tcscmp(argv[optind], _T("list-banks"))) {
-		// List banks.
+	} else if (!_tcscmp(argv[optind], _T("info"))) {
+		// Print WAD information.
 		if (argc < optind+2) {
-			print_error(argv[0], _T("RVT-H device or disk image not specified"));
+			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = list_banks(argv[optind+1]);
-	} else if (!_tcscmp(argv[optind], _T("extract"))) {
-		// Extract a bank.
-		if (argc < optind+3) {
-			print_error(argv[0], _T("missing parameters for 'extract'"));
-			return EXIT_FAILURE;
-		} else if (argc == optind+3) {
-			// Two parameters specified.
-			// Pass NULL as the bank number, which will be
-			// interpreted as bank 1 for single-disc images
-			// and an error for HDD images.
-			ret = extract(argv[optind+1], NULL, argv[optind+2], recrypt_key, flags);
-		} else {
-			// Three or more parameters specified.
-			ret = extract(argv[optind+1], argv[optind+2], argv[optind+3], recrypt_key, flags);
-		}
-	} else if (!_tcscmp(argv[optind], _T("import"))) {
-		// Import a bank.
-		if (argc < optind+4) {
-			print_error(argv[0], _T("missing parameters for 'import'"));
+		ret = print_wad_info(argv[optind+1], false);
+	} else if (!_tcscmp(argv[optind], _T("verify"))) {
+		// Verify a WAD.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = import(argv[optind+1], argv[optind+2], argv[optind+3]);
-	} else if (!_tcscmp(argv[optind], _T("delete"))) {
-		// Delete a bank.
-		if (argc < 3) {
-			print_error(argv[0], _T("missing parameters for 'delete'"));
+		ret = print_wad_info(argv[optind+1], true);
+	} else if (!_tcscmp(argv[optind], _T("resign"))) {
+		// Resign a WAD.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("WAD filenames not specified"));
+			return EXIT_FAILURE;
+		} else if (argc < optind+3) {
+			print_error(argv[0], _T("Output WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = delete_bank(argv[optind+1], argv[optind+2]);
-	} else if (!_tcscmp(argv[optind], _T("undelete"))) {
-		// Undelete a bank.
-		if (argc < 3) {
-			print_error(argv[0], _T("missing parameters for 'undelete'"));
-			return EXIT_FAILURE;
-		}
-		ret = undelete_bank(argv[optind+1], argv[optind+2]);
-	} else if (!_tcscmp(argv[optind], _T("query"))) {
-		// Query RVT-H Reader devices.
-		// NOTE: Not checking HAVE_QUERY. If querying isn't available,
-		// an error message will be displayed.
-		ret = query();
+		ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key);
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
-		// assume it's a filename and handle it as 'list'.
+		// assume it's a filename and handle it as 'info'.
+		// TODO: If two filenames are specified, handle it as 'resign'.
 		const TCHAR *p;
 		bool isFilename = false;
 		for (p = argv[optind]; *p != 0; p++) {
@@ -309,7 +245,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 
 		if (isFilename) {
 			// Probably a filename.
-			ret = list_banks(argv[optind]);
+			ret = print_wad_info(argv[optind], false);
 		} else {
 			// Not a filename.
 			print_error(argv[0], _T("unrecognized command '%s'"), argv[optind]);

@@ -33,9 +33,9 @@
 #include "libwiicrypto/wii_structs.h"
 #include "libwiicrypto/cert.h"
 #include "libwiicrypto/cert_store.h"
-#include "libwiicrypto/aesw.h"
 #include "libwiicrypto/rsaw.h"
 #include "libwiicrypto/priv_key_store.h"
+#include "libwiicrypto/sig_tools.h"
 
 #include "byteswap.h"
 
@@ -310,106 +310,6 @@ int RvtH::recryptID(unsigned int bank)
 	return ret;
 }
 
-static inline uint32_t toNext64(uint32_t n)
-{
-	return (n + 63U) & ~63U;
-}
-
-/**
- * Re-encrypt a ticket's title key.
- * This will also change the issuer if necessary.
- *
- * NOTE: This function will NOT fakesign the ticket.
- * Call cert_fakesign_tmd() afterwards.
- * TODO: Real signing for debug.
- *
- * @param ticket Ticket.
- * @param toKey New key.
- * @return 0 on success; non-zero on error.
- */
-static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
-{
-	// Common keys.
-	RVL_AES_Keys_e fromKey;
-	const uint8_t *key_from, *key_to;
-	const char *issuer;
-	uint8_t iv[16];	// based on Title ID
-
-	// TODO: Error checking.
-	// TODO: Pass in an aesw context for less overhead.
-	AesCtx *aesw;
-
-	// Check the 'from' key.
-	if (!strncmp(ticket->issuer,
-	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
-	{
-		// Retail. Use RVL_KEY_RETAIL unless the Korean key is selected.
-		fromKey = (ticket->common_key_index != 1
-			? RVL_KEY_RETAIL
-			: RVL_KEY_KOREAN);
-	}
-	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET], sizeof(ticket->issuer)))
-	{
-		// Debug. Use RVL_KEY_DEBUG.
-		fromKey = RVL_KEY_DEBUG;
-	}
-	else
-	{
-		// Unknown issuer.
-		errno = EIO;
-		return RVTH_ERROR_ISSUER_UNKNOWN;
-	}
-
-	// TODO: Determine the 'from' key by checking the
-	// original issuer and key index.
-	if (fromKey == toKey) {
-		// No recryption needed.
-		return 0;
-	}
-
-	// Key data and 'To' issuer.
-	key_from = RVL_AES_Keys[fromKey];
-	key_to = RVL_AES_Keys[toKey];
-	if (likely(toKey != RVL_KEY_DEBUG)) {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET];
-	} else {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET];
-	}
-
-	// Initialize the AES context.
-	errno = 0;
-	aesw = aesw_new();
-	if (!aesw) {
-		int ret = -errno;
-		if (ret == 0) {
-			ret = -EIO;
-		}
-		return ret;
-	}
-
-	// IV is the 64-bit title ID, followed by zeroes.
-	memcpy(iv, &ticket->title_id, 8);
-	memset(&iv[8], 0, 8);
-
-	// Decrypt the key with the original common key.
-	aesw_set_key(aesw, key_from, 16);
-	aesw_set_iv(aesw, iv, sizeof(iv));
-	aesw_decrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
-
-	// Encrypt the key with the new common key.
-	aesw_set_key(aesw, key_to, 16);
-	aesw_set_iv(aesw, iv, sizeof(iv));
-	aesw_encrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
-
-	// Update the issuer.
-	strncpy(ticket->issuer, issuer, sizeof(ticket->issuer));
-
-	// We're done here
-	aesw_free(aesw);
-	return 0;
-}
-
 /**
  * Re-encrypt partitions in a Wii disc image.
  *
@@ -429,7 +329,7 @@ static int rvth_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::recryptWiiPartitions(unsigned int bank,
-	RvtH_CryptoType_e cryptoType,
+	RVL_CryptoType_e cryptoType,
 	RvtH_Progress_Callback callback)
 {
 	uint32_t lba_size;
@@ -455,8 +355,8 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// Callback state.
 	RvtH_Progress_State state;
 
-	if (cryptoType < RVTH_CryptoType_Debug ||
-	    cryptoType >= RVTH_CryptoType_MAX)
+	if (cryptoType < RVL_CryptoType_Debug ||
+	    cryptoType >= RVL_CryptoType_MAX)
 	{
 		errno = EINVAL;
 		return -EINVAL;
@@ -494,7 +394,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	}
 
 	// Is the disc encrypted?
-	if (entry->crypto_type <= RVTH_CryptoType_None) {
+	if (entry->crypto_type <= RVL_CryptoType_None) {
 		// Not encrypted. Cannot process it.
 		return RVTH_ERROR_IS_UNENCRYPTED;
 	}
@@ -502,13 +402,13 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// Determine the key index.
 	RVL_AES_Keys_e toKey;
 	switch (cryptoType) {
-		case RVTH_CryptoType_Debug:
+		case RVL_CryptoType_Debug:
 			toKey = RVL_KEY_DEBUG;
 			break;
-		case RVTH_CryptoType_Retail:
+		case RVL_CryptoType_Retail:
 			toKey = RVL_KEY_RETAIL;
 			break;
-		case RVTH_CryptoType_Korean:
+		case RVL_CryptoType_Korean:
 			toKey = RVL_KEY_KOREAN;
 			break;
 		default:
@@ -637,7 +537,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		// Copy in the ticket.
 		memcpy(&hdr_new.ticket, &hdr_orig.ticket, sizeof(hdr_new.ticket));
 		// Recrypt the ticket. (This also updates the issuer.)
-		ret = rvth_recrypt_ticket(&hdr_new.ticket, toKey);
+		ret = sig_recrypt_ticket(&hdr_new.ticket, toKey);
 		if (ret != 0) {
 			// Error recrypting the ticket.
 			int err = errno;
@@ -660,7 +560,8 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		}
 
 		// Starting position.
-		data_pos = toNext64(offsetof(RVL_PartitionHeader, data));
+		data_pos = offsetof(RVL_PartitionHeader, data);
+		data_pos = ALIGN(64, data_pos);
 
 		// Copy in the TMD.
 		tmd_size = be32_to_cpu(hdr_orig.tmd_size);
@@ -674,6 +575,10 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 		// Change the issuer.
 		tmdHeader = (RVL_TMD_Header*)&hdr_new.u8[data_pos];
+		// NOTE: MSVC Secure Overloads will change strncpy() to strncpy_s(),
+		// which doesn't clear the buffer. Hence, we'll need to explicitly
+		// clear the buffer first.
+		memset(tmdHeader->issuer, 0, sizeof(tmdHeader->issuer));
 		strncpy(tmdHeader->issuer, issuer_TMD, sizeof(tmdHeader->issuer));
 		// Sign the TMD.
 		// TODO: Error checking.
@@ -690,7 +595,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		// TMD parameters.
 		hdr_new.tmd_size = hdr_orig.tmd_size;
 		hdr_new.tmd_offset = cpu_to_be32(data_pos >> 2);
-		data_pos += toNext64(tmd_size);
+		data_pos += ALIGN(64, tmd_size);
 
 		// Write the new certificate chain.
 		// NOTE: RVT-H images usually have a development certificate,
@@ -705,6 +610,9 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 		// Certificate chain order for retail is Ticket, CA, TMD.
 		// TODO: Verify for debug! (and write the dev cert?)
+		// NOTE: WAD cert chain order is CA, Ticket, TMD...
+		// (CA, Ticket, TMD, Dev for debug)
+		// TODO: Verify all of this.
 		p_cert_chain = &hdr_new.u8[data_pos];
 		memcpy(p_cert_chain, cert_ticket, sizeof(*cert_ticket));
 		p_cert_chain += sizeof(*cert_ticket);
@@ -751,25 +659,25 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// Update the bank entry.
 	switch (toKey) {
 		case RVL_KEY_RETAIL:
-			entry->crypto_type = RVTH_CryptoType_Retail;
-			entry->ticket.sig_type = RVTH_SigType_Retail;
-			entry->ticket.sig_status = RVTH_SigStatus_Fake;
-			entry->tmd.sig_type = RVTH_SigType_Retail;
-			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			entry->crypto_type = RVL_CryptoType_Retail;
+			entry->ticket.sig_type = RVL_SigType_Retail;
+			entry->ticket.sig_status = RVL_SigStatus_Fake;
+			entry->tmd.sig_type = RVL_SigType_Retail;
+			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
 		case RVL_KEY_KOREAN:
-			entry->crypto_type = RVTH_CryptoType_Korean;
-			entry->ticket.sig_type = RVTH_SigType_Retail;
-			entry->ticket.sig_status = RVTH_SigStatus_Fake;
-			entry->tmd.sig_type = RVTH_SigType_Retail;
-			entry->tmd.sig_status = RVTH_SigStatus_Fake;
+			entry->crypto_type = RVL_CryptoType_Korean;
+			entry->ticket.sig_type = RVL_SigType_Retail;
+			entry->ticket.sig_status = RVL_SigStatus_Fake;
+			entry->tmd.sig_type = RVL_SigType_Retail;
+			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
 		case RVL_KEY_DEBUG:
-			entry->crypto_type = RVTH_CryptoType_Debug;
-			entry->ticket.sig_type = RVTH_SigType_Debug;
-			entry->ticket.sig_status = RVTH_SigStatus_OK;
-			entry->tmd.sig_type = RVTH_SigType_Debug;
-			entry->tmd.sig_status = RVTH_SigStatus_OK;
+			entry->crypto_type = RVL_CryptoType_Debug;
+			entry->ticket.sig_type = RVL_SigType_Debug;
+			entry->ticket.sig_status = RVL_SigStatus_OK;
+			entry->tmd.sig_type = RVL_SigType_Debug;
+			entry->tmd.sig_status = RVL_SigStatus_OK;
 			break;
 		default:
 			// Should not happen...

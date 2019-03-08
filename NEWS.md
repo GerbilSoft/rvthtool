@@ -1,5 +1,20 @@
 # Changes
 
+## v2.0 - GUI Release (released 2019/??/??)
+
+New features:
+* GUI frontend written using the Qt Toolkit.
+* [TODO] Added device querying on Windows.
+* wadresign: Command line tool to recrypt and resign WAD files.
+  * Can read retail, Korean, debug, and early devkit WADs.
+  * Can create retail (fakesigned), Korean (fakesigned), and debug
+    (realsigned) WAD files.
+  * **WARNING:** Use with caution if converting system titles for use
+    on real hardware.
+
+Low-level changes:
+* Rewrote librvth using C++ to improve maintainability.
+
 ## v1.1.1 - Brown Paper Bag Release (released 2018/09/17)
 
 * Extracting images broke because it failed when opening a file with 0 bytes

@@ -122,3 +122,15 @@ install on retail consoles, since they're encrypted with debug keys.
 Do **NOT** attempt to install them by re-encrypting them with the retail
 keys. Doing so will most likely result in a brick, especially if the 128 MB
 mode IOS WADs are used.
+
+## wadresign
+
+This is a command line tool to resign WAD files to and from any Wii keyset.
+Conversion to Debug will be realsigned. Conversion to retail or Korean will
+be fakesigned.
+
+In addition, this tool supports reading early devkit WADs, which makes it
+possible to convert them to run on emulators and/or later devkits.
+
+**WARNING:** Use with caution if converting a system title for installation
+on read hardware, since this may result in an unrecoverable brick.

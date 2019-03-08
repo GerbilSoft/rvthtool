@@ -31,6 +31,7 @@
 
 // libwiicrypto
 #include "libwiicrypto/cert_store.h"
+#include "libwiicrypto/sig_tools.h"
 
 // C includes.
 #include <stdlib.h>
@@ -241,7 +242,7 @@ static int rvth_encrypt_group(AesCtx *aesw, const uint8_t *pInBuf,
  *
  * @param ticket	[in] Ticket.
  * @param titleKey	[out] Output buffer for the title key. (Must be 16 bytes.)
- * @param crypto_type	[out] Encryption type. (See RvtH_CryptoType_e.)
+ * @param crypto_type	[out] Encryption type. (See RVL_CryptoType_e.)
  * @return 0 on success; non-zero on error.
  */
 static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_t *crypto_type)
@@ -260,10 +261,10 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 		// Retail. Use RVL_KEY_RETAIL unless the Korean key is selected.
 		if (ticket->common_key_index != 1) {
 			commonKey = RVL_AES_Keys[RVL_KEY_RETAIL];
-			*crypto_type = RVTH_CryptoType_Retail;
+			*crypto_type = RVL_CryptoType_Retail;
 		} else {
 			commonKey = RVL_AES_Keys[RVL_KEY_KOREAN];
-			*crypto_type = RVTH_CryptoType_Korean;
+			*crypto_type = RVL_CryptoType_Korean;
 		}
 	}
 	else if (!strncmp(ticket->issuer,
@@ -271,7 +272,7 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 	{
 		// Debug. Use RVL_KEY_DEBUG.
 		commonKey = RVL_AES_Keys[RVL_KEY_DEBUG];
-		*crypto_type = RVTH_CryptoType_Debug;
+		*crypto_type = RVL_CryptoType_Debug;
 	}
 	else
 	{

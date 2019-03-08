@@ -24,6 +24,7 @@
 #include "libwiicrypto/common.h"
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
+#include "libwiicrypto/sig_tools.h"
 
 #include "tcharx.h"
 
@@ -64,8 +65,8 @@ extern "C" {
 
 // Wii signature information.
 typedef struct _RvtH_SigInfo {
-	uint8_t sig_type;	// Signature type. (See RvtH_SigType_e.)
-	uint8_t sig_status;	// Signature status. (See RvtH_SigStatus_e.)
+	uint8_t sig_type;	// Signature type. (See RVL_SigType_e.)
+	uint8_t sig_status;	// Signature status. (See RVL_SigStatus_e.)
 } RvtH_SigInfo;
 
 // Disc image and RVT-H bank entry definition.
@@ -86,7 +87,7 @@ typedef struct _RvtH_BankEntry {
 	GCN_DiscHeader discHeader;
 
 	// Wii-specific
-	uint8_t crypto_type;	// Encryption type. (See RvtH_CryptoType_e.)
+	uint8_t crypto_type;	// Encryption type. (See RVL_CryptoType_e.)
 	uint8_t ios_version;	// IOS version. (0 == ERROR)
 	RvtH_SigInfo ticket;	// Ticket encryption/signature.
 	RvtH_SigInfo tmd;	// TMD encryption/signature.
@@ -320,7 +321,7 @@ class RvtH {
 		 * using the GCM constructor and then copyToGcm().
 		 * @param bank		[in] Bank number. (0-7)
 		 * @param filename	[in] Destination filename.
-		 * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RvtH_CryptoType_e)
+		 * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RVL_CryptoType_e)
 		 * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
 		 * @param callback	[in,opt] Progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
@@ -377,7 +378,7 @@ class RvtH {
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int recryptWiiPartitions(unsigned int bank,
-			RvtH_CryptoType_e cryptoType,
+			RVL_CryptoType_e cryptoType,
 			RvtH_Progress_Callback callback);
 		
 	private:
