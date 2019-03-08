@@ -6,7 +6,10 @@ IF(NOT WIN32)
 	CHECK_FUNCTION_EXISTS(ftruncate HAVE_FTRUNCATE)
 ENDIF(NOT WIN32)
 
-IF(ENABLE_UDEV)
+IF(WIN32)
+	# Win32 API has built-in device querying functionality.
+	SET(HAVE_QUERY 1)
+ELSEIF(ENABLE_UDEV)
 	# Find UDEV.
 	IF(UNIX AND NOT APPLE)
 		FIND_PACKAGE(UDev)
@@ -14,12 +17,8 @@ IF(ENABLE_UDEV)
 			SET(HAVE_UDEV 1)
 			SET(HAVE_QUERY 1)
 		ENDIF(UDEV_FOUND)
-	ELSEIF(WIN32)
-		# TODO: Set HAVE_QUERY once it's implemented on Windows.
 	ENDIF()
-ELSE(ENABLE_UDEV)
-	UNSET(HAVE_UDEV)
-ENDIF(ENABLE_UDEV)
+ENDIF()
 
 # Write the config.h file.
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.librvth.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.librvth.h")
@@ -68,7 +67,9 @@ SET(librvth_H
 	reader/WbfsReader.hpp
 	)
 
-IF(HAVE_UDEV)
+IF(WIN32)
+	SET(librvth_QUERY_SRCS query_win32.c)
+ELSEIF(HAVE_UDEV)
 	SET(librvth_QUERY_SRCS query_udev.c)
 ENDIF()
 
@@ -116,11 +117,15 @@ IF(HAVE_NETTLE)
 	TARGET_LINK_LIBRARIES(rvth PRIVATE ${NETTLE_LIBRARIES})
 ENDIF(HAVE_NETTLE)
 
-# UDEV
-IF(HAVE_UDEV)
+# Device query library
+IF(WIN32)
+	# TODO: cfgmgr32.lib is not present in MSVC 2010,
+	# but may be needed with later versions.
+	TARGET_LINK_LIBRARIES(rvth PRIVATE setupapi)
+ELSEIF(HAVE_UDEV)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${UDEV_INCLUDE_DIRS})
 	TARGET_LINK_LIBRARIES(rvth PRIVATE ${UDEV_LIBRARIES})
-ENDIF(HAVE_UDEV)
+ENDIF()
 
 # Unix: Add -fpic/-fPIC in order to use this static library in plugins.
 IF(UNIX AND NOT APPLE)

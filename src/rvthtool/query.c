@@ -157,14 +157,14 @@ int query(void)
 			did_one = true;
 		}
 
-		printf("%s\n", p->device_name);
-		printf("- Manufacturer:  %s\n", (p->usb_vendor ? p->usb_vendor : "(unknown)"));
-		printf("- Product Name:  %s\n", (p->usb_product ? p->usb_product : "(unknown)"));
-		printf("- Serial Number: %s\n", (p->serial_number ? p->serial_number : "(unknown)"));
-		printf("- HDD Firmware:  %s\n", (p->fw_version ? p->fw_version : "(unknown)"));
+		_tprintf(_T("%s\n"), p->device_name);
+		_tprintf(_T("- Manufacturer:  %s\n"), (p->usb_vendor ? p->usb_vendor : _T("(unknown)")));
+		_tprintf(_T("- Product Name:  %s\n"), (p->usb_product ? p->usb_product : _T("(unknown)")));
+		_tprintf(_T("- Serial Number: %s\n"), (p->serial_number ? p->serial_number : _T("(unknown)")));
+		_tprintf(_T("- HDD Firmware:  %s\n"), (p->fw_version ? p->fw_version : _T("(unknown)")));
 		// TODO: Trim the vendor/model fields if necessary.
-		printf("- HDD Vendor:    %s\n", (p->hdd_vendor ? p->hdd_vendor : "(unknown)"));
-		printf("- HDD Model:     %s\n", (p->hdd_model ? p->hdd_model : "(unknown)"));
+		_tprintf(_T("- HDD Vendor:    %s\n"), (p->hdd_vendor ? p->hdd_vendor : _T("(unknown)")));
+		_tprintf(_T("- HDD Model:     %s\n"), (p->hdd_model ? p->hdd_model : _T("(unknown)")));
 
 		// Format and print the HDD size.
 		format_size(hdd_size, sizeof(hdd_size), p->size);

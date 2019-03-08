@@ -22,6 +22,7 @@
 #define __RVTHTOOL_LIBRVTH_QUERY_H__
 
 #include <stdint.h>
+#include "librvth/tcharx.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,15 +39,15 @@ extern "C" {
 typedef struct _RvtH_QueryEntry {
 	struct _RvtH_QueryEntry *next;
 
-	const char *device_name;	// Device name, e.g. "/dev/sdc" or "\\.\PhysicalDrive3".
+	const TCHAR *device_name;	// Device name, e.g. "/dev/sdc" or "\\.\PhysicalDrive3".
 
-	const char *usb_vendor;		// USB vendor name.
-	const char *usb_product;	// USB product name.
-	const char *serial_number;	// Serial number, in ASCII.
-	const char *fw_version;		// Firmware version. (FIXME: HDD or RVT-H board?)
+	const TCHAR *usb_vendor;	// USB vendor name.
+	const TCHAR *usb_product;	// USB product name.
+	const TCHAR *serial_number;	// Serial number, in ASCII.
+	const TCHAR *fw_version;	// Firmware version. (FIXME: HDD or RVT-H board?)
 
-	const char *hdd_vendor;		// HDD vendor.
-	const char *hdd_model;		// HDD model number.
+	const TCHAR *hdd_vendor;	// HDD vendor.
+	const TCHAR *hdd_model;		// HDD model number.
 	uint64_t size;			// HDD size, in bytes.
 } RvtH_QueryEntry;
 
