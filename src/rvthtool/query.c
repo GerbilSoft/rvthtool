@@ -75,32 +75,32 @@ static void format_size(char *buf, size_t buf_size, int64_t size)
 		frac_part = 0;
 	} else if (size < (2LL << 20)) {
 		// tr: Kilobytes
-		suffix = "KB";
+		suffix = "KiB";
 		whole_part = (int)(size >> 10);
 		frac_part = calc_frac_part(size, (1LL << 10));
 	} else if (size < (2LL << 30)) {
 		// tr: Megabytes
-		suffix = "MB";
+		suffix = "MiB";
 		whole_part = (int)(size >> 20);
 		frac_part = calc_frac_part(size, (1LL << 20));
 	} else if (size < (2LL << 40)) {
 		// tr: Gigabytes
-		suffix = "GB";
+		suffix = "GiB";
 		whole_part = (int)(size >> 30);
 		frac_part = calc_frac_part(size, (1LL << 30));
 	} else if (size < (2LL << 50)) {
 		// tr: Terabytes
-		suffix = "TB";
+		suffix = "TiB";
 		whole_part = (int)(size >> 40);
 		frac_part = calc_frac_part(size, (1LL << 40));
 	} else if (size < (2LL << 60)) {
 		// tr: Petabytes
-		suffix = "PB";
+		suffix = "PiB";
 		whole_part = (int)(size >> 50);
 		frac_part = calc_frac_part(size, (1LL << 50));
 	} else /*if (size < (2ULL << 70))*/ {
 		// tr: Exabytes
-		suffix = "EB";
+		suffix = "EiB";
 		whole_part = (int)(size >> 60);
 		frac_part = calc_frac_part(size, (1LL << 60));
 	}
