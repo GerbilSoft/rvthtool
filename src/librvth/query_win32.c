@@ -110,7 +110,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		unsigned int hw_serial = 0;
 
 		// DeviceIoControl()
-		HANDLE hDrive;
+		HANDLE hDevice;
 		union {
 			STORAGE_DEVICE_NUMBER sdn;
 			STORAGE_PROPERTY_QUERY spq;
@@ -198,17 +198,17 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		// References:
 		// - https://stackoverflow.com/questions/5583553/name-mapping-physicaldrive-to-scsi
 		// - https://stackoverflow.com/a/5584978
-		hDrive = CreateFile(s_devicePath,
+		hDevice = CreateFile(s_devicePath,
 			GENERIC_READ,		// dwDesiredAccess
 			FILE_SHARE_READ,	// dwShareMode
 			NULL,			// lpSecurityAttributes
 			OPEN_EXISTING,		// dwCreationDisposition
 			FILE_ATTRIBUTE_NORMAL,	// dwFlagsAndAttributes
 			NULL);			// hTemplateFile
-		if (!hDrive || hDrive == INVALID_HANDLE_VALUE)
+		if (!hDevice || hDevice == INVALID_HANDLE_VALUE)
 			continue;
 
-		bRet = DeviceIoControl(hDrive,
+		bRet = DeviceIoControl(hDevice,
 			IOCTL_STORAGE_GET_DEVICE_NUMBER,// dwIoControlCode
 			NULL, 0,			// no input buffer
 			(LPVOID)&io.sdn, sizeof(io.sdn),// output buffer
@@ -219,7 +219,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		{
 			// Unable to get the device information,
 			// or this isn't a disk device.
-			CloseHandle(hDrive);
+			CloseHandle(hDevice);
 			continue;
 		}
 
@@ -229,7 +229,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			list_head = malloc(sizeof(*list_head));
 			if (!list_head) {
 				// malloc() failed.
-				CloseHandle(hDrive);
+				CloseHandle(hDevice);
 				break;
 			}
 			list_tail = list_head;
@@ -239,7 +239,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			list_tail->next = malloc(sizeof(*list_tail));
 			if (!list_tail->next) {
 				// malloc() failed.
-				CloseHandle(hDrive);
+				CloseHandle(hDevice);
 				rvth_query_free(list_head);
 				list_head = NULL;
 				list_tail = NULL;
@@ -306,7 +306,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		io.spq.PropertyId = StorageDeviceProperty;
 		io.spq.QueryType = PropertyStandardQuery;
 		io.spq.AdditionalParameters[0] = 0;
-		bRet = DeviceIoControl(hDrive,
+		bRet = DeviceIoControl(hDevice,
 			IOCTL_STORAGE_QUERY_PROPERTY,	// dwIoControlCode
 			&io.spq, sizeof(io.spq),	// input buffer
 			&buf.spq, sizeof(buf.spq),	// output buffer
@@ -340,7 +340,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		}
 
 		// Get the disk capacity.
-		bRet = DeviceIoControl(hDrive,
+		bRet = DeviceIoControl(hDevice,
 			IOCTL_DISK_GET_LENGTH_INFO,	// dwIoControlCode
 			NULL, 0,			// no input buffer
 			(LPVOID)&io.gli, sizeof(io.gli),// output buffer
@@ -354,7 +354,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			list_tail->size = 0;
 		}
 
-		CloseHandle(hDrive);
+		CloseHandle(hDevice);
 	}
 
 	SetupDiDestroyDeviceInfoList(hDevInfoSet);
