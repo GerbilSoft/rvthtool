@@ -339,7 +339,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	switch (recrypt_key) {
 		case RVL_CryptoType_Debug:
 			toKey = RVL_KEY_DEBUG;
-			s_toKey = "debug";
+			s_toKey = "debug (realsigned)";
 			break;
 		case RVL_CryptoType_Retail:
 			toKey = RVL_KEY_RETAIL;

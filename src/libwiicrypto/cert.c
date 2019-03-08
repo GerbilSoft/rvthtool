@@ -268,8 +268,7 @@ int cert_verify(const uint8_t *data, size_t size)
 		}
 
 		// Check the DER identifier.
-		if (memcmp(&buf[sig_der_offset+1], pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0)
-		{
+		if (memcmp(&buf[sig_der_offset+1], pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0) {
 			// Incorrect or missing DER identifier.
 			ret |= SIG_FAIL_DER_TYPE_ERROR | SIG_ERROR_INVALID;
 		}

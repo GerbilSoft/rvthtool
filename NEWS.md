@@ -15,6 +15,9 @@ New features:
 Low-level changes:
 * Rewrote librvth using C++ to improve maintainability.
 
+Other changes:
+* Realsigned tickets and TMDs are now explicitly indicated as such.
+
 ## v1.1.1 - Brown Paper Bag Release (released 2018/09/17)
 
 * Extracting images broke because it failed when opening a file with 0 bytes

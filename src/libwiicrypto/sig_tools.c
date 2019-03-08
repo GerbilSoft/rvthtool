@@ -122,7 +122,7 @@ const char *RVL_SigStatus_toString_stsAppend(RVL_SigStatus_e sigStatus)
 		// tr: RVL_SigStatus_Unknown
 		" (unknown)",
 		// tr: RVL_SigStatus_OK
-		"",
+		" (realsigned)",
 		// tr: RVL_SigStatus_Invalid
 		" (INVALID)",
 		// tr: RVL_SigStatus_Fake

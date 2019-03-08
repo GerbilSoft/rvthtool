@@ -219,6 +219,8 @@ QString BankEntryViewPrivate::sigStatusString(
 					QChar(L')');
 				break;
 			case RVL_SigStatus_OK:
+				status += QLatin1String(" (") +
+					BankEntryView::tr("realsigned") + QChar(L')');
 				break;
 			case RVL_SigStatus_Invalid:
 				status += QLatin1String(" (") +
