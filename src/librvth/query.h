@@ -32,6 +32,12 @@ extern "C" {
 #define RVTH_READER_VID 0x057e
 #define RVTH_READER_PID 0x0304
 
+// NOTE: STORAGE_DEVICE_DESCRIPTOR has a serial number value
+// for the HDD itself, but the RVT-H Reader USB bridge
+// doesn't support this query. The code is still present,
+// but disabled because it isn't useful.
+//#define RVTH_QUERY_ENABLE_HDD_SERIAL 1
+
 /**
  * Scanned device entry.
  * This is a singly-linked list.
@@ -43,11 +49,16 @@ typedef struct _RvtH_QueryEntry {
 
 	const TCHAR *usb_vendor;	// USB vendor name.
 	const TCHAR *usb_product;	// USB product name.
-	const TCHAR *serial_number;	// Serial number, in ASCII.
-	const TCHAR *fw_version;	// Firmware version. (FIXME: HDD or RVT-H board?)
+	const TCHAR *usb_serial;	// USB serial number, in ASCII.
 
 	const TCHAR *hdd_vendor;	// HDD vendor.
 	const TCHAR *hdd_model;		// HDD model number.
+	const TCHAR *hdd_fwver;		// HDD firmware version.
+
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+	const TCHAR *hdd_serial;	// HDD serial number, in ASCII.
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
+
 	uint64_t size;			// HDD size, in bytes.
 } RvtH_QueryEntry;
 

@@ -151,11 +151,19 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		list_tail->device_name = strdup(s_devnode);
 		list_tail->usb_vendor = strdup_null(udev_device_get_sysattr_value(usb_dev, "manufacturer"));
 		list_tail->usb_product = strdup_null(udev_device_get_sysattr_value(usb_dev, "product"));
-		list_tail->serial_number = strdup_null(udev_device_get_sysattr_value(usb_dev, "serial"));
-		list_tail->fw_version = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));
+		list_tail->usb_serial = strdup_null(udev_device_get_sysattr_value(usb_dev, "serial"));
 		list_tail->hdd_vendor = strdup_null(udev_device_get_sysattr_value(scsi_dev, "vendor"));
 		list_tail->hdd_model = strdup_null(udev_device_get_sysattr_value(scsi_dev, "model"));
+		list_tail->hdd_fwver = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+		// TODO: SCSI device serial number?
+		list_tail->hdd_serial = strdup_null(udev_device_get_sysattr_value(scsi_dev, "serial"));
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
 		list_tail->size = (s_blk_size ? strtoull(s_blk_size, NULL, 10) * 512ULL : 0);
+
+		// NOTE: STORAGE_DEVICE_DESCRIPTOR has a serial number value
+		// for the HDD itself, but the RVT-H Reader USB bridge
+		// doesn't support this query.
 
 		udev_device_unref(dev);
 	}

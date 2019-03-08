@@ -30,8 +30,6 @@
 #include <windows.h>
 #include <setupapi.h>
 #include <winioctl.h>
-//#include <devioctl.h>
-//#include <ntddstor.h>
 #include <devguid.h>
 #include <cfgmgr32.h>
 
@@ -39,6 +37,31 @@
 static inline TCHAR *_tcsdup_null(const TCHAR *s)
 {
 	return (s ? _tcsdup(s) : NULL);
+}
+
+/**
+ * Convert ANSI to TCHAR and _tcsdup() the string.
+ * @param str ANSI string
+ * @param len Length of string, or -1 for NULL-terminated
+ * @return _tcsdup()'d TCHAR string
+ */
+static inline TCHAR *A2T_dup(const char *str, int len)
+{
+	// TODO: Remove trailing spaces?
+
+#ifdef _UNICODE
+	wchar_t wcsbuf[256];
+	int ret = MultiByteToWideChar(CP_ACP, 0, str, len, wcsbuf, _countof(wcsbuf));
+	if (ret < _countof(wcsbuf)) {
+		wcsbuf[ret] = _T('\0');
+	} else {
+		wcsbuf[_countof(wcsbuf)-1] = _T('\0');
+	}
+	return _tcsdup(wcsbuf);
+#else /* !_UNICODE */
+	// ANSI build. Just _tcsdup() it.
+	return (len >= 0 ? _tcsndup(str, len) : _tcsdup(str));
+#endif /* _UNICODE */
 }
 
 /**
@@ -62,16 +85,6 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 	// Pathnames.
 	TCHAR s_devicePath[MAX_PATH];	// Storage device path
-
-	// Attributes.
-	// TODO: Buffer sizes?
-	TCHAR s_usb_vendor[32];
-	TCHAR s_usb_product[128];
-	TCHAR s_serial_number[32];
-	TCHAR s_fw_version[16];
-	TCHAR s_hdd_vendor[32];
-	TCHAR s_hdd_model[64];
-	uint64_t hdd_size;
 
 	// Get all USB devices and find one with a matching vendor/device ID.
 	// Once we find it, get GUID_DEVINTERFACE_DISK for that ID.
@@ -97,7 +110,12 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 		// DeviceIoControl()
 		HANDLE hDrive;
-		STORAGE_DEVICE_NUMBER sdn;
+		union {
+			STORAGE_DEVICE_NUMBER sdn;
+			STORAGE_PROPERTY_QUERY spq;
+			GET_LENGTH_INFORMATION gli;
+		} io;
+		BYTE spqBuf[4096];
 		DWORD cbBytesReturned;
 		BOOL bRet;
 
@@ -173,12 +191,15 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		if (!hDrive || hDrive == INVALID_HANDLE_VALUE)
 			continue;
 
-		bRet = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER,
+		bRet = DeviceIoControl(hDrive,
+			IOCTL_STORAGE_GET_DEVICE_NUMBER,// dwIoControlCode
 			NULL, 0,			// no input buffer
-			(LPVOID)&sdn, sizeof(sdn),	// output buffer
+			(LPVOID)&io.sdn, sizeof(io.sdn),// output buffer
 			&cbBytesReturned,		// # bytes returned
 			NULL);				// synchronous I/O
-		if (!bRet || sdn.DeviceType != FILE_DEVICE_DISK) {
+		if (!bRet || cbBytesReturned != sizeof(io.sdn) ||
+		    io.sdn.DeviceType != FILE_DEVICE_DISK)
+		{
 			// Unable to get the device information,
 			// or this isn't a disk device.
 			CloseHandle(hDrive);
@@ -212,7 +233,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 
 		// Device name.
 		_sntprintf(s_devicePath, _countof(s_devicePath),
-			_T("\\\\.\\PhysicalDrive%u"), sdn.DeviceNumber);
+			_T("\\\\.\\PhysicalDrive%u"), io.sdn.DeviceNumber);
 		list_tail->device_name = _tcsdup(s_devicePath);
 
 		// Get more drive information.
@@ -220,15 +241,61 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		// References:
 		// - https://stackoverflow.com/questions/327718/how-to-list-physical-disks
 		// - https://stackoverflow.com/a/18183115
+		io.spq.PropertyId = StorageDeviceProperty;
+		io.spq.QueryType = PropertyStandardQuery;
+		io.spq.AdditionalParameters[0] = 0;
+		bRet = DeviceIoControl(hDrive,
+			IOCTL_STORAGE_QUERY_PROPERTY,	// dwIoControlCode
+			&io.spq, sizeof(io.spq),	// input buffer
+			&spqBuf, sizeof(spqBuf),	// output buffer
+			&cbBytesReturned,		// # bytes returned
+			NULL);				// synchronous I/O
+		if (bRet) {
+			const STORAGE_DEVICE_DESCRIPTOR *const psdp = (const STORAGE_DEVICE_DESCRIPTOR*)spqBuf;
+			if (psdp->VendorIdOffset) {
+				list_tail->hdd_vendor = A2T_dup(&spqBuf[psdp->VendorIdOffset], -1);
+			} else {
+				list_tail->hdd_vendor = NULL;
+			}
+			if (psdp->ProductIdOffset) {
+				list_tail->hdd_model = A2T_dup(&spqBuf[psdp->ProductIdOffset], -1);
+			} else {
+				list_tail->hdd_model = NULL;
+			}
+			if (psdp->ProductRevisionOffset) {
+				list_tail->hdd_fwver = A2T_dup(&spqBuf[psdp->ProductRevisionOffset], -1);
+			} else {
+				list_tail->hdd_fwver = NULL;
+			}
+
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+			if (psdp->SerialNumberOffset) {
+				list_tail->hdd_serial = A2T_dup(&spqBuf[psdp->SerialNumberOffset], -1);
+			} else {
+				list_tail->hdd_serial = NULL;
+			}
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
+		}
+
+		// Get the disk capacity.
+		bRet = DeviceIoControl(hDrive,
+			IOCTL_DISK_GET_LENGTH_INFO,	// dwIoControlCode
+			NULL, 0,			// no input buffer
+			(LPVOID)&io.gli, sizeof(io.gli),// output buffer
+			&cbBytesReturned,		// number of bytes returned
+			nullptr);			// OVERLAPPED structure
+		if (bRet && cbBytesReturned == sizeof(io.gli)) {
+			// Size obtained successfully.
+			list_tail->size = io.gli.Length.QuadPart;
+		} else {
+			// Unable to obtain the size.
+			list_tail->size = 0;
+		}
 
 		// TODO
 		list_tail->usb_vendor = NULL;
 		list_tail->usb_product = NULL;
-		list_tail->serial_number = NULL;
-		list_tail->fw_version = NULL;
-		list_tail->hdd_vendor = NULL;
-		list_tail->hdd_model = NULL;
-		list_tail->size = 0;
+		list_tail->usb_serial = NULL;
 
 		CloseHandle(hDrive);
 	}

@@ -33,10 +33,13 @@ void rvth_query_free(RvtH_QueryEntry *devs)
 		free((char*)devs->device_name);
 		free((char*)devs->usb_vendor);
 		free((char*)devs->usb_product);
-		free((char*)devs->serial_number);
-		free((char*)devs->fw_version);
+		free((char*)devs->usb_serial);
 		free((char*)devs->hdd_vendor);
 		free((char*)devs->hdd_model);
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+		free((char*)devs->hdd_serial);
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
+		free((char*)devs->hdd_fwver);
 		free(devs);
 		devs = next;
 	}

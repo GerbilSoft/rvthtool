@@ -158,17 +158,20 @@ int query(void)
 		}
 
 		_tprintf(_T("%s\n"), p->device_name);
-		_tprintf(_T("- Manufacturer:  %s\n"), (p->usb_vendor ? p->usb_vendor : _T("(unknown)")));
-		_tprintf(_T("- Product Name:  %s\n"), (p->usb_product ? p->usb_product : _T("(unknown)")));
-		_tprintf(_T("- Serial Number: %s\n"), (p->serial_number ? p->serial_number : _T("(unknown)")));
-		_tprintf(_T("- HDD Firmware:  %s\n"), (p->fw_version ? p->fw_version : _T("(unknown)")));
+		_tprintf(_T("- Manufacturer:      %s\n"), (p->usb_vendor ? p->usb_vendor : _T("(unknown)")));
+		_tprintf(_T("- Product Name:      %s\n"), (p->usb_product ? p->usb_product : _T("(unknown)")));
+		_tprintf(_T("- Serial Number:     %s\n"), (p->usb_serial ? p->usb_serial : _T("(unknown)")));
 		// TODO: Trim the vendor/model fields if necessary.
-		_tprintf(_T("- HDD Vendor:    %s\n"), (p->hdd_vendor ? p->hdd_vendor : _T("(unknown)")));
-		_tprintf(_T("- HDD Model:     %s\n"), (p->hdd_model ? p->hdd_model : _T("(unknown)")));
+		_tprintf(_T("- HDD Vendor:        %s\n"), (p->hdd_vendor ? p->hdd_vendor : _T("(unknown)")));
+		_tprintf(_T("- HDD Model:         %s\n"), (p->hdd_model ? p->hdd_model : _T("(unknown)")));
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+		_tprintf(_T("- HDD Serial Number: %s\n"), (p->hdd_serial ? p->hdd_serial : _T("(unknown)")));
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
+		_tprintf(_T("- HDD Firmware Ver:  %s\n"), (p->hdd_fwver ? p->hdd_fwver : _T("(unknown)")));
 
 		// Format and print the HDD size.
 		format_size(hdd_size, sizeof(hdd_size), p->size);
-		printf("- HDD Size:      %s\n", hdd_size);
+		printf("- HDD Size:          %s\n", hdd_size);
 	}
 
 	rvth_query_free(devs);
