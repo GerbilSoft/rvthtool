@@ -275,7 +275,11 @@ RvtH_QueryEntry *rvth_query_devices(void)
 			list_tail->usb_vendor = NULL;
 		}
 
-		// NOTE: LOCATION_INFORMATION seems to have "RVT-H READER"...
+		// NOTE: On XP, the device name is stored as "Location Information".
+		// On Win7, it doesn't seem to be accessible with cfgmgr32.
+		// We'll assume it's always "RVT-H READER".
+		list_tail->usb_product = _tcsdup(_T("RVT-H READER"));
+#if 0
 		ulLength = sizeof(buf.tcs);
 		ret = CM_Get_DevNode_Registry_Property(dnDevInstParent,
 			CM_DRP_LOCATION_INFORMATION,	// ulProperty
@@ -288,6 +292,7 @@ RvtH_QueryEntry *rvth_query_devices(void)
 		} else {
 			list_tail->usb_product = NULL;
 		}
+#endif
 
 		// RVT-H Reader serial number.
 		// TODO: Prepend "HMA" or "HUA" to the serial number?
