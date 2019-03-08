@@ -119,8 +119,6 @@ ENDIF(HAVE_NETTLE)
 
 # Device query library
 IF(WIN32)
-	# TODO: cfgmgr32.lib is not present in MSVC 2010,
-	# but may be needed with later versions.
 	TARGET_LINK_LIBRARIES(rvth PRIVATE setupapi)
 ELSEIF(HAVE_UDEV)
 	TARGET_INCLUDE_DIRECTORIES(rvth PRIVATE ${UDEV_INCLUDE_DIRS})
