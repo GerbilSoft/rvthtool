@@ -59,7 +59,7 @@
         <translation>7md 516:</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="115"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="118"/>
         <source>byte(s)</source>
         <translation>
             <numerusform>by73</numerusform>
@@ -67,108 +67,113 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="120"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="123"/>
         <source>KiB</source>
         <translation>k1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="125"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="128"/>
         <source>MiB</source>
         <translation>m1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="130"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="133"/>
         <source>GiB</source>
         <translation>61b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="135"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="138"/>
         <source>TiB</source>
         <translation>71b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="140"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="143"/>
         <source>PiB</source>
         <translation>p1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="145"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="148"/>
         <source>EiB</source>
         <translation>31b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="174"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="177"/>
         <source>%1 %2</source>
         <extracomment>%1 == localized value, %2 == suffix (e.g. MiB)</extracomment>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="200"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="298"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="330"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="394"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="203"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="303"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="335"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="399"/>
         <source>Unknown</source>
         <translation>unkn0wn</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="203"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="400"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="206"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="405"/>
         <source>Debug</source>
         <translation>d3bu6</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="206"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="403"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="209"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="408"/>
         <source>Retail</source>
         <translation>r3741l</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="222"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="223"/>
+        <source>realsigned</source>
+        <translation>r34l516n3d</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="227"/>
         <source>INVALID</source>
         <translation>1nv4l1d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="226"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="231"/>
         <source>fakesigned</source>
         <translation>f4k3516n3d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="287"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="292"/>
         <source>[DELETED]</source>
         <translation>[d3l373d]</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="301"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="306"/>
         <source>Empty</source>
         <translation>3mp7y</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="304"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="309"/>
         <source>GameCube</source>
         <translation>64m3cub3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="307"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="312"/>
         <source>Wii (Single-Layer)</source>
         <translation>w11 (51n6l3-l4y3r)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="310"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="315"/>
         <source>Wii (Dual-Layer)</source>
         <translation>w11 (du4l-l4y3r)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="313"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="318"/>
         <source>Wii (DL Bank 2)</source>
         <translation>w11 (dl b4nk 2)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="397"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="402"/>
         <source>None</source>
         <translation>n0n3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="406"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="411"/>
         <source>Korean</source>
         <translation>k0r34n</translation>
     </message>
@@ -196,24 +201,24 @@
         <translation>&amp;f1l3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="109"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="110"/>
         <source>&amp;Help</source>
         <translation>&amp;h3lp</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="115"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="116"/>
         <source>&amp;Language</source>
         <translation>&amp;l4n6u463</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="136"/>
-        <source>&amp;Open</source>
-        <translation>&amp;Op3n</translation>
+        <source>&amp;Open Disk Image...</source>
+        <translation>&amp;Op3n d15k 1m463...</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="139"/>
-        <source>Open an RVT-H Reader disk image</source>
-        <translation>0p3n 4n rv7-h r34d3r d15k 1m463</translation>
+        <source>Open an RVT-H Reader disk image or standalone GCM disc image</source>
+        <translation>0p3n 4n rv7-h r34d3r d15k 1m463 0r 574nd4l0n3 6cm d15c 1m463</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="142"/>
@@ -256,32 +261,47 @@
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="108"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="189"/>
+        <source>Open RVT-&amp;H Reader...</source>
+        <translation>0p3n rv7-&amp;h r34d3r...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="192"/>
+        <source>Open a connected RVT-H Reader device</source>
+        <translation>0p3n 4 c0nn3c73d rv7-h r34d3r d3v1c3</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="195"/>
+        <source>Ctrl+H</source>
+        <translation></translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="110"/>
         <source>No RVT-H Reader disk image loaded.</source>
         <translation>n0 rv7-h r34d3r d15k 1m463 l04d3d.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="394"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="401"/>
         <source>All Supported Files</source>
         <translation>4ll 5upp0r73d f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="396"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="403"/>
         <source>RVT-H Reader Disk Image Files</source>
         <translation>rv7-h r34d3r d15k 1m463 f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="398"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="405"/>
         <source>GameCube/Wii Disc Image Files</source>
         <translation>64m3cub3/w11 d15c 1m463 f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="400"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="407"/>
         <source>All Files</source>
         <translation>4ll f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="414"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="421"/>
         <source>Open RVT-H Reader Disk Image</source>
         <translation>0p3n rv7-h r34d3r d15k 1m463</translation>
     </message>
@@ -341,6 +361,82 @@
         <location filename="../src/qrvthtool/RvtHModel.cpp" line="553"/>
         <source>IOS</source>
         <translation>105</translation>
+    </message>
+</context>
+<context>
+    <name>SelectDeviceDialog</name>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.ui" line="14"/>
+        <source>Select RVT-H Reader Device</source>
+        <translation>53l3c7 rv7-h r34d3r d3v1c3</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="124"/>
+        <source>byte(s)</source>
+        <translation>
+            <numerusform>by73</numerusform>
+            <numerusform>by735</numerusform>
+        </translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="129"/>
+        <source>KiB</source>
+        <translation>k1b</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="134"/>
+        <source>MiB</source>
+        <translation>m1b</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="139"/>
+        <source>GiB</source>
+        <translation>61b</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="144"/>
+        <source>TiB</source>
+        <translation>71b</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="149"/>
+        <source>PiB</source>
+        <translation>p1b</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="154"/>
+        <source>EiB</source>
+        <translation>31b</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="213"/>
+        <source>ERROR enumerating RVT-H Reader devices:</source>
+        <translation>3rr0r 3num3r471n6 rv7-h r34d3r d3v1c35:</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="228"/>
+        <source>Try rerunning qrvthtool using an elevated command prompt.</source>
+        <translation>7ry r3runn1n6 qrv7h700l u51n6 4n 3l3v473d c0mm4nd pr0mp7.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="231"/>
+        <source>Try rerunning qrvthtool using an Administrator account.</source>
+        <translation>7ry r3runn1n6 qrv7h700l u51n6 4n 4dm1n157r470r 4cc0un7.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="234"/>
+        <source>Try rerunning qrvthtool as root.</source>
+        <translation>7ry r3runn1n6 qrv7h700l 45 r007.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="241"/>
+        <source>No RVT-H Reader devices found.</source>
+        <translation>n0 rv7-h r34d3r d3v1c35 f0und.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="315"/>
+        <source>&amp;Refresh</source>
+        <translation>&amp;r3fr35h</translation>
     </message>
 </context>
 <context>
