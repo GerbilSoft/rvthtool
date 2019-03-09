@@ -255,15 +255,17 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 
 	// Open the specified RVT-H Reader disk image.
 #ifdef _WIN32
-	d->rvth = new RvtH(reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
+	RvtH *const rvth_tmp = new RvtH(reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
 #else /* !_WIN32 */
-	d->rvth = new RvtH(filename.toUtf8().constData(), nullptr);
+	RvtH *const rvth_tmp = new RvtH(filename.toUtf8().constData(), nullptr);
 #endif
-	if (!d->rvth) {
+	if (!rvth_tmp->isOpen()) {
 		// FIXME: Show an error message?
+		delete d->rvth;
 		return;
 	}
 
+	d->rvth = rvth_tmp;
 	d->filename = filename;
 	d->model->setRvtH(d->rvth);
 
