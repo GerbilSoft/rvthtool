@@ -298,7 +298,13 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 	this->setWindowIcon(QIcon());
 #endif /* Q_OS_MAC */
 
-	// TODO: Add a "Refresh" button.
+	// TODO: Add device hotplug detection.
+
+	// Change the "Reset" button to "Refresh".
+	QPushButton *const btnRefresh = d->ui.buttonBox->button(QDialogButtonBox::Reset);
+	btnRefresh->setText(tr("&Refresh"));
+	btnRefresh->setIcon(QIcon::fromTheme(QLatin1String("view-refresh")));
+	connect(btnRefresh, SIGNAL(clicked()), this, SLOT(refresh()));
 
 	// Refresh the device list.
 	d->refreshDeviceList();
@@ -425,6 +431,12 @@ void SelectDeviceDialog::done(int r)
 	}
 
 	super::done(r);
+}
+
+void SelectDeviceDialog::refresh(void)
+{
+	Q_D(SelectDeviceDialog);
+	d->refreshDeviceList();
 }
 
 /** lstDevices slots **/

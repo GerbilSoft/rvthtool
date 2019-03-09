@@ -72,6 +72,7 @@ class SelectDeviceDialog : public QDialog
 		void accept(void) final;
 		void reject(void) final;
 		void done(int r) final;
+		void refresh(void);
 
 		// lstDevices slots
 		void lstDevices_selectionModel_selectionChanged(
