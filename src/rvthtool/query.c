@@ -138,7 +138,8 @@ static void format_size(char *buf, size_t buf_size, int64_t size)
 int query(void)
 {
 	// TODO: Differentiate between "no devices" and "error".
-	RvtH_QueryEntry *devs, *p;
+	RvtH_QueryEntry *devs;
+	const RvtH_QueryEntry *p;
 	char hdd_size[32];
 	bool did_one = false;
 	int err = 0;
