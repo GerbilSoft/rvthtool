@@ -110,6 +110,7 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 		ui.grpBankList->setTitle(QRvtHToolWindow::tr("No RVT-H Reader disk image loaded."));
 	} else {
 		// Show the filename.
+		// TODO: Get the device serial number.
 		ui.grpBankList->setTitle(displayFilename);
 	}
 
