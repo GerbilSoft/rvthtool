@@ -231,7 +231,7 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 						SelectDeviceDialog::tr("Try rerunning qrvthtool using an Administrator account.");
 				}
 #else /* _WIN32 */
-				s_err += SelectDeviceDialog::tr("Try rerunning rvthtool as root.");
+				s_err += SelectDeviceDialog::tr("Try rerunning qrvthtool as root.");
 #endif /* _WIN32 */
 			}
 			return;
