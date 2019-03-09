@@ -439,3 +439,11 @@ void SelectDeviceDialog::lstDevices_selectionModel_selectionChanged(
 	d->ui.buttonBox->button(QDialogButtonBox::Ok)->setEnabled(
 		selected.indexes().size() == 1);
 }
+
+void SelectDeviceDialog::on_lstDevices_doubleClicked(const QModelIndex &index)
+{
+	Q_UNUSED(index)
+
+	// Act like the "OK" button was clicked.
+	this->accept();
+}

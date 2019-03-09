@@ -76,6 +76,7 @@ class SelectDeviceDialog : public QDialog
 		// lstDevices slots
 		void lstDevices_selectionModel_selectionChanged(
 			const QItemSelection& selected, const QItemSelection& deselected);
+		void on_lstDevices_doubleClicked(const QModelIndex &index);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__ */
