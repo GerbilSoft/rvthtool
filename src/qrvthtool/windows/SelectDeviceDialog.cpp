@@ -224,7 +224,7 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 					osvi.dwMajorVersion = 0;
 				}
 				if (osvi.dwMajorVersion >= 6) {
-					s_err += QLatin1String("\n\n" +
+					s_err += QLatin1String("\n\n") +
 						SelectDeviceDialog::tr("Try rerunning qrvthtool using an elevated command prompt.");
 				} else {
 					s_err += QLatin1String("\n\n") +
@@ -254,11 +254,21 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 		}
 
 		// Device name and serial number.
+#ifdef _WIN32
+		QString deviceName = QString::fromUtf16(
+			reinterpret_cast<const char16_t*>(p->device_name));
+		QString serialNumber;
+		if (p->usb_serial) {
+			serialNumber = QString::fromUtf16(
+			reinterpret_cast<const char16_t*>(p->usb_serial));
+		}
+#else /* !_WIN32 */
 		QString deviceName = QString::fromUtf8(p->device_name);
 		QString serialNumber;
 		if (p->usb_serial) {
 			serialNumber = QString::fromUtf8(p->usb_serial);
 		}
+#endif /* _WIN32 */
 		int64_t hddSize = p->size;
 
 		// Create the string.
