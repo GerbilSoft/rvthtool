@@ -24,6 +24,8 @@
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
 
+#include "windows/SelectDeviceDialog.hpp"
+
 // Qt includes.
 #include <QtWidgets/QFileDialog>
 
@@ -226,13 +228,13 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	//d->proxyModel->setDynamicSortFilter(true);
 	//d->ui.lstBankList->sortByColumn(RvtHModel::COL_BANKNUM, Qt::AscendingOrder);
 
-	// Connect the lstBankList slots.
-	connect(d->ui.lstBankList->selectionModel(), &QItemSelectionModel::selectionChanged,
-		this, &QRvtHToolWindow::lstBankList_selectionModel_selectionChanged);
-
 	// Initialize the UI.
 	d->updateLstBankList();
 	d->updateWindowTitle();
+
+	// Connect the lstBankList selection signal.
+	connect(d->ui.lstBankList->selectionModel(), &QItemSelectionModel::selectionChanged,
+		this, &QRvtHToolWindow::lstBankList_selectionModel_selectionChanged);
 }
 
 QRvtHToolWindow::~QRvtHToolWindow()
@@ -381,12 +383,14 @@ void QRvtHToolWindow::showEvent(QShowEvent *event)
 	}
 }
 
-/** UI widget slots. **/
+/** UI widget slots **/
+
+/** Actions **/
 
 /**
- * Open a memory card image.
+ * Open an RVT-H Reader disk image or standalone GCM disc image.
  */
-void QRvtHToolWindow::on_actionOpen_triggered(void)
+void QRvtHToolWindow::on_actionOpenDiskImage_triggered(void)
 {
 	Q_D(QRvtHToolWindow);
 
@@ -429,7 +433,27 @@ void QRvtHToolWindow::on_actionOpen_triggered(void)
 }
 
 /**
- * Close the currently-opened memory card image.
+ * Open an RVT-H Reader disk image or standalone GCM disc image.
+ */
+void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
+{
+	Q_D(QRvtHToolWindow);
+
+	// Prompt the user to select a device.
+	SelectDeviceDialog *const dialog = new SelectDeviceDialog();
+	int ret = dialog->exec();
+	if (ret == QDialog::Accepted) {
+		QString deviceName = dialog->deviceName();
+		if (!deviceName.isEmpty()) {
+			// Filename is selected.
+			// TODO: Show the serial number?
+			openRvtH(deviceName);
+		}
+	}
+}
+
+/**
+ * Close the currently-opened RVT-H Reader disk image or device.
  */
 void QRvtHToolWindow::on_actionClose_triggered(void)
 {
@@ -459,7 +483,7 @@ void QRvtHToolWindow::on_actionAbout_triggered(void)
 	//AboutDialog::ShowSingle(this);
 }
 
-/** RvtHModel slots. **/
+/** RvtHModel slots **/
 
 void QRvtHToolWindow::rvthModel_layoutChanged(void)
 {
@@ -479,7 +503,8 @@ void QRvtHToolWindow::rvthModel_rowsInserted(void)
 	d->updateLstBankList();
 }
 
-/** lstBankList slots. **/
+/** lstBankList slots **/
+
 void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 	const QItemSelection& selected, const QItemSelection& deselected)
 {

@@ -48,6 +48,7 @@ SET(qrvthtool_SRCS
 	widgets/QTreeViewOpt.cpp
 
 	windows/QRvtHToolWindow.cpp
+	windows/SelectDeviceDialog.cpp
 	)
 
 # Headers with Qt objects.
@@ -59,8 +60,10 @@ SET(qrvthtool_MOC_H
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp
 	widgets/QTreeViewOpt.hpp
+	widgets/QItemView_Text.hpp
 
 	windows/QRvtHToolWindow.hpp
+	windows/SelectDeviceDialog.hpp
 	)
 QT5_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
 
@@ -69,6 +72,7 @@ SET(qrvthtool_UIS
 	widgets/BankEntryView.ui
 
 	windows/QRvtHToolWindow.ui
+	windows/SelectDeviceDialog.ui
 	)
 QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
 

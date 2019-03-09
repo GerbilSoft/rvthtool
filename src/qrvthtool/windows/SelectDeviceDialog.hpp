@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool (qrvthtool)                                                  *
- * QRvtHToolWindow.hpp: Main window.                                       *
+ * SelectDeviceDialog.hpp: Select an RVT-H Reader device.                  *
  *                                                                         *
  * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
@@ -18,64 +18,64 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__
+#ifndef __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__
+#define __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__
 
-class QItemSelection;
-#include <QMainWindow>
+#include <QDialog>
+#include <QItemSelection>
 
-class QRvtHToolWindowPrivate;
-class QRvtHToolWindow : public QMainWindow
+class SelectDeviceDialogPrivate;
+class SelectDeviceDialog : public QDialog
 {
 	Q_OBJECT
-	typedef QMainWindow super;
+	typedef QDialog super;
 	
 	public:
-		explicit QRvtHToolWindow(QWidget *parent = 0);
-		virtual ~QRvtHToolWindow();
+		explicit SelectDeviceDialog(QWidget *parent = 0);
+		virtual ~SelectDeviceDialog();
 
 	protected:
-		QRvtHToolWindowPrivate *const d_ptr;
-		Q_DECLARE_PRIVATE(QRvtHToolWindow)
+		SelectDeviceDialogPrivate *const d_ptr;
+		Q_DECLARE_PRIVATE(SelectDeviceDialog)
 	private:
-		Q_DISABLE_COPY(QRvtHToolWindow)
-
-	public:
-		/**
-		 * Open an RVT-H Reader disk image.
-		 * @param filename Filename.
-		 */
-		void openRvtH(const QString &filename);
-
-		/**
-		 * Close the currently-opened RVT-H Reader disk image.
-		 */
-		void closeRvtH(void);
+		Q_DISABLE_COPY(SelectDeviceDialog)
 
 	protected:
 		// State change event. (Used for switching the UI language at runtime.)
 		void changeEvent(QEvent *event) final;
 
-		// Window show event.
-		void showEvent(QShowEvent *event) final;
+	public:
+		/** Properties **/
+
+		/**
+		 * Get the selected RVT-H Reader device name.
+		 * @return Device name, or empty string if not selected.
+		 */
+		QString deviceName(void) const;
+
+		/**
+		 * Get the selected RVT-H Reader serial number.
+		 * @return Serial number, or empty string if not selected.
+		 */
+		QString serialNumber(void) const;
+
+		/**
+		 * Get the selected RVT-H Reader HDD size.
+		 * @return HDD size (in bytes), or 0 if not selected.
+		 */
+		int64_t hddSize(void) const;
 
 	protected slots:
 		/** UI widget slots **/
 
-		// Actions
-		void on_actionOpenDiskImage_triggered(void);
-		void on_actionOpenDevice_triggered(void);
-		void on_actionClose_triggered(void);
-		void on_actionExit_triggered(void);
-		void on_actionAbout_triggered(void);
+		// QDialog slots
+		void accept(void) final;
+		void reject(void) final;
+		void done(int r) final;
 
-		// RvtHModel slots
-		void rvthModel_layoutChanged(void);
-		void rvthModel_rowsInserted(void);
-
-		// lstBankList slots
-		void lstBankList_selectionModel_selectionChanged(
+		// lstDevices slots
+		void lstDevices_selectionModel_selectionChanged(
 			const QItemSelection& selected, const QItemSelection& deselected);
 };
 
-#endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__ */
+#endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__ */

@@ -99,7 +99,8 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
-    <addaction name="actionOpen"/>
+    <addaction name="actionOpenDiskImage"/>
+    <addaction name="actionOpenDevice"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
@@ -127,16 +128,15 @@
     <bool>false</bool>
    </property>
   </widget>
-  <action name="actionOpen">
+  <action name="actionOpenDiskImage">
    <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-open"/>
    </property>
    <property name="text">
-    <string>&amp;Open</string>
+    <string>&amp;Open Disk Image...</string>
    </property>
    <property name="toolTip">
-    <string>Open an RVT-H Reader disk image</string>
+    <string>Open an RVT-H Reader disk image or standalone GCM disc image</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -179,6 +179,20 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionOpenDevice">
+   <property name="icon">
+    <iconset theme="drive-harddisk"/>
+   </property>
+   <property name="text">
+    <string>Open RVT-&amp;H Reader...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open a connected RVT-H Reader device</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+H</string>
    </property>
   </action>
  </widget>
