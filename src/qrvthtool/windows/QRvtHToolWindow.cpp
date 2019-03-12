@@ -30,6 +30,10 @@
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QProgressBar>
+
+// RVL_CryptoType_e
+#include "libwiicrypto/sig_tools.h"
 
 /** QRvtHToolWindowPrivate **/
 
@@ -96,6 +100,23 @@ class QRvtHToolWindowPrivate
 		// Recryption Key widgets.
 		QLabel *lblRecryptionKey;
 		QComboBox *cboRecryptionKey;
+
+	public:
+		// TODO: StatusBarManager.
+		QLabel *lblMessage;
+		QProgressBar *progressBar;
+
+	public:
+		/**
+		 * RVT-H progress callback.
+		 * @param state		[in] Current progress.
+		 * @param userdata	[in] User data specified when calling the RVT-H function.
+		 * @return True to continue; false to abort.
+		 */
+		static bool progress_callback(const RvtH_Progress_State *state, void *userdata);
+
+		// Current progress operation.
+		QString cur_filenameOnly;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -107,6 +128,9 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, lastIconID(RvtHModel::ICON_MAX)
 	, lblRecryptionKey(nullptr)
 	, cboRecryptionKey(nullptr)
+	// TODO: StatusBarManager.
+	, lblMessage(nullptr)
+	, progressBar(nullptr)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -236,10 +260,10 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
 
 	cboRecryptionKey = new QComboBox(q);
-	cboRecryptionKey->addItem(QString());	// None
-	cboRecryptionKey->addItem(QString());	// Retail (fakesigned)
-	cboRecryptionKey->addItem(QString());	// Korean (fakesigned)
-	cboRecryptionKey->addItem(QString());	// Debug (fakesigned)
+	cboRecryptionKey->addItem(QString(), RVL_CryptoType_None);	// None
+	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Retail);	// Retail (fakesigned)
+	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Korean);	// Korean (fakesigned)
+	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Debug);	// Debug (fakesigned)
 	cboRecryptionKey->setCurrentIndex(0);
 	ui.toolBar->insertWidget(ui.actionAbout, cboRecryptionKey);
 
@@ -267,6 +291,58 @@ void QRvtHToolWindowPrivate::retranslateToolbar(void)
 	cboRecryptionKey->setItemText(2, QRvtHToolWindow::tr("Korean (fakesigned)"));
 	cboRecryptionKey->setItemText(3, QRvtHToolWindow::tr("Debug (realsigned)"));
 	cboRecryptionKey->setCurrentIndex(0);
+}
+
+/**
+ * RVT-H progress callback.
+ * @param state		[in] Current progress.
+ * @param userdata	[in] User data specified when calling the RVT-H function.
+ * @return True to continue; false to abort.
+ */
+bool QRvtHToolWindowPrivate::progress_callback(const RvtH_Progress_State *state, void *userdata)
+{
+	QRvtHToolWindowPrivate *const d = static_cast<QRvtHToolWindowPrivate*>(userdata);
+
+	#define MEGABYTE (1048576 / RVTH_BLOCK_SIZE)
+	switch (state->type) {
+		case RVTH_PROGRESS_EXTRACT:
+			d->lblMessage->setText(
+				QRvtHToolWindow::tr("Extracting to %1: %L2 MiB / %L3 MiB copied...")
+				.arg(d->cur_filenameOnly)
+				.arg(state->lba_processed / MEGABYTE)
+				.arg(state->lba_total / MEGABYTE));
+			break;
+		case RVTH_PROGRESS_IMPORT:
+			d->lblMessage->setText(
+				QRvtHToolWindow::tr("Importing from %1: %L2 MiB / %L3 MiB copied...")
+				.arg(d->cur_filenameOnly)
+				.arg(state->lba_processed / MEGABYTE)
+				.arg(state->lba_total / MEGABYTE));
+			break;
+		case RVTH_PROGRESS_RECRYPT:
+			if (state->lba_total <= 1) {
+				// TODO: Encryption types?
+				if (state->lba_processed == 0) {
+					d->lblMessage->setText(
+						QRvtHToolWindow::tr("Recrypting the ticket(s) and TMD(s)..."));
+				}
+			} else {
+				d->lblMessage->setText(
+					QRvtHToolWindow::tr("Recrypting to %1: %L2 MiB / %L3 MiB copied...")
+					.arg(d->cur_filenameOnly)
+					.arg(state->lba_processed / MEGABYTE)
+					.arg(state->lba_total / MEGABYTE));
+			}
+			break;
+		default:
+			// FIXME
+			assert(false);
+			return false;
+	}
+
+	// TODO: Use a separate thread instead of calling processEvents().
+	qApp->processEvents();
+	return true;
 }
 
 /** QRvtHToolWindow **/
@@ -328,6 +404,19 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->updateLstBankList();
 	d->initToolbar();
 	d->updateWindowTitle();
+
+	// TODO: StatusBarManager.
+	d->lblMessage = new QLabel();
+	d->lblMessage->setTextFormat(Qt::PlainText);
+	d->ui.statusBar->addWidget(d->lblMessage, 1);
+
+	d->progressBar = new QProgressBar();
+	d->progressBar->setVisible(false);
+	d->ui.statusBar->addPermanentWidget(d->progressBar, 1);
+
+	// Set the progress bar's size so it doesn't randomly resize.
+	d->progressBar->setMinimumWidth(320);
+	d->progressBar->setMaximumWidth(320);
 
 	// Connect the lstBankList selection signal.
 	connect(d->ui.lstBankList->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -579,6 +668,86 @@ void QRvtHToolWindow::on_actionAbout_triggered(void)
 {
 	// TODO
 	//AboutDialog::ShowSingle(this);
+}
+
+/** RVT-H disk image actions **/
+
+/**
+ * Extract the selected bank.
+ */
+void QRvtHToolWindow::on_actionExtract_triggered(void)
+{
+	Q_D(QRvtHToolWindow);
+
+	// Only one bank can be selected.
+	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
+	if (!selectionModel->hasSelection())
+		return;
+
+	QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
+	if (!index.isValid())
+		return;
+
+	// TODO: Sort proxy model like in mcrecover.
+	unsigned int bank = d->proxyModel->mapToSource(index).row();
+
+	// Prompt the user for a save location.
+	QString filename = QFileDialog::getSaveFileName(this,
+		tr("Extract Disc Image"),
+		QString(),	// Default filename (TODO)
+		// TODO: Remove extra space from the filename filter?
+		tr("GameCube/Wii Disc Images") + QLatin1String(" (*.gcm);;") +
+		tr("All Files") + QLatin1String(" (*)"));
+	if (filename.isEmpty())
+		return;
+
+	// TODO:
+	// - Use a separate thread.
+	// - Port StatusBarManager from mcrecover.
+	// - Add a "Cancel" button.
+
+	// Disable main UI widgets.
+	// TODO: Prevent the window from being closed.
+	d->ui.menuBar->setEnabled(false);
+	d->ui.toolBar->setEnabled(false);
+	d->ui.centralwidget->setEnabled(false);
+
+	// Show the progress bar.
+	d->progressBar->setVisible(true);
+	d->progressBar->setMaximum(100);
+	d->progressBar->setValue(0);
+
+	// Initial message.
+	const QString filenameOnly = QFileInfo(filename).fileName();
+	d->lblMessage->setText(tr("Extracting to %1:").arg(filenameOnly));
+
+	// Recryption key.
+	const int recrypt_key = d->cboRecryptionKey->currentData().toInt();
+
+	// TODO: NDEV flag?
+	const unsigned int flags = 0;
+
+	// Save the information for the callback.
+	d->cur_filenameOnly = filenameOnly;
+
+	// Start the extraction.
+	// NOTE: Callback is set to use the private class.
+#ifdef _WIN32
+	int ret = d->rvth->extract(bank, reinterpret_cast<const wchar_t*>(filename.utf16()),
+		recrypt_key, flags, d->progress_callback, d);
+#else /* !_WIN32 */
+	int ret = d->rvth->extract(bank, filename.toUtf8().constData(),
+		recrypt_key, flags, d->progress_callback, d);
+#endif /* _WIN32 */
+
+	// TODO: Better error handling in StatusBarManager.
+	d->lblMessage->setText(tr("Bank %1 extracted into %2: return code %3")
+		.arg(bank+1).arg(filenameOnly).arg(ret));
+
+	// Enable main UI widgets.
+	d->ui.menuBar->setEnabled(true);
+	d->ui.toolBar->setEnabled(true);
+	d->ui.centralwidget->setEnabled(true);
 }
 
 /** RvtHModel slots **/
