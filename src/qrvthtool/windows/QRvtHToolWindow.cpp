@@ -26,6 +26,9 @@
 
 #include "windows/SelectDeviceDialog.hpp"
 
+// C includes. (C++ namespace)
+#include <cassert>
+
 // Qt includes.
 #include <QtGui/QCloseEvent>
 #include <QtWidgets/QComboBox>
