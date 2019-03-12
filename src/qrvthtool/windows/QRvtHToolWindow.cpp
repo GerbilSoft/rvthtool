@@ -27,6 +27,7 @@
 #include "windows/SelectDeviceDialog.hpp"
 
 // Qt includes.
+#include <QtGui/QCloseEvent>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
@@ -572,6 +573,26 @@ void QRvtHToolWindow::showEvent(QShowEvent *event)
 		static_assert(RvtHModel::COL_IOS_VERSION + 1 == RvtHModel::COL_MAX,
 			"Default column visibility status needs to be updated!");
 	}
+
+	// Pass the event to the base class.
+	super::showEvent(event);
+}
+
+/**
+ * Window close event.
+ * @param event Window close event.
+ */
+void QRvtHToolWindow::closeEvent(QCloseEvent *event)
+{
+	Q_D(QRvtHToolWindow);
+	if (d->uiBusyCounter > 0) {
+		// UI is busy. Ignore the close event.
+		event->ignore();
+		return;
+	}
+
+	// Pass the event to the base class.
+	super::closeEvent(event);
 }
 
 /** UI busy functions **/
@@ -592,6 +613,8 @@ void QRvtHToolWindow::markUiBusy(void)
 		d->ui.menuBar->setEnabled(false);
 		d->ui.toolBar->setEnabled(false);
 		this->centralWidget()->setEnabled(false);
+
+		// TODO: Disable the close button?
 	}
 }
 

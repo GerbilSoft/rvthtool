@@ -59,6 +59,9 @@ class QRvtHToolWindow : public QMainWindow
 		// Window show event.
 		void showEvent(QShowEvent *event) final;
 
+		// Window close event.
+		void closeEvent(QCloseEvent *event) final;
+
 	protected slots:
 		// UI busy functions
 		void markUiBusy(void);
