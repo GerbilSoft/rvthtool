@@ -143,7 +143,7 @@ static void print_help(const TCHAR *argv0)
 int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 {
 	int ret;
-	uint32_t flags = 0;
+	unsigned int flags = 0;
 
 	// Key to use for recryption.
 	// -1 == default; no recryption, except when importing retail to RVT-H.

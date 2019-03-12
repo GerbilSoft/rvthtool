@@ -343,7 +343,7 @@ end:
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::extract(unsigned int bank, const TCHAR *filename,
-	int recrypt_key, uint32_t flags, RvtH_Progress_Callback callback, void *userdata)
+	int recrypt_key, unsigned int flags, RvtH_Progress_Callback callback, void *userdata)
 {
 	RvtH *rvth_dest = nullptr;
 	int64_t diskFreeSpace_lba = 0;

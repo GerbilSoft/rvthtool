@@ -85,7 +85,7 @@ static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
  * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @return 0 on success; non-zero on error.
  */
-int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key, uint32_t flags)
+int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int recrypt_key, unsigned int flags)
 {
 	// Open the RVT-H device or disk image.
 	int ret;

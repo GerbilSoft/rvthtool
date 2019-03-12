@@ -334,7 +334,7 @@ class RvtH {
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int extract(unsigned int bank, const TCHAR *filename,
-			int recrypt_key, uint32_t flags,
+			int recrypt_key, unsigned int flags,
 			RvtH_Progress_Callback callback = nullptr,
 			void *userdata = nullptr);
 
