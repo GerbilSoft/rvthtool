@@ -60,6 +60,11 @@ class QRvtHToolWindow : public QMainWindow
 		void showEvent(QShowEvent *event) final;
 
 	protected slots:
+		// UI busy functions
+		void markUiBusy(void);
+		void markUiNotBusy(void);
+
+	protected slots:
 		/** UI widget slots **/
 
 		// Actions

@@ -106,6 +106,9 @@ class QRvtHToolWindowPrivate
 		QLabel *lblMessage;
 		QProgressBar *progressBar;
 
+		// UI busy counter
+		int uiBusyCounter;
+
 	public:
 		/**
 		 * RVT-H progress callback.
@@ -131,6 +134,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	// TODO: StatusBarManager.
 	, lblMessage(nullptr)
 	, progressBar(nullptr)
+	, uiBusyCounter(0)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -570,6 +574,51 @@ void QRvtHToolWindow::showEvent(QShowEvent *event)
 	}
 }
 
+/** UI busy functions **/
+
+/**
+ * Mark the UI as busy.
+ * Calls to this function stack, so if markUiBusy()
+ * was called 3 times, markUiNotBusy() must be called 3 times.
+ */
+void QRvtHToolWindow::markUiBusy(void)
+{
+	Q_D(QRvtHToolWindow);
+	d->uiBusyCounter++;
+	if (d->uiBusyCounter == 1) {
+		// UI is now busy.
+		// TODO: Prevent the window from being closed.
+		this->setCursor(Qt::WaitCursor);
+		d->ui.menuBar->setEnabled(false);
+		d->ui.toolBar->setEnabled(false);
+		this->centralWidget()->setEnabled(false);
+	}
+}
+
+/**
+ * Mark the UI as not busy.
+ * Calls to this function stack, so if markUiBusy()
+ * was called 3 times, markUiNotBusy() must be called 3 times.
+ */
+void QRvtHToolWindow::markUiNotBusy(void)
+{
+	Q_D(QRvtHToolWindow);
+	if (d->uiBusyCounter <= 0) {
+		// We're already not busy.
+		// Don't decrement the counter, though.
+		return;
+	}
+
+	d->uiBusyCounter--;
+	if (d->uiBusyCounter == 0) {
+		// UI is no longer busy.
+		d->ui.menuBar->setEnabled(true);
+		d->ui.toolBar->setEnabled(true);
+		this->centralWidget()->setEnabled(true);
+		this->unsetCursor();
+	}
+}
+
 /** UI widget slots **/
 
 /** Actions **/
@@ -707,10 +756,7 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	// - Add a "Cancel" button.
 
 	// Disable main UI widgets.
-	// TODO: Prevent the window from being closed.
-	d->ui.menuBar->setEnabled(false);
-	d->ui.toolBar->setEnabled(false);
-	d->ui.centralwidget->setEnabled(false);
+	markUiBusy();
 
 	// Show the progress bar.
 	d->progressBar->setVisible(true);
@@ -745,9 +791,7 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 		.arg(bank+1).arg(filenameOnly).arg(ret));
 
 	// Enable main UI widgets.
-	d->ui.menuBar->setEnabled(true);
-	d->ui.toolBar->setEnabled(true);
-	d->ui.centralwidget->setEnabled(true);
+	markUiNotBusy();
 }
 
 /** RvtHModel slots **/
