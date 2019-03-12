@@ -33,6 +33,7 @@
 
 // C includes.
 #include <stdlib.h>
+#include <sys/stat.h>
 
 // C includes. (C++ namespace)
 #include <cassert>
@@ -60,6 +61,30 @@ using std::wstring;
 static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
 {
 	tstring path(filename);
+	int64_t freeSpace_lba = 0;
+	int ret;
+
+	// Check if the file exists already.
+	// If it does, it will be overwritten, so we can
+	// add its size to the free space.
+#ifdef _WIN32
+	struct _stati64 sbuf;
+	ret = ::_tstati64(filename, &sbuf);
+#else /* !_WIN32 */
+	struct stat sbuf;
+	ret = ::stat(filename, &sbuf);
+#endif /* _WIN32 */
+	if (ret == 0) {
+		// POSIX has st_blocks, which is *allocated* 512-byte blocks.
+		// Windows does not, so use the full size on Windows.
+		// TODO: CMake check? (https://cmake.org/cmake/help/v3.0/module/CheckStructHasMember.html)
+#ifdef _WIN32
+		freeSpace_lba  = static_cast<int64_t>(sbuf.st_size) / 512;
+		freeSpace_lba += (sbuf.st_size % 512 != 0);
+#else /* !_WIN32 */
+		freeSpace_lba  = static_cast<int64_t>(sbuf.st_blocks);
+#endif /* _WIN32 */
+	}
 
 #ifdef _WIN32
 	// Remove the filename portion.
@@ -79,7 +104,7 @@ static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
 	}
 
 	// Convert the free space to RVT-H LBAs.
-	return static_cast<int64_t>(freeBytesAvailableToCaller.QuadPart) / LBA_SIZE;
+	freeSpace_lba += (static_cast<int64_t>(freeBytesAvailableToCaller.QuadPart) / LBA_SIZE);
 #else /* !_WIN32 */
 	// Remove the filename portion.
 	size_t slash_pos = path.rfind(_T('/'));
@@ -88,15 +113,17 @@ static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
 	}
 
 	struct statvfs svbuf;
-	int ret = statvfs(path.c_str(), &svbuf);
+	ret = statvfs(path.c_str(), &svbuf);
 	if (ret != 0) {
 		// Error...
 		return -errno;
 	}
 
 	// Convert the free space from file system blocks to RVT-H LBAs.
-	return static_cast<int64_t>(svbuf.f_bavail) * (svbuf.f_frsize / LBA_SIZE);
+	freeSpace_lba += (static_cast<int64_t>(svbuf.f_bavail) * (svbuf.f_frsize / LBA_SIZE));
 #endif /* _WIN32 */
+
+	return freeSpace_lba;
 }
 
 /**
