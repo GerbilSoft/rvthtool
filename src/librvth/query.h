@@ -71,7 +71,7 @@ typedef struct _RvtH_QueryEntry {
  * @param serial Serial number as provided by the RVT-H Reader.
  * @return Allocated serial number string.
  */
-char *rvth_create_full_serial_number(unsigned int serial);
+TCHAR *rvth_create_full_serial_number(unsigned int serial);
 
 /**
  * Scan all USB devices for RVT-H Readers.

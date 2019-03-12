@@ -33,7 +33,7 @@
  * @param serial Serial number as provided by the RVT-H Reader.
  * @return Allocated serial number string.
  */
-char *rvth_create_full_serial_number(unsigned int serial)
+TCHAR *rvth_create_full_serial_number(unsigned int serial)
 {
 	TCHAR buf[16];
 	unsigned int serial_tmp = serial;
@@ -43,7 +43,7 @@ char *rvth_create_full_serial_number(unsigned int serial)
 	if (serial < 10000000 || serial > 29999999) {
 		// Serial number is out of range.
 		// Print it as-is.
-		_sntprintf(buf, sizeof(buf), "%08u", serial);
+		_sntprintf(buf, sizeof(buf), _T("%08u"), serial);
 		return _tcsdup(buf);
 	}
 
@@ -70,10 +70,10 @@ char *rvth_create_full_serial_number(unsigned int serial)
 
 	if (serial < 20000000) {
 		// 10xxxxxx: RVT-H Reader (Wired)
-		snprintf(buf, sizeof(buf), "HUA%08u%01u", serial, serial_tmp);
+		_sntprintf(buf, sizeof(buf), _T("HUA%08u%01u"), serial, serial_tmp);
 	} else {
 		// 20xxxxxx: RVT-H Reader (Wireless)
-		snprintf(buf, sizeof(buf), "HMA%08u%01u", serial, serial_tmp);
+		_sntprintf(buf, sizeof(buf), _T("HMA%08u%01u"), serial, serial_tmp);
 	}
 	return _tcsdup(buf);
 }
