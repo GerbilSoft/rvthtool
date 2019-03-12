@@ -104,9 +104,10 @@ static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
  * @param rvth_dest	[out] Destination RvtH object.
  * @param bank_src	[in] Source bank number. (0-7)
  * @param callback	[in,opt] Progress callback.
+ * @param userdata	[in,opt] User data for progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callback callback)
+int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callback callback, void *userdata)
 {
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
@@ -218,11 +219,11 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 
 	if (callback) {
 		// Initialize the callback state.
-		state.type = RVTH_PROGRESS_EXTRACT;
 		state.rvth = this;
 		state.rvth_gcm = rvth_dest;
 		state.bank_rvth = bank_src;
 		state.bank_gcm = 0;
+		state.type = RVTH_PROGRESS_EXTRACT;
 		state.lba_processed = 0;
 		state.lba_total = lba_copy_len;
 	}
@@ -234,7 +235,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		if (callback) {
 			bool bRet;
 			state.lba_processed = lba_count;
-			bRet = callback(&state);
+			bRet = callback(&state, userdata);
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
@@ -278,7 +279,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		if (callback) {
 			bool bRet;
 			state.lba_processed = lba_count;
-			bRet = callback(&state);
+			bRet = callback(&state, userdata);
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
@@ -300,7 +301,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	if (callback) {
 		bool bRet;
 		state.lba_processed = lba_copy_len;
-		bRet = callback(&state);
+		bRet = callback(&state, userdata);
 		if (!bRet) {
 			// Stop processing.
 			err = ECANCELED;
@@ -338,10 +339,11 @@ end:
  * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RVL_CryptoType_e)
  * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
  * @param callback	[in,opt] Progress callback.
+ * @param userdata	[in,opt] User data for progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::extract(unsigned int bank, const TCHAR *filename,
-	int recrypt_key, uint32_t flags, RvtH_Progress_Callback callback)
+	int recrypt_key, uint32_t flags, RvtH_Progress_Callback callback, void *userdata)
 {
 	RvtH *rvth_dest = nullptr;
 	int64_t diskFreeSpace_lba = 0;
@@ -487,14 +489,15 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 
 	// Copy the bank from the source image to the destination GCM.
 	if (unenc_to_enc) {
-		ret = copyToGcm_doCrypt(rvth_dest, bank, callback);
+		ret = copyToGcm_doCrypt(rvth_dest, bank, callback, userdata);
 	} else {
-		ret = copyToGcm(rvth_dest, bank, callback);
+		ret = copyToGcm(rvth_dest, bank, callback, userdata);
 	}
 	if (ret == 0 && recrypt_key > RVL_CryptoType_Unknown) {
 		// Recrypt the disc image.
 		if (entry->crypto_type != recrypt_key) {
-			ret = rvth_dest->recryptWiiPartitions(0, static_cast<RVL_CryptoType_e>(recrypt_key), callback);
+			ret = rvth_dest->recryptWiiPartitions(0,
+				static_cast<RVL_CryptoType_e>(recrypt_key), callback, userdata);
 		}
 	}
 
@@ -510,10 +513,11 @@ end:
  * @param bank_dest	[in] Destination bank number. (0-7)
  * @param bank_src	[in] Source bank number. (0-7)
  * @param callback	[in,opt] Progress callback.
+ * @param userdata	[in,opt] User data for progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
-	unsigned int bank_src, RvtH_Progress_Callback callback)
+	unsigned int bank_src, RvtH_Progress_Callback callback, void *userdata)
 {
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
@@ -721,11 +725,11 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 
 	if (callback) {
 		// Initialize the callback state.
-		state.type = RVTH_PROGRESS_IMPORT;
 		state.rvth = rvth_dest;
 		state.rvth_gcm = this;
 		state.bank_rvth = bank_dest;
 		state.bank_gcm = bank_src;
+		state.type = RVTH_PROGRESS_IMPORT;
 		state.lba_processed = 0;
 		state.lba_total = lba_copy_len;
 	}
@@ -737,7 +741,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		if (callback) {
 			bool bRet;
 			state.lba_processed = lba_count;
-			bRet = callback(&state);
+			bRet = callback(&state, userdata);
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
@@ -764,7 +768,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	if (callback) {
 		bool bRet;
 		state.lba_processed = lba_copy_len;
-		bRet = callback(&state);
+		bRet = callback(&state, userdata);
 		if (!bRet) {
 			// Stop processing.
 			err = ECANCELED;
@@ -796,10 +800,11 @@ end:
  * @param bank		[in] Bank number. (0-7)
  * @param filename	[in] Source GCM filename.
  * @param callback	[in,opt] Progress callback.
+ * @param userdata	[in,opt] User data for progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::import(unsigned int bank, const TCHAR *filename,
-	RvtH_Progress_Callback callback)
+	RvtH_Progress_Callback callback, void *userdata)
 {
 	if (!filename || filename[0] == 0) {
 		errno = EINVAL;
@@ -836,7 +841,7 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 	// Copy the bank from the source GCM to the HDD.
 	// TODO: HDD to HDD?
 	// NOTE: `bank` parameter starts at 0, not 1.
-	ret = rvth_src->copyToHDD(this, bank, 0, callback);
+	ret = rvth_src->copyToHDD(this, bank, 0, callback, userdata);
 	if (ret == 0) {
 		// Must convert to debug realsigned for use on RVT-H.
 		const RvtH_BankEntry *const entry = &m_entries[0];
@@ -850,7 +855,7 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 		{
 			// Retail or Korean encryption, or invalid signature.
 			// Convert to Debug.
-			ret = recryptWiiPartitions(bank, RVL_CryptoType_Debug, callback);
+			ret = recryptWiiPartitions(bank, RVL_CryptoType_Debug, callback, userdata);
 		}
 		else
 		{

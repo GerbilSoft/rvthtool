@@ -317,10 +317,11 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
  * @param rvth_dest	[out] Destination RvtH object.
  * @param bank_src	[in] Source bank number. (0-7)
  * @param callback	[in,opt] Progress callback.
+ * @param userdata	[in,opt] User data for progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
-	unsigned int bank_src, RvtH_Progress_Callback callback)
+int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
+	RvtH_Progress_Callback callback, void *userdata)
 {
 	uint32_t data_lba_src;	// Game partition, data offset LBA. (source, unencrypted)
 	uint32_t data_lba_dest;	// Game partition, data offset LBA. (dest, encrypted)
@@ -529,11 +530,11 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 	if (callback) {
 		// Initialize the callback state.
 		// TODO: Fields for source vs. destination sizes?
-		state.type = RVTH_PROGRESS_EXTRACT;
 		state.rvth = this;
 		state.rvth_gcm = rvth_dest;
 		state.bank_rvth = bank_src;
 		state.bank_gcm = 0;
+		state.type = RVTH_PROGRESS_EXTRACT;
 		state.lba_processed = 0;
 		state.lba_total = lba_copy_len;
 	}
@@ -557,7 +558,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 		if (callback) {
 			bool bRet;
 			state.lba_processed = lba_count_dec;
-			bRet = callback(&state);
+			bRet = callback(&state, userdata);
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
@@ -584,7 +585,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 		if (callback) {
 			bool bRet;
 			state.lba_processed = lba_count_dec;
-			bRet = callback(&state);
+			bRet = callback(&state, userdata);
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
@@ -637,7 +638,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest,
 	if (callback) {
 		bool bRet;
 		state.lba_processed = lba_copy_len;
-		bRet = callback(&state);
+		bRet = callback(&state, userdata);
 		if (!bRet) {
 			// Stop processing.
 			err = ECANCELED;

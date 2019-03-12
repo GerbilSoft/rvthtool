@@ -326,11 +326,12 @@ int RvtH::recryptID(unsigned int bank)
  * @param bank		[in] Bank number. (0-7)
  * @param cryptoType	[in] New encryption type.
  * @param callback	[in,opt] Progress callback.
+ * @param userdata	[in,opt] User data for progress callback.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::recryptWiiPartitions(unsigned int bank,
 	RVL_CryptoType_e cryptoType,
-	RvtH_Progress_Callback callback)
+	RvtH_Progress_Callback callback, void *userdata)
 {
 	uint32_t lba_size;
 
@@ -435,7 +436,6 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 	if (callback) {
 		// Initialize the callback state.
-		state.type = RVTH_PROGRESS_RECRYPT;
 		state.rvth = this;
 		state.rvth_gcm = NULL;
 		state.bank_rvth = bank;
@@ -443,9 +443,10 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		// (0,1) because we're only recrypting the ticket(s) and TMD(s).
 		// lba_processed == 0 indicates we're starting.
 		// lba_processed == 1 indicates we're done.
+		state.type = RVTH_PROGRESS_RECRYPT;
 		state.lba_processed = 0;
 		state.lba_total = 1;
-		callback(&state);
+		callback(&state, userdata);
 	}
 
 	// Get the GCN disc header.
@@ -696,7 +697,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 	if (callback) {
 		state.lba_processed = 1;
-		callback(&state);
+		callback(&state, userdata);
 	}
 
 	return ret;

@@ -110,8 +110,6 @@ typedef enum {
 
 // Progress callback status.
 typedef struct _RvtH_Progress_State {
-	RvtH_Progress_Type type;
-
 	// RvtH objects.
 	const RvtH *rvth;	// Primary RvtH.
 	const RvtH *rvth_gcm;	// GCM being extracted or imported, if not NULL.
@@ -119,6 +117,9 @@ typedef struct _RvtH_Progress_State {
 	// Bank numbers.
 	unsigned int bank_rvth;	// Bank number in `rvth`.
 	unsigned int bank_gcm;	// Bank number in `rvth_gcm`. (UINT_MAX if none)
+
+	// Progress type.
+	RvtH_Progress_Type type;
 
 	// Progress.
 	// If RVTH_PROGRESS_RECRYPT and lba_total == 1,
@@ -131,10 +132,11 @@ typedef struct _RvtH_Progress_State {
 
 /**
  * RVT-H progress callback.
- * @param state Current progress.
+ * @param state		[in] Current progress.
+ * @param userdata	[in] User data specified when calling the RVT-H function.
  * @return True to continue; false to abort.
  */
-typedef bool (*RvtH_Progress_Callback)(const RvtH_Progress_State *state);
+typedef bool (*RvtH_Progress_Callback)(const RvtH_Progress_State *state, void *userdata);
 
 #ifdef __cplusplus
 }
@@ -295,10 +297,12 @@ class RvtH {
 		 * @param rvth_dest	[out] Destination RvtH object.
 		 * @param bank_src	[in] Source bank number. (0-7)
 		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int copyToGcm(RvtH *rvth_dest, unsigned int bank_src,
-			RvtH_Progress_Callback callback = nullptr);
+			RvtH_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
 
 		/**
 		 * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
@@ -310,10 +314,12 @@ class RvtH {
 		 * @param rvth_dest	[out] Destination RvtH object.
 		 * @param bank_src	[in] Source bank number. (0-7)
 		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
-			RvtH_Progress_Callback callback = nullptr);
+			RvtH_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
 
 		/**
 		 * Extract a disc image from this RVT-H disk image.
@@ -324,11 +330,13 @@ class RvtH {
 		 * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RVL_CryptoType_e)
 		 * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
 		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int extract(unsigned int bank, const TCHAR *filename,
 			int recrypt_key, uint32_t flags,
-			RvtH_Progress_Callback callback = nullptr);
+			RvtH_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
 
 		/**
 		 * Copy a bank from this HDD or standalone disc image to an RVT-H system.
@@ -336,11 +344,13 @@ class RvtH {
 		 * @param bank_dest	[in] Destination bank number. (0-7)
 		 * @param bank_src	[in] Source bank number. (0-7)
 		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 			unsigned int bank_src,
-			RvtH_Progress_Callback callback = nullptr);
+			RvtH_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
 
 		/**
 		 * Import a disc image into this RVT-H disk image.
@@ -349,10 +359,12 @@ class RvtH {
 		 * @param bank		[in] Bank number. (0-7)
 		 * @param filename	[in] Source GCM filename.
 		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int import(unsigned int bank, const TCHAR *filename,
-			RvtH_Progress_Callback callback = nullptr);
+			RvtH_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
 
 	public:
 		/** Recryption functions (recrypt.cpp) **/
@@ -375,11 +387,13 @@ class RvtH {
 		 * @param bank		[in] Bank number. (0-7)
 		 * @param cryptoType	[in] New encryption type.
 		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int recryptWiiPartitions(unsigned int bank,
 			RVL_CryptoType_e cryptoType,
-			RvtH_Progress_Callback callback);
+			RvtH_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
 		
 	private:
 		// Reference-counted FILE*.

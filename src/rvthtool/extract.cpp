@@ -30,11 +30,14 @@
 
 /**
  * RVT-H progress callback.
- * @param state RvtH_Progress_State
+ * @param state		[in] Current progress.
+ * @param userdata	[in] User data specified when calling the RVT-H function.
  * @return True to continue; false to abort.
  */
-static bool progress_callback(const RvtH_Progress_State *state)
+static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
 {
+	UNUSED(userdata);
+
 	#define MEGABYTE (1048576 / RVTH_BLOCK_SIZE)
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:
