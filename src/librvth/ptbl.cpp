@@ -40,7 +40,7 @@
 
 // Volume group and partition tables.
 typedef union _ptbl_t {
-	uint8_t u8[RVTH_BLOCK_SIZE*2];
+	uint8_t u8[LBA_SIZE*2];
 	struct {
 		RVL_VolumeGroupTable vgtbl;
 		RVL_PartitionTableEntry ptbl[31];
@@ -178,7 +178,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 
 		// Process the partitions.
 		for (pte = pte_start; pte < pte_end; pte++) {
-			ptbl[pt_total_proc].lba_start = (be32_to_cpu(pte->addr) / (RVTH_BLOCK_SIZE/4));
+			ptbl[pt_total_proc].lba_start = (be32_to_cpu(pte->addr) / (LBA_SIZE/4));
 			ptbl[pt_total_proc].lba_len = 0;	// will be calculated later
 			ptbl[pt_total_proc].type = be32_to_cpu(pte->type);
 			ptbl[pt_total_proc].vg = vg_idx;
@@ -303,7 +303,7 @@ int rvth_ptbl_write(RvtH_BankEntry *entry)
 	for (pt_idx = 0; pt_idx < entry->pt_count; pt_idx++, pte++) {
 		assert(pte->vg < ARRAY_SIZE(pt.vgtbl.vg));
 		pt.vgtbl.vg[pte->vg].count++;
-		ptptr[pte->vg]->addr = cpu_to_be32(pte->lba_start * (RVTH_BLOCK_SIZE/4));
+		ptptr[pte->vg]->addr = cpu_to_be32(pte->lba_start * (LBA_SIZE/4));
 		ptptr[pte->vg]->type = cpu_to_be32(pte->type);
 		ptptr[pte->vg]++;
 	}

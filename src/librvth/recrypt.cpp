@@ -50,7 +50,7 @@
 
 // Sector buffer. (1 LBA)
 typedef union _sbuf1_t {
-	uint8_t u8[RVTH_BLOCK_SIZE];
+	uint8_t u8[LBA_SIZE];
 	GCN_DiscHeader gcn;
 	struct {
 		RVL_VolumeGroupTable vgtbl;
@@ -60,7 +60,7 @@ typedef union _sbuf1_t {
 
 // Sector buffer. (2 LBAs)
 typedef union _sbuf2_t {
-	uint8_t u8[RVTH_BLOCK_SIZE*2];
+	uint8_t u8[LBA_SIZE*2];
 	GCN_DiscHeader gcn;
 	struct {
 		RVL_VolumeGroupTable vgtbl;

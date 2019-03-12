@@ -20,8 +20,10 @@
 
 #include "extract.h"
 #include "list-banks.hpp"
+
 #include "librvth/rvth.hpp"
 #include "librvth/rvth_error.h"
+#include "librvth/nhcd_structs.h"
 
 // C includes. (C++ namespace)
 #include <cassert>
@@ -38,7 +40,7 @@ static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
 {
 	UNUSED(userdata);
 
-	#define MEGABYTE (1048576 / RVTH_BLOCK_SIZE)
+	#define MEGABYTE (1048576 / LBA_SIZE)
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:
 			printf("\rExtracting: %4u MB / %4u MB copied...",

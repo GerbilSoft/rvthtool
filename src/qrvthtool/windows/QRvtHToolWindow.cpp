@@ -20,7 +20,10 @@
 
 #include "QRvtHToolWindow.hpp"
 
+// librvth
 #include "librvth/rvth.hpp"
+#include "librvth/nhcd_structs.h"
+
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
 
@@ -311,7 +314,7 @@ bool QRvtHToolWindowPrivate::progress_callback(const RvtH_Progress_State *state,
 {
 	QRvtHToolWindowPrivate *const d = static_cast<QRvtHToolWindowPrivate*>(userdata);
 
-	#define MEGABYTE (1048576 / RVTH_BLOCK_SIZE)
+	#define MEGABYTE (1048576 / LBA_SIZE)
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:
 			d->lblMessage->setText(
@@ -352,10 +355,10 @@ bool QRvtHToolWindowPrivate::progress_callback(const RvtH_Progress_State *state,
 	// NOTE: Checking existing maximum value to prevent unnecessary updates.
 	// TODO: Handle RVTH_PROGRESS_RECRYPT?
 	if (state->type != RVTH_PROGRESS_RECRYPT) {
-		if (d->progressBar->maximum() != state->lba_total) {
-			d->progressBar->setMaximum(state->lba_total);
+		if (d->progressBar->maximum() != static_cast<int>(state->lba_total)) {
+			d->progressBar->setMaximum(static_cast<int>(state->lba_total));
 		}
-		d->progressBar->setValue(state->lba_processed);
+		d->progressBar->setValue(static_cast<int>(state->lba_processed));
 	}
 
 	// TODO: Use a separate thread instead of calling processEvents().

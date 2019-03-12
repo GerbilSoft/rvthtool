@@ -60,7 +60,7 @@ static const uint8_t nddemo_header[64] = {
 // the volume group table.
 // FIXME: Handle other cases when using direct device access on Windows.
 typedef union _ptbl_t {
-	uint8_t u8[RVTH_BLOCK_SIZE];
+	uint8_t u8[LBA_SIZE];
 	struct {
 		RVL_VolumeGroupTable vgtbl;
 		RVL_PartitionTableEntry ptbl[15];
@@ -133,7 +133,7 @@ static uint32_t rvth_find_GamePartition_int(const ptbl_t *pt)
 	for (unsigned int i = 0; i < ptcount; i++) {
 		if (pt->ptbl[i].type == cpu_to_be32(0)) {
 			// Found the game partition.
-			return (be32_to_cpu(pt->ptbl[i].addr) / (RVTH_BLOCK_SIZE/4));
+			return (be32_to_cpu(pt->ptbl[i].addr) / (LBA_SIZE/4));
 		}
 	}
 
@@ -167,7 +167,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
 
 	// Sector buffer.
 	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
+		uint8_t u8[LBA_SIZE];
 		GCN_DiscHeader gcn;
 		ptbl_t pt;
 	} sbuf;

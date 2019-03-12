@@ -51,7 +51,7 @@ int rvth_init_BankEntry_region(RvtH_BankEntry *entry)
 
 	// Sector buffer.
 	union {
-		uint8_t u8[RVTH_BLOCK_SIZE];
+		uint8_t u8[LBA_SIZE];
 		struct {
 			uint8_t bi2_pad[0x40];
 			GCN_Boot_Info bi2;
@@ -327,7 +327,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	unsigned int i;
 
 	// Sector buffer.
-	uint8_t sector_buf[RVTH_BLOCK_SIZE*2];
+	uint8_t sector_buf[LBA_SIZE*2];
 
 	// Physical memory size is 24 MB.
 	static const uint32_t physMemSize = 24*1024*1024;
@@ -481,7 +481,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 		return -EIO;
 	}
 
-	memcpy(&dol, &sector_buf[dolOffset % RVTH_BLOCK_SIZE], sizeof(dol));
+	memcpy(&dol, &sector_buf[dolOffset % LBA_SIZE], sizeof(dol));
 
 	if (boot.bi2.dolLimit != cpu_to_be32(0)) {
 		// Calculate the total size of all sections.
