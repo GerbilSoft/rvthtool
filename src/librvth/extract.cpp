@@ -40,6 +40,65 @@
 #include <cstring>
 #include <ctime>
 
+// C++ includes.
+#include <string>
+using std::string;
+using std::wstring;
+
+// for disk free space
+#ifdef _WIN32
+# include <windows.h>
+#else /* !_WIN32 */
+# include <sys/statvfs.h>
+#endif /* _WIN32 */
+
+/**
+ * Get the free disk space on the volume containing `filename`.
+ * @param filename Filename.
+ * @return Free disk space, in LBAs.
+ */
+static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
+{
+	tstring path(filename);
+
+#ifdef _WIN32
+	// Remove the filename portion.
+	size_t slash_pos = path.rfind(_T('\\'));
+	if (slash_pos != string::npos && slash_pos != path.size()-1) {
+		path.resize(slash_pos + 1);
+	}
+
+	ULARGE_INTEGER freeBytesAvailableToCaller;
+	BOOL bRet = GetDiskFreeSpaceEx(path.c_str(),
+		&freeBytesAvailableToCaller,
+		nullptr, nullptr);
+	if (!bRet) {
+		// TODO: Convert Win32 error code to POSIX.
+		//DWORD dwErr = GetLastError();
+		return -EIO;
+	}
+
+	// Convert the free space to RVT-H LBAs.
+	return static_cast<int64_t>(freeBytesAvailableToCaller.QuadPart) / LBA_SIZE;
+#else /* !_WIN32 */
+	// Remove the filename portion.
+	size_t slash_pos = path.rfind(_T('/'));
+	if (slash_pos != string::npos && slash_pos != path.size()-1) {
+		path.resize(slash_pos + 1);
+	}
+
+	struct statvfs svbuf;
+	int ret = statvfs(path.c_str(), &svbuf);
+	if (ret != 0) {
+		// Error...
+		return -errno;
+	}
+
+	// Convert the free space from file system blocks to RVT-H LBAs.
+	return static_cast<int64_t>(svbuf.f_bavail) * (svbuf.f_frsize / LBA_SIZE);
+#endif /* _WIN32 */
+}
+
 /**
  * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
  * @param rvth_dest	[out] Destination RvtH object.
@@ -285,6 +344,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	int recrypt_key, uint32_t flags, RvtH_Progress_Callback callback)
 {
 	RvtH *rvth_dest = nullptr;
+	int64_t diskFreeSpace_lba = 0;
 	int ret = 0;
 
 	if (!filename || filename[0] == 0) {
@@ -334,15 +394,33 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	if (flags & RVTH_EXTRACT_PREPEND_SDK_HEADER) {
 		if (entry->type == RVTH_BankType_GCN) {
 			// FIXME: Not supported.
-			return RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
+			errno = ENOTSUP;
+			ret = RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
+			goto end;
 		}
 		// Prepend 32k to the GCM.
 		gcm_lba_len += BYTES_TO_LBA(32768);
 	}
 
+	// Check that we have enough free disk space.
+	// NOTE: We're not checking for sparse sectors.
+	diskFreeSpace_lba = getDiskFreeSpace_lba(filename);
+	if (diskFreeSpace_lba < 0) {
+		// Error...
+		ret = static_cast<int>(diskFreeSpace_lba);
+		errno = -ret;
+		goto end;
+	} else if (diskFreeSpace_lba < gcm_lba_len) {
+		// Not enough free disk space.
+		errno = ENOSPC;
+		ret = -ENOSPC;
+		goto end;
+	}
+
 	rvth_dest = new RvtH(filename, gcm_lba_len, &ret);
 	if (!rvth_dest->isOpen()) {
 		// Error creating the standalone disc image.
+		errno = EIO;
 		if (ret == 0) {
 			ret = -EIO;
 		}
