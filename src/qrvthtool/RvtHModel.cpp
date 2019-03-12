@@ -430,23 +430,20 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 				case COL_REVISION:
 					// TODO: BCD?
 					return QString::number(entry->discHeader.revision);
-				case COL_REGION:
+
+				case COL_REGION: {
 					// TODO: Icon?
-					switch (entry->region_code) {
-						default:
-							return QString::number(entry->region_code);
-						case GCN_REGION_JAPAN:
-							return QLatin1String("JPN");
-						case GCN_REGION_USA:
-							return QLatin1String("USA");
-						case GCN_REGION_PAL:
-							return QLatin1String("EUR");
-						case GCN_REGION_FREE:
-							return QLatin1String("ALL");
-						case GCN_REGION_SOUTH_KOREA:
-							return QLatin1String("KOR");
+					QString s_region;
+					static const char region_code_tbl[7][4] = {
+						"JPN", "USA", "EUR", "ALL", "KOR", "CHN", "TWN"
+					};
+					if (entry->region_code <= GCN_REGION_TWN) {
+						s_region = QLatin1String(region_code_tbl[entry->region_code]);
+					} else {
+						s_region = QString::number(entry->region_code);
 					}
-					break;
+					return s_region;
+				}
 
 				case COL_IOS_VERSION:
 					// Wii only.

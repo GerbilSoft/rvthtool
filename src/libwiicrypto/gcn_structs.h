@@ -72,11 +72,16 @@ ASSERT_STRUCT(GCN_DiscHeader, 0x68);
  * Used in bi2.bin (GameCube) and RVL_RegionSetting.
  */
 typedef enum {
-	GCN_REGION_JAPAN = 0,		// Japan / Taiwan
-	GCN_REGION_USA = 1,		// USA
-	GCN_REGION_PAL = 2,		// Europe / Australia
-	GCN_REGION_FREE = 3,		// Region-Free
-	GCN_REGION_SOUTH_KOREA = 4,	// South Korea
+	GCN_REGION_JPN = 0,	// Japan / Taiwan
+	GCN_REGION_USA = 1,	// USA
+	GCN_REGION_PAL = 2,	// Europe / Australia
+	GCN_REGION_ALL = 3,	// Region-Free
+
+	// The following region codes are Wii-specific,
+	// but we'll allow them for GameCube.
+	GCN_REGION_KOR = 4,	// South Korea
+	GCN_REGION_CHN = 5,	// China
+	GCN_REGION_TWN = 6,	// Taiwan
 } GCN_Region_Code;
 
 /**

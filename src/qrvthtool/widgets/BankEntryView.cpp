@@ -356,25 +356,13 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 
 	// Region. (TODO: Icon?)
 	QString s_region;
-	switch (bankEntry->region_code) {
-		default:
-			s_region = QString::number(bankEntry->region_code);
-			break;
-		case GCN_REGION_JAPAN:
-			s_region = QLatin1String("JPN");
-			break;
-		case GCN_REGION_USA:
-			s_region = QLatin1String("USA");
-			break;
-		case GCN_REGION_PAL:
-			s_region = QLatin1String("EUR");
-			break;
-		case GCN_REGION_FREE:
-			s_region = QLatin1String("ALL");
-			break;
-		case GCN_REGION_SOUTH_KOREA:
-			s_region = QLatin1String("KOR");
-			break;
+	static const char region_code_tbl[7][4] = {
+		"JPN", "USA", "EUR", "ALL", "KOR", "CHN", "TWN"
+	};
+	if (bankEntry->region_code <= GCN_REGION_TWN) {
+		s_region = QLatin1String(region_code_tbl[bankEntry->region_code]);
+	} else {
+		s_region = QString::number(bankEntry->region_code);
 	}
 	ui.lblRegion->setText(s_region);
 	ui.lblRegion->show();

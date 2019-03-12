@@ -54,8 +54,8 @@ static void trim_title(char *title, int size)
 int print_bank(const RvtH *rvth, unsigned int bank)
 {
 	// Region codes.
-	static const char region_code_tbl[5][4] = {
-		"JPN", "USA", "EUR", "ALL", "KOR"
+	static const char region_code_tbl[7][4] = {
+		"JPN", "USA", "EUR", "ALL", "KOR", "CHN", "TWN"
 	};
 
 	const unsigned int bank_count = rvth->bankCount();
