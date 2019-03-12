@@ -345,6 +345,16 @@ bool QRvtHToolWindowPrivate::progress_callback(const RvtH_Progress_State *state,
 			return false;
 	}
 
+	// Update the progress bar.
+	// NOTE: Checking existing maximum value to prevent unnecessary updates.
+	// TODO: Handle RVTH_PROGRESS_RECRYPT?
+	if (state->type != RVTH_PROGRESS_RECRYPT) {
+		if (d->progressBar->maximum() != state->lba_total) {
+			d->progressBar->setMaximum(state->lba_total);
+		}
+		d->progressBar->setValue(state->lba_processed);
+	}
+
 	// TODO: Use a separate thread instead of calling processEvents().
 	qApp->processEvents();
 	return true;
