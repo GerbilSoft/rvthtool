@@ -43,7 +43,7 @@
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::ExtendedSelection</enum>
+           <enum>QAbstractItemView::SingleSelection</enum>
           </property>
           <property name="iconSize">
            <size>
@@ -103,6 +103,8 @@
     <addaction name="actionOpenDevice"/>
     <addaction name="actionClose"/>
     <addaction name="separator"/>
+    <addaction name="actionExtract"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -128,9 +130,29 @@
     <bool>false</bool>
    </property>
   </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionExtract"/>
+   <addaction name="actionAbout"/>
+  </widget>
   <action name="actionOpenDiskImage">
    <property name="icon">
-    <iconset theme="document-open"/>
+    <iconset theme="document-open">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Open Disk Image...</string>
@@ -183,7 +205,8 @@
   </action>
   <action name="actionOpenDevice">
    <property name="icon">
-    <iconset theme="drive-harddisk"/>
+    <iconset theme="drive-harddisk">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>Open RVT-&amp;H Reader...</string>
@@ -193,6 +216,17 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+H</string>
+   </property>
+  </action>
+  <action name="actionExtract">
+   <property name="icon">
+    <iconset theme="document-export"/>
+   </property>
+   <property name="text">
+    <string>E&amp;xtract...</string>
+   </property>
+   <property name="toolTip">
+    <string>Extract the selected disc image.</string>
    </property>
   </action>
  </widget>

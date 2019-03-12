@@ -27,7 +27,9 @@
 #include "windows/SelectDeviceDialog.hpp"
 
 // Qt includes.
+#include <QtWidgets/QComboBox>
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QLabel>
 
 /** QRvtHToolWindowPrivate **/
 
@@ -71,9 +73,29 @@ class QRvtHToolWindowPrivate
 		void updateLstBankList(void);
 
 		/**
+		 * Update the "enabled" status of the QActions.
+		 */
+		void updateActionEnableStatus(void);
+
+		/**
 		 * Update the window title.
 		 */
 		void updateWindowTitle(void);
+
+	public:
+		/**
+		 * Initialize the toolbar.
+		 */
+		void initToolbar(void);
+
+		/**
+		 * Retranslate the toolbar.
+		 */
+		void retranslateToolbar(void);
+
+		// Recryption Key widgets.
+		QLabel *lblRecryptionKey;
+		QComboBox *cboRecryptionKey;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -83,6 +105,8 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, proxyModel(new RvtHSortFilterProxyModel(q))
 	, cols_init(false)
 	, lastIconID(RvtHModel::ICON_MAX)
+	, lblRecryptionKey(nullptr)
+	, cboRecryptionKey(nullptr)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -122,6 +146,24 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 	for (int i = 0; i < num_sections; i++)
 		ui.lstBankList->resizeColumnToContents(i);
 	ui.lstBankList->resizeColumnToContents(num_sections);
+}
+
+/**
+ * Update the "enabled" status of the QActions.
+ */
+void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
+{
+	if (!rvth) {
+		// No RVT-H Reader image is loaded.
+		ui.actionClose->setEnabled(false);
+		ui.actionExtract->setEnabled(false);
+	} else {
+		// Memory card image is loaded.
+		// TODO: Disable open, scan, and save (all) if we're scanning.
+		ui.actionClose->setEnabled(true);
+		ui.actionExtract->setEnabled(
+			ui.lstBankList->selectionModel()->hasSelection());
+	}
 }
 
 /**
@@ -172,6 +214,59 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 		q->setWindowIcon(model->getIcon(iconID));
 		lastIconID = iconID;
 	}
+}
+
+/**
+ * Initialize the toolbar.
+ */
+void QRvtHToolWindowPrivate::initToolbar(void)
+{
+	Q_Q(QRvtHToolWindow);
+
+	// Disable per-bank actions by default.
+	ui.actionExtract->setEnabled(false);
+
+	// Recryption Hey.
+	ui.toolBar->insertSeparator(ui.actionAbout);
+	lblRecryptionKey = new QLabel(QRvtHToolWindow::tr("Recryption Key:"), q);
+	lblRecryptionKey->setObjectName(QLatin1String("lblRecryptionKey"));
+	lblRecryptionKey->setToolTip(QRvtHToolWindow::tr(
+		"Set the encryption key to use when extracting disc images.\n"
+		"Default is None, which retains the original key."));
+	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
+
+	cboRecryptionKey = new QComboBox(q);
+	cboRecryptionKey->addItem(QString());	// None
+	cboRecryptionKey->addItem(QString());	// Retail (fakesigned)
+	cboRecryptionKey->addItem(QString());	// Korean (fakesigned)
+	cboRecryptionKey->addItem(QString());	// Debug (fakesigned)
+	cboRecryptionKey->setCurrentIndex(0);
+	ui.toolBar->insertWidget(ui.actionAbout, cboRecryptionKey);
+
+	// Make sure the "About" button is right-aligned.
+	QWidget *spacer = new QWidget(q);
+	spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	ui.toolBar->insertWidget(ui.actionAbout, spacer);
+
+	// Retranslate the toolbar.
+	retranslateToolbar();
+}
+
+/**
+ * Retranslate the toolbar.
+ */
+void QRvtHToolWindowPrivate::retranslateToolbar(void)
+{
+	lblRecryptionKey->setText(QRvtHToolWindow::tr("Recryption Key:"));
+	lblRecryptionKey->setToolTip(QRvtHToolWindow::tr(
+		"Set the encryption key to use when extracting disc images.\n"
+		"Default is None, which retains the original key."));
+
+	cboRecryptionKey->setItemText(0, QRvtHToolWindow::tr("None"));
+	cboRecryptionKey->setItemText(1, QRvtHToolWindow::tr("Retail (fakesigned)"));
+	cboRecryptionKey->setItemText(2, QRvtHToolWindow::tr("Korean (fakesigned)"));
+	cboRecryptionKey->setItemText(3, QRvtHToolWindow::tr("Debug (realsigned)"));
+	cboRecryptionKey->setCurrentIndex(0);
 }
 
 /** QRvtHToolWindow **/
@@ -231,6 +326,7 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 
 	// Initialize the UI.
 	d->updateLstBankList();
+	d->initToolbar();
 	d->updateWindowTitle();
 
 	// Connect the lstBankList selection signal.
@@ -348,6 +444,7 @@ void QRvtHToolWindow::changeEvent(QEvent *event)
 			d->ui.retranslateUi(this);
 			d->updateLstBankList();
 			d->updateWindowTitle();
+			d->retranslateToolbar();
 			break;
 
 		default:
@@ -540,6 +637,9 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 			entry = d->rvth->bankEntry(bank, nullptr);
 		}
 	}
+
+	// If file(s) are selected, enable the Save action.
+	d->ui.actionExtract->setEnabled(bank >= 0);
 
 	// Set the BankView's BankEntry to the selected bank.
 	// NOTE: Only handles the first selected bank.
