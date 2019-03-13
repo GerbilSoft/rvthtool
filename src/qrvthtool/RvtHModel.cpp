@@ -396,9 +396,10 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 			}
 			// All other columns are empty.
 			return QVariant();
+
 		case RVTH_BankType_Wii_DL_Bank2:
-			// TODO: Make the previous bank double-tall.
 			return QVariant();
+
 		default:
 			break;
 	}

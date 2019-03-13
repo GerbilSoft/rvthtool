@@ -31,12 +31,6 @@
 #include <cerrno>
 #include <cstring>
 
-// SDK header values.
-// TODO: Verify GC1L, NN2L. (These are all NN1L images.)
-// TODO: Checksum at 0x0830.
-static const uint8_t sdk_0x0000[4] = {0xFF,0xFF,0x00,0x00};
-static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
-
 Reader::Reader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	: m_file(nullptr)
 	, m_lba_start(lba_start)
@@ -130,6 +124,8 @@ Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Check for SDK headers.
 	// TODO: Verify GC1L, NN2L. (These are all NN1L images.)
 	// TODO: Checksum at 0x0830.
+	static const uint8_t sdk_0x0000[4] = {0xFF,0xFF,0x00,0x00};
+	static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
 	if (lba_len > BYTES_TO_LBA(32768) &&
 	    !memcmp(&sbuf[0x0000], sdk_0x0000, sizeof(sdk_0x0000)) &&
 	    !memcmp(&sbuf[0x082C], sdk_0x082C, sizeof(sdk_0x082C)) &&
