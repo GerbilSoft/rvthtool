@@ -303,7 +303,14 @@ ENDIF(INSTALL_DEBUG)
 
 # FreeDesktop.org specifications.
 IF(UNIX AND NOT APPLE)
-	# TODO: Icons.
+	# Icons.
+	FOREACH(ICON_SIZE 16x16 22x22 24x24 32x32 48x48 64x64 128x128 256x256)
+		INSTALL(FILES resources/hw/${ICON_SIZE}/rvth.png
+			DESTINATION share/icons/hicolor/${ICON_SIZE}/apps
+			RENAME qrvthtool.png
+			COMPONENT "desktop-icon"
+			)
+	ENDFOREACH()
 
         # Desktop file.
         INSTALL(FILES resources/xdg/qrvthtool.desktop
