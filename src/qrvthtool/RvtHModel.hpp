@@ -33,7 +33,7 @@ class RvtHModel : public QAbstractListModel
 	typedef QAbstractListModel super;
 	
 	public:
-		explicit RvtHModel(QObject *parent = 0);
+		explicit RvtHModel(QObject *parent = nullptr);
 		virtual ~RvtHModel();
 
 	protected:

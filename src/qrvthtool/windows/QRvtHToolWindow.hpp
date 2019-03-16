@@ -31,7 +31,7 @@ class QRvtHToolWindow : public QMainWindow
 	typedef QMainWindow super;
 	
 	public:
-		explicit QRvtHToolWindow(QWidget *parent = 0);
+		explicit QRvtHToolWindow(QWidget *parent = nullptr);
 		virtual ~QRvtHToolWindow();
 
 	protected:

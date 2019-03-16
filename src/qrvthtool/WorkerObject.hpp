@@ -41,7 +41,7 @@ class WorkerObject : public QObject
 	Q_PROPERTY(int recryptionKey READ recryptionKey WRITE setRecryptionKey)
 	
 	public:
-		explicit WorkerObject(QObject *parent = 0);
+		explicit WorkerObject(QObject *parent = nullptr);
 
 	protected:
 		WorkerObjectPrivate *const d_ptr;

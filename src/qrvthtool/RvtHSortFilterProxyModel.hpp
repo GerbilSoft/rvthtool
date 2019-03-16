@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * RvtHSortFilterProxyModel.hpp: RvtHModel sort filter proxy.              *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -29,7 +29,7 @@ class RvtHSortFilterProxyModel : public QSortFilterProxyModel
 	typedef QSortFilterProxyModel super;
 
 	public:
-		explicit RvtHSortFilterProxyModel(QObject *parent = 0);
+		explicit RvtHSortFilterProxyModel(QObject *parent = nullptr);
 
 	private:
 		Q_DISABLE_COPY(RvtHSortFilterProxyModel)

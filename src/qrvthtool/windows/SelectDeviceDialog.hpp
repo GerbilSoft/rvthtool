@@ -31,7 +31,7 @@ class SelectDeviceDialog : public QDialog
 	typedef QDialog super;
 	
 	public:
-		explicit SelectDeviceDialog(QWidget *parent = 0);
+		explicit SelectDeviceDialog(QWidget *parent = nullptr);
 		virtual ~SelectDeviceDialog();
 
 	protected:

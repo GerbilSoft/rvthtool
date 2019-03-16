@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * BankEntryView.hpp: Bank Entry view widget.                              *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -34,7 +34,7 @@ class BankEntryView : public QWidget
 	Q_PROPERTY(const struct _RvtH_BankEntry* bankEntry READ bankEntry WRITE setBankEntry)
 
 	public:
-		explicit BankEntryView(QWidget *parent = 0);
+		explicit BankEntryView(QWidget *parent = nullptr);
 		virtual ~BankEntryView();
 
 	protected:
