@@ -80,18 +80,21 @@ bool WorkerObjectPrivate::progress_callback(const RvtH_Progress_State *state, vo
 	WorkerObjectPrivate *const d = static_cast<WorkerObjectPrivate*>(userdata);
 	WorkerObject *const q = d->q_ptr;
 
+	// TODO: Don't show the bank number if the source image is a standalone disc image.
 	#define MEGABYTE (1048576 / LBA_SIZE)
 	QString text;
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:
-			text = WorkerObject::tr("Extracting to %1: %L2 MiB / %L3 MiB copied...")
+			text = WorkerObject::tr("Extracting Bank %1 to %2: %L3 MiB / %L4 MiB copied...")
+				.arg(d->bank+1)
 				.arg(d->gcmFilenameOnly)
 				.arg(state->lba_processed / MEGABYTE)
 				.arg(state->lba_total / MEGABYTE);
 			break;
 		case RVTH_PROGRESS_IMPORT:
-			text = WorkerObject::tr("Importing from %1: %L2 MiB / %L3 MiB copied...")
+			text = WorkerObject::tr("Importing from %1 to Bank %2: %L3 MiB / %L4 MiB copied...")
 				.arg(d->gcmFilenameOnly)
+				.arg(d->bank+1)
 				.arg(state->lba_processed / MEGABYTE)
 				.arg(state->lba_total / MEGABYTE);
 			break;
@@ -102,7 +105,8 @@ bool WorkerObjectPrivate::progress_callback(const RvtH_Progress_State *state, vo
 					text = WorkerObject::tr("Recrypting the ticket(s) and TMD(s)...");
 				}
 			} else {
-				text = WorkerObject::tr("Recrypting to %1: %L2 MiB / %L3 MiB copied...")
+				text = WorkerObject::tr("Recrypting Bank %1 to %2: %L3 MiB / %L4 MiB copied...")
+					.arg(d->bank+1)
 					.arg(d->gcmFilenameOnly)
 					.arg(state->lba_processed / MEGABYTE)
 					.arg(state->lba_total / MEGABYTE);
