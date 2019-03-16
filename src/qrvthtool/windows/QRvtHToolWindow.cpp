@@ -189,9 +189,42 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 		// Set the group box's title.
 		ui.grpBankList->setTitle(QRvtHToolWindow::tr("No RVT-H Reader disk image loaded."));
 	} else {
-		// Show the filename.
+		// Show the filename and device type.
 		// TODO: Get the device serial number.
-		ui.grpBankList->setTitle(displayFilename);
+		QString title = displayFilename;
+		QString imageType;
+		switch (rvth->imageType()) {
+			// HDDs (multiple banks)
+			case RVTH_ImageType_HDD_Reader:
+				// TODO: Serial number.
+				// TODO: Option to hide the serial number?
+				imageType = QRvtHToolWindow::tr("RVT-H Reader") +
+					QChar(L' ') + QLatin1String("HzAxxxxxxxxY");
+				break;
+			case RVTH_ImageType_HDD_Image:
+				imageType = QRvtHToolWindow::tr("RVT-H Reader Disk Image");
+				break;
+
+			// GCMs (single banks)
+			// TODO: CISO/WBFS?
+			case RVTH_ImageType_GCM:
+				imageType = QRvtHToolWindow::tr("Disc Image");
+				break;
+			case RVTH_ImageType_GCM_SDK:
+				imageType = QRvtHToolWindow::tr("SDK Disc Image");
+				break;
+
+			default:
+				break;
+		}
+
+		if (!imageType.isEmpty()) {
+			ui.grpBankList->setTitle(
+				QRvtHToolWindow::tr("%1 [%2]")
+				.arg(displayFilename).arg(imageType));
+		} else {
+			ui.grpBankList->setTitle(displayFilename);
+		}
 	}
 
 	// Show the QTreeView headers if an RVT-H Reader disk image is loaded.
