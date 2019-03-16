@@ -35,6 +35,11 @@
 extern UINT WM_TaskbarButtonCreated;
 UINT WM_TaskbarButtonCreated;
 
+// MSGFLT_ADD (requires _WIN32_WINNT >= 0x0600)
+#ifndef MSGFLT_ADD
+# define MSGFLT_ADD 1
+#endif
+
 /**
  * Register the TaskbarButtonCreated message.
  */
