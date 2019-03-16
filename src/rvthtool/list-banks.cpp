@@ -272,7 +272,7 @@ static int print_bank_table(const RvtH *rvth)
 	// Print the entries.
 	for (unsigned int bank = 0; bank < bank_count; bank++) {
 		// TODO: Check for errors?
-		const RvtH_BankEntry *const entry = rvth->bankEntry(bank, nullptr);
+		const RvtH_BankEntry *const entry = rvth->bankEntry(bank);
 		print_bank(rvth, bank);
 
 		// Nothing is printed for the second bank of dual-layer Wii discs,

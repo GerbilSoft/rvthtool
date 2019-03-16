@@ -211,7 +211,7 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 		return RvtHModel::ICON_MAX;
 	}
 
-	const RvtH_BankEntry *entry = rvth->bankEntry(bank, nullptr);
+	const RvtH_BankEntry *entry = rvth->bankEntry(bank);
 	assert(entry != nullptr);
 	if (!entry) {
 		// No bank entry here...
