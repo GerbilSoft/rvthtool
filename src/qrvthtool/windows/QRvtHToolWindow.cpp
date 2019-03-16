@@ -312,6 +312,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	lblRecryptionKey->setToolTip(QRvtHToolWindow::tr(
 		"Set the encryption key to use when extracting disc images.\n"
 		"Default is None, which retains the original key."));
+	lblRecryptionKey->setContentsMargins(4, 0, 4, 0);
 	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
 
 	cboRecryptionKey = new QComboBox(q);
