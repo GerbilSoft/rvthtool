@@ -142,19 +142,8 @@ IF(WIN32)
 		TaskbarButtonManager/Win7TaskbarList.hpp
 		)
 ELSEIF(UNIX AND NOT APPLE)
-	# Unity Launcher API.
-	# dlopen() is required.
-	SET(qrvthtool_NEEDS_DL 1)
-	SET(qrvthtool_TBM_SRCS
-		${qrvthtool_TBM_SRCS}
-		TaskbarButtonManager/UnityLauncher.cpp
-		)
-	SET(qrvthtool_TBM_MOC_H
-		${qrvthtool_TBM_MOC_H}
-		TaskbarButtonManager/UnityLauncher.hpp
-		)
-
 	IF(HAVE_Qt5DBus)
+		# DockManager D-Bus API
 		SET(DBus_XML_SRCS
 			dbus/net.launchpad.DockItem.xml
 			dbus/net.launchpad.DockManager.xml
@@ -164,7 +153,7 @@ ELSEIF(UNIX AND NOT APPLE)
 			)
 
 		# Enable DockManager / Unity API support.
-		# NOTE: The D-BUS interfaces are generated in ${CMAKE_CURRENT_BINARY_DIR},
+		# NOTE: The D-Bus interfaces are generated in ${CMAKE_CURRENT_BINARY_DIR},
 		# *not* ${CMAKE_CURRENT_BINARY_DIR}/dbus/.
 		QT5_ADD_DBUS_INTERFACES(
 			qrvthtool_DBUS_INTERFACE_SRCS
@@ -174,10 +163,12 @@ ELSEIF(UNIX AND NOT APPLE)
 			${qrvthtool_TBM_SRCS}
 			${qrvthtool_DBUS_INTERFACE_SRCS}
 			TaskbarButtonManager/DockManager.cpp
+			TaskbarButtonManager/UnityLauncher.cpp
 			)
 		SET(qrvthtool_TBM_MOC_H
 			${qrvthtool_TBM_MOC_H}
 			TaskbarButtonManager/DockManager.hpp
+			TaskbarButtonManager/UnityLauncher.hpp
 			)
 	ENDIF(HAVE_Qt5DBus)
 ENDIF()
@@ -284,12 +275,6 @@ IF(ENABLE_NLS)
 	ADD_DEPENDENCIES(qrvthtool translations_target)
 ENDIF(ENABLE_NLS)
 
-# Link in libdl if it's required for dlopen()
-# and we have a component that uses it.
-IF(qrvthtool_NEEDS_DL AND CMAKE_DL_LIBS)
-	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${CMAKE_DL_LIBS})
-ENDIF(qrvthtool_NEEDS_DL AND CMAKE_DL_LIBS)
-
 #################
 # Installation. #
 #################
@@ -315,5 +300,16 @@ ELSEIF(SPLIT_DEBUG)
 		)
 ENDIF()
 ENDIF(INSTALL_DEBUG)
+
+# FreeDesktop.org specifications.
+IF(UNIX AND NOT APPLE)
+	# TODO: Icons.
+
+        # Desktop file.
+        INSTALL(FILES resources/xdg/qrvthtool.desktop
+                DESTINATION share/applications
+                COMPONENT "desktop-icon"
+                )
+ENDIF(UNIX AND NOT APPLE)
 
 ENDIF(BUILD_QT5)

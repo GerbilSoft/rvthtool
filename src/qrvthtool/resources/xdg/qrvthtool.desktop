@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=RVT-H Tool
+Comment=Nintendo RVT-H Reader Tool
+Type=Application
+Version=2.0
+Exec=qrvthtool %f
+Icon=qrvthtool
+Categories=Game;Application;Utility;
