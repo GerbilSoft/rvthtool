@@ -18,6 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
+#include "config.qrvthtool.h"
+
 #include "windows/QRvtHToolWindow.hpp"
 
 // Qt includes.
@@ -81,6 +83,11 @@ int main(int argc, char *argv[])
 #endif /* QT_VERSION >= 0x050600 */
 
 	QApplication *app = new QApplication(argc, argv);
+	app->setApplicationName(QLatin1String("qrvthtool"));
+	app->setApplicationDisplayName(QLatin1String("RVT-H Tool"));
+	app->setOrganizationDomain(QLatin1String("gerbilsoft.com"));
+	app->setOrganizationName(QLatin1String("Gerbil Software"));
+	app->setApplicationVersion(QLatin1String(VERSION_STRING));
 
 	// Initialize the TranslationManager.
 	TranslationManager *const tsm = TranslationManager::instance();

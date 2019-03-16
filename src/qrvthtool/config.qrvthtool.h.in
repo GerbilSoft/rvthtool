@@ -24,6 +24,9 @@
 /* Translations directory. */
 #define QRVTHTOOL_TRANSLATIONS_DIRECTORY "@QRVTHTOOL_TRANSLATIONS_DIRECTORY@"
 
+/* Program version. */
+#define VERSION_STRING "@VERSION_STRING@"
+
 /* Define to 1 if you have KF5 WidgetsAddons. */
 #cmakedefine HAVE_KF5WIDGETSADDONS 1
 

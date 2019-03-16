@@ -247,11 +247,16 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
  */
 void QRvtHToolWindowPrivate::updateWindowTitle(void)
 {
-	QString windowTitle;
+	// NOTE: Since we're setting QGuiApplication::applicationDisplayName,
+	// the program name is automatically appended to the title on
+	// Windows and Unix/Linux. Hence, we only have to set the window
+	// title to the loaded filename.
+	// TODO: Mac OS X handling.
+	Q_Q(QRvtHToolWindow);
 	RvtHModel::IconID iconID;
 	if (rvth) {
-		windowTitle += displayFilename;
-		windowTitle += QLatin1String(" - ");
+		q->setWindowTitle(displayFilename);
+
 		// If it's an RVT-H HDD image, use the RVT-H icon.
 		// Otherwise, get the icon for the first bank.
 		if (rvth->isHDD()) {
@@ -266,12 +271,9 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 		}
 	} else {
 		// Use the RVT-H icon as the default.
+		q->setWindowTitle(QString());
 		iconID = RvtHModel::ICON_RVTH;
 	}
-	windowTitle += QApplication::applicationName();
-
-	Q_Q(QRvtHToolWindow);
-	q->setWindowTitle(windowTitle);
 
 #ifdef Q_OS_MAC
 	// If there's no image loaded, remove the window icon.
