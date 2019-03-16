@@ -62,6 +62,11 @@ class QRvtHToolWindow : public QMainWindow
 		// Window close event.
 		void closeEvent(QCloseEvent *event) final;
 
+#ifdef Q_OS_WIN
+		// Windows message handler. Used for TaskbarButtonManager.
+		bool nativeEvent(const QByteArray &eventType, void *message, long *result) final;
+#endif /* Q_OS_WIN */
+
 	protected slots:
 		// UI busy functions
 		void markUiBusy(void);

@@ -48,6 +48,13 @@
 // Worker object for the worker thread.
 #include "WorkerObject.hpp"
 
+// Taskbar Button Manager.
+#include "TaskbarButtonManager/TaskbarButtonManager.hpp"
+#include "TaskbarButtonManager/TaskbarButtonManagerFactory.hpp"
+#ifdef Q_OS_WIN
+# include <windows.h>
+#endif /* Q_OS_WIN */
+
 /** QRvtHToolWindowPrivate **/
 
 #include "ui_QRvtHToolWindow.h"
@@ -126,6 +133,9 @@ class QRvtHToolWindowPrivate
 
 		// UI busy counter
 		int uiBusyCounter;
+
+		// Taskbar Button Manager.
+		TaskbarButtonManager *taskbarButtonManager;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -142,6 +152,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, workerThread(nullptr)
 	, workerObject(nullptr)
 	, uiBusyCounter(0)
+	, taskbarButtonManager(nullptr)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -427,6 +438,11 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	// Connect the lstBankList selection signal.
 	connect(d->ui.lstBankList->selectionModel(), &QItemSelectionModel::selectionChanged,
 		this, &QRvtHToolWindow::lstBankList_selectionModel_selectionChanged);
+
+#ifndef Q_OS_WIN
+	// Initialize the Taskbar Button Manager. (Non-Windows systems)
+	d->taskbarButtonManager = TaskbarButtonManagerFactory::createManager(this);
+#endif /* Q_OS_WIN */
 }
 
 QRvtHToolWindow::~QRvtHToolWindow()
@@ -597,6 +613,32 @@ void QRvtHToolWindow::closeEvent(QCloseEvent *event)
 	// Pass the event to the base class.
 	super::closeEvent(event);
 }
+
+#ifdef Q_OS_WIN
+/**
+ * Windows message handler.
+ * Used for TaskbarButtonManager.
+ * @param eventType
+ * @param message
+ * @param result
+ * @return
+ */
+bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
+{
+	// Reference: http://nicug.blogspot.com/2011/03/windows-7-taskbar-extensions-in-qt.html
+	Q_D(McRecoverWindow);
+	const MSG *const msg = reinterpret_cast<const MSG*>(message);
+	extern UINT WM_TaskbarButtonCreated;
+	if (msg->message == WM_TaskbarButtonCreated) {
+		// Initialize the Taskbar Button Manager.
+		d->taskbarButtonManager = TaskbarButtonManagerFactory::createManager(this);
+		if (d->taskbarButtonManager) {
+			d->taskbarButtonManager->setWindow(this);
+		}
+	}
+	return false;
+}
+#endif /* Q_OS_WIN */
 
 /** UI busy functions **/
 
@@ -982,6 +1024,13 @@ void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progres
 			d->progressBar->setMaximum(progress_max);
 		}
 		d->progressBar->setValue(progress_value);
+
+		if (d->taskbarButtonManager) {
+			if (d->taskbarButtonManager->progressBarMax() != progress_max) {
+				d->taskbarButtonManager->setProgressBarMax(progress_max);
+			}
+			d->taskbarButtonManager->setProgressBarValue(progress_value);
+		}
 	}
 }
 
@@ -1009,6 +1058,12 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 		// TODO: Change progress bar to red?
 		// TOOD: Critical vs. warning.
 		MessageSound::play(QMessageBox::Warning, text, this);
+	}
+
+	// TODO: Hide the progress bar on success after 5 seconds.
+	// TODO: Same with taskbar button, but for now, just clear it.
+	if (d->taskbarButtonManager) {
+		d->taskbarButtonManager->clearProgressBar();
 	}
 
 	// Make sure the thread exits.

@@ -27,6 +27,40 @@
 // TranslationManager
 #include "TranslationManager.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+extern UINT WM_TaskbarButtonCreated;
+UINT WM_TaskbarButtonCreated;
+
+/**
+ * Register the TaskbarButtonCreated message.
+ */
+static void RegisterTaskbarButtonCreatedMessage(void)
+{
+	WM_TaskbarButtonCreated = RegisterWindowMessage(_T("TaskbarButtonCreated"));
+
+	// Enable taskbar messages even if running elevated.
+	// Elevated privileges are necessary for raw device
+	// access in most cases.
+	// Reference: https://msdn.microsoft.com/en-us/library/windows/desktop/dd388202(v=vs.85).aspx
+	typedef BOOL (WINAPI *PFNCHANGEWINDOWMESSAGEFILTER)(__in UINT message, __in DWORD dwFlag);
+	PFNCHANGEWINDOWMESSAGEFILTER pfn = nullptr;
+	HMODULE hUser32 = GetModuleHandle(_T("user32"));
+	if (hUser32) {
+		pfn = reinterpret_cast<PFNCHANGEWINDOWMESSAGEFILTER>(GetProcAddress(
+			hUser32, "ChangeWindowMessageFilter"));
+		if (pfn) {
+			// Found the function.
+			// Enable taskbar messages.
+			pfn(WM_TaskbarButtonCreated, MSGFLT_ADD);
+			pfn(WM_COMMAND, MSGFLT_ADD);
+			pfn(WM_SYSCOMMAND, MSGFLT_ADD);
+			pfn(WM_ACTIVATE, MSGFLT_ADD);
+		}
+	}
+}
+#endif /* _WIN32 */
+
 /**
  * Main entry point.
  * @param argc Number of arguments.
@@ -51,6 +85,10 @@ int main(int argc, char *argv[])
 	// Initialize the TranslationManager.
 	TranslationManager *const tsm = TranslationManager::instance();
 	tsm->setTranslation(QLocale::system().name());
+
+#ifdef _WIN32
+	RegisterTaskbarButtonCreatedMessage();
+#endif /* _WIN32 */
 
 	// Initialize the QRvtHToolWindow.
 	QRvtHToolWindow *window = new QRvtHToolWindow();

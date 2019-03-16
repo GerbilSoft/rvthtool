@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (qrvthtool)                                                  *
- * config.qrvthtool.h.in: QRvthTool configuration. (source file)           *
+ * TaskbarButtonManagerFactory.hpp: TaskbarButtonManager factory class.    *
  *                                                                         *
- * Copyright (c) 2013-2018 by David Korth.                                 *
+ * Copyright (c) 2015-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -15,19 +15,32 @@
  * GNU General Public License for more details.                            *
  *                                                                         *
  * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.  *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__
-#define __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__
+#ifndef __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGERFACTORY_HPP__
+#define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGERFACTORY_HPP__
 
-/* Translations directory. */
-#define QRVTHTOOL_TRANSLATIONS_DIRECTORY "@QRVTHTOOL_TRANSLATIONS_DIRECTORY@"
+// for Q_DISABLE_COPY()
+#include <QtCore/qglobal.h>
+class QObject;
 
-/* Define to 1 if you have KF5 WidgetsAddons. */
-#cmakedefine HAVE_KF5WIDGETSADDONS 1
+class TaskbarButtonManager;
+class TaskbarButtonManagerFactory
+{
+	private:
+		TaskbarButtonManagerFactory();
+		~TaskbarButtonManagerFactory();
+	private:
+		Q_DISABLE_COPY(TaskbarButtonManagerFactory)
 
-/* Define to 1 if you have Qt5DBus. */
-#cmakedefine HAVE_Qt5DBus 1
+	public:
+		/**
+		 * Create a TaskbarButtonManager.
+		 * @param parent Parent object.
+		 * @return System-specific TaskbarButtonManager, or nullptr on error.
+		 */
+		static TaskbarButtonManager *createManager(QObject *parent = nullptr);
+};
 
-#endif /* __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__ */
+#endif /* __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGERFACTORY_HPP__ */

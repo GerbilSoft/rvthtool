@@ -7,6 +7,13 @@ ELSE()
 	SET(ENABLE_UDEV OFF CACHE "Enable UDEV for the 'query' command." INTERAL FORCE)
 ENDIF()
 
+# Enable D-Bus for DockManager / Unity API.
+IF(UNIX AND NOT APPLE)
+	OPTION(ENABLE_DBUS	"Enable D-Bus support for DockManager / Unity API." 1)
+ELSE(UNIX AND NOT APPLE)
+	SET(ENABLE_DBUS 0)
+ENDIF(UNIX AND NOT APPLE)
+
 # Link-time optimization.
 # FIXME: Not working in clang builds and Ubuntu's gcc...
 IF(MSVC)

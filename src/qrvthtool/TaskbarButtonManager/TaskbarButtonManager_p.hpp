@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (qrvthtool)                                                  *
- * config.qrvthtool.h.in: QRvthTool configuration. (source file)           *
+ * TaskbarButtonManager_p.hpp: Taskbar button manager base class. (PRIVATE)*
  *                                                                         *
- * Copyright (c) 2013-2018 by David Korth.                                 *
+ * Copyright (c) 2013-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -15,19 +15,33 @@
  * GNU General Public License for more details.                            *
  *                                                                         *
  * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.  *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__
-#define __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__
+#ifndef __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_P_HPP__
+#define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_P_HPP__
 
-/* Translations directory. */
-#define QRVTHTOOL_TRANSLATIONS_DIRECTORY "@QRVTHTOOL_TRANSLATIONS_DIRECTORY@"
+#include "TaskbarButtonManager.hpp"
 
-/* Define to 1 if you have KF5 WidgetsAddons. */
-#cmakedefine HAVE_KF5WIDGETSADDONS 1
+class TaskbarButtonManagerPrivate
+{
+	public:
+		explicit TaskbarButtonManagerPrivate(TaskbarButtonManager *const q);
+		virtual ~TaskbarButtonManagerPrivate();
 
-/* Define to 1 if you have Qt5DBus. */
-#cmakedefine HAVE_Qt5DBus 1
+	protected:
+		TaskbarButtonManager *const q_ptr;
+		Q_DECLARE_PUBLIC(TaskbarButtonManager)
+	private:
+		Q_DISABLE_COPY(TaskbarButtonManagerPrivate)
 
-#endif /* __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__ */
+	public:
+		// Window.
+		QWidget *window;
+
+		// Status elements.
+		int progressBarValue;	// Current progress. (-1 for no bar)
+		int progressBarMax;	// Maximum progress.
+};
+
+#endif /* __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_P_HPP__ */

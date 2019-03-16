@@ -11,6 +11,11 @@ FIND_PACKAGE(Qt5 5.2.0 COMPONENTS Core Gui Widgets)
 IF(Qt5_FOUND AND Qt5Core_FOUND AND Qt5Gui_FOUND AND Qt5Widgets_FOUND)
 	# Found Qt5.
 	SET(BUILD_QT5 ON)
+	IF(ENABLE_DBUS)
+		# QtDBus is used for DockManager.
+		FIND_PACKAGE(Qt5DBus)
+		SET(HAVE_Qt5DBus ${Qt5DBus_FOUND})
+	ENDIF(ENABLE_DBUS)
 ELSE()
 	# Did not find Qt5.
 	MESSAGE(WARNING "Qt5 not found. Not building qrvthtool.")
@@ -116,6 +121,68 @@ SET(qrvthtool_UIS
 	)
 QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
 
+# TaskbarButtonManager
+SET(qrvthtool_TBM_SRCS
+	TaskbarButtonManager/TaskbarButtonManager.cpp
+	TaskbarButtonManager/TaskbarButtonManagerFactory.cpp
+	)
+SET(qrvthtool_TBM_MOC_H
+	TaskbarButtonManager/TaskbarButtonManager.hpp
+	)
+SET(qrvthtool_TBM_H TaskbarButtonManager/TaskbarButtonManager_p.hpp)
+
+IF(WIN32)
+	# Windows: Use ITaskbarList3. (Win7+)
+	SET(qrvthtool_TBM_SRCS
+		${qrvthtool_TBM_SRCS}
+		TaskbarButtonManager/Win7TaskbarList.cpp
+		)
+	SET(qrvthtool_TBM_MOC_H
+		${qrvthtool_TBM_MOC_H}
+		TaskbarButtonManager/Win7TaskbarList.hpp
+		)
+ELSEIF(UNIX AND NOT APPLE)
+	# Unity Launcher API.
+	# dlopen() is required.
+	SET(qrvthtool_NEEDS_DL 1)
+	SET(qrvthtool_TBM_SRCS
+		${qrvthtool_TBM_SRCS}
+		TaskbarButtonManager/UnityLauncher.cpp
+		)
+	SET(qrvthtool_TBM_MOC_H
+		${qrvthtool_TBM_MOC_H}
+		TaskbarButtonManager/UnityLauncher.hpp
+		)
+
+	IF(QtDBus_FOUND)
+		SET(DBus_XML_SRCS
+			dbus/net.launchpad.DockItem.xml
+			dbus/net.launchpad.DockManager.xml
+			)
+		SET_SOURCE_FILES_PROPERTIES(${DBus_XML_SRCS} PROPERTIES
+			INCLUDE dbus/DBusMetatypes.hpp
+			)
+
+		# Enable DockManager / Unity API support.
+		# NOTE: The D-BUS interfaces are generated in ${CMAKE_CURRENT_BINARY_DIR},
+		# *not* ${CMAKE_CURRENT_BINARY_DIR}/dbus/.
+		QT5_ADD_DBUS_INTERFACES(
+			qrvthtool_DBUS_INTERFACE_SRCS
+			${DBus_XML_SRCS}
+			)
+		SET(qrvthtool_TBM_SRCS
+			${qrvthtool_TBM_SRCS}
+			${qrvthtool_DBUS_INTERFACE_SRCS}
+			TaskbarButtonManager/DockManager.cpp
+			)
+		SET(qrvthtool_TBM_MOC_H
+			${qrvthtool_TBM_MOC_H}
+			TaskbarButtonManager/DockManager.hpp
+			)
+	ENDIF(QtDBus_FOUND)
+ENDIF()
+QT5_WRAP_CPP(qrvthtool_TBM_MOC_SRCS ${qrvthtool_TBM_MOC_H})
+
 ######################
 # Qt resource files. #
 ######################
@@ -150,6 +217,8 @@ ADD_EXECUTABLE(qrvthtool WIN32 MACOSX_BUNDLE
 	${qrvthtool_MOC_SRCS}
 	${qrvthtool_RCC_O}
 	${qrvthtool_RC}
+	${qrvthtool_TBM_SRCS}
+	${qrvthtool_TBM_MOC_SRCS}
 	)
 ADD_DEPENDENCIES(qrvthtool git_version)
 DO_SPLIT_DEBUG(qrvthtool)
@@ -211,6 +280,12 @@ WIN32_IMAGE_VERSION_LINKER_FLAGS(${VERSION_MAJOR} ${VERSION_MINOR})
 IF(ENABLE_NLS)
 	ADD_DEPENDENCIES(qrvthtool translations_target)
 ENDIF(ENABLE_NLS)
+
+# Link in libdl if it's required for dlopen()
+# and we have a component that uses it.
+IF(qrvthtool_NEEDS_DL AND CMAKE_DL_LIBS)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${CMAKE_DL_LIBS})
+ENDIF(qrvthtool_NEEDS_DL AND CMAKE_DL_LIBS)
 
 #################
 # Installation. #
