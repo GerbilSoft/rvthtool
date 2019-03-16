@@ -105,6 +105,8 @@
     <addaction name="separator"/>
     <addaction name="actionExtract"/>
     <addaction name="actionImport"/>
+    <addaction name="actionDelete"/>
+    <addaction name="actionUndelete"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -149,6 +151,8 @@
    <addaction name="separator"/>
    <addaction name="actionExtract"/>
    <addaction name="actionImport"/>
+   <addaction name="actionDelete"/>
+   <addaction name="actionUndelete"/>
    <addaction name="actionAbout"/>
   </widget>
   <action name="actionOpenDiskImage">
@@ -242,6 +246,28 @@
    </property>
    <property name="toolTip">
     <string>Import a disc image into the selected empty bank.</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="icon">
+    <iconset theme="edit-delete"/>
+   </property>
+   <property name="text">
+    <string>&amp;Delete</string>
+   </property>
+   <property name="toolTip">
+    <string>Delete the selected bank.</string>
+   </property>
+  </action>
+  <action name="actionUndelete">
+   <property name="icon">
+    <iconset theme="edit-undo"/>
+   </property>
+   <property name="text">
+    <string>&amp;Undelete</string>
+   </property>
+   <property name="toolTip">
+    <string>Undelete the selected bank.</string>
    </property>
   </action>
  </widget>

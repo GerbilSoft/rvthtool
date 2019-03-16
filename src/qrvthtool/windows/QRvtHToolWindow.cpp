@@ -214,6 +214,8 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
 		ui.actionClose->setEnabled(false);
 		ui.actionExtract->setEnabled(false);
 		ui.actionImport->setEnabled(false);
+		ui.actionDelete->setEnabled(false);
+		ui.actionUndelete->setEnabled(false);
 	} else {
 		// RVT-H Reader image is loaded.
 		// TODO: Disable open, scan, and save (all) if we're scanning.
@@ -222,22 +224,38 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
 		// If a bank is selected, enable the actions.
 		const RvtH_BankEntry *const entry = ui.bevBankEntryView->bankEntry();
 		if (entry) {
-			// Enable Extract if the bank is not empty.
+			// Enable Extract if the bank is *not* empty.
 			ui.actionExtract->setEnabled(entry->type != RVTH_BankType_Empty);
 
 			// If this is an actual RVT-H Reader, we can
 			// enable the writing functions.
 			if (rvth->imageType() == RVTH_ImageType_HDD_Reader) {
-				// Enable Import if the bank *is* empty.
-				ui.actionImport->setEnabled(entry->type == RVTH_BankType_Empty);
+				if (entry->type == RVTH_BankType_Empty) {
+					// Bank is empty.
+					// Enable Import; disable Delete and Undelete.
+					ui.actionImport->setEnabled(true);
+					ui.actionDelete->setEnabled(false);
+					ui.actionUndelete->setEnabled(false);
+				} else {
+					// Bank is not empty.
+					// Enable Import and Undelete if the bank is deleted.
+					// Enable Delete if the bank is not deleted.
+					ui.actionImport->setEnabled(entry->is_deleted);
+					ui.actionUndelete->setEnabled(entry->is_deleted);
+					ui.actionDelete->setEnabled(!entry->is_deleted);
+				}
 			} else {
 				// Not an RVT-H Reader. Disable all writing functions.
 				ui.actionImport->setEnabled(false);
+				ui.actionDelete->setEnabled(false);
+				ui.actionUndelete->setEnabled(false);
 			}
 		} else {
 			// No entry. Disable everything.
 			ui.actionExtract->setEnabled(false);
 			ui.actionImport->setEnabled(false);
+			ui.actionDelete->setEnabled(false);
+			ui.actionUndelete->setEnabled(false);
 		}
 	}
 }
@@ -304,6 +322,8 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	// Disable per-bank actions by default.
 	ui.actionExtract->setEnabled(false);
 	ui.actionImport->setEnabled(false);
+	ui.actionDelete->setEnabled(false);
+	ui.actionUndelete->setEnabled(false);
 
 	// Recryption key.
 	ui.toolBar->insertSeparator(ui.actionAbout);
