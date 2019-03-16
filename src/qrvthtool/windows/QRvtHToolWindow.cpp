@@ -838,12 +838,20 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 			// TODO: Sort proxy model like in mcrecover.
 			bank = d->proxyModel->mapToSource(index).row();
 			// TODO: Check for errors?
-			entry = d->rvth->bankEntry(bank, nullptr);
+			entry = d->rvth->bankEntry(bank);
 		}
 	}
 
-	// If file(s) are selected, enable the Save action.
-	d->ui.actionExtract->setEnabled(bank >= 0);
+	// If a bank is selected, enable the actions.
+	// If it's empty, only enable Import. (TODO)
+	bool enable = false;
+	if (entry && entry->type != RVTH_BankType_Empty) {
+		// Valid entry.
+		// TODO: Do we want to hide RVTH_BankType_Unknown, too?
+		enable = true;
+	}
+
+	d->ui.actionExtract->setEnabled(enable);
 
 	// Set the BankView's BankEntry to the selected bank.
 	// NOTE: Only handles the first selected bank.
