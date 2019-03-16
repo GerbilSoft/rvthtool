@@ -104,6 +104,7 @@
     <addaction name="actionClose"/>
     <addaction name="separator"/>
     <addaction name="actionExtract"/>
+    <addaction name="actionImport"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -147,6 +148,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionExtract"/>
+   <addaction name="actionImport"/>
    <addaction name="actionAbout"/>
   </widget>
   <action name="actionOpenDiskImage">
@@ -220,13 +222,25 @@
   </action>
   <action name="actionExtract">
    <property name="icon">
-    <iconset theme="document-export"/>
+    <iconset theme="document-export">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>E&amp;xtract...</string>
    </property>
    <property name="toolTip">
     <string>Extract the selected disc image.</string>
+   </property>
+  </action>
+  <action name="actionImport">
+   <property name="icon">
+    <iconset theme="document-import"/>
+   </property>
+   <property name="text">
+    <string>&amp;Import...</string>
+   </property>
+   <property name="toolTip">
+    <string>Import a disc image into the selected empty bank.</string>
    </property>
   </action>
  </widget>

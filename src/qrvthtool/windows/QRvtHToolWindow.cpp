@@ -195,12 +195,24 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
 		// No RVT-H Reader image is loaded.
 		ui.actionClose->setEnabled(false);
 		ui.actionExtract->setEnabled(false);
+		ui.actionImport->setEnabled(false);
 	} else {
-		// Memory card image is loaded.
+		// RVT-H Reader image is loaded.
 		// TODO: Disable open, scan, and save (all) if we're scanning.
 		ui.actionClose->setEnabled(true);
-		ui.actionExtract->setEnabled(
-			ui.lstBankList->selectionModel()->hasSelection());
+
+		// If a bank is selected, enable the actions.
+		const RvtH_BankEntry *const entry = ui.bevBankEntryView->bankEntry();
+		if (entry) {
+			// Enable Extract if the bank is not empty.
+			ui.actionExtract->setEnabled(entry->type != RVTH_BankType_Empty);
+			// Enable Import if the bank *is* empty.
+			ui.actionImport->setEnabled(entry->type == RVTH_BankType_Empty);
+		} else {
+			// No entry. Disable everything.
+			ui.actionExtract->setEnabled(false);
+			ui.actionImport->setEnabled(false);
+		}
 	}
 }
 
@@ -263,6 +275,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 
 	// Disable per-bank actions by default.
 	ui.actionExtract->setEnabled(false);
+	ui.actionImport->setEnabled(false);
 
 	// Recryption Hey.
 	ui.toolBar->insertSeparator(ui.actionAbout);
@@ -749,7 +762,8 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 
 	// Initial message.
 	const QString filenameOnly = QFileInfo(filename).fileName();
-	d->lblMessage->setText(tr("Extracting to %1:").arg(filenameOnly));
+	d->lblMessage->setText(tr("Extracting Bank %1 to %2:")
+		.arg(bank+1).arg(filenameOnly));
 
 	// Recryption key.
 	const int recryption_key = d->cboRecryptionKey->currentData().toInt();
@@ -768,6 +782,76 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 
 	connect(d->workerThread, &QThread::started,
 		d->workerObject, &WorkerObject::doExtract);
+	connect(d->workerObject, &WorkerObject::updateStatus,
+		this, &QRvtHToolWindow::workerObject_updateStatus);
+	connect(d->workerObject, &WorkerObject::finished,
+		this, &QRvtHToolWindow::workerObject_finished);
+
+	// Start the thread.
+	// Progress will be updated using callback signals.
+	// TODO: Watchdog timer in case the thread fails?
+	d->workerThread->start();
+}
+
+/**
+ * Import an image into the selected bank.
+ */
+void QRvtHToolWindow::on_actionImport_triggered(void)
+{
+	Q_D(QRvtHToolWindow);
+
+	if (d->workerThread->isRunning() || d->workerObject) {
+		// Worker thread is already running.
+		return;
+	}
+
+	// Only one bank can be selected.
+	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
+	if (!selectionModel->hasSelection())
+		return;
+
+	QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
+	if (!index.isValid())
+		return;
+
+	// TODO: Sort proxy model like in mcrecover.
+	const unsigned int bank = d->proxyModel->mapToSource(index).row();
+
+	// Prompt the user to select a disc image.
+	QString filename = QFileDialog::getOpenFileName(this,
+		tr("Import Disc Image"),
+		QString(),	// Default filename (TODO)
+		// TODO: Remove extra space from the filename filter?
+		tr("GameCube/Wii Disc Images") + QLatin1String(" (*.gcm *.wbfs *.ciso);;") +
+		tr("All Files") + QLatin1String(" (*)"));
+	if (filename.isEmpty())
+		return;
+
+	// TODO:
+	// - Add a "Cancel" button.
+
+	// Disable the main UI widgets.
+	markUiBusy();
+
+	// Show the progress bar.
+	d->progressBar->setVisible(true);
+	d->progressBar->setMaximum(100);
+	d->progressBar->setValue(0);
+
+	// Initial message.
+	const QString filenameOnly = QFileInfo(filename).fileName();
+	d->lblMessage->setText(tr("Importing %1 to Bank %2:")
+		.arg(filenameOnly).arg(bank+1));
+
+	// Create the worker object and start the extraction.
+	d->workerObject = new WorkerObject();
+	d->workerObject->moveToThread(d->workerThread);
+	d->workerObject->setRvtH(d->rvth);
+	d->workerObject->setBank(bank);
+	d->workerObject->setGcmFilename(filename);
+
+	connect(d->workerThread, &QThread::started,
+		d->workerObject, &WorkerObject::doImport);
 	connect(d->workerObject, &WorkerObject::updateStatus,
 		this, &QRvtHToolWindow::workerObject_updateStatus);
 	connect(d->workerObject, &WorkerObject::finished,
@@ -836,20 +920,12 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 		}
 	}
 
-	// If a bank is selected, enable the actions.
-	// If it's empty, only enable Import. (TODO)
-	bool enable = false;
-	if (entry && entry->type != RVTH_BankType_Empty) {
-		// Valid entry.
-		// TODO: Do we want to hide RVTH_BankType_Unknown, too?
-		enable = true;
-	}
-
-	d->ui.actionExtract->setEnabled(enable);
-
 	// Set the BankView's BankEntry to the selected bank.
 	// NOTE: Only handles the first selected bank.
 	d->ui.bevBankEntryView->setBankEntry(entry);
+
+	// Update the action enable status.
+	d->updateActionEnableStatus();
 }
 
 /** Worker object slots **/

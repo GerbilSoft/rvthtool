@@ -79,6 +79,7 @@ class QRvtHToolWindow : public QMainWindow
 
 		// RVT-H disk image actions
 		void on_actionExtract_triggered(void);
+		void on_actionImport_triggered(void);
 
 		// RvtHModel slots
 		void rvthModel_layoutChanged(void);

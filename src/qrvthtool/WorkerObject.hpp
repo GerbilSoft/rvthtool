@@ -139,9 +139,27 @@ class WorkerObject : public QObject
 
 		/**
 		 * Start an extraction process.
-		 * Parameters must have been set before calling this function.
+		 *
+		 * The following properties must be set before calling this function:
+		 * - rvth
+		 * - bank
+		 * - gcmFilename
+		 *
+		 * Optional parameters:
+		 * - recryptionKey (default is -1)
+		 * - flags (default is 0)
 		 */
 		void doExtract(void);
+
+		/**
+		 * Start an import process.
+		 *
+		 * The following properties must be set before calling this function:
+		 * - rvth
+		 * - bank
+		 * - gcmFilename
+		 */
+		void doImport(void);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WORKEROBJECT_HPP__ */

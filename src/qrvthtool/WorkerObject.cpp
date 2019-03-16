@@ -251,7 +251,15 @@ void WorkerObject::setFlags(unsigned int flags)
 
 /**
  * Start an extraction process.
- * Parameters must have been set before calling this function.
+ *
+ * The following properties must be set before calling this function:
+ * - rvth
+ * - bank
+ * - gcmFilename
+ *
+ * Optional parameters:
+ * - recryptionKey (default is -1)
+ * - flags (default is 0)
  */
 void WorkerObject::doExtract(void)
 {
@@ -291,5 +299,54 @@ void WorkerObject::doExtract(void)
 		// An error occurred...
 		emit finished(tr("doExtract() ERROR extracting Bank %1 into %2: %3")
 			.arg(d->bank+1).arg(d->gcmFilenameOnly).arg(ret), ret);
+	}
+}
+
+/**
+ * Start an import process.
+ *
+ * The following properties must be set before calling this function:
+ * - rvth
+ * - bank
+ * - gcmFilename
+ */
+void WorkerObject::doImport(void)
+{
+	// NOTE: Callback is set to use the private class.
+	Q_D(WorkerObject);
+	if (!d->rvth) {
+		emit finished(tr("doImport() ERROR: rvth object is not set."), -EINVAL);
+		return;
+	} else if (d->bank >= d->rvth->bankCount()) {
+		if (d->bank == ~0U) {
+			emit finished(tr("doImport() ERROR: Bank number is not set."), -EINVAL);
+		} else {
+			emit finished(tr("doImport() ERROR: Bank number %1 is out of range.")
+				.arg(d->bank+1), -ERANGE);
+		}
+		return;
+	} else if (d->gcmFilename.isEmpty()) {
+		emit finished(tr("doImport() ERROR: gcmFilename is not set."), -EINVAL);
+		return;
+	}
+
+#ifdef _WIN32
+	int ret = d->rvth->import(d->bank,
+		reinterpret_cast<const wchar_t*>(d->gcmFilename.utf16()),
+		d->progress_callback, d);
+#else /* !_WIN32 */
+	int ret = d->rvth->import(d->bank,
+		d->gcmFilename.toUtf8().constData(),
+		d->progress_callback, d);
+#endif /* _WIN32 */
+
+	if (ret == 0) {
+		// Successfully extracted.
+		emit finished(tr("%1 imported into Bank %2 successfully.")
+			.arg(d->gcmFilenameOnly).arg(d->bank+1), ret);
+	} else {
+		// An error occurred...
+		emit finished(tr("doImport() ERROR importing %1 into Bank %2: %3")
+			.arg(d->gcmFilenameOnly).arg(d->bank+1).arg(ret), ret);
 	}
 }
