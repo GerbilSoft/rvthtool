@@ -87,6 +87,24 @@ class QRvtHToolWindow : public QMainWindow
 		// lstBankList slots
 		void lstBankList_selectionModel_selectionChanged(
 			const QItemSelection& selected, const QItemSelection& deselected);
+
+	protected slots:
+		/** Worker object slots **/
+
+		/**
+		 * Update the status bar.
+		 * @param text Status bar text.
+		 * @param progress_value Progress bar value. (If -1, ignore this.)
+		 * @param progress_max Progress bar maximum. (If -1, ignore this.)
+		 */
+		void workerObject_updateStatus(const QString &text, int progress_value, int progress_max);
+
+		/**
+		 * Process is finished.
+		 * @param text Status bar text.
+		 * @param err Error code. (0 on success)
+		 */
+		void workerObject_finished(const QString &text, int err);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__ */

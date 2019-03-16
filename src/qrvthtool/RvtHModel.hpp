@@ -1,5 +1,5 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (qrvthtool)                                                  *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
  * Copyright (c) 2018-2019 by David Korth.                                 *

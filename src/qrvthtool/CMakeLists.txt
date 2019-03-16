@@ -42,6 +42,7 @@ SET(qrvthtool_SRCS
 	RvtHModel.cpp
 	RvtHSortFilterProxyModel.cpp
 	TranslationManager.cpp
+	WorkerObject.cpp
 
 	widgets/BankEntryView.cpp
 	widgets/LanguageMenu.cpp
@@ -56,6 +57,7 @@ SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 	RvtHSortFilterProxyModel.hpp
 	TranslationManager.hpp
+	WorkerObject.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp

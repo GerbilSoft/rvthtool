@@ -33,6 +33,7 @@
 #include <cassert>
 
 // Qt includes.
+#include <QtCore/QThread>
 #include <QtGui/QCloseEvent>
 #include <QtWidgets/QComboBox>
 #include <QtWidgets/QFileDialog>
@@ -41,6 +42,9 @@
 
 // RVL_CryptoType_e
 #include "libwiicrypto/sig_tools.h"
+
+// Worker object for the worker thread.
+#include "WorkerObject.hpp"
 
 /** QRvtHToolWindowPrivate **/
 
@@ -109,22 +113,18 @@ class QRvtHToolWindowPrivate
 		QComboBox *cboRecryptionKey;
 
 	public:
-		// TODO: StatusBarManager.
+		// Status bar widgets.
 		QLabel *lblMessage;
 		QProgressBar *progressBar;
+
+		// Worker thread.
+		QThread *workerThread;
+		WorkerObject *workerObject;
 
 		// UI busy counter
 		int uiBusyCounter;
 
 	public:
-		/**
-		 * RVT-H progress callback.
-		 * @param state		[in] Current progress.
-		 * @param userdata	[in] User data specified when calling the RVT-H function.
-		 * @return True to continue; false to abort.
-		 */
-		static bool progress_callback(const RvtH_Progress_State *state, void *userdata);
-
 		// Current progress operation.
 		QString cur_filenameOnly;
 };
@@ -138,9 +138,10 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, lastIconID(RvtHModel::ICON_MAX)
 	, lblRecryptionKey(nullptr)
 	, cboRecryptionKey(nullptr)
-	// TODO: StatusBarManager.
 	, lblMessage(nullptr)
 	, progressBar(nullptr)
+	, workerThread(new QThread(q))
+	, workerObject(nullptr)
 	, uiBusyCounter(0)
 {
 	// Connect the RvtHModel slots.
@@ -152,7 +153,13 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 
 QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 {
-	// NOTE: Delete the MemCardModel first to prevent issues later.
+	if (workerObject) {
+		// Worker is still running...
+		// TODO: Cancel it and then wait for it to finish.
+		delete workerObject;
+	}
+
+	// NOTE: Delete the RvtHModel first to prevent issues later.
 	delete model;
 	if (rvth) {
 		delete rvth;
@@ -302,68 +309,6 @@ void QRvtHToolWindowPrivate::retranslateToolbar(void)
 	cboRecryptionKey->setItemText(2, QRvtHToolWindow::tr("Korean (fakesigned)"));
 	cboRecryptionKey->setItemText(3, QRvtHToolWindow::tr("Debug (realsigned)"));
 	cboRecryptionKey->setCurrentIndex(0);
-}
-
-/**
- * RVT-H progress callback.
- * @param state		[in] Current progress.
- * @param userdata	[in] User data specified when calling the RVT-H function.
- * @return True to continue; false to abort.
- */
-bool QRvtHToolWindowPrivate::progress_callback(const RvtH_Progress_State *state, void *userdata)
-{
-	QRvtHToolWindowPrivate *const d = static_cast<QRvtHToolWindowPrivate*>(userdata);
-
-	#define MEGABYTE (1048576 / LBA_SIZE)
-	switch (state->type) {
-		case RVTH_PROGRESS_EXTRACT:
-			d->lblMessage->setText(
-				QRvtHToolWindow::tr("Extracting to %1: %L2 MiB / %L3 MiB copied...")
-				.arg(d->cur_filenameOnly)
-				.arg(state->lba_processed / MEGABYTE)
-				.arg(state->lba_total / MEGABYTE));
-			break;
-		case RVTH_PROGRESS_IMPORT:
-			d->lblMessage->setText(
-				QRvtHToolWindow::tr("Importing from %1: %L2 MiB / %L3 MiB copied...")
-				.arg(d->cur_filenameOnly)
-				.arg(state->lba_processed / MEGABYTE)
-				.arg(state->lba_total / MEGABYTE));
-			break;
-		case RVTH_PROGRESS_RECRYPT:
-			if (state->lba_total <= 1) {
-				// TODO: Encryption types?
-				if (state->lba_processed == 0) {
-					d->lblMessage->setText(
-						QRvtHToolWindow::tr("Recrypting the ticket(s) and TMD(s)..."));
-				}
-			} else {
-				d->lblMessage->setText(
-					QRvtHToolWindow::tr("Recrypting to %1: %L2 MiB / %L3 MiB copied...")
-					.arg(d->cur_filenameOnly)
-					.arg(state->lba_processed / MEGABYTE)
-					.arg(state->lba_total / MEGABYTE));
-			}
-			break;
-		default:
-			// FIXME
-			assert(false);
-			return false;
-	}
-
-	// Update the progress bar.
-	// NOTE: Checking existing maximum value to prevent unnecessary updates.
-	// TODO: Handle RVTH_PROGRESS_RECRYPT?
-	if (state->type != RVTH_PROGRESS_RECRYPT) {
-		if (d->progressBar->maximum() != static_cast<int>(state->lba_total)) {
-			d->progressBar->setMaximum(static_cast<int>(state->lba_total));
-		}
-		d->progressBar->setValue(static_cast<int>(state->lba_processed));
-	}
-
-	// TODO: Use a separate thread instead of calling processEvents().
-	qApp->processEvents();
-	return true;
 }
 
 /** QRvtHToolWindow **/
@@ -601,8 +546,9 @@ void QRvtHToolWindow::showEvent(QShowEvent *event)
 void QRvtHToolWindow::closeEvent(QCloseEvent *event)
 {
 	Q_D(QRvtHToolWindow);
-	if (d->uiBusyCounter > 0) {
-		// UI is busy. Ignore the close event.
+	if (d->uiBusyCounter > 0 || d->workerThread->isRunning() || d->workerObject) {
+		// UI is busy, or the worker thread is running.
+		// Ignore the close event.
 		event->ignore();
 		return;
 	}
@@ -767,6 +713,11 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 {
 	Q_D(QRvtHToolWindow);
 
+	if (d->workerThread->isRunning() || d->workerObject) {
+		// Worker thread is already running.
+		return;
+	}
+
 	// Only one bank can be selected.
 	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
 	if (!selectionModel->hasSelection())
@@ -777,7 +728,7 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 		return;
 
 	// TODO: Sort proxy model like in mcrecover.
-	unsigned int bank = d->proxyModel->mapToSource(index).row();
+	const unsigned int bank = d->proxyModel->mapToSource(index).row();
 
 	// Prompt the user for a save location.
 	QString filename = QFileDialog::getSaveFileName(this,
@@ -790,11 +741,9 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 		return;
 
 	// TODO:
-	// - Use a separate thread.
-	// - Port StatusBarManager from mcrecover.
 	// - Add a "Cancel" button.
 
-	// Disable main UI widgets.
+	// Disable the main UI widgets.
 	markUiBusy();
 
 	// Show the progress bar.
@@ -807,30 +756,33 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	d->lblMessage->setText(tr("Extracting to %1:").arg(filenameOnly));
 
 	// Recryption key.
-	const int recrypt_key = d->cboRecryptionKey->currentData().toInt();
+	const int recryption_key = d->cboRecryptionKey->currentData().toInt();
 
 	// TODO: NDEV flag?
 	const unsigned int flags = 0;
 
-	// Save the information for the callback.
 	d->cur_filenameOnly = filenameOnly;
 
-	// Start the extraction.
-	// NOTE: Callback is set to use the private class.
-#ifdef _WIN32
-	int ret = d->rvth->extract(bank, reinterpret_cast<const wchar_t*>(filename.utf16()),
-		recrypt_key, flags, d->progress_callback, d);
-#else /* !_WIN32 */
-	int ret = d->rvth->extract(bank, filename.toUtf8().constData(),
-		recrypt_key, flags, d->progress_callback, d);
-#endif /* _WIN32 */
+	// Create the worker object and start the extraction.
+	d->workerObject = new WorkerObject();
+	d->workerObject->moveToThread(d->workerThread);
+	d->workerObject->setRvtH(d->rvth);
+	d->workerObject->setBank(bank);
+	d->workerObject->setGcmFilename(filename);
+	d->workerObject->setRecryptionKey(recryption_key);
+	d->workerObject->setFlags(flags);
 
-	// TODO: Better error handling in StatusBarManager.
-	d->lblMessage->setText(tr("Bank %1 extracted into %2: return code %3")
-		.arg(bank+1).arg(filenameOnly).arg(ret));
+	connect(d->workerThread, &QThread::started,
+		d->workerObject, &WorkerObject::doExtract);
+	connect(d->workerObject, &WorkerObject::updateStatus,
+		this, &QRvtHToolWindow::workerObject_updateStatus);
+	connect(d->workerObject, &WorkerObject::finished,
+		this, &QRvtHToolWindow::workerObject_finished);
 
-	// Enable main UI widgets.
-	markUiNotBusy();
+	// Start the thread.
+	// Progress will be updated using callback signals.
+	// TODO: Watchdog timer in case the thread fails?
+	d->workerThread->start();
 }
 
 /** RvtHModel slots **/
@@ -896,4 +848,66 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 	// Set the BankView's BankEntry to the selected bank.
 	// NOTE: Only handles the first selected bank.
 	d->ui.bevBankEntryView->setBankEntry(entry);
+}
+
+/** Worker object slots **/
+
+/**
+ * Update the status bar.
+ * @param text Status bar text.
+ * @param progress_value Progress bar value. (If -1, ignore this.)
+ * @param progress_max Progress bar maximum. (If -1, ignore this.)
+ */
+void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progress_value, int progress_max)
+{
+	Q_D(QRvtHToolWindow);
+	d->lblMessage->setText(text);
+
+	// TODO: "Error" state.
+	if (progress_value >= 0 && progress_max >= 0) {
+		if (d->progressBar->maximum() != progress_max) {
+			d->progressBar->setMaximum(progress_max);
+		}
+		d->progressBar->setValue(progress_value);
+	}
+}
+
+/**
+ * Process is finished.
+ * @param text Status bar text.
+ * @param err Error code. (0 on success)
+ */
+void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
+{
+	Q_D(QRvtHToolWindow);
+	d->lblMessage->setText(text);
+
+	// TODO: Play a default sound effect.
+	// MessageBeep() on Windows; libcanberra on Linux.
+	if (err != 0) {
+		// Process completed.
+		d->progressBar->setValue(d->progressBar->maximum());
+	} else {
+		// Process failed.
+		// TODO: Change progress bar to red?
+	}
+
+	// Make sure the thread exits.
+	// NOTE: Connecting WorkerObject::finished() to QThread::quit()
+	// might not work if the slots get run in the wrong order.
+	// NOTE 2: QThread::wait() doesn't return if the thread has
+	// finished before it's called, even though the documentation
+	// says it does...
+	d->workerThread->quit();
+	do {
+		d->workerThread->wait(250);
+	} while (d->workerThread->isRunning());
+
+	// Delete the worker object. It'll be created again for the next process.
+	// NOTE: Need to use deleteLater() to prevent race conditions.
+	d->workerObject->deleteLater();
+	d->workerObject = nullptr;
+
+	// Enable the main UI widgets.
+	markUiNotBusy();
 }
