@@ -144,6 +144,9 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpenDiskImage"/>
+   <addaction name="actionOpenDevice"/>
+   <addaction name="separator"/>
    <addaction name="actionExtract"/>
    <addaction name="actionImport"/>
    <addaction name="actionAbout"/>
@@ -157,7 +160,7 @@
     <string>&amp;Open Disk Image...</string>
    </property>
    <property name="toolTip">
-    <string>Open an RVT-H Reader disk image or standalone GCM disc image</string>
+    <string>Open an RVT-H Reader disk image or standalone GCM disc image.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -196,7 +199,7 @@
     <string>&amp;Close</string>
    </property>
    <property name="toolTip">
-    <string>Close the RVT-H Reader disk image</string>
+    <string>Close the RVT-H Reader disk image.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
@@ -211,7 +214,7 @@
     <string>Open RVT-&amp;H Reader...</string>
    </property>
    <property name="toolTip">
-    <string>Open a connected RVT-H Reader device</string>
+    <string>Open a connected RVT-H Reader device.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+H</string>
