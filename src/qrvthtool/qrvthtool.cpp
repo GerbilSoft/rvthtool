@@ -30,7 +30,8 @@
 #include "TranslationManager.hpp"
 
 #ifdef _WIN32
-#include <windows.h>
+# include <windows.h>
+# include <tchar.h>
 extern UINT WM_TaskbarButtonCreated;
 UINT WM_TaskbarButtonCreated;
 
