@@ -59,6 +59,7 @@ static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
 					printf("\rRecrypting the ticket(s) and TMD(s)...");
 				}
 			} else {
+				// TODO: This doesn't seem to be used yet...
 				printf("\rRecrypting: %4u MiB / %4u MiB processed...",
 					state->lba_processed / MEGABYTE,
 					state->lba_total / MEGABYTE);

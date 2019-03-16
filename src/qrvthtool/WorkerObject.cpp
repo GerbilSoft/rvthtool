@@ -105,6 +105,7 @@ bool WorkerObjectPrivate::progress_callback(const RvtH_Progress_State *state, vo
 					text = WorkerObject::tr("Recrypting the ticket(s) and TMD(s)...");
 				}
 			} else {
+				// TODO: This doesn't seem to be used yet...
 				text = WorkerObject::tr("Recrypting Bank %1 to %2: %L3 MiB / %L4 MiB copied...")
 					.arg(d->bank+1)
 					.arg(d->gcmFilenameOnly)
