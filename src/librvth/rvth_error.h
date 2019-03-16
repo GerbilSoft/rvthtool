@@ -39,25 +39,24 @@ typedef enum {
 	RVTH_ERROR_NOT_HDD_IMAGE		= 10,	// Attempting to modify the bank table of a non-HDD image.
 	RVTH_ERROR_NO_GAME_PARTITION		= 11,	// Game partition was not found in a Wii image.
 	RVTH_ERROR_INVALID_BANK_COUNT		= 12,	// `bank_count` field is invalid.
-	RVTH_ERROR_IS_HDD_IMAGE			= 13,	// Operation does not support HDD images.
-	RVTH_ERROR_IS_RETAIL_CRYPTO		= 14,	// Cannot import a retail-encrypted Wii game.
-	RVTH_ERROR_IMAGE_TOO_BIG		= 15,	// Source image does not fit in an RVT-H bank.
-	RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED	= 16,	// Destination bank is not empty or deleted.
-	RVTH_ERROR_NOT_WII_IMAGE		= 17,	// Wii-specific operation was requested on a non-Wii image.
-	RVTH_ERROR_IS_UNENCRYPTED		= 18,	// Image is unencrypted.
-	RVTH_ERROR_IS_ENCRYPTED			= 19,	// Image is encrypted.
-	RVTH_ERROR_PARTITION_TABLE_CORRUPTED	= 20,	// Wii partition table is corrupted.
-	RVTH_ERROR_PARTITION_HEADER_CORRUPTED	= 21,	// At least one Wii partition header is corrupted.
-	RVTH_ERROR_ISSUER_UNKNOWN		= 22,	// Certificate has an unknown issuer.
+	RVTH_ERROR_IS_HDD_IMAGE			= 13,	// Operation cannot be performed on devices or HDD images.
+	RVTH_ERROR_IMAGE_TOO_BIG		= 14,	// Source image does not fit in an RVT-H bank.
+	RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED	= 15,	// Destination bank is not empty or deleted.
+	RVTH_ERROR_NOT_WII_IMAGE		= 16,	// Wii-specific operation was requested on a non-Wii image.
+	RVTH_ERROR_IS_UNENCRYPTED		= 17,	// Image is unencrypted.
+	RVTH_ERROR_IS_ENCRYPTED			= 18,	// Image is encrypted.
+	RVTH_ERROR_PARTITION_TABLE_CORRUPTED	= 19,	// Wii partition table is corrupted.
+	RVTH_ERROR_PARTITION_HEADER_CORRUPTED	= 20,	// At least one Wii partition header is corrupted.
+	RVTH_ERROR_ISSUER_UNKNOWN		= 21,	// Certificate has an unknown issuer.
 
 	// 'import' command: Dual-Layer errors.
-	RVTH_ERROR_IMPORT_DL_EXT_NO_BANK1	= 23,	// Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.
-	RVTH_ERROR_IMPORT_DL_LAST_BANK		= 24,	// Cannot use the last bank for a Dual-Layer image.
-	RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED	= 25,	// The second bank for the Dual-Layer image is not empty or deleted.
-	RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS	= 26,	// The two banks are not contiguous.
+	RVTH_ERROR_IMPORT_DL_EXT_NO_BANK1	= 22,	// Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.
+	RVTH_ERROR_IMPORT_DL_LAST_BANK		= 23,	// Cannot use the last bank for a Dual-Layer image.
+	RVTH_ERROR_BANK2DL_NOT_EMPTY_OR_DELETED	= 24,	// The second bank for the Dual-Layer image is not empty or deleted.
+	RVTH_ERROR_IMPORT_DL_NOT_CONTIGUOUS	= 25,	// The two banks are not contiguous.
 
 	// NDEV option.
-	RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED	= 27,	// NDEV headers for GCN are currently unsupported.
+	RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED	= 26,	// NDEV headers for GCN are currently unsupported.
 
 	RVTH_ERROR_MAX
 } RvtH_Errors;

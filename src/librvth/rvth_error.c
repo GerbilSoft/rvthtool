@@ -67,8 +67,6 @@ const char *rvth_error(int err)
 		"RVT-H bank count field is invalid",
 		// tr: RVTH_ERROR_IS_HDD_IMAGE
 		"Operation cannot be performed on devices or HDD images",
-		// tr: RVTH_ERROR_IS_RETAIL_CRYPTO
-		"Cannot import a retail-encrypted Wii game",
 		// tr: RVTH_ERROR_IMAGE_TOO_BIG
 		"Source image does not fit in an RVT-H bank",
 		// tr: RVTH_ERROR_BANK_NOT_EMPTY_OR_DELETED
