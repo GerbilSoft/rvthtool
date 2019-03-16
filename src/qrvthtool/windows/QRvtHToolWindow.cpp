@@ -285,7 +285,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	ui.actionExtract->setEnabled(false);
 	ui.actionImport->setEnabled(false);
 
-	// Recryption Hey.
+	// Recryption key.
 	ui.toolBar->insertSeparator(ui.actionAbout);
 	lblRecryptionKey = new QLabel(QRvtHToolWindow::tr("Recryption Key:"), q);
 	lblRecryptionKey->setObjectName(QLatin1String("lblRecryptionKey"));
