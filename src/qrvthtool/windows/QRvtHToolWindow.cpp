@@ -206,8 +206,16 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
 		if (entry) {
 			// Enable Extract if the bank is not empty.
 			ui.actionExtract->setEnabled(entry->type != RVTH_BankType_Empty);
-			// Enable Import if the bank *is* empty.
-			ui.actionImport->setEnabled(entry->type == RVTH_BankType_Empty);
+
+			// If this is an actual RVT-H Reader, we can
+			// enable the writing functions.
+			if (rvth->imageType() == RVTH_ImageType_HDD_Reader) {
+				// Enable Import if the bank *is* empty.
+				ui.actionImport->setEnabled(entry->type == RVTH_BankType_Empty);
+			} else {
+				// Not an RVT-H Reader. Disable all writing functions.
+				ui.actionImport->setEnabled(false);
+			}
 		} else {
 			// No entry. Disable everything.
 			ui.actionExtract->setEnabled(false);
