@@ -87,11 +87,15 @@ void MessageSound::play(QMessageBox::Icon notificationType, const QString &messa
 #else /* !_WIN32 */
 	// Linux: Try a few different methods.
 	// TODO: Check XDG_DESKTOP_SESSION.
+	// TODO: More methods.
 
+#ifdef HAVE_KF5WIDGETSADDONS
 	// If KDE is available, try FrameworkIntegrationPlugin.
 	pthread_once(&kf5notify_once, init_kf5notify);
 	if (s_notifyInterface) {
 		s_notifyInterface->sendNotification(notificationType, message, parent);
 	}
+#endif /* HAVE_KF5WIDGETSADDONS */
+
 #endif /* _WIN32 */
 }
