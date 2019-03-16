@@ -852,7 +852,7 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 		}
 		delete rvth_src;
 		return ret;
-	} else if (!rvth_src->isHDD() || rvth_src->bankCount() > 1) {
+	} else if (rvth_src->isHDD() || rvth_src->bankCount() > 1) {
 		// Not a standalone disc image.
 		delete rvth_src;
 		errno = EINVAL;
