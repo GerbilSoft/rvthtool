@@ -123,10 +123,6 @@ class QRvtHToolWindowPrivate
 
 		// UI busy counter
 		int uiBusyCounter;
-
-	public:
-		// Current progress operation.
-		QString cur_filenameOnly;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -760,8 +756,6 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 
 	// TODO: NDEV flag?
 	const unsigned int flags = 0;
-
-	d->cur_filenameOnly = filenameOnly;
 
 	// Create the worker object and start the extraction.
 	d->workerObject = new WorkerObject();
