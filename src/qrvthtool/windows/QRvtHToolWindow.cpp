@@ -886,7 +886,7 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 
 	// TODO: Play a default sound effect.
 	// MessageBeep() on Windows; libcanberra on Linux.
-	if (err != 0) {
+	if (err == 0) {
 		// Process completed.
 		d->progressBar->setValue(d->progressBar->maximum());
 	} else {
