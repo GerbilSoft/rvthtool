@@ -40,7 +40,8 @@ class WorkerObjectPrivate
 			, rvth(nullptr)
 			, bank(~0U)
 			, recryption_key(-1)
-			, flags(0U) { }
+			, flags(0U)
+			, cancel(false) { }
 
 	protected:
 		WorkerObject *const q_ptr;
@@ -56,6 +57,10 @@ class WorkerObjectPrivate
 
 		QString gcmFilename;
 		QString gcmFilenameOnly;
+
+		// Cancel the current process.
+		// TODO: Mutex?
+		bool cancel;
 
 	public:
 		/**
@@ -131,7 +136,9 @@ bool WorkerObjectPrivate::progress_callback(const RvtH_Progress_State *state, vo
 		emit q->updateStatus(text, -1, -1);
 	}
 
-	return true;
+	// Return `true` to continue.
+	// If `cancel` is set, return `false` to cancel.
+	return !d->cancel;
 }
 
 /** WorkerObject **/
@@ -251,6 +258,15 @@ void WorkerObject::setFlags(unsigned int flags)
 /** Worker functions **/
 
 /**
+ * Cancel the current process.
+ */
+void WorkerObject::cancel(void)
+{
+	Q_D(WorkerObject);
+	d->cancel = true;
+}
+
+/**
  * Start an extraction process.
  *
  * The following properties must be set before calling this function:
@@ -282,6 +298,7 @@ void WorkerObject::doExtract(void)
 		return;
 	}
 
+	d->cancel = false;
 #ifdef _WIN32
 	int ret = d->rvth->extract(d->bank,
 		reinterpret_cast<const wchar_t*>(d->gcmFilename.utf16()),
@@ -331,6 +348,7 @@ void WorkerObject::doImport(void)
 		return;
 	}
 
+	d->cancel = false;
 #ifdef _WIN32
 	int ret = d->rvth->import(d->bank,
 		reinterpret_cast<const wchar_t*>(d->gcmFilename.utf16()),

@@ -562,6 +562,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
+				ret = -ECANCELED;
 				goto end;
 			}
 		}
@@ -589,6 +590,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
+				ret = -ECANCELED;
 				goto end;
 			}
 		}
@@ -642,6 +644,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
 		if (!bRet) {
 			// Stop processing.
 			err = ECANCELED;
+			ret = -ECANCELED;
 			goto end;
 		}
 	}

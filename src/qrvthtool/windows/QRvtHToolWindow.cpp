@@ -40,6 +40,7 @@
 #include <QtWidgets/QFileDialog>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QProgressBar>
+#include <QtWidgets/QToolButton>
 
 // RVL_CryptoType_e
 #include "libwiicrypto/sig_tools.h"
@@ -116,6 +117,7 @@ class QRvtHToolWindowPrivate
 	public:
 		// Status bar widgets.
 		QLabel *lblMessage;
+		QToolButton *btnCancel;
 		QProgressBar *progressBar;
 
 		// Worker thread.
@@ -393,10 +395,26 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->initToolbar();
 	d->updateWindowTitle();
 
-	// TODO: StatusBarManager.
+	/** Progress bar widgets **/
 	d->lblMessage = new QLabel();
 	d->lblMessage->setTextFormat(Qt::PlainText);
 	d->ui.statusBar->addWidget(d->lblMessage, 1);
+
+	// TODO: Handle "Escape" keypresses as cancel?
+	// Disabling focus to prevent it from being highlighted.
+	d->btnCancel = new QToolButton();
+	d->btnCancel->setVisible(false);
+	d->btnCancel->setFocusPolicy(Qt::NoFocus);
+	d->btnCancel->setToolTip(tr("Cancel the current operation."));
+	if (QIcon::hasThemeIcon(QLatin1String("dialog-close"))) {
+		d->btnCancel->setIcon(QIcon::fromTheme(QLatin1String("dialog-close")));
+	} else {
+		d->btnCancel->setIcon(style()->standardIcon(
+			QStyle::SP_DialogCloseButton, nullptr, d->btnCancel));
+	}
+	connect(d->btnCancel, &QToolButton::clicked,
+		this, &QRvtHToolWindow::btnCancel_clicked);
+	d->ui.statusBar->addPermanentWidget(d->btnCancel, 1);
 
 	d->progressBar = new QProgressBar();
 	d->progressBar->setVisible(false);
@@ -769,7 +787,8 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	// Disable the main UI widgets.
 	markUiBusy();
 
-	// Show the progress bar.
+	// Show the progress bar and cancel button.
+	d->btnCancel->setVisible(true);
 	d->progressBar->setVisible(true);
 	d->progressBar->setMaximum(100);
 	d->progressBar->setValue(0);
@@ -848,7 +867,8 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 	// Disable the main UI widgets.
 	markUiBusy();
 
-	// Show the progress bar.
+	// Show the progress bar and cancel button.
+	d->btnCancel->setVisible(true);
 	d->progressBar->setVisible(true);
 	d->progressBar->setMaximum(100);
 	d->progressBar->setValue(0);
@@ -975,6 +995,9 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	Q_D(QRvtHToolWindow);
 	d->lblMessage->setText(text);
 
+	// Hide the Cancel button.
+	d->btnCancel->setVisible(false);
+
 	// TODO: Play a default sound effect.
 	// MessageBeep() on Windows; libcanberra on Linux.
 	if (err == 0) {
@@ -1008,4 +1031,17 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 
 	// Enable the main UI widgets.
 	markUiNotBusy();
+}
+
+/**
+ * Cancel button was pressed.
+ */
+void QRvtHToolWindow::btnCancel_clicked(void)
+{
+	Q_D(QRvtHToolWindow);
+	// TODO: Make sure there's no race conditions.
+	if (d->workerObject) {
+		// TODO: Delete the destination .gcm if necessary?
+		d->workerObject->cancel();
+	}
 }

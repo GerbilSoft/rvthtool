@@ -106,6 +106,11 @@ class QRvtHToolWindow : public QMainWindow
 		 * @param err Error code. (0 on success)
 		 */
 		void workerObject_finished(const QString &text, int err);
+
+		/**
+		 * Cancel button was pressed.
+		 */
+		void btnCancel_clicked(void);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__ */

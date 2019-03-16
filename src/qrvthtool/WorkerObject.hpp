@@ -138,6 +138,11 @@ class WorkerObject : public QObject
 		/** Worker functions **/
 
 		/**
+		 * Cancel the current process.
+		 */
+		void cancel(void);
+
+		/**
 		 * Start an extraction process.
 		 *
 		 * The following properties must be set before calling this function:

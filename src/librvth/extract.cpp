@@ -266,6 +266,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
+				ret = -ECANCELED;
 				goto end;
 			}
 		}
@@ -310,6 +311,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
+				ret = -ECANCELED;
 				goto end;
 			}
 		}
@@ -332,6 +334,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		if (!bRet) {
 			// Stop processing.
 			err = ECANCELED;
+			ret = -ECANCELED;
 			goto end;
 		}
 	}
@@ -772,6 +775,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 			if (!bRet) {
 				// Stop processing.
 				err = ECANCELED;
+				ret = -ECANCELED;
 				goto end;
 			}
 		}
@@ -799,6 +803,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		if (!bRet) {
 			// Stop processing.
 			err = ECANCELED;
+			ret = -ECANCELED;
 			goto end;
 		}
 	}
