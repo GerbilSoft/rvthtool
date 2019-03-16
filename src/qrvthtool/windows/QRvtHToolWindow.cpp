@@ -271,7 +271,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
 
 	cboRecryptionKey = new QComboBox(q);
-	cboRecryptionKey->addItem(QString(), RVL_CryptoType_None);	// None
+	cboRecryptionKey->addItem(QString(), -1);			// None
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Retail);	// Retail (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Korean);	// Korean (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Debug);	// Debug (fakesigned)
