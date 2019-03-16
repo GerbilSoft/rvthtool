@@ -43,12 +43,12 @@ static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
 	#define MEGABYTE (1048576 / LBA_SIZE)
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:
-			printf("\rExtracting: %4u MB / %4u MB copied...",
+			printf("\rExtracting: %4u MiB / %4u MiB copied...",
 				state->lba_processed / MEGABYTE,
 				state->lba_total / MEGABYTE);
 			break;
 		case RVTH_PROGRESS_IMPORT:
-			printf("\rImporting: %4u MB / %4u MB copied...",
+			printf("\rImporting: %4u MiB / %4u MiB copied...",
 				state->lba_processed / MEGABYTE,
 				state->lba_total / MEGABYTE);
 			break;
@@ -59,7 +59,7 @@ static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
 					printf("\rRecrypting the ticket(s) and TMD(s)...");
 				}
 			} else {
-				printf("\rRecrypting: %4u MB / %4u MB processed...",
+				printf("\rRecrypting: %4u MiB / %4u MiB processed...",
 					state->lba_processed / MEGABYTE,
 					state->lba_total / MEGABYTE);
 			}
