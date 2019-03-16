@@ -52,14 +52,18 @@ static void init_kf5notify(void)
 
 /**
  * Play a message sound effect.
- * @param icon MessageBox icon associated with the sound effect.
+ * @param notificationType Notification type.
+ * @param message Message for logging. (not supported on all systems)
+ * @param parent Parent window. (not supported on all systems)
  */
-void MessageSound::play(QMessageBox::Icon icon)
+void MessageSound::play(QMessageBox::Icon notificationType, const QString &message, QWidget *parent)
 {
 #ifdef _WIN32
 	// Windows: Use MessageBeep().
+	Q_UNUSED(message)
+	Q_UNUSED(parent)
 	UINT uType;
-	switch (icon) {
+	switch (notificationType) {
 		case QMessageBox::Information:
 			uType = MB_ICONINFORMATION;
 			break;
@@ -87,8 +91,7 @@ void MessageSound::play(QMessageBox::Icon icon)
 	// If KDE is available, try FrameworkIntegrationPlugin.
 	pthread_once(&kf5notify_once, init_kf5notify);
 	if (s_notifyInterface) {
-		// TODO: Send the message and parent too?
-		s_notifyInterface->sendNotification(icon, QString(), nullptr);
+		s_notifyInterface->sendNotification(notificationType, message, parent);
 	}
 #endif /* _WIN32 */
 }

@@ -980,12 +980,12 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	if (err == 0) {
 		// Process completed.
 		d->progressBar->setValue(d->progressBar->maximum());
-		MessageSound::play(QMessageBox::Information);
+		MessageSound::play(QMessageBox::Information, text, this);
 	} else {
 		// Process failed.
 		// TODO: Change progress bar to red?
 		// TOOD: Critical vs. warning.
-		MessageSound::play(QMessageBox::Warning);
+		MessageSound::play(QMessageBox::Warning, text, this);
 	}
 
 	// Make sure the thread exits.

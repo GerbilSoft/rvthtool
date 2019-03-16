@@ -34,9 +34,11 @@ class MessageSound
 	public:
 		/**
 		 * Play a message sound effect.
-		 * @param icon MessageBox icon associated with the sound effect.
+		 * @param notificationType Notification type.
+		 * @param message Message for logging. (not supported on all systems)
+		 * @param parent Parent window. (not supported on all systems)
 		 */
-		static void play(QMessageBox::Icon icon);
+		static void play(QMessageBox::Icon notificationType, const QString &message = QString(), QWidget *parent = nullptr);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_MESSAGESOUND_HPP__ */
