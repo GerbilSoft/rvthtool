@@ -136,7 +136,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, cboRecryptionKey(nullptr)
 	, lblMessage(nullptr)
 	, progressBar(nullptr)
-	, workerThread(new QThread(q))
+	, workerThread(nullptr)
 	, workerObject(nullptr)
 	, uiBusyCounter(0)
 {
@@ -149,11 +149,15 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 
 QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 {
-	if (workerObject) {
-		// Worker is still running...
-		// TODO: Cancel it and then wait for it to finish.
-		delete workerObject;
+	if (workerThread) {
+		// Worker thread is still running...
+		// TODO: Cancel it instead of simply quitting.
+		workerThread->quit();
+		do {
+			workerThread->wait(250);
+		} while (workerThread->isRunning());
 	}
+	delete workerObject;
 
 	// NOTE: Delete the RvtHModel first to prevent issues later.
 	delete model;
@@ -563,7 +567,8 @@ void QRvtHToolWindow::showEvent(QShowEvent *event)
 void QRvtHToolWindow::closeEvent(QCloseEvent *event)
 {
 	Q_D(QRvtHToolWindow);
-	if (d->uiBusyCounter > 0 || d->workerThread->isRunning() || d->workerObject) {
+	if (d->uiBusyCounter > 0 || d->workerObject ||
+	    (d->workerThread && d->workerThread->isRunning())) {
 		// UI is busy, or the worker thread is running.
 		// Ignore the close event.
 		event->ignore();
@@ -730,7 +735,7 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 {
 	Q_D(QRvtHToolWindow);
 
-	if (d->workerThread->isRunning() || d->workerObject) {
+	if (d->workerObject || (d->workerThread && d->workerThread->isRunning())) {
 		// Worker thread is already running.
 		return;
 	}
@@ -779,7 +784,8 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	// TODO: NDEV flag?
 	const unsigned int flags = 0;
 
-	// Create the worker object and start the extraction.
+	// Create the worker thread and object.
+	d->workerThread = new QThread(this);
 	d->workerObject = new WorkerObject();
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
@@ -851,8 +857,8 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 	d->lblMessage->setText(tr("Importing %1 to Bank %2:")
 		.arg(filenameOnly).arg(bank+1));
 
-	// Create the worker object and start the extraction.
-	d->workerObject = new WorkerObject();
+	// Create the worker thread and object.
+	d->workerThread = new QThread(this);
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
 	d->workerObject->setBank(bank);
@@ -988,6 +994,8 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	do {
 		d->workerThread->wait(250);
 	} while (d->workerThread->isRunning());
+	d->workerThread->deleteLater();
+	d->workerThread = nullptr;
 
 	// Delete the worker object. It'll be created again for the next process.
 	// NOTE: Need to use deleteLater() to prevent race conditions.
