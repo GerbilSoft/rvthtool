@@ -125,7 +125,6 @@ net::launchpad::DockManager *DockManagerPrivate::GetDockManagerInterface(QObject
 				QLatin1String("net.launchpad.DockManager"),
 				QLatin1String("/net/launchpad/DockManager"),
 				bus, parent);
-	printf("ifDockManager: %p %d\n", ifDockManager, ifDockManger->isValid());
 	if (!ifDockManager->isValid()) {
 		// Cannot connect to the DockManager.
 		delete ifDockManager;

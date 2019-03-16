@@ -154,7 +154,7 @@ ELSEIF(UNIX AND NOT APPLE)
 		TaskbarButtonManager/UnityLauncher.hpp
 		)
 
-	IF(QtDBus_FOUND)
+	IF(HAVE_Qt5DBus)
 		SET(DBus_XML_SRCS
 			dbus/net.launchpad.DockItem.xml
 			dbus/net.launchpad.DockManager.xml
@@ -179,7 +179,7 @@ ELSEIF(UNIX AND NOT APPLE)
 			${qrvthtool_TBM_MOC_H}
 			TaskbarButtonManager/DockManager.hpp
 			)
-	ENDIF(QtDBus_FOUND)
+	ENDIF(HAVE_Qt5DBus)
 ENDIF()
 QT5_WRAP_CPP(qrvthtool_TBM_MOC_SRCS ${qrvthtool_TBM_MOC_H})
 
@@ -238,6 +238,9 @@ TARGET_LINK_LIBRARIES(qrvthtool PRIVATE rvth)
 # Qt libraries
 # NOTE: Libraries have to be linked in reverse order.
 TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
+IF(ENABLE_DBUS AND HAVE_Qt5DBus)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::DBus)
+ENDIF(ENABLE_DBUS AND HAVE_Qt5DBus)
 IF(WIN32)
 	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::WinMain)
 ENDIF(WIN32)
