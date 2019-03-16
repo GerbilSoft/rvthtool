@@ -628,7 +628,7 @@ void QRvtHToolWindow::closeEvent(QCloseEvent *event)
 bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
 {
 	// Reference: http://nicug.blogspot.com/2011/03/windows-7-taskbar-extensions-in-qt.html
-	Q_D(McRecoverWindow);
+	Q_D(QRvtHToolWindow);
 	const MSG *const msg = reinterpret_cast<const MSG*>(message);
 	extern UINT WM_TaskbarButtonCreated;
 	if (msg->message == WM_TaskbarButtonCreated) {
