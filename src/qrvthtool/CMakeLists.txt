@@ -33,6 +33,42 @@ ELSE()
         SET(QRVTHTOOL_TRANSLATIONS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${DIR_INSTALL_TRANSLATIONS}")
 ENDIF()
 
+# KDE5: Check for KWidgetsAddons headers for notification sounds.
+IF(UNIX AND NOT APPLE)
+	# Reference: http://www.proli.net/2014/06/21/porting-your-project-to-qt5kf5/
+	# Find KDE5 Extra CMake Modules.
+	FIND_PACKAGE(ECM ${REQUIRE_KDE5} 0.0.11 NO_MODULE)
+	IF(ECM_MODULE_PATH AND ECM_KDE_MODULE_DIR)
+		# Make sure ECM's CMake files don't create an uninstall rule.
+		SET(KDE_SKIP_UNINSTALL_TARGET TRUE)
+
+		# Don't add KDE tests to the CTest build.
+		SET(KDE_SKIP_TEST_SETTINGS TRUE)
+
+		# Include KDE5 CMake modules.
+		LIST(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
+		# NOTE: The following are not needed for rvthtool and cause
+		# duplicate moc generation, but we're leaving it here for reference.
+		#INCLUDE(KDEInstallDirs)
+		#INCLUDE(KDECMakeSettings)
+		#INCLUDE(KDECompilerSettings)
+
+		# Get rid of the explicit C90 setting.
+		# NOTE: Not needed because KDECompilerSettings isn't used.
+		#STRING(REPLACE "-std=iso9899:1990" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+
+		# Find KDE5. (TODO: Version?)
+		FIND_PACKAGE(KF5 COMPONENTS WidgetsAddons)
+		IF(KF5WidgetsAddons_FOUND)
+			SET(HAVE_KF5WIDGETSADDONS 1)
+
+			# KDE code uses pthread_once().
+			FIND_PACKAGE(Threads REQUIRED)
+		ENDIF(KF5WidgetsAddons_FOUND)
+	ENDIF()
+ENDIF(UNIX AND NOT APPLE)
+
+
 # Write the config.h file.
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.qrvthtool.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.qrvthtool.h")
 
@@ -43,6 +79,7 @@ SET(qrvthtool_SRCS
 	RvtHSortFilterProxyModel.cpp
 	TranslationManager.cpp
 	WorkerObject.cpp
+	MessageSound.cpp
 
 	widgets/BankEntryView.cpp
 	widgets/LanguageMenu.cpp
@@ -58,6 +95,7 @@ SET(qrvthtool_MOC_H
 	RvtHSortFilterProxyModel.hpp
 	TranslationManager.hpp
 	WorkerObject.hpp
+	MessageSound.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp
@@ -126,14 +164,24 @@ TARGET_INCLUDE_DIRECTORIES(qrvthtool
 		$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/..>
 	)
 
-TARGET_LINK_LIBRARIES(qrvthtool rvth)
+TARGET_LINK_LIBRARIES(qrvthtool PRIVATE rvth)
 
 # Qt libraries
 # NOTE: Libraries have to be linked in reverse order.
-TARGET_LINK_LIBRARIES(qrvthtool Qt5::Widgets Qt5::Gui Qt5::Core)
+TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
 IF(WIN32)
-	TARGET_LINK_LIBRARIES(qrvthtool Qt5::WinMain)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::WinMain)
 ENDIF(WIN32)
+
+IF(CMAKE_THREAD_LIBS_INIT)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+ENDIF(CMAKE_THREAD_LIBS_INIT)
+
+IF(HAVE_KF5WIDGETSADDONS)
+	# NOTE: The library isn't actually needed, but we need to
+	# link to the target in order to get the headers.
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE KF5::WidgetsAddons)
+ENDIF(HAVE_KF5WIDGETSADDONS)
 
 # Define -DQT_NO_DEBUG in release builds.
 SET(CMAKE_C_FLAGS_RELEASE   "-DQT_NO_DEBUG ${CMAKE_C_FLAGS_RELEASE}")
@@ -150,6 +198,10 @@ ADD_DEFINITIONS(-DQT_USE_FAST_CONCATENATION
 	-DQT_STRICT_ITERATORS
 	-DQT_NO_URL_CAST_FROM_STRING
 	)
+
+# Qt5 requires "-fpic -fPIC" due to reduced relocations.
+SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fpic -fPIC")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic -fPIC")
 
 # Win32: image version.
 INCLUDE(Win32ImageVersionLinkerFlags)

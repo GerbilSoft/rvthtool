@@ -26,6 +26,7 @@
 
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
+#include "MessageSound.hpp"
 
 #include "windows/SelectDeviceDialog.hpp"
 
@@ -979,9 +980,12 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	if (err == 0) {
 		// Process completed.
 		d->progressBar->setValue(d->progressBar->maximum());
+		MessageSound::play(QMessageBox::Information);
 	} else {
 		// Process failed.
 		// TODO: Change progress bar to red?
+		// TOOD: Critical vs. warning.
+		MessageSound::play(QMessageBox::Warning);
 	}
 
 	// Make sure the thread exits.

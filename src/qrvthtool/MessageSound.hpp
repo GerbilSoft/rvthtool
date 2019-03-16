@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (qrvthtool)                                                  *
- * config.qrvthtool.h.in: QRvthTool configuration. (source file)           *
+ * MessageSound.hpp: Message sound effects abstraction class.              *
  *                                                                         *
- * Copyright (c) 2013-2018 by David Korth.                                 *
+ * Copyright (c) 2018-2019 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -18,13 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__
-#define __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__
+#ifndef __RVTHTOOL_QRVTHTOOL_MESSAGESOUND_HPP__
+#define __RVTHTOOL_QRVTHTOOL_MESSAGESOUND_HPP__
 
-/* Translations directory. */
-#define QRVTHTOOL_TRANSLATIONS_DIRECTORY "@QRVTHTOOL_TRANSLATIONS_DIRECTORY@"
+#include <QtWidgets/QMessageBox>
 
-/* Define to 1 if you have KF5 WidgetsAddons. */
-#cmakedefine HAVE_KF5WIDGETSADDONS 1
+class MessageSound
+{
+	private:
+		// MessageSound is a private class.
+		MessageSound();
+		~MessageSound();
+		Q_DISABLE_COPY(MessageSound);
 
-#endif /* __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__ */
+	public:
+		/**
+		 * Play a message sound effect.
+		 * @param icon MessageBox icon associated with the sound effect.
+		 */
+		static void play(QMessageBox::Icon icon);
+};
+
+#endif /* __RVTHTOOL_QRVTHTOOL_MESSAGESOUND_HPP__ */
