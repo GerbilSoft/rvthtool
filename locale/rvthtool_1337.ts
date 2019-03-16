@@ -106,19 +106,19 @@
         <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="203"/>
         <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="303"/>
         <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="335"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="399"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="387"/>
         <source>Unknown</source>
         <translation>unkn0wn</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="206"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="405"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="393"/>
         <source>Debug</source>
         <translation>d3bu6</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="209"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="408"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="396"/>
         <source>Retail</source>
         <translation>r3741l</translation>
     </message>
@@ -168,12 +168,12 @@
         <translation>w11 (dl b4nk 2)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="402"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="390"/>
         <source>None</source>
         <translation>n0n3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="411"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="399"/>
         <source>Korean</source>
         <translation>k0r34n</translation>
     </message>
@@ -201,109 +201,191 @@
         <translation>&amp;f1l3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="110"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="113"/>
         <source>&amp;Help</source>
         <translation>&amp;h3lp</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="116"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="119"/>
         <source>&amp;Language</source>
         <translation>&amp;l4n6u463</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="136"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="157"/>
         <source>&amp;Open Disk Image...</source>
         <translation>&amp;Op3n d15k 1m463...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="139"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="160"/>
         <source>Open an RVT-H Reader disk image or standalone GCM disc image</source>
         <translation>0p3n 4n rv7-h r34d3r d15k 1m463 0r 574nd4l0n3 6cm d15c 1m463</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="142"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="163"/>
         <source>Ctrl+O</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="151"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="172"/>
         <source>E&amp;xit</source>
         <translation>3&amp;x17</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="154"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="175"/>
         <source>Exit the program</source>
         <translation>3x17 7h3 pr06r4m</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="163"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="184"/>
         <source>&amp;About</source>
         <translation>&amp;Ab0u7</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="166"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="187"/>
         <source>About this program</source>
         <translation>4b0u7 7h15 pr06r4m</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="175"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="196"/>
         <source>&amp;Close</source>
         <translation>&amp;cl053</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="178"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="199"/>
         <source>Close the RVT-H Reader disk image</source>
         <translation>cl053 7h3 rv7-h r34d3r d15k 1m463</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="181"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="202"/>
         <source>Ctrl+W</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="189"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="211"/>
         <source>Open RVT-&amp;H Reader...</source>
         <translation>0p3n rv7-&amp;h r34d3r...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="192"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="214"/>
         <source>Open a connected RVT-H Reader device</source>
         <translation>0p3n 4 c0nn3c73d rv7-h r34d3r d3v1c3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="195"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="217"/>
         <source>Ctrl+H</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="110"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="226"/>
+        <source>E&amp;xtract...</source>
+        <translation>3&amp;x7r4c7...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="229"/>
+        <source>Extract the selected disc image.</source>
+        <translation>3x7r4c7 7h3 53l3c73d d15c 1m463.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="238"/>
+        <source>&amp;Import...</source>
+        <translation>&amp;imp0r7...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.ui" line="241"/>
+        <source>Import a disc image into the selected empty bank.</source>
+        <translation>1mp0r7 4 d15c 1m463 1n70 7h3 53l3c73d 3mp7y b4nk.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="172"/>
         <source>No RVT-H Reader disk image loaded.</source>
         <translation>n0 rv7-h r34d3r d15k 1m463 l04d3d.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="401"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="290"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="319"/>
+        <source>Recryption Key:</source>
+        <translation>r3cryp710n k3y:</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="292"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="320"/>
+        <source>Set the encryption key to use when extracting disc images.
+Default is None, which retains the original key.</source>
+        <translation>537 7h3 3ncryp710n k3y 70 u53 wh3n 3x7r4c71n6 d15c 1m4635.
+d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="324"/>
+        <source>None</source>
+        <translation>n0n3</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="325"/>
+        <source>Retail (fakesigned)</source>
+        <translation>r3741l (f4k3516n3d)</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="326"/>
+        <source>Korean (fakesigned)</source>
+        <translation>k0r34n (f4k3516n3d)</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="327"/>
+        <source>Debug (realsigned)</source>
+        <translation>d3bu6 (r34l516n3d)</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="638"/>
         <source>All Supported Files</source>
         <translation>4ll 5upp0r73d f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="403"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="640"/>
         <source>RVT-H Reader Disk Image Files</source>
         <translation>rv7-h r34d3r d15k 1m463 f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="405"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="642"/>
         <source>GameCube/Wii Disc Image Files</source>
         <translation>64m3cub3/w11 d15c 1m463 f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="407"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="644"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="756"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="834"/>
         <source>All Files</source>
         <translation>4ll f1l35</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="421"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="658"/>
         <source>Open RVT-H Reader Disk Image</source>
         <translation>0p3n rv7-h r34d3r d15k 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="752"/>
+        <source>Extract Disc Image</source>
+        <translation>3x7r4c7 d15c 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="755"/>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="833"/>
+        <source>GameCube/Wii Disc Images</source>
+        <translation>64m3cub3/w11 d15c 1m4635</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="773"/>
+        <source>Extracting Bank %1 to %2:</source>
+        <translation>3x7r4c71n6 b4nk %1 70 %2:</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="830"/>
+        <source>Import Disc Image</source>
+        <translation>1mp0r7 d15c 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="851"/>
+        <source>Importing %1 to Bank %2:</source>
+        <translation>1mp0r71n6 %1 70 b4nk %2:</translation>
     </message>
 </context>
 <context>
@@ -322,43 +404,43 @@
 <context>
     <name>RvtHModel</name>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="545"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="543"/>
         <source>#</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="546"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="544"/>
         <source>Type</source>
         <translation>7yp3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="547"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="545"/>
         <source>Title</source>
         <translation>717l3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="549"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="547"/>
         <source>Game ID</source>
         <extracomment>6-character game ID, e.g. GALE01.</extracomment>
         <translation>64m3 1d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="550"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="548"/>
         <source>Disc #</source>
         <translation>d15c #</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="551"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="549"/>
         <source>Revision</source>
         <translation>r3v1510n</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="552"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="550"/>
         <source>Region</source>
         <translation>r3610n</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="553"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="551"/>
         <source>IOS</source>
         <translation>105</translation>
     </message>
@@ -462,6 +544,89 @@
         <source>C</source>
         <comment>ts-locale</comment>
         <translation>1337</translation>
+    </message>
+</context>
+<context>
+    <name>WorkerObject</name>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="88"/>
+        <source>Extracting Bank %1 to %2: %L3 MiB / %L4 MiB copied...</source>
+        <translation>3x7r4c71n6 b4nk %1 70 %2: %L3 m1b / %L4 m1b c0p13d...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="95"/>
+        <source>Importing from %1 to Bank %2: %L3 MiB / %L4 MiB copied...</source>
+        <translation>1mp0r71n6 fr0m %1 70 b4nk %2: %L3 m1b / %L4 m1b c0p13d...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="105"/>
+        <source>Recrypting the ticket(s) and TMD(s)...</source>
+        <translation>r3cryp71n6 7h3 71ck37(5) 4nd 7md(5)...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="109"/>
+        <source>Recrypting Bank %1 to %2: %L3 MiB / %L4 MiB copied...</source>
+        <translation>r3cryp71n6 b4nk %1 70 %2: %L3 m1b / %L4 m1b c0p13d...</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="270"/>
+        <source>doExtract() ERROR: rvth object is not set.</source>
+        <translation>d03x7r4c7() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="274"/>
+        <source>doExtract() ERROR: Bank number is not set.</source>
+        <translation>d03x7r4c7() 3rr0r: b4nk numb3r 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="276"/>
+        <source>doExtract() ERROR: Bank number %1 is out of range.</source>
+        <translation>d03x7r4c7() 3rr0r: b4nk numb3r %1 15 0u7 0f r4n63.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="281"/>
+        <source>doExtract() ERROR: gcmFilename is not set.</source>
+        <translation>d03x7r4c7() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="297"/>
+        <source>Bank %1 extracted into %2 successfully.</source>
+        <translation>b4nk %1 3x7r4c73d 1n70 %2 5ucc355fully.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="301"/>
+        <source>doExtract() ERROR extracting Bank %1 into %2: %3</source>
+        <translation>d03x7r4c7() 3rr0r 3x7r4c71n6 b4nk %1 1n70 %2: %3</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="319"/>
+        <source>doImport() ERROR: rvth object is not set.</source>
+        <translation>d01mp0r7() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="323"/>
+        <source>doImport() ERROR: Bank number is not set.</source>
+        <translation>d01mp0r7() 3rr0r: b4nk numb3r 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="325"/>
+        <source>doImport() ERROR: Bank number %1 is out of range.</source>
+        <translation>d01mp0r7() 3rr0r: b4nk numb3r %1 15 0u7 0f r4n63.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="330"/>
+        <source>doImport() ERROR: gcmFilename is not set.</source>
+        <translation>d01mp0r7() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="346"/>
+        <source>%1 imported into Bank %2 successfully.</source>
+        <translation>%1 1mp0r73d 1n70 b4nk %2 5ucc355fully.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="350"/>
+        <source>doImport() ERROR importing %1 into Bank %2: %3</source>
+        <translation>d01mp0r7() 3rr0r 1mp0r71n6 %1 1n70 b4nk %2: %3</translation>
     </message>
 </context>
 </TS>

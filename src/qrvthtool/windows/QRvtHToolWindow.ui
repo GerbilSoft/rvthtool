@@ -132,9 +132,6 @@
    </property>
   </widget>
   <widget class="QToolBar" name="toolBar">
-   <property name="windowTitle">
-    <string>toolBar</string>
-   </property>
    <property name="movable">
     <bool>false</bool>
    </property>
@@ -234,7 +231,8 @@
   </action>
   <action name="actionImport">
    <property name="icon">
-    <iconset theme="document-import"/>
+    <iconset theme="document-import">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Import...</string>
