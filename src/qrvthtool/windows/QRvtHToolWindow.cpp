@@ -1021,7 +1021,6 @@ void QRvtHToolWindow::rvthModel_rowsInserted(void)
 void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 	const QItemSelection& selected, const QItemSelection& deselected)
 {
-	Q_UNUSED(selected)
 	Q_UNUSED(deselected)
 	Q_D(QRvtHToolWindow);
 
@@ -1031,26 +1030,16 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 		return;
 	}
 
-	// FIXME: QItemSelection::indexes() *crashes* in MSVC debug builds. (Qt 4.8.6)
-	// References: (search for "QModelIndexList assertion", no quotes)
-	// - http://www.qtforum.org/article/13355/qt4-qtableview-assertion-failure.html#post66572
-	// - http://www.qtcentre.org/threads/55614-QTableView-gt-selectionModel%20%20-gt-selection%20%20-indexes%20%20-crash#8766774666573257762
-	// - https://forum.qt.io/topic/24664/crash-with-qitemselectionmodel-selectedindexes
-	//QModelIndexList indexes = selected.indexes();
+	// Determine the selected bank.
+	// Note that selected.indexes() contains all columns,
+	// so we just need to get the bank number from the first column.
 	int bank = -1;
 	const RvtH_BankEntry *entry = nullptr;
-	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
-	if (selectionModel->hasSelection()) {
-		// TODO: If multiple banks are selected, and one of the
-		// banks was just now unselected, this will still be the
-		// unselected bank.
-		QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
-		if (index.isValid()) {
-			// TODO: Sort proxy model like in mcrecover.
-			bank = d->proxyModel->mapToSource(index).row();
-			// TODO: Check for errors?
-			entry = d->rvth->bankEntry(bank);
-		}
+	QModelIndexList selList = selected.indexes();
+	if (!selList.isEmpty()) {
+		// TODO: Sort proxy model like in mcrecover.
+		bank = d->proxyModel->mapToSource(selList[0]).row();
+		entry = d->rvth->bankEntry(bank);
 	}
 
 	// Set the BankView's BankEntry to the selected bank.
