@@ -127,6 +127,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
 		if (!s_usb_serial) {
 			// No serial number...
+			udev_device_unref(dev);
 			continue;
 		}
 		hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
@@ -136,6 +137,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		// - Wireless: 20xxxxxx
 		if (hw_serial < 10000000 || hw_serial > 29999999) {
 			// Not a valid serial number.
+			udev_device_unref(dev);
 			continue;
 		}
 
