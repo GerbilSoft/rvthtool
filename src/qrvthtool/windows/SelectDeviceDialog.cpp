@@ -20,6 +20,8 @@
 
 #include "SelectDeviceDialog.hpp"
 
+// librvth
+#include "librvth/config.librvth.h"
 #include "librvth/query.h"
 
 // for the RVT-H Reader icon
@@ -186,9 +188,6 @@ QString SelectDeviceDialogPrivate::format_size(int64_t size)
  */
 void SelectDeviceDialogPrivate::refreshDeviceList(void)
 {
-	RvtH_QueryEntry *devs;
-	int err = 0;
-
 	// TODO: Switch from QListWidget to QListView and use a model?
 
 	// OK button is disabled when the list is cleared,
@@ -201,7 +200,9 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 	vecSerialNumbers.clear();
 	vecHDDSizes.clear();
 
-	devs = rvth_query_devices(&err);
+#ifdef HAVE_QUERY
+	int err = 0;
+	RvtH_QueryEntry *devs = rvth_query_devices(&err);
 	if (!devs) {
 		// No devices found.
 
@@ -287,6 +288,12 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 	}
 
 	rvth_query_free(devs);
+#else /* !HAVE_QUERY */
+	// TODO: Better error message.
+	// TODO: Fall back to /dev/* scanning?
+	ui.lstDevices->setNoItemText(
+		SelectDeviceDialog::tr("ERROR: Device querying not supported in this build."));
+#endif /* HAVE_QUERY */
 }
 
 /** SelectDeviceDialog **/
