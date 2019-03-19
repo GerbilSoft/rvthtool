@@ -123,6 +123,22 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 			continue;
 		}
 
+		// Get the serial number.
+		s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
+		if (!s_usb_serial) {
+			// No serial number...
+			continue;
+		}
+		hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
+
+		// Is the serial number valid?
+		// - Wired:    10xxxxxx
+		// - Wireless: 20xxxxxx
+		if (hw_serial < 10000000 || hw_serial > 29999999) {
+			// Not a valid serial number.
+			continue;
+		}
+
 		// Create a list entry.
 		if (!list_head) {
 			// New list head.
@@ -153,22 +169,6 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		// Assuming blocks are 512 bytes.
 		// TODO: Get the actual LBA size.
 		s_blk_size = udev_device_get_sysattr_value(dev, "size");
-
-		// Get the serial number.
-		s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
-		if (!s_usb_serial) {
-			// No serial number...
-			continue;
-		}
-		hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
-
-		// Is the serial number valid?
-		// - Wired:    10xxxxxx
-		// - Wireless: 20xxxxxx
-		if (hw_serial < 10000000 || hw_serial > 29999999) {
-			// Not a valid serial number.
-			continue;
-		}
 
 		// Copy the strings.
 		list_tail->device_name = strdup(s_devnode);
