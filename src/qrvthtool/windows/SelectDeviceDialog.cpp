@@ -325,6 +325,10 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 	btnRefresh->setIcon(QIcon::fromTheme(QLatin1String("view-refresh")));
 	connect(btnRefresh, SIGNAL(clicked()), this, SLOT(refresh()));
 
+	// Set the device list's decoration position.
+	// NOTE: Qt automatically interprets this as "Right" if an RTL language is in use.
+	d->ui.lstDevices->setDecorationPosition(QStyleOptionViewItem::Left);
+
 	// Refresh the device list.
 	d->refreshDeviceList();
 

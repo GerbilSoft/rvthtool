@@ -35,15 +35,18 @@ class QListView_Text : public QListView
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	Q_PROPERTY(QStyleOptionViewItem::Position decorationPosition READ decorationPosition WRITE setDecorationPosition)
 	typedef QListView super;
 
 	public:
 		QListView_Text(QWidget *parent = nullptr)
-			: QListView(parent) { }
+			: super(parent)
+			, m_decorationPosition(QStyleOptionViewItem::Left) { }
 
 	private:
 		Q_DISABLE_COPY(QListView_Text)
 		QString m_noItemText;
+		QStyleOptionViewItem::Position m_decorationPosition;
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
@@ -52,21 +55,27 @@ class QListView_Text : public QListView
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
 		void setNoItemText(const QString &noItemText);
+
+		inline QStyleOptionViewItem::Position decorationPosition(void) const { return m_decorationPosition; }
+		void setDecorationPosition(QStyleOptionViewItem::Position position);
 };
 
 class QListWidget_Text : public QListWidget
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	Q_PROPERTY(QStyleOptionViewItem::Position decorationPosition READ decorationPosition WRITE setDecorationPosition)
 	typedef QListWidget super;
 
 	public:
 		QListWidget_Text(QWidget *parent = nullptr)
-			: QListWidget(parent) { }
+			: super(parent)
+			, m_decorationPosition(QStyleOptionViewItem::Left) { }
 
 	private:
 		Q_DISABLE_COPY(QListWidget_Text)
 		QString m_noItemText;
+		QStyleOptionViewItem::Position m_decorationPosition;
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
@@ -75,21 +84,27 @@ class QListWidget_Text : public QListWidget
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
 		void setNoItemText(const QString &noItemText);
+
+		inline QStyleOptionViewItem::Position decorationPosition(void) const { return m_decorationPosition; }
+		void setDecorationPosition(QStyleOptionViewItem::Position position);
 };
 
 class QTreeView_Text : public QTreeView
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	Q_PROPERTY(QStyleOptionViewItem::Position decorationPosition READ decorationPosition WRITE setDecorationPosition)
 	typedef QTreeView super;
 
 	public:
 		QTreeView_Text(QWidget *parent = nullptr)
-			: QTreeView(parent) { }
+			: super(parent)
+			, m_decorationPosition(QStyleOptionViewItem::Left) { }
 
 	private:
 		Q_DISABLE_COPY(QTreeView_Text)
 		QString m_noItemText;
+		QStyleOptionViewItem::Position m_decorationPosition;
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
@@ -98,21 +113,27 @@ class QTreeView_Text : public QTreeView
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
 		void setNoItemText(const QString &noItemText);
+
+		inline QStyleOptionViewItem::Position decorationPosition(void) const { return m_decorationPosition; }
+		void setDecorationPosition(QStyleOptionViewItem::Position position);
 };
 
 class QTreeWidget_Text : public QTreeWidget
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	Q_PROPERTY(QStyleOptionViewItem::Position decorationPosition READ decorationPosition WRITE setDecorationPosition)
 	typedef QTreeWidget super;
 
 	public:
 		QTreeWidget_Text(QWidget *parent = nullptr)
-			: QTreeWidget(parent) { }
+			: super(parent)
+			, m_decorationPosition(QStyleOptionViewItem::Left) { }
 
 	private:
 		Q_DISABLE_COPY(QTreeWidget_Text)
 		QString m_noItemText;
+		QStyleOptionViewItem::Position m_decorationPosition;
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
@@ -121,6 +142,9 @@ class QTreeWidget_Text : public QTreeWidget
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
 		void setNoItemText(const QString &noItemText);
+
+		inline QStyleOptionViewItem::Position decorationPosition(void) const { return m_decorationPosition; }
+		void setDecorationPosition(QStyleOptionViewItem::Position position);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_QITEMVIEW_TEXT_HPP__ */

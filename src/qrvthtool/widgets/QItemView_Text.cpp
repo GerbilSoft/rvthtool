@@ -36,11 +36,8 @@ void klass##_Text::paintEvent(QPaintEvent *e) \
 \
 QStyleOptionViewItem klass##_Text::viewOptions(void) const \
 { \
-	/* TODO: Make this an adjustable parameter.       * \
-	 * Display the icon on the left side of the text, * \
-	 * similar to Windows Explorer's "Tiles" view.    */ \
 	QStyleOptionViewItem option = super::viewOptions(); \
-	option.decorationPosition = QStyleOptionViewItem::Left; \
+	option.decorationPosition = m_decorationPosition; \
 	return option; \
 } \
 \
@@ -52,6 +49,18 @@ void klass##_Text::setNoItemText(const QString &noItemText) \
 	m_noItemText = noItemText; \
 	if (!model() || model()->rowCount(rootIndex()) == 0) { \
 		/* No items. Need to update. */ \
+		update(); \
+	} \
+} \
+\
+void klass##_Text::setDecorationPosition(QStyleOptionViewItem::Position position) \
+{ \
+	if (m_decorationPosition == position) \
+		return; \
+\
+	m_decorationPosition = position; \
+	if (model() && model()->rowCount(rootIndex()) > 0) { \
+		/* We have items. Need to update. */ \
 		update(); \
 	} \
 }
