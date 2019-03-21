@@ -5,10 +5,12 @@
 On Debian/Ubuntu, you will need build-essential and the following development
 packages:
 * pkg-config libgmp-dev nettle-dev libudev-dev
+* For the Qt GUI: qtbase5-dev qttools-dev-tools
 
 On Red Hat/Fedora, you will need to install "C Development Tools and Libraries"
 and the following development packages:
 * cmake gmp-devel nettle-devel libudev-devel
+* For the Qt GUI: qt-devel qt5-linguist
 
 Clone the repository, then:
 * cd rvthtool

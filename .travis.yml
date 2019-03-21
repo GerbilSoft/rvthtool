@@ -4,7 +4,7 @@ language: cpp
 matrix:
   include:
     - os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       compiler: gcc
     - os: osx
@@ -23,6 +23,7 @@ addons:
       - nettle-dev
       - libudev-dev
       - qtbase5-dev
+      - qttools5-dev-tools
 
 # Run the build script.
 script: ./travis.sh

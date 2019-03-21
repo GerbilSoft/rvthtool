@@ -8,7 +8,9 @@ Build-Depends:
  dpkg-dev (>= 1.17.17),
  libgmp3-dev,
  nettle-dev,
- libudev-dev
+ libudev-dev,
+ qtbase5-dev,
+ qttools5-dev-tools
 Standards-Version: 3.9.8
 Homepage: https://github.com/GerbilSoft/rvthtool
 Vcs-Git: https://github.com/GerbilSoft/rvthtool
@@ -19,3 +21,9 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: RVT-H Tool
  This is an open-source tool for managing RVT-H Reader consoles.
+
+Package: qrvthtool
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: RVT-H Tool (GUI)
+ This is an open-source tool for managing RVT-H Reader consoles. (GUI)
