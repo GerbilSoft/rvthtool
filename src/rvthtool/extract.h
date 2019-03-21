@@ -22,7 +22,6 @@
 #define __RVTHTOOL_RVTHTOOL_EXTRACT_H__
 
 #include "librvth/tcharx.h"
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
