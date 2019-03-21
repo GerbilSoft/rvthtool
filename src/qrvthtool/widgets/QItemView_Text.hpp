@@ -46,42 +46,12 @@ class QListView_Text : public QListView
 		QString m_noItemText;
 
 	protected:
-		void paintEvent(QPaintEvent *e)
-		{
-			QListView::paintEvent(e);
-			if ((!model() || model()->rowCount(rootIndex()) == 0) &&
-			    !m_noItemText.isEmpty())
-			{
-				/* The view is empty. */
-				QPainter p(this->viewport());
-				p.drawText(rect(), Qt::AlignCenter, m_noItemText);
-			}
-		}
-
-		QStyleOptionViewItem viewOptions(void) const final
-		{
-			// TODO: Make this an adjustable parameter.
-			// Display the icon on the left side of the text,
-			// similar to Windows Explorer's "Tiles" view.
-			QStyleOptionViewItem option = super::viewOptions();
-			option.decorationPosition = QStyleOptionViewItem::Left;
-			return option;
-		}
+		void paintEvent(QPaintEvent *e) final;
+		QStyleOptionViewItem viewOptions(void) const final;
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
-
-		void setNoItemText(const QString &noItemText)
-		{
-			if (m_noItemText == noItemText)
-				return;
-
-			m_noItemText = noItemText;
-			if (!model() || model()->rowCount(rootIndex()) == 0) {
-				/* No items. Need to update. */
-				update();
-			}
-		}
+		void setNoItemText(const QString &noItemText);
 };
 
 class QListWidget_Text : public QListWidget
@@ -99,42 +69,12 @@ class QListWidget_Text : public QListWidget
 		QString m_noItemText;
 
 	protected:
-		void paintEvent(QPaintEvent *e)
-		{
-			QListWidget::paintEvent(e);
-			if ((!model() || model()->rowCount(rootIndex()) == 0) &&
-			    !m_noItemText.isEmpty())
-			{
-				/* The view is empty. */
-				QPainter p(this->viewport());
-				p.drawText(rect(), Qt::AlignCenter, m_noItemText);
-			}
-		}
-
-		QStyleOptionViewItem viewOptions(void) const final
-		{
-			// TODO: Make this an adjustable parameter.
-			// Display the icon on the left side of the text,
-			// similar to Windows Explorer's "Tiles" view.
-			QStyleOptionViewItem option = super::viewOptions();
-			option.decorationPosition = QStyleOptionViewItem::Left;
-			return option;
-		}
+		void paintEvent(QPaintEvent *e) final;
+		QStyleOptionViewItem viewOptions(void) const final;
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
-
-		void setNoItemText(const QString &noItemText)
-		{
-			if (m_noItemText == noItemText)
-				return;
-
-			m_noItemText = noItemText;
-			if (!model() || model()->rowCount(rootIndex()) == 0) {
-				/* No items. Need to update. */
-				update();
-			}
-		}
+		void setNoItemText(const QString &noItemText);
 };
 
 class QTreeView_Text : public QTreeView
@@ -152,32 +92,12 @@ class QTreeView_Text : public QTreeView
 		QString m_noItemText;
 
 	protected:
-		void paintEvent(QPaintEvent *e)
-		{
-			QTreeView::paintEvent(e);
-			if ((!model() || model()->rowCount(rootIndex()) == 0) &&
-			    !m_noItemText.isEmpty())
-			{
-				/* The view is empty. */
-				QPainter p(this->viewport());
-				p.drawText(rect(), Qt::AlignCenter, m_noItemText);
-			}
-		}
+		void paintEvent(QPaintEvent *e) final;
+		QStyleOptionViewItem viewOptions(void) const final;
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
-
-		void setNoItemText(const QString &noItemText)
-		{
-			if (m_noItemText == noItemText)
-				return;
-
-			m_noItemText = noItemText;
-			if (!model() || model()->rowCount(rootIndex()) == 0) {
-				/* No items. Need to update. */
-				update();
-			}
-		}
+		void setNoItemText(const QString &noItemText);
 };
 
 class QTreeWidget_Text : public QTreeWidget
@@ -195,32 +115,12 @@ class QTreeWidget_Text : public QTreeWidget
 		QString m_noItemText;
 
 	protected:
-		void paintEvent(QPaintEvent *e)
-		{
-			QTreeWidget::paintEvent(e);
-			if ((!model() || model()->rowCount(rootIndex()) == 0) &&
-			    !m_noItemText.isEmpty())
-			{
-				/* The view is empty. */
-				QPainter p(this->viewport());
-				p.drawText(rect(), Qt::AlignCenter, m_noItemText);
-			}
-		}
+		void paintEvent(QPaintEvent *e) final;
+		QStyleOptionViewItem viewOptions(void) const final;
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
-
-		void setNoItemText(const QString &noItemText)
-		{
-			if (m_noItemText == noItemText)
-				return;
-
-			m_noItemText = noItemText;
-			if (!model() || model()->rowCount(rootIndex()) == 0) {
-				/* No items. Need to update. */
-				update();
-			}
-		}
+		void setNoItemText(const QString &noItemText);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_QITEMVIEW_TEXT_HPP__ */

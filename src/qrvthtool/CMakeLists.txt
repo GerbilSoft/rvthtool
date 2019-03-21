@@ -89,6 +89,7 @@ SET(qrvthtool_SRCS
 	widgets/BankEntryView.cpp
 	widgets/LanguageMenu.cpp
 	widgets/QTreeViewOpt.cpp
+	widgets/QItemView_Text.cpp
 
 	windows/QRvtHToolWindow.cpp
 	windows/SelectDeviceDialog.cpp
