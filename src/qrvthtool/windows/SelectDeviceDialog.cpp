@@ -279,7 +279,9 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 
 		// Create the QListWidgetItem.
 		// TODO: Verify that QListWidget takes ownership.
-		new QListWidgetItem(rvthReaderIcon, text, ui.lstDevices);
+		// TODO: Switch to QListView and use a model.
+		QListWidgetItem *const item = new QListWidgetItem(rvthReaderIcon, text, ui.lstDevices);
+		item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
 
 		// Save the device information.
 		vecDeviceNames.append(deviceName);

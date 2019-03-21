@@ -35,6 +35,7 @@ class QListView_Text : public QListView
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	typedef QListView super;
 
 	public:
 		QListView_Text(QWidget *parent = nullptr)
@@ -57,6 +58,16 @@ class QListView_Text : public QListView
 			}
 		}
 
+		QStyleOptionViewItem viewOptions(void) const final
+		{
+			// TODO: Make this an adjustable parameter.
+			// Display the icon on the left side of the text,
+			// similar to Windows Explorer's "Tiles" view.
+			QStyleOptionViewItem option = super::viewOptions();
+			option.decorationPosition = QStyleOptionViewItem::Left;
+			return option;
+		}
+
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
 
@@ -77,6 +88,7 @@ class QListWidget_Text : public QListWidget
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	typedef QListWidget super;
 
 	public:
 		QListWidget_Text(QWidget *parent = nullptr)
@@ -99,6 +111,16 @@ class QListWidget_Text : public QListWidget
 			}
 		}
 
+		QStyleOptionViewItem viewOptions(void) const final
+		{
+			// TODO: Make this an adjustable parameter.
+			// Display the icon on the left side of the text,
+			// similar to Windows Explorer's "Tiles" view.
+			QStyleOptionViewItem option = super::viewOptions();
+			option.decorationPosition = QStyleOptionViewItem::Left;
+			return option;
+		}
+
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
 
@@ -119,6 +141,7 @@ class QTreeView_Text : public QTreeView
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	typedef QTreeView super;
 
 	public:
 		QTreeView_Text(QWidget *parent = nullptr)
@@ -161,6 +184,7 @@ class QTreeWidget_Text : public QTreeWidget
 {
 	Q_OBJECT
 	Q_PROPERTY(QString noItemText READ noItemText WRITE setNoItemText)
+	typedef QTreeWidget super;
 
 	public:
 		QTreeWidget_Text(QWidget *parent = nullptr)
