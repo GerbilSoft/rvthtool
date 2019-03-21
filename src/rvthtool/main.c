@@ -150,9 +150,6 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Other values are from RVL_CryptoType_e.
 	int recrypt_key = -1;
 
-	((void)argc);
-	((void)argv);
-
 #ifdef _WIN32
 	// Set Win32 security options.
 	secoptions_init();
