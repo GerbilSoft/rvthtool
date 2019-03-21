@@ -294,7 +294,7 @@ int64_t RefFile::size(void)
 #elif defined(__linux__)
 		// Linux version.
 		// Reference: http://www.microhowto.info/howto/get_the_size_of_a_linux_block_special_device_in_c.html
-		int ret = -1;
+		int64_t ret = -1;
 		if (ioctl(fileno(m_file), BLKGETSIZE64, &ret) == 0) {
 			// Size obtained successfully.
 			return ret;
