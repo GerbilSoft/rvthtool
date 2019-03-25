@@ -391,6 +391,9 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	// TODO: If recryption is needed, validate parts of the partitions,
 	// e.g. certificate chain length, before copying.
 
+	// TODO: If recrypt_key == the original key,
+	// handle it as -1.
+
 	// Create a standalone disc image.
 	RvtH_BankEntry *const entry = &m_entries[bank];
 	const bool unenc_to_enc = (entry->type >= RVTH_BankType_Wii_SL &&
@@ -607,6 +610,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	RvtH_BankEntry *const entry_dest = &rvth_dest->m_entries[bank_dest];
 
 	// Source image length cannot be larger than a single bank.
+	RvtH_BankEntry *entry_dest2 = nullptr;
 	if (entry_src->type == RVTH_BankType_Wii_DL) {
 		// Special cases for DL:
 		// - Destination bank must not be the last bank.
@@ -638,7 +642,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		}
 
 		// Check that the second bank is empty or deleted.
-		const RvtH_BankEntry *const entry_dest2 = &rvth_dest->m_entries[bank_dest+1];
+		entry_dest2 = &rvth_dest->m_entries[bank_dest+1];
 		if (entry_dest2->type != RVTH_BankType_Empty &&
 		    !entry_dest2->is_deleted)
 		{
@@ -701,18 +705,40 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		goto end;
 	}
 
-	// If no reader is set up for the destination bank, set one up now.
+	// Reset the reader for the bank.
+	if (entry_dest->reader) {
+		delete entry_dest->reader;
+		entry_dest->reader = nullptr;
+	}
+	// NOTE: Using the source LBA length, since we might be
+	// importing a dual-layer Wii image.
+	entry_dest->reader = Reader::open(rvth_dest->m_file,
+		entry_dest->lba_start, entry_src->lba_len);
 	if (!entry_dest->reader) {
-		entry_dest->reader = Reader::open(rvth_dest->m_file,
-			entry_dest->lba_start, entry_dest->lba_len);
-		if (!entry_dest->reader) {
-			// Cannot create a reader...
-			err = errno;
-			if (err == 0) {
-				err = EIO;
-			}
-			goto end;
+		// Cannot create a reader...
+		err = errno;
+		if (err == 0) {
+			err = EIO;
 		}
+		goto end;
+	}
+
+	if (entry_dest2) {
+		// Clear the second bank entry.
+		if (entry_dest2->reader) {
+			delete entry_dest2->reader;
+			entry_dest2->reader = nullptr;
+		}
+		entry_dest2->timestamp = -1;
+		entry_dest2->type = RVTH_BankType_Wii_DL_Bank2;
+		entry_dest2->region_code = 0xFF;
+		entry_dest2->is_deleted = false;
+		free(entry_dest2->ptbl);
+		entry_dest2->ptbl = nullptr;
+
+		// NOTE: We don't need to write the second bank table entry for,
+		// DL images, since it should already be empty and/or deleted.
+		// It has to be updated in memory for qrvthtool, though.
 	}
 
 	// Process 1 MB at a time.
