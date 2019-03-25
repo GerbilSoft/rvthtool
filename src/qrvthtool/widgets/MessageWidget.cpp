@@ -146,6 +146,7 @@ void MessageWidgetPrivate::Ui_MessageWidget::setupUi(QWidget *MessageWidget)
 	btnDismiss = new QToolButton(content);
 	btnDismiss->setObjectName(QLatin1String("btnDismiss"));
 	btnDismiss->setFocusPolicy(Qt::NoFocus);
+	btnDismiss->setStyleSheet(QLatin1String("margin: 0px; padding: 0px;"));
 
 	// Icon for the "Dismiss" button.
 	if (QIcon::hasThemeIcon(QLatin1String("dialog-close"))) {
