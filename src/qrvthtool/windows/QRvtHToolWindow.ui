@@ -23,7 +23,10 @@
    <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QVBoxLayout" name="vboxMain" stretch="0">
+   <layout class="QVBoxLayout" name="vboxMain" stretch="0,1">
+    <item>
+     <widget class="MessageWidgetStack" name="msgWidget" native="true"/>
+    </item>
     <item>
      <widget class="QSplitter" name="splitterMain">
       <property name="orientation">
@@ -250,7 +253,8 @@
   </action>
   <action name="actionDelete">
    <property name="icon">
-    <iconset theme="edit-delete"/>
+    <iconset theme="edit-delete">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Delete</string>
@@ -261,7 +265,8 @@
   </action>
   <action name="actionUndelete">
    <property name="icon">
-    <iconset theme="edit-undo"/>
+    <iconset theme="edit-undo">
+     <normaloff>.</normaloff>.</iconset>
    </property>
    <property name="text">
     <string>&amp;Undelete</string>
@@ -290,6 +295,12 @@
    <slots>
     <signal>languageChanged(QString)</signal>
    </slots>
+  </customwidget>
+  <customwidget>
+   <class>MessageWidgetStack</class>
+   <extends>QWidget</extends>
+   <header>widgets/MessageWidgetStack.hpp</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>

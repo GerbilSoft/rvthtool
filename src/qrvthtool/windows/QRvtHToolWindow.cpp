@@ -23,11 +23,13 @@
 // librvth
 #include "librvth/rvth.hpp"
 #include "librvth/nhcd_structs.h"
+#include "librvth/rvth_error.h"
 
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
 #include "MessageSound.hpp"
 
+#include "widgets/MessageWidgetStack.hpp"
 #include "windows/SelectDeviceDialog.hpp"
 
 // C includes. (C++ namespace)
@@ -520,13 +522,19 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	}
 
 	// Open the specified RVT-H Reader disk image.
+	int err = 0;
 #ifdef _WIN32
-	RvtH *const rvth_tmp = new RvtH(reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
+	RvtH *const rvth_tmp = new RvtH(reinterpret_cast<const wchar_t*>(filename.utf16()), &err);
 #else /* !_WIN32 */
-	RvtH *const rvth_tmp = new RvtH(filename.toUtf8().constData(), nullptr);
+	RvtH *const rvth_tmp = new RvtH(filename.toUtf8().constData(), &err);
 #endif
-	if (!rvth_tmp->isOpen()) {
-		// FIXME: Show an error message?
+	if (!rvth_tmp->isOpen() || err != 0) {
+		// Unable to open the RVT-H Reader disk image.
+		const QString filenameOnly = QFileInfo(filename).fileName();
+		const QString errMsg = tr("An error occurred while opening %1: %2")
+			.arg(filenameOnly)
+			.arg(QString::fromUtf8(rvth_error(err)));
+		d->ui.msgWidget->showMessage(errMsg, MessageWidget::ICON_CRITICAL);
 		delete d->rvth;
 		return;
 	}

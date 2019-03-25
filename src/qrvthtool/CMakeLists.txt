@@ -88,6 +88,8 @@ SET(qrvthtool_SRCS
 
 	widgets/BankEntryView.cpp
 	widgets/LanguageMenu.cpp
+	widgets/MessageWidget.cpp
+	widgets/MessageWidgetStack.cpp
 	widgets/QTreeViewOpt.cpp
 	widgets/QItemView_Text.cpp
 
@@ -105,6 +107,8 @@ SET(qrvthtool_MOC_H
 
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp
+	widgets/MessageWidget.hpp
+	widgets/MessageWidgetStack.hpp
 	widgets/QTreeViewOpt.hpp
 	widgets/QItemView_Text.hpp
 
