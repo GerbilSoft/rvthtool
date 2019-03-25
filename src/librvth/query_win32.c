@@ -20,6 +20,9 @@
 
 #include "query.h"
 
+// TODO: stdboolx.h
+#include "../libwiicrypto/common.h"
+
 // C includes.
 #include <ctype.h>
 #include <errno.h>
@@ -38,6 +41,46 @@
 static inline TCHAR *_tcsdup_null(const TCHAR *s)
 {
 	return (s ? _tcsdup(s) : NULL);
+}
+
+/**
+ * Check if a device is a matching USB device.
+ * @param pDevInst	[in] Device instance.
+ * @param pHwSerial	[out] Serial number.
+ * @return True if it's a matching USB device; false if not.
+ */
+static bool check_usb_device(DEVINST *pDevInst, unsigned int *pHwSerial)
+{
+	uint16_t vid = 0, pid = 0;
+	TCHAR *p;
+	TCHAR s_usbInstanceID[MAX_DEVICE_ID_LEN];
+
+	int ret = CM_Get_Device_ID(*pDevInst, s_usbInstanceID, _countof(s_usbInstanceID), 0);
+	if (ret != CR_SUCCESS)
+		return false;
+
+	// Format: "USB\\VID_%04X&PID_%04X\\%08u"
+	// NOTE: Needs to be converted to uppercase, since "Vid" and "Pid" might show up.
+	// Last %08u is the serial number.
+	p = s_usbInstanceID;
+	while (*p != _T('\0')) {
+		*p = _totupper(*p);
+		p++;
+	}
+
+	// Try sscanf().
+	ret = _stscanf(s_usbInstanceID, _T("USB\\VID_%04hX&PID_%04hX\\%08u"), &vid, &pid, pHwSerial);
+	if (ret != 3)
+		return false;
+
+	// Does the USB device ID match?
+	if (vid != RVTH_READER_VID || pid != RVTH_READER_PID) {
+		// Not an RVT-H Reader.
+		return false;
+	}
+
+	// Correct VID/PID.
+	return true;
 }
 
 /**
@@ -82,7 +125,6 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 	/* Temporary string buffers */
 
 	// Instance IDs.
-	TCHAR s_usbInstanceID[MAX_DEVICE_ID_LEN];	// USB drive
 	TCHAR s_diskInstanceID[MAX_DEVICE_ID_LEN];	// Storage device
 
 	// Pathnames.
@@ -111,8 +153,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		TCHAR *p;
 		int ret;
 
-		// USB ID
-		uint16_t vid = 0, pid = 0;
+		// Serial number
 		unsigned int hw_serial = 0;
 
 		// DeviceIoControl()
@@ -143,29 +184,10 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		ret = CM_Get_Parent(&dnDevInstParent, devInfoData.DevInst, 0);
 		if (ret != CR_SUCCESS)
 			continue;
-		ret = CM_Get_Device_ID(dnDevInstParent, s_usbInstanceID, _countof(s_usbInstanceID), 0);
-		if (ret != CR_SUCCESS)
-			continue;
 
-		// Format: "USB\\VID_%04X&PID_%04X\\%08u"
-		// NOTE: Needs to be converted to uppercase, since "Vid" and "Pid" might show up.
-		// Last %08u is the serial number.
-		p = s_usbInstanceID;
-		while (*p != _T('\0')) {
-			*p = _totupper(*p);
-			p++;
-		}
-
-		// Try sscanf().
-		ret = _stscanf(s_usbInstanceID, _T("USB\\VID_%04hX&PID_%04hX\\%08u"), &vid, &pid, &hw_serial);
-		if (ret != 3)
+		// Check if the VID/PID matches Nintendo RVT-H Reader.
+		if (!check_usb_device(&dnDevInstParent, &hw_serial))
 			continue;
-
-		// Does the USB device ID match?
-		if (vid != RVTH_READER_VID || pid != RVTH_READER_PID) {
-			// Not an RVT-H Reader.
-			continue;
-		}
 
 		// Is the serial number valid?
 		// - Wired:    10xxxxxx
@@ -383,4 +405,182 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 
 	SetupDiDestroyDeviceInfoList(hDevInfoSet);
 	return list_head;
+}
+
+/**
+ * Get the serial number for the specified RVT-H Reader device.
+ * @param filename	[in] RVT-H Reader device filename.
+ * @param pErr		[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
+ * @return Allocated serial number string, or nullptr on error.
+ */
+TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr)
+{
+	HDEVINFO hDevInfoSet = NULL;
+	SP_DEVINFO_DATA devInfoData;
+	int devIndex = 0;
+
+	/* Temporary string buffers */
+	TCHAR *s_full_serial = NULL;
+
+	// Instance IDs.
+	TCHAR s_diskInstanceID[MAX_DEVICE_ID_LEN];	// Storage device
+
+	// Pathnames.
+	TCHAR s_devicePath[MAX_PATH];	// Storage device path
+
+	// Check if the filename matches the expected pattern.
+	unsigned int drive_number = 0;
+	size_t filename_len = _tcslen(filename);
+	if (filename_len <= 17) {
+		// Not enough characters.
+		return false;
+	}
+	if (_tcsncmp(filename, _T("\\\\.\\PhysicalDrive"), 17) != 0) {
+		// Wrong pattern.
+		return false;
+	}
+	drive_number = (unsigned int)_tcstoul(&filename[17], NULL, 10);
+
+	// Get all USB devices and find one with a matching vendor/device ID.
+	// Once we find it, get GUID_DEVINTERFACE_DISK for that ID.
+	// References:
+	// - https://docs.microsoft.com/en-us/windows/desktop/api/setupapi/nf-setupapi-setupdigetclassdevsw
+	// - https://social.msdn.microsoft.com/Forums/vstudio/en-US/76315dfa-6764-4feb-a3e2-1f173fc5bdfd/how-to-get-usb-vendor-and-product-id-programmatically-in-c?forum=vcgeneral
+	hDevInfoSet = SetupDiGetClassDevs(&GUID_DEVINTERFACE_DISK, NULL,
+		NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+	if (!hDevInfoSet || hDevInfoSet == INVALID_HANDLE_VALUE) {
+		// SetupDiGetClassDevs() failed.
+		if (pErr) {
+			// TODO: Convert GetLastError()?
+			*pErr = EIO;
+		}
+		return NULL;
+	}
+
+	memset(&devInfoData, 0, sizeof(devInfoData));
+	devInfoData.cbSize = sizeof(devInfoData);
+	while (SetupDiEnumDeviceInfo(hDevInfoSet, devIndex, &devInfoData)) {
+		DEVINST dnDevInstParent;
+		TCHAR *p;
+		int ret;
+
+		// Serial number
+		unsigned int hw_serial = 0;
+
+		// DeviceIoControl()
+		HANDLE hDevice;
+		union {
+			STORAGE_DEVICE_NUMBER sdn;
+			STORAGE_PROPERTY_QUERY spq;
+			GET_LENGTH_INFORMATION gli;
+		} io;
+		DWORD cbBytesReturned;
+		BOOL bRet;
+
+		// Increment the device index here.
+		devIndex++;
+
+		// Get the parent instance ID.
+		// References:
+		// - https://stackoverflow.com/questions/3098696/get-information-about-disk-drives-result-on-windows7-32-bit-system
+		// - https://stackoverflow.com/a/3100268
+		ret = CM_Get_Parent(&dnDevInstParent, devInfoData.DevInst, 0);
+		if (ret != CR_SUCCESS)
+			continue;
+
+		// Check if the VID/PID matches Nintendo RVT-H Reader.
+		if (!check_usb_device(&dnDevInstParent, &hw_serial))
+			continue;
+
+		// Is the serial number valid?
+		// - Wired:    10xxxxxx
+		// - Wireless: 20xxxxxx
+		if (hw_serial < 10000000 || hw_serial > 29999999) {
+			// Not a valid serial number.
+			continue;
+		}
+
+		// Get this device's instance path.
+		// It works as a stand-in for \\\\.\\\PhysicalDrive#
+		ret = CM_Get_Device_ID(devInfoData.DevInst, s_diskInstanceID, _countof(s_diskInstanceID), 0);
+		if (ret != CR_SUCCESS)
+			continue;
+
+		// Use the disk instance ID to create the actual path.
+		// NOTE: Needs some adjustments: [FOR COMMIT, use actual RVT-H path]
+		// - Disk instance ID:   USBSTOR\DISK&VEN_&PROD_PATRIOT_MEMORY&REV_PMAP\070B7AAA9AF3D977&0
+		// - Actual path: \\\\?\\usbstor#disk&ven_&prod_patriot_memory&rev_pmap#070b7aaa9af3d977&0#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}
+		// Adjustments required:
+		// - Replace backslashes in instance ID with #
+		// - Append GUID_DEVINTERFACE_DISK [TODO: Convert from the GUID at runtime?]
+
+		p = s_diskInstanceID;
+		while (*p != _T('\0')) {
+			if (*p == _T('\\')) {
+				*p = _T('#');
+			}
+			p++;
+		}
+		_sntprintf(s_devicePath, _countof(s_devicePath),
+			_T("\\\\?\\%s#{53f56307-b6bf-11d0-94f2-00a0c91efb8b}"), s_diskInstanceID);
+
+		// Open the drive to retrieve information.
+		// NOTE: Might require administrative privileges.
+		// References:
+		// - https://stackoverflow.com/questions/5583553/name-mapping-physicaldrive-to-scsi
+		// - https://stackoverflow.com/a/5584978
+		hDevice = CreateFile(s_devicePath,
+			GENERIC_READ,		// dwDesiredAccess
+			FILE_SHARE_READ,	// dwShareMode
+			NULL,			// lpSecurityAttributes
+			OPEN_EXISTING,		// dwCreationDisposition
+			FILE_ATTRIBUTE_NORMAL,	// dwFlagsAndAttributes
+			NULL);			// hTemplateFile
+		if (!hDevice || hDevice == INVALID_HANDLE_VALUE) {
+			// Can't open this device for some reason...
+			DWORD dwErr = GetLastError();
+			if (dwErr == ERROR_ACCESS_DENIED) {
+				// Access denied.
+				// User is probably not Administrator.
+				// Stop enumerating devices and return an error.
+				if (pErr) {
+					*pErr = EACCES;
+				}
+				return NULL;
+			}
+
+			// Other error. Continue enumerating.
+			// TODO: Return for certain errors?
+			continue;
+		}
+
+		bRet = DeviceIoControl(hDevice,
+			IOCTL_STORAGE_GET_DEVICE_NUMBER,// dwIoControlCode
+			NULL, 0,			// no input buffer
+			(LPVOID)&io.sdn, sizeof(io.sdn),// output buffer
+			&cbBytesReturned,		// # bytes returned
+			NULL);				// synchronous I/O
+		CloseHandle(hDevice);
+		if (!bRet || cbBytesReturned != sizeof(io.sdn) ||
+		    io.sdn.DeviceType != FILE_DEVICE_DISK)
+		{
+			// Unable to get the device information,
+			// or this isn't a disk device.
+			continue;
+		}
+
+		if (io.sdn.DeviceNumber != drive_number) {
+			// Wrong drive number.
+			continue;
+		}
+
+		// Found the correct drive.
+
+		// RVT-H Reader serial number.
+		s_full_serial = rvth_create_full_serial_number(hw_serial);
+		break;
+	}
+
+	SetupDiDestroyDeviceInfoList(hDevInfoSet);
+	return s_full_serial;
 }
