@@ -226,7 +226,7 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 				}
 				if (osvi.dwMajorVersion >= 6) {
 					s_err += QLatin1String("\n\n") +
-						SelectDeviceDialog::tr("Try rerunning qrvthtool using an elevated command prompt.");
+						SelectDeviceDialog::tr("Try rerunning qrvthtool as Administrator.");
 				} else {
 					s_err += QLatin1String("\n\n") +
 						SelectDeviceDialog::tr("Try rerunning qrvthtool using an Administrator account.");
