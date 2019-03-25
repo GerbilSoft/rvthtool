@@ -300,7 +300,10 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 /** SelectDeviceDialog **/
 
 SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
-	: super(parent)
+	: super(parent,
+		Qt::WindowSystemMenuHint |
+		Qt::WindowTitleHint |
+		Qt::WindowCloseButtonHint)
 	, d_ptr(new SelectDeviceDialogPrivate(this))
 {
 	Q_D(SelectDeviceDialog);
