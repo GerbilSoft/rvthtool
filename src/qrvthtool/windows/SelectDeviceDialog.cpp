@@ -235,7 +235,6 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 				s_err += SelectDeviceDialog::tr("Try rerunning qrvthtool as root.");
 #endif /* _WIN32 */
 			}
-			return;
 		} else {
 			// Not a permissions issue.
 			// We simply didn't find any RVT-H Reader devices.
