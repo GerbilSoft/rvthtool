@@ -535,6 +535,7 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->btnCancel->setVisible(false);
 	d->btnCancel->setFocusPolicy(Qt::NoFocus);
 	d->btnCancel->setToolTip(tr("Cancel the current operation."));
+	d->btnCancel->setStyleSheet(QLatin1String("margin: 0px; padding: 0px;"));
 	if (QIcon::hasThemeIcon(QLatin1String("dialog-close"))) {
 		d->btnCancel->setIcon(QIcon::fromTheme(QLatin1String("dialog-close")));
 	} else {
