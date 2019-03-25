@@ -1006,6 +1006,7 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
+	d->workerObject = new WorkerObject();
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
 	d->workerObject->setBank(bank);
