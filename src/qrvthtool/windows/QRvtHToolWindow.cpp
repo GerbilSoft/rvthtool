@@ -941,7 +941,8 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	const unsigned int flags = 0;
 
 	// Update status.
-	d->updateStatus_didInitialUpdate = false;
+	// NOTE: We don't need to do an initial update for extract.
+	d->updateStatus_didInitialUpdate = true;
 	d->updateStatus_bank = bank;
 
 	// Create the worker thread and object.
@@ -1016,6 +1017,7 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 		.arg(filenameOnly).arg(bank+1));
 
 	// Update status.
+	// NOTE: We *do* need to do an initial update for import.
 	d->updateStatus_didInitialUpdate = false;
 	d->updateStatus_bank = bank;
 
@@ -1213,7 +1215,6 @@ void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progres
 	if (progress_value >= 0 && progress_max >= 0) {
 		if (!d->updateStatus_didInitialUpdate) {
 			// Update the RVT-H model.
-			// TODO: Only if importing?
 			d->model->forceBankUpdate(d->updateStatus_bank);
 			d->updateStatus_didInitialUpdate = true;
 		}
