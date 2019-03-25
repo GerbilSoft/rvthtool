@@ -268,8 +268,10 @@ ADD_DEFINITIONS(-DQT_USE_FAST_CONCATENATION
 	)
 
 # Qt5 requires "-fpic -fPIC" due to reduced relocations.
-SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fpic -fPIC")
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic -fPIC")
+IF(UNIX AND NOT APPLE)
+	SET(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -fpic -fPIC")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpic -fPIC")
+ENDIF(UNIX AND NOT APPLE)
 
 # Win32: image version.
 INCLUDE(Win32ImageVersionLinkerFlags)
