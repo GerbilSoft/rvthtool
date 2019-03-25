@@ -902,7 +902,7 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 	ret = rvth_src->copyToHDD(this, bank, 0, callback, userdata);
 	if (ret == 0) {
 		// Must convert to debug realsigned for use on RVT-H.
-		const RvtH_BankEntry *const entry = &m_entries[0];
+		const RvtH_BankEntry *const entry = this->bankEntry(bank);
 		if (entry &&
 			(entry->type == RVTH_BankType_Wii_SL ||
 			 entry->type == RVTH_BankType_Wii_DL) &&
