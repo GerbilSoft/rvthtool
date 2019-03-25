@@ -213,10 +213,11 @@ class RvtH {
 
 		/**
 		 * Write a bank table entry to disk.
-		 * @param bank	[in] Bank number. (0-7)
+		 * @param bank		[in] Bank number. (0-7)
+		 * @param pTimestamp	[out,opt] Timestamp written to the bank entry.
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
-		int writeBankEntry(unsigned int bank);
+		int writeBankEntry(unsigned int bank, time_t *pTimestamp = nullptr);
 
 	private:
 		DISABLE_COPY(RvtH)

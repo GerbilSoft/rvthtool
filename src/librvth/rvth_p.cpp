@@ -96,10 +96,11 @@ bool RvtH::isBlockEmpty(const uint8_t *block, unsigned int size)
 
 /**
  * Write a bank table entry to disk.
- * @param bank	[in] Bank number. (0-7)
+ * @param bank		[in] Bank number. (0-7)
+ * @param pTimestamp	[out,opt] Timestamp written to the bank entry.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int RvtH::writeBankEntry(unsigned int bank)
+int RvtH::writeBankEntry(unsigned int bank, time_t *pTimestamp)
 {
 	if (!isHDD()) {
 		// Standalone disc image. No bank table.
@@ -125,55 +126,56 @@ int RvtH::writeBankEntry(unsigned int bank)
 	// If the bank entry is deleted, then it should be
 	// all zeroes, so skip all of this.
 	RvtH_BankEntry *const rvth_entry = &m_entries[bank];
-	if (rvth_entry->is_deleted)
-		goto skip_creating_bank_entry;
+	if (!rvth_entry->is_deleted) {
+		// Bank entry is not deleted.
+		// Construct the NHCD bank entry.
 
-	// Check the bank type.
-	switch (rvth_entry->type) {
-		// These bank entries can be written.
-		case RVTH_BankType_Empty:
-			nhcd_entry.type = cpu_to_be32(NHCD_BankType_Empty);
-			break;
-		case RVTH_BankType_GCN:
-			nhcd_entry.type = cpu_to_be32(NHCD_BankType_GCN);
-			break;
-		case RVTH_BankType_Wii_SL:
-			nhcd_entry.type = cpu_to_be32(NHCD_BankType_Wii_SL);
-			break;
-		case RVTH_BankType_Wii_DL:
-			nhcd_entry.type = cpu_to_be32(NHCD_BankType_Wii_DL);
-			break;
+		// Check the bank type.
+		switch (rvth_entry->type) {
+			// These bank entries can be written.
+			case RVTH_BankType_Empty:
+				nhcd_entry.type = cpu_to_be32(NHCD_BankType_Empty);
+				break;
+			case RVTH_BankType_GCN:
+				nhcd_entry.type = cpu_to_be32(NHCD_BankType_GCN);
+				break;
+			case RVTH_BankType_Wii_SL:
+				nhcd_entry.type = cpu_to_be32(NHCD_BankType_Wii_SL);
+				break;
+			case RVTH_BankType_Wii_DL:
+				nhcd_entry.type = cpu_to_be32(NHCD_BankType_Wii_DL);
+				break;
 
-		case RVTH_BankType_Unknown:
-		default:
-			// Unknown bank status...
-			return RVTH_ERROR_BANK_UNKNOWN;
+			case RVTH_BankType_Unknown:
+			default:
+				// Unknown bank status...
+				return RVTH_ERROR_BANK_UNKNOWN;
 
-		case RVTH_BankType_Wii_DL_Bank2:
-			// Second bank of a dual-layer Wii disc image.
-			// TODO: Automatically select the first bank?
-			return RVTH_ERROR_BANK_DL_2;
+			case RVTH_BankType_Wii_DL_Bank2:
+				// Second bank of a dual-layer Wii disc image.
+				// TODO: Automatically select the first bank?
+				return RVTH_ERROR_BANK_DL_2;
+		}
+
+		if (rvth_entry->type != RVTH_BankType_Empty) {
+			// ASCII zero bytes.
+			memset(nhcd_entry.all_zero, '0', sizeof(nhcd_entry.all_zero));
+
+			// Timestamp.
+			rvth_timestamp_create(nhcd_entry.timestamp, sizeof(nhcd_entry.timestamp), time(nullptr));
+			if (pTimestamp) {
+				// Convert the timestamp back.
+				// NOTE: We can't just use the value from time(nullptr) because
+				// that's in UTC/GMT, and we need localtime here.
+				*pTimestamp = rvth_timestamp_parse(nhcd_entry.timestamp);
+			}
+
+			// LBA start and length.
+			nhcd_entry.lba_start = cpu_to_be32(rvth_entry->lba_start);
+			nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
+		}
 	}
 
-	if (rvth_entry->type == RVTH_BankType_Empty ||
-	    rvth_entry->is_deleted)
-	{
-		// Bank is either empty or deleted.
-		// Don't bother doing anything with it.
-		goto skip_creating_bank_entry;
-	}
-
-	// ASCII zero bytes.
-	memset(nhcd_entry.all_zero, '0', sizeof(nhcd_entry.all_zero));
-
-	// Timestamp.
-	rvth_timestamp_create(nhcd_entry.timestamp, sizeof(nhcd_entry.timestamp), time(NULL));
-
-	// LBA start and length.
-	nhcd_entry.lba_start = cpu_to_be32(rvth_entry->lba_start);
-	nhcd_entry.lba_len = cpu_to_be32(rvth_entry->lba_len);
-
-skip_creating_bank_entry:
 	// Write the bank entry.
 	ret = m_file->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {

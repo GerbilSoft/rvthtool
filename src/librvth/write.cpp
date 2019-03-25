@@ -186,6 +186,7 @@ int RvtH::deleteBank(unsigned int bank)
 
 	// Delete the bank and write the entry.
 	rvth_entry->is_deleted = true;
+	rvth_entry->timestamp = -1;
 	ret = this->writeBankEntry(bank);
 	m_file->flush();
 	if (ret != 0) {
@@ -265,7 +266,7 @@ int RvtH::undeleteBank(unsigned int bank)
 
 	// Undelete the bank and write the entry.
 	rvth_entry->is_deleted = false;
-	ret = this->writeBankEntry(bank);
+	ret = this->writeBankEntry(bank, &rvth_entry->timestamp);
 	m_file->flush();
 	if (ret != 0) {
 		// Error undeleting the bank...
