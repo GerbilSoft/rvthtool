@@ -221,7 +221,7 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 				// TODO: Handle pErr.
 				QString qs_full_serial;
 #ifdef _WIN32
-				wchar_t *s_full_serial = rvth_get_device_serial_number(
+				wchar_t *const s_full_serial = rvth_get_device_serial_number(
 					reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
 				if (s_full_serial) {
 					qs_full_serial = QString::fromUtf16(
@@ -229,7 +229,7 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 					free(s_full_serial);
 				}
 #else /* !_WIN32 */
-				char *s_full_serial = rvth_get_device_serial_number(
+				char *const s_full_serial = rvth_get_device_serial_number(
 					filename.toUtf8().constData(), nullptr);
 				if (s_full_serial) {
 					qs_full_serial = QString::fromUtf8(s_full_serial);
