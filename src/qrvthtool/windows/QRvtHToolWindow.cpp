@@ -913,9 +913,6 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	if (filename.isEmpty())
 		return;
 
-	// TODO:
-	// - Add a "Cancel" button.
-
 	// Disable the main UI widgets.
 	markUiBusy();
 
@@ -966,7 +963,7 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 {
 	Q_D(QRvtHToolWindow);
 
-	if (d->workerThread->isRunning() || d->workerObject) {
+	if (d->workerObject || (d->workerThread && d->workerThread->isRunning())) {
 		// Worker thread is already running.
 		return;
 	}
@@ -992,9 +989,6 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 		tr("All Files") + QLatin1String(" (*)"));
 	if (filename.isEmpty())
 		return;
-
-	// TODO:
-	// - Add a "Cancel" button.
 
 	// Disable the main UI widgets.
 	markUiBusy();
