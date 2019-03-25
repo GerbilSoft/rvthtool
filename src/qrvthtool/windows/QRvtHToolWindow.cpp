@@ -1052,14 +1052,21 @@ void QRvtHToolWindow::on_actionDelete_triggered(void)
 
 	// Delete the selected bank.
 	int ret = d->rvth->deleteBank(bank);
+
+	QString text;
+	QMessageBox::Icon notificationType;
 	if (ret == 0) {
 		// Successfully deleted.
-		d->lblMessage->setText(tr("Bank %1 deleted.").arg(bank+1));
+		text = tr("Bank %1 deleted.").arg(bank+1);
+		notificationType = QMessageBox::Information;
 	} else {
 		// An error occurred...
-		d->lblMessage->setText(tr("ERROR deleting Bank %1: %2")
-			.arg(bank+1).arg(ret));
+		text = tr("ERROR deleting Bank %1: %2")
+			.arg(bank+1).arg(ret);
+		notificationType = QMessageBox::Warning;
 	}
+	d->lblMessage->setText(text);
+	MessageSound::play(notificationType, text, this);
 
 	// Update the RVT-H model.
 	d->model->forceBankUpdate(bank);
@@ -1095,14 +1102,21 @@ void QRvtHToolWindow::on_actionUndelete_triggered(void)
 
 	// Undelete the selected bank.
 	int ret = d->rvth->undeleteBank(bank);
+
+	QString text;
+	QMessageBox::Icon notificationType;
 	if (ret == 0) {
 		// Successfully deleted.
-		d->lblMessage->setText(tr("Bank %1 undeleted.").arg(bank+1));
+		text = tr("Bank %1 undeleted.").arg(bank+1);
+		notificationType = QMessageBox::Information;
 	} else {
 		// An error occurred...
-		d->lblMessage->setText(tr("ERROR undeleting Bank %1: %2")
-			.arg(bank+1).arg(ret));
+		text = tr("ERROR undeleting Bank %1: %2")
+			.arg(bank+1).arg(ret);
+		notificationType = QMessageBox::Warning;
 	}
+	d->lblMessage->setText(text);
+	MessageSound::play(notificationType, text, this);
 
 	// Update the RVT-H model.
 	d->model->forceBankUpdate(bank);
@@ -1208,8 +1222,6 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	// Hide the Cancel button.
 	d->btnCancel->setVisible(false);
 
-	// TODO: Play a default sound effect.
-	// MessageBeep() on Windows; libcanberra on Linux.
 	if (err == 0) {
 		// Process completed.
 		d->progressBar->setValue(d->progressBar->maximum());
