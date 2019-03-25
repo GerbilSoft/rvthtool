@@ -1065,6 +1065,8 @@ void QRvtHToolWindow::on_actionDelete_triggered(void)
 	d->model->forceBankUpdate(bank);
 	// Update the BankEntryView.
 	d->ui.bevBankEntryView->update();
+	// Update the action enable status.
+	d->updateActionEnableStatus();
 }
 
 /**
@@ -1106,6 +1108,8 @@ void QRvtHToolWindow::on_actionUndelete_triggered(void)
 	d->model->forceBankUpdate(bank);
 	// Update the BankEntryView.
 	d->ui.bevBankEntryView->update();
+	// Update the action enable status.
+	d->updateActionEnableStatus();
 }
 
 /** RvtHModel slots **/
