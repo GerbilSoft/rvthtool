@@ -149,6 +149,11 @@ class QRvtHToolWindowPrivate
 
 		// Taskbar Button Manager.
 		TaskbarButtonManager *taskbarButtonManager;
+
+	public:
+		// Update status.
+		bool updateStatus_didInitialUpdate;
+		int updateStatus_bank;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -166,6 +171,8 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, workerObject(nullptr)
 	, uiBusyCounter(0)
 	, taskbarButtonManager(nullptr)
+	, updateStatus_didInitialUpdate(false)
+	, updateStatus_bank(0)
 {
 	// Connect the RvtHModel slots.
 	QObject::connect(model, &RvtHModel::layoutChanged,
@@ -933,6 +940,10 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	// TODO: NDEV flag?
 	const unsigned int flags = 0;
 
+	// Update status.
+	d->updateStatus_didInitialUpdate = false;
+	d->updateStatus_bank = bank;
+
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
 	d->workerObject = new WorkerObject();
@@ -1003,6 +1014,10 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 	const QString filenameOnly = d->getDisplayFilename(filename);
 	d->lblMessage->setText(tr("Importing %1 to Bank %2:")
 		.arg(filenameOnly).arg(bank+1));
+
+	// Update status.
+	d->updateStatus_didInitialUpdate = false;
+	d->updateStatus_bank = bank;
 
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
@@ -1196,6 +1211,13 @@ void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progres
 
 	// TODO: "Error" state.
 	if (progress_value >= 0 && progress_max >= 0) {
+		if (!d->updateStatus_didInitialUpdate) {
+			// Update the RVT-H model.
+			// TODO: Only if importing?
+			d->model->forceBankUpdate(d->updateStatus_bank);
+			d->updateStatus_didInitialUpdate = true;
+		}
+
 		if (d->progressBar->maximum() != progress_max) {
 			d->progressBar->setMaximum(progress_max);
 		}
@@ -1271,6 +1293,8 @@ void QRvtHToolWindow::btnCancel_clicked(void)
 	// TODO: Make sure there's no race conditions.
 	if (d->workerObject) {
 		// TODO: Delete the destination .gcm if necessary?
+		// TODO: If importing, restore the old bank entry?
+		// (may need librvth changes)
 		d->workerObject->cancel();
 	}
 }
