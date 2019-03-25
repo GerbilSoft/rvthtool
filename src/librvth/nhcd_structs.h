@@ -95,7 +95,8 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 #define NHCD_BANK_SIZE_LBA			0x8C4A00U
 
 // Bank 1 size for extended bank tables.
-#define NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA	0x2C0000U
+#define NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA	NHCD_BANKTABLE_ADDRESS_LBA
+#define NHCD_EXTBANKTABLE_BANK_1_OFFSET_LBA	(NHCD_BANKTABLE_ADDRESS_LBA - NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA)
 
 /**
  * Get the default bank starting address.
@@ -104,8 +105,8 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
  * bank table header and 8 bank entries. (0x300009U)
  *
  * For `bank_count > 8`, the same is true for banks 2 and higher.
- * Bank 1 is relocated to (NHCD_BANKTABLE_ADDRESS_LBA - NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA)
- * and will only support GCN images.
+ * Bank 1 is relocated to LBA 0 and will only support GCN images.
+ * TODO: Test changes - was relocated to LBA 0x40000, but now 0.
  *
  * @param bank Bank number. (0-7)
  * @param bank_count Bank count.
@@ -116,7 +117,7 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 		? (NHCD_BANKTABLE_ADDRESS_LBA + 9U + (NHCD_BANK_SIZE_LBA * (bank))) \
 		: (((bank_count) <= 8) \
 			? (NHCD_BANKTABLE_ADDRESS_LBA + 9U) \
-			: (NHCD_BANKTABLE_ADDRESS_LBA - NHCD_EXTBANKTABLE_BANK_1_SIZE_LBA) \
+			: NHCD_EXTBANKTABLE_BANK_1_OFFSET_LBA \
 		) \
 	)
 

@@ -187,6 +187,12 @@ SET(qrvthtool_RCC_SRCS
 	resources/hw/hw.qrc
 	resources/flags/flags.qrc
 	)
+IF(WIN32 OR APPLE)
+	SET(qrvthtool_RCC_SRCS
+		${qrvthtool_RCC_SRCS}
+		resources/oxygen/oxygen.qrc
+		)
+ENDIF(WIN32 OR APPLE)
 
 QT5_ADD_RESOURCES(
 	qrvthtool_RCC_O ${qrvthtool_RCC_SRCS}

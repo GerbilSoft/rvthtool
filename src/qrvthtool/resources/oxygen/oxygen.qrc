@@ -1,0 +1,59 @@
+<RCC>
+  <qresource prefix="icons/oxygen">
+    <file>index.theme</file>
+
+    <file>16x16/application-exit.png</file>
+    <file>22x22/application-exit.png</file>
+    <file>32x32/application-exit.png</file>
+    <file>48x48/application-exit.png</file>
+    <file>64x64/application-exit.png</file>
+    <file>128x128/application-exit.png</file>
+
+    <file>16x16/dialog-close.png</file>
+    <file>22x22/dialog-close.png</file>
+    <file>32x32/dialog-close.png</file>
+    <file>48x48/dialog-close.png</file>
+
+    <file>16x16/document-open.png</file>
+    <file>22x22/document-open.png</file>
+    <file>32x32/document-open.png</file>
+    <file>48x48/document-open.png</file>
+
+    <file>16x16/document-close.png</file>
+    <file>22x22/document-close.png</file>
+    <file>32x32/document-close.png</file>
+    <file>48x48/document-close.png</file>
+
+    <file>16x16/document-export.png</file>
+    <file>22x22/document-export.png</file>
+    <file>32x32/document-export.png</file>
+    <file>48x48/document-export.png</file>
+
+    <file>16x16/document-import.png</file>
+    <file>22x22/document-import.png</file>
+    <file>32x32/document-import.png</file>
+    <file>48x48/document-import.png</file>
+
+    <file>16x16/drive-harddisk.png</file>
+    <file>22x22/drive-harddisk.png</file>
+    <file>32x32/drive-harddisk.png</file>
+    <file>48x48/drive-harddisk.png</file>
+    <file>64x64/drive-harddisk.png</file>
+    <file>128x128/drive-harddisk.png</file>
+
+    <file>16x16/edit-delete.png</file>
+    <file>22x22/edit-delete.png</file>
+    <file>32x32/edit-delete.png</file>
+    <file>48x48/edit-delete.png</file>
+
+    <file>16x16/edit-undo.png</file>
+    <file>22x22/edit-undo.png</file>
+    <file>32x32/edit-undo.png</file>
+    <file>48x48/edit-undo.png</file>
+
+    <file>16x16/help-about.png</file>
+    <file>22x22/help-about.png</file>
+    <file>32x32/help-about.png</file>
+    <file>48x48/help-about.png</file>
+  </qresource>
+</RCC>

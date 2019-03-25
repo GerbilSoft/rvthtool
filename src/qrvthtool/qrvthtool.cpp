@@ -99,9 +99,21 @@ int main(int argc, char *argv[])
 	TranslationManager *const tsm = TranslationManager::instance();
 	tsm->setTranslation(QLocale::system().name());
 
+	// TODO: Call QApplication::setWindowIcon().
+
 #ifdef _WIN32
 	RegisterTaskbarButtonCreatedMessage();
 #endif /* _WIN32 */
+
+#if defined(_WIN32) || defined(__APPLE__)
+	// Check if an icon theme is available.
+	if (!QIcon::hasThemeIcon(QLatin1String("application-exit"))) {
+		// Icon theme is not available.
+		// Use the built-in Oxygen icon theme.
+		// Reference: http://tkrotoff.blogspot.com/2010/02/qiconfromtheme-under-windows.html
+		QIcon::setThemeName(QLatin1String("oxygen"));
+	}
+#endif /* _WIN32 || __APPLE__ */
 
 	// Initialize the QRvtHToolWindow.
 	QRvtHToolWindow *window = new QRvtHToolWindow();
