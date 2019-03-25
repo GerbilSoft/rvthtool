@@ -104,6 +104,13 @@ class RvtHModel : public QAbstractListModel
 		 * The system theme has changed.
 		 */
 		void themeChanged_slot(void);
+
+	public slots:
+		/**
+		 * Force the RVT-H model to update a bank.
+		 * @param bank Bank number.
+		 */
+		void forceBankUpdate(unsigned int bank);
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_RVTHMODEL_HPP__ */

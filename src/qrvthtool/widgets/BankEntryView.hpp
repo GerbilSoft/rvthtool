@@ -56,6 +56,11 @@ class BankEntryView : public QWidget
 		 */
 		void setBankEntry(const struct _RvtH_BankEntry *bankEntry);
 
+		/**
+		 * Update the currently displayed RvtH_BankEntry.
+		 */
+		void update(void);
+
 	protected:
 		// State change event. (Used for switching the UI language at runtime.)
 		void changeEvent(QEvent *event);

@@ -1024,6 +1024,90 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 	d->workerThread->start();
 }
 
+/**
+ * Delete the selected bank.
+ */
+void QRvtHToolWindow::on_actionDelete_triggered(void)
+{
+	Q_D(QRvtHToolWindow);
+
+	if (d->workerObject || (d->workerThread && d->workerThread->isRunning())) {
+		// Worker thread is already running.
+		return;
+	}
+
+	// TODO: Prompt the user to confirm?
+
+	// Only one bank can be selected.
+	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
+	if (!selectionModel->hasSelection())
+		return;
+
+	QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
+	if (!index.isValid())
+		return;
+
+	// TODO: Sort proxy model like in mcrecover.
+	const unsigned int bank = d->proxyModel->mapToSource(index).row();
+
+	// Delete the selected bank.
+	int ret = d->rvth->deleteBank(bank);
+	if (ret == 0) {
+		// Successfully deleted.
+		d->lblMessage->setText(tr("Bank %1 deleted.").arg(bank+1));
+	} else {
+		// An error occurred...
+		d->lblMessage->setText(tr("ERROR deleting Bank %1: %2")
+			.arg(bank+1).arg(ret));
+	}
+
+	// Update the RVT-H model.
+	d->model->forceBankUpdate(bank);
+	// Update the BankEntryView.
+	d->ui.bevBankEntryView->update();
+}
+
+/**
+ * Undelete the selected bank.
+ */
+void QRvtHToolWindow::on_actionUndelete_triggered(void)
+{
+	Q_D(QRvtHToolWindow);
+
+	if (d->workerObject || (d->workerThread && d->workerThread->isRunning())) {
+		// Worker thread is already running.
+		return;
+	}
+
+	// Only one bank can be selected.
+	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
+	if (!selectionModel->hasSelection())
+		return;
+
+	QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
+	if (!index.isValid())
+		return;
+
+	// TODO: Sort proxy model like in mcrecover.
+	const unsigned int bank = d->proxyModel->mapToSource(index).row();
+
+	// Undelete the selected bank.
+	int ret = d->rvth->undeleteBank(bank);
+	if (ret == 0) {
+		// Successfully deleted.
+		d->lblMessage->setText(tr("Bank %1 undeleted.").arg(bank+1));
+	} else {
+		// An error occurred...
+		d->lblMessage->setText(tr("ERROR undeleting Bank %1: %2")
+			.arg(bank+1).arg(ret));
+	}
+
+	// Update the RVT-H model.
+	d->model->forceBankUpdate(bank);
+	// Update the BankEntryView.
+	d->ui.bevBankEntryView->update();
+}
+
 /** RvtHModel slots **/
 
 void QRvtHToolWindow::rvthModel_layoutChanged(void)

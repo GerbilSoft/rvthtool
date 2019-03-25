@@ -640,3 +640,28 @@ void RvtHModel::themeChanged_slot(void)
 
 	// TODO: Force an update?
 }
+
+/**
+ * Force the RVT-H model to update a bank.
+ * @param bank Bank number.
+ */
+void RvtHModel::forceBankUpdate(unsigned int bank)
+{
+	Q_D(RvtHModel);
+	if (!d->rvth)
+		return;
+
+	const unsigned int bankCount = d->rvth->bankCount();
+	if (bank >= bankCount) {
+		// Out of range.
+		return;
+	}
+
+	// Data for this bank is changed.
+	// Force update this bank and the next bank,
+	// in case the bank was previously DL.
+	const unsigned int bank2 = (bank == bankCount-1 ? bank : bank+1);
+	QModelIndex idxStart = index(bank, 0);
+	QModelIndex idxEnd = index(bank2, COL_MAX-1);
+	emit dataChanged(idxStart, idxEnd);
+}

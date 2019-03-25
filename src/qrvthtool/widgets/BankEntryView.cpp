@@ -551,6 +551,14 @@ void BankEntryView::setBankEntry(const RvtH_BankEntry *bankEntry)
 	d->updateWidgetDisplay();
 }
 
+/**
+ * Update the currently displayed RvtH_BankEntry.
+ */
+void BankEntryView::update(void)
+{
+	Q_D(BankEntryView);
+	d->updateWidgetDisplay();
+}
 
 /**
  * Widget state has changed.
