@@ -19,8 +19,10 @@
  ***************************************************************************/
 
 #include "list-banks.hpp"
+
 #include "librvth/rvth.hpp"
 #include "librvth/rvth_error.h"
+#include "librvth/query.h"
 
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/sig_tools.h"
@@ -305,13 +307,24 @@ int list_banks(const TCHAR *rvth_filename)
 
 	// Check if this is an HDD image.
 	switch (rvth->imageType()) {
-		case RVTH_ImageType_HDD_Reader:
-			fputs("Type: RVT-H Reader System\n", stdout);
+		case RVTH_ImageType_HDD_Reader: {
+			// Get the serial number.
+			TCHAR *const s_full_serial = rvth_get_device_serial_number(rvth_filename, nullptr);
+			fputs("Type: RVT-H Reader System", stdout);
+			if (s_full_serial) {
+				fputs(" [", stdout);
+				_fputts(s_full_serial, stdout);
+				putchar(']');
+			}
+			putchar('\n');
+
 			if (!rvth->hasNHCD()) {
 				fputs("*** WARNING: NHCD table is missing.\n"
 				      "*** Using defaults. Writing will be disabled.\n", stdout);
 			}
 			break;
+		}
+
 		case RVTH_ImageType_HDD_Image:
 			fputs("Type: RVT-H Reader Disk Image\n", stdout);
 			if (!rvth->hasNHCD()) {
