@@ -108,6 +108,17 @@ class QRvtHToolWindowPrivate
 		 */
 		void updateWindowTitle(void);
 
+		/**
+		 * Get the display filename for the given filename.
+		 *
+		 * This removes the directories and returns only the filename,
+		 * except in the case of device files.
+		 *
+		 * @param filename Full filename.
+		 * @return Display filename.
+		 */
+		static QString getDisplayFilename(const QString &filename);
+
 	public:
 		/**
 		 * Initialize the toolbar.
@@ -348,6 +359,48 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 }
 
 /**
+ * Get the display filename for the given filename.
+ *
+ * This removes the directories and returns only the filename,
+ * except in the case of device files.
+ *
+ * @param filename Full filename.
+ * @return Display filename.
+ */
+QString QRvtHToolWindowPrivate::getDisplayFilename(const QString &filename)
+{
+	QString rfn = filename;
+	bool removeDir = true;
+
+#ifdef _WIN32
+	// Does the path start with "\\\\.\\PhysicalDriveN"?
+	// FIXME: How does Qt's native slashes interact with this?
+	if (rfn.startsWith(QLatin1String("\\\\.\\PhysicalDrive")) ||
+	    rfn.startsWith(QLatin1String("//./PhysicalDrive")))
+	{
+		// Physical drive.
+		// TODO: Make sure it's all backslashes.
+		removeDir = false;
+	}
+#else /* !_WIN32 */
+	// Does the path start with "/dev/"?
+	if (rfn.startsWith(QLatin1String("/dev/"))) {
+		// Physical drive.
+		removeDir = false;
+	}
+#endif
+
+	if (removeDir) {
+		int lastSlash = rfn.lastIndexOf(QChar(L'/'));
+		if (lastSlash >= 0) {
+			rfn.remove(0, lastSlash + 1);
+		}
+	}
+
+	return rfn;
+}
+
+/**
  * Initialize the toolbar.
  */
 void QRvtHToolWindowPrivate::initToolbar(void)
@@ -530,9 +583,8 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 #endif
 	if (!rvth_tmp->isOpen() || err != 0) {
 		// Unable to open the RVT-H Reader disk image.
-		const QString filenameOnly = QFileInfo(filename).fileName();
-		const QString errMsg = tr("An error occurred while opening %1: %2")
-			.arg(filenameOnly)
+		const QString errMsg = tr("An error occurred while opening '%1': %2")
+			.arg(d->getDisplayFilename(filename))
 			.arg(QString::fromUtf8(rvth_error(err)));
 		d->ui.msgWidget->showMessage(errMsg, MessageWidget::ICON_CRITICAL);
 		delete d->rvth;
@@ -544,33 +596,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	d->model->setRvtH(d->rvth);
 
 	// Extract the filename from the path.
-	// TODO: Use QFileInfo or similar?
-	d->displayFilename = filename;
-	bool removeDir = true;
-#ifdef _WIN32
-	// Does the path start with "\\\\.\\PhysicalDriveN"?
-	// FIXME: How does Qt's native slashes interact with this?
-	if (d->displayFilename.startsWith(QLatin1String("\\\\.\\PhysicalDrive")) ||
-	    d->displayFilename.startsWith(QLatin1String("//./PhysicalDrive")))
-	{
-		// Physical drive.
-		// TODO: Make sure it's all backslashes.
-		removeDir = false;
-	}
-#else /* !_WIN32 */
-	// Does the path start with "/dev/"?
-	if (d->displayFilename.startsWith(QLatin1String("/dev/"))) {
-		// Physical drive.
-		removeDir = false;
-	}
-#endif
-
-	if (removeDir) {
-		int lastSlash = d->displayFilename.lastIndexOf(QChar(L'/'));
-		if (lastSlash >= 0) {
-			d->displayFilename.remove(0, lastSlash + 1);
-		}
-	}
+	d->displayFilename = d->getDisplayFilename(filename);
 
 	// Update the UI.
 	d->updateLstBankList();
@@ -900,7 +926,7 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	d->progressBar->setValue(0);
 
 	// Initial message.
-	const QString filenameOnly = QFileInfo(filename).fileName();
+	const QString filenameOnly = d->getDisplayFilename(filename);
 	d->lblMessage->setText(tr("Extracting Bank %1 to %2:")
 		.arg(bank+1).arg(filenameOnly));
 
@@ -980,7 +1006,7 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 	d->progressBar->setValue(0);
 
 	// Initial message.
-	const QString filenameOnly = QFileInfo(filename).fileName();
+	const QString filenameOnly = d->getDisplayFilename(filename);
 	d->lblMessage->setText(tr("Importing %1 to Bank %2:")
 		.arg(filenameOnly).arg(bank+1));
 
