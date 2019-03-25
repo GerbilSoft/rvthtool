@@ -20,6 +20,9 @@
 
 #include "query.h"
 
+// TODO: stdboolx.h
+#include "../libwiicrypto/common.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,6 +33,35 @@
 static inline char *strdup_null(const char *s)
 {
 	return (s ? strdup(s) : NULL);
+}
+
+/**
+ * Check if a USB device has the correct VID/PID.
+ * @param usb_dev USB device.
+ * @return True if it's correct; false if not.
+ */
+static bool is_vid_pid_correct(struct udev_device *usb_dev)
+{
+	const char *s_vid, *s_pid;
+	unsigned int vid, pid;
+
+	// Check if the VID/PID matches Nintendo RVT-H Reader.
+	s_vid = udev_device_get_sysattr_value(usb_dev, "idVendor");
+	s_pid = udev_device_get_sysattr_value(usb_dev, "idProduct");
+	if (!s_vid || !s_pid) {
+		// Unable to get either VID or PID.
+		return false;
+	}
+
+	vid = strtoul(s_vid, NULL, 16);
+	pid = strtoul(s_pid, NULL, 16);
+	if (vid != RVTH_READER_VID || pid != RVTH_READER_PID) {
+		// Incorrect VID or PID.
+		return false;
+	}
+
+	// Correct VID/PID.
+	return true;
 }
 
 /**
@@ -46,7 +78,6 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 	struct udev *udev;
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *devices, *dev_list_entry;
-	struct udev_device *dev;
 
 	// Create the udev object.
 	udev = udev_new();
@@ -67,11 +98,10 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 	// Go over the list of devices and find matching USB devices.
 	udev_list_entry_foreach(dev_list_entry, devices) {
 		struct udev_device *usb_dev, *scsi_dev;
+		struct udev_device *dev;
 
 		const char *path;
 		const char *s_devnode;
-		const char *s_vid, *s_pid;
-		unsigned int vid, pid;
 
 		const char *s_blk_size;
 		const char *s_usb_serial;
@@ -108,17 +138,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		}
 	
 		// Check if the VID/PID matches Nintendo RVT-H Reader.
-		s_vid = udev_device_get_sysattr_value(usb_dev, "idVendor");
-		s_pid = udev_device_get_sysattr_value(usb_dev, "idProduct");
-		if (!s_vid || !s_pid) {
-			// Unable to get either VID or PID.
-			udev_device_unref(dev);
-			continue;
-		}
-		vid = strtoul(s_vid, NULL, 16);
-		pid = strtoul(s_pid, NULL, 16);
-		if (vid != RVTH_READER_VID || pid != RVTH_READER_PID) {
-			// Incorrect VID or PID.
+		if (!is_vid_pid_correct(usb_dev)) {
 			udev_device_unref(dev);
 			continue;
 		}
@@ -201,4 +221,122 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		*pErr = 0;
 	}
 	return list_head;
+}
+
+/**
+ * Get the serial number for the specified RVT-H Reader device.
+ * @param filename	[in] RVT-H Reader device filename.
+ * @param pErr		[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
+ * @return Allocated serial number string, or nullptr on error.
+ */
+TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr)
+{
+	// Reference: http://www.signal11.us/oss/udev/
+	struct udev *udev;
+	struct udev_enumerate *enumerate;
+	struct udev_list_entry *devices, *dev_list_entry;
+	TCHAR *s_full_serial = NULL;
+
+	// Create the udev object.
+	udev = udev_new();
+	if (!udev) {
+		// Unable to create a udev object.
+		if (pErr) {
+			*pErr = ENOMEM;
+		}
+		return NULL;
+	}
+
+	// TODO: Get the device directly based on `filename`
+	// instead of enumerating devices.
+
+	// Create a list of the devices in the 'block' subsystem.
+	enumerate = udev_enumerate_new(udev);
+	udev_enumerate_add_match_subsystem(enumerate, "block");
+	udev_enumerate_scan_devices(enumerate);
+	devices = udev_enumerate_get_list_entry(enumerate);
+
+	// Go over the list of devices and find matching USB devices.
+	udev_list_entry_foreach(dev_list_entry, devices) {
+		struct udev_device *usb_dev;
+		struct udev_device *dev;
+
+		const char *path;
+		const char *s_devnode;
+
+		const char *s_usb_serial;
+		unsigned int hw_serial;
+
+		// Get the filename of the /sys entry for the device
+		// and create a udev_device object (dev) representing it.
+		path = udev_list_entry_get_name(dev_list_entry);
+		dev = udev_device_new_from_syspath(udev, path);
+
+		// udev_device_get_devnode() returns the path to the device node itself in /dev.
+		s_devnode = udev_device_get_devnode(dev);
+		if (!s_devnode || _tcscmp(filename, s_devnode) != 0) {
+			// No device node, or wrong filename.
+			udev_device_unref(dev);
+			continue;
+		}
+
+		// The device pointed to by dev contains information about the
+		// block device. In order to get information about the USB device,
+		// get the parent device with the subsystem/devtype pair of
+		// "usb"/"usb_device". This will be several levels up the tree,
+		// but the function will find it.
+		// NOTE: This device is NOT referenced, and is cleaned up when
+		// dev is cleaned up.
+		usb_dev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
+		if (!usb_dev) {
+			// Parent USB device is missing.
+			// Not an external HDD.
+			udev_device_unref(dev);
+			continue;
+		}
+	
+		// Check if the VID/PID matches Nintendo RVT-H Reader.
+		if (!is_vid_pid_correct(usb_dev)) {
+			udev_device_unref(dev);
+			continue;
+		}
+
+		// Get the serial number.
+		s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
+		if (!s_usb_serial) {
+			// No serial number...
+			udev_device_unref(dev);
+			continue;
+		}
+		hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
+
+		// Is the serial number valid?
+		// - Wired:    10xxxxxx
+		// - Wireless: 20xxxxxx
+		if (hw_serial < 10000000 || hw_serial > 29999999) {
+			// Not a valid serial number.
+			udev_device_unref(dev);
+			continue;
+		}
+
+		// Create the full serial number.
+		s_full_serial = rvth_create_full_serial_number(hw_serial);
+		udev_device_unref(dev);
+		break;
+	}
+
+	// Free the enumerator object.
+	udev_enumerate_unref(enumerate);
+	udev_unref(udev);
+
+	if (pErr) {
+		if (s_full_serial) {
+			// Full serial number obtained.
+			*pErr = 0;
+		} else {
+			// Device not found.
+			*pErr = ENOENT;
+		}
+	}
+	return s_full_serial;
 }

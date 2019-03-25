@@ -24,6 +24,7 @@
 #include "librvth/rvth.hpp"
 #include "librvth/nhcd_structs.h"
 #include "librvth/rvth_error.h"
+#include "librvth/query.h"
 
 #include "RvtHModel.hpp"
 #include "RvtHSortFilterProxyModel.hpp"
@@ -215,12 +216,35 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 		QString imageType;
 		switch (rvth->imageType()) {
 			// HDDs (multiple banks)
-			case RVTH_ImageType_HDD_Reader:
-				// TODO: Serial number.
+			case RVTH_ImageType_HDD_Reader: {
 				// TODO: Option to hide the serial number?
-				imageType = QRvtHToolWindow::tr("RVT-H Reader") +
-					QChar(L' ') + QLatin1String("HzAxxxxxxxxY");
+				// TODO: Handle pErr.
+				QString qs_full_serial;
+#ifdef _WIN32
+				wchar_t *s_full_serial = rvth_get_device_serial_number(
+					reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
+				if (s_full_serial) {
+					qs_full_serial = QString::fromUtf16(
+						reinterpret_cast<const char16_t*>(s_full_serial));
+					free(s_full_serial);
+				}
+#else /* !_WIN32 */
+				char *s_full_serial = rvth_get_device_serial_number(
+					filename.toUtf8().constData(), nullptr);
+				if (s_full_serial) {
+					qs_full_serial = QString::fromUtf8(s_full_serial);
+					free(s_full_serial);
+				}
+#endif /* _WIN32 */
+
+				imageType = QRvtHToolWindow::tr("RVT-H Reader");
+				if (!qs_full_serial.isEmpty()) {
+					imageType += QChar(L' ');
+					imageType += qs_full_serial;
+				}
+
 				break;
+			}
 			case RVTH_ImageType_HDD_Image:
 				imageType = QRvtHToolWindow::tr("RVT-H Reader Disk Image");
 				break;

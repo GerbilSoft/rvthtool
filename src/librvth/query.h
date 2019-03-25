@@ -81,6 +81,14 @@ TCHAR *rvth_create_full_serial_number(unsigned int serial);
 RvtH_QueryEntry *rvth_query_devices(int *pErr);
 
 /**
+ * Get the serial number for the specified RVT-H Reader device.
+ * @param filename	[in] RVT-H Reader device filename.
+ * @param pErr		[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
+ * @return Allocated serial number string, or nullptr on error.
+ */
+TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr);
+
+/**
  * Free a list of queried devices.
  */
 void rvth_query_free(RvtH_QueryEntry *devs);
