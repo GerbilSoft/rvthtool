@@ -391,6 +391,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	tmdHeader = (const RVL_TMD_Header*)tmd;
 
 	// NOTE: Using TMD for most information.
+	printf("%s:\n", wad_filename);
 	printf("Type: %s\n", s_wad_type);
 	printf("- Title ID:      %08X-%08X\n", be32_to_cpu(tmdHeader->title_id.hi), be32_to_cpu(tmdHeader->title_id.lo));
 
