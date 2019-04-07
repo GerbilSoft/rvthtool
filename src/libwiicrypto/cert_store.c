@@ -530,12 +530,13 @@ RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer)
 {
 	unsigned int i;
 
-	if (!s_issuer) {
+	if (!s_issuer || s_issuer[0] == 0) {
+		// Unknown certificate.
+		// NOTE: If issuer is NULL, this is probably the root
+		// certificate, but the root certificate isn't used by
+		// discs or WAD files, so it's more likely an error.
 		errno = EINVAL;
 		return RVL_CERT_ISSUER_UNKNOWN;
-	} else if (s_issuer[0] == 0) {
-		// Root certificate.
-		return RVL_CERT_ISSUER_ROOT;
 	}
 
 	for (i = RVL_CERT_ISSUER_ROOT; i < RVL_CERT_ISSUER_MAX; i++) {
