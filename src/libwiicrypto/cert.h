@@ -101,10 +101,11 @@ int cert_verify(const uint8_t *data, size_t size);
  * NOTE: If changing the encryption type, the issuer and title key
  * must be updated *before* calling this function.
  *
- * @param ticket Ticket to fakesign.
+ * @param ticket_u8 Ticket to fakesign.
+ * @param size Size of ticket.
  * @return 0 on success; negative POSIX error code on error.
  */
-int cert_fakesign_ticket(RVL_Ticket *ticket);
+int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size);
 
 /**
  * Sign a ticket with real encryption keys.
@@ -112,11 +113,12 @@ int cert_fakesign_ticket(RVL_Ticket *ticket);
  * NOTE: If changing the encryption type, the issuer and title key
  * must be updated *before* calling this function.
  *
- * @param ticket Ticket to fakesign.
+ * @param ticket_u8 Ticket to sign.
+ * @param size Size of ticket.
  * @param key RSA-2048 private key.
  * @return 0 on success; negative POSIX error code on error.
  */
-int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key);
+int cert_realsign_ticket(uint8_t *ticket_u8, size_t size, const RSA2048PrivateKey *key);
 
 /**
  * Fakesign a TMD.

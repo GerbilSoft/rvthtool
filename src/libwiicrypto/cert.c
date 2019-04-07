@@ -299,14 +299,16 @@ int cert_verify(const uint8_t *data, size_t size)
  * NOTE: If changing the encryption type, the issuer and title key
  * must be updated *before* calling this function.
  *
- * @param ticket Ticket to fakesign.
+ * @param ticket_u8 Ticket to fakesign.
+ * @param size Size of ticket.
  * @return 0 on success; negative POSIX error code on error.
  */
-int cert_fakesign_ticket(RVL_Ticket *ticket)
+int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size)
 {
 	struct sha1_ctx sha1;
 	uint8_t digest[SHA1_DIGEST_SIZE];
 	uint32_t *fake;
+	RVL_Ticket *const ticket = (RVL_Ticket*)ticket_u8;
 
 	if (!ticket) {
 		errno = EINVAL;
@@ -329,8 +331,8 @@ int cert_fakesign_ticket(RVL_Ticket *ticket)
 	do {
 		// Calculate the SHA-1 of the ticket.
 		// If the first byte is 0, we're done.
-		sha1_update(&sha1, sizeof(*ticket) - offsetof(RVL_Ticket, issuer),
-			(const uint8_t*)&ticket->issuer);
+		static const unsigned int signing_offset = offsetof(RVL_Ticket, issuer);
+		sha1_update(&sha1, size - signing_offset, (const uint8_t*)(&ticket_u8[signing_offset]));
 		sha1_digest(&sha1, sizeof(digest), digest);
 	} while (digest[0] != 0 && ++(*fake) != 0);
 
@@ -344,14 +346,16 @@ int cert_fakesign_ticket(RVL_Ticket *ticket)
  * NOTE: If changing the encryption type, the issuer and title key
  * must be updated *before* calling this function.
  *
- * @param ticket Ticket to fakesign.
+ * @param ticket_u8 Ticket to sign.
+ * @param size Size of ticket.
  * @param key RSA-2048 private key.
  * @return 0 on success; negative POSIX error code on error.
  */
-int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
+int cert_realsign_ticket(uint8_t *ticket_u8, size_t size, const RSA2048PrivateKey *key)
 {
 	struct sha1_ctx sha1;
 	uint8_t digest[SHA1_DIGEST_SIZE];
+	RVL_Ticket *const ticket = (RVL_Ticket*)ticket_u8;
 
 	if (!ticket) {
 		errno = EINVAL;
@@ -363,9 +367,9 @@ int cert_realsign_ticket(RVL_Ticket *ticket, const RSA2048PrivateKey *key)
 	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
 
 	// Calculate the SHA-1 hash.
+	static const unsigned int signing_offset = offsetof(RVL_Ticket, issuer);
 	sha1_init(&sha1);
-	sha1_update(&sha1, sizeof(*ticket) - offsetof(RVL_Ticket, issuer),
-		(const uint8_t*)&ticket->issuer);
+	sha1_update(&sha1, size - signing_offset, (const uint8_t*)(&ticket_u8[signing_offset]));
 	sha1_digest(&sha1, sizeof(digest), digest);
 
 	// Sign the ticket.

@@ -274,8 +274,9 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	WAD_Header header;
 	WAD_Info_t wadInfo;
 
-	RVL_Ticket ticket;
-	uint8_t *tmd = NULL;
+	uint8_t *ticket_u8 = NULL;
+	uint8_t *tmd_u8 = NULL;
+	const RVL_Ticket *ticket = NULL;
 	const RVL_TMD_Header *tmdHeader = NULL;
 	uint16_t title_version;
 	uint8_t ios_version = 0;
@@ -343,12 +344,19 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 		ret = 3;
 		goto end;
+	} else if (wadInfo.ticket_size > WAD_TICKET_SIZE_MAX) {
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(wad_filename, stderr);
+		fprintf(stderr, "' ticket size is too big. (%u; should be %u)\n",
+			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+		ret = 4;
+		goto end;
 	} else if (wadInfo.tmd_size < sizeof(RVL_TMD_Header)) {
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(wad_filename, stderr);
 		fprintf(stderr, "' TMD size is too small. (%u; should be at least %u)\n",
 			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
-		ret = 4;
+		ret = 5;
 		goto end;
 	} else if (wadInfo.tmd_size > WAD_TMD_SIZE_MAX) {
 		// Too big.
@@ -356,38 +364,46 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		_fputts(wad_filename, stderr);
 		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
 			wadInfo.tmd_size);
-		ret = 5;
+		ret = 6;
 		goto end;
 	}
 
 	// Load the ticket and TMD.
+	ticket_u8 = malloc(wadInfo.ticket_size);
+	if (!ticket_u8) {
+		fprintf(stderr, "*** ERROR: Unable to allocate %u bytes for the ticket.\n", wadInfo.ticket_size);
+		ret = 7;
+		goto end;
+	}
 	fseeko(f_wad, wadInfo.ticket_address, SEEK_SET);
-	size = fread(&ticket, 1, sizeof(ticket), f_wad);
-	if (size != sizeof(ticket)) {
+	size = fread(ticket_u8, 1, wadInfo.ticket_size, f_wad);
+	if (size != wadInfo.ticket_size) {
 		// Read error.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(wad_filename, stderr);
 		fputs("': Unable to read the ticket.\n", stderr);
-		ret = 6;
+		ret = 8;
 		goto end;
 	}
-	tmd = malloc(wadInfo.tmd_size);
-	if (!tmd) {
+	ticket = (const RVL_Ticket*)ticket_u8;
+
+	tmd_u8 = malloc(wadInfo.tmd_size);
+	if (!tmd_u8) {
 		fprintf(stderr, "*** ERROR: Unable to allocate %u bytes for the TMD.\n", wadInfo.tmd_size);
-		ret = 7;
+		ret = 9;
 		goto end;
 	}
 	fseeko(f_wad, wadInfo.tmd_address, SEEK_SET);
-	size = fread(tmd, 1, wadInfo.tmd_size, f_wad);
+	size = fread(tmd_u8, 1, wadInfo.tmd_size, f_wad);
 	if (size != wadInfo.tmd_size) {
 		// Read error.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(wad_filename, stderr);
 		fputs("': Unable to read the TMD.\n", stderr);
-		ret = 8;
+		ret = 10;
 		goto end;
 	}
-	tmdHeader = (const RVL_TMD_Header*)tmd;
+	tmdHeader = (const RVL_TMD_Header*)tmd_u8;
 
 	// NOTE: Using TMD for most information.
 	printf("%s:\n", wad_filename);
@@ -420,12 +436,12 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	printf("- IOS version:   %u\n", ios_version);
 
 	// Determine the encryption key in use.
-	issuer_ticket = cert_get_issuer_from_name(ticket.issuer);
+	issuer_ticket = cert_get_issuer_from_name(ticket->issuer);
 	switch (issuer_ticket) {
 		default:	// TODO: Show an error instead?
 		case RVL_CERT_ISSUER_RETAIL_TICKET:
 			// Retail may be either Common Key or Korean Key.
-			switch (ticket.common_key_index) {
+			switch (ticket->common_key_index) {
 				case 0:
 					encKey = RVL_KEY_RETAIL;
 					s_encKey = "Retail";
@@ -437,7 +453,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 				default: {
 					// NOTE: A good number of retail WADs have an
 					// incorrect common key index for some reason.
-					if (ticket.title_id.u8[7] == 'K') {
+					if (ticket->title_id.u8[7] == 'K') {
 						s_invalidKey = "Korean";
 						s_encKey = "Korean";
 						encKey = RVL_KEY_KOREAN;
@@ -459,13 +475,13 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	// Check the ticket issuer and signature.
 	s_issuer_ticket = issuer_type(issuer_ticket);
-	sig_status_ticket = sig_verify((const uint8_t*)&ticket, sizeof(ticket));
+	sig_status_ticket = sig_verify(ticket_u8, wadInfo.ticket_size);
 	printf("- Ticket Signature: %s%s\n",
 		s_issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
 	// Check the ticket issuer and signature.
 	s_issuer_tmd = issuer_type(cert_get_issuer_from_name(tmdHeader->issuer));
-	sig_status_tmd = sig_verify(tmd, wadInfo.tmd_size);
+	sig_status_tmd = sig_verify(tmd_u8, wadInfo.tmd_size);
 	printf("- TMD Signature:    %s%s\n",
 		s_issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
@@ -484,7 +500,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		fputs("*** WARNING: WAD file '", stderr);
 		_fputts(wad_filename, stderr);
 		fprintf(stderr, "': Invalid common key index %u.\n",
-			ticket.common_key_index);
+			ticket->common_key_index);
 		fprintf(stderr, "*** Assuming %s common key based on game ID.\n\n", s_invalidKey);
 	}
 
@@ -495,7 +511,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	// Make sure the TMD is big enough.
 	// TODO: Show an error if it's not?
-	content = (const RVL_Content_Entry*)(&tmd[sizeof(*tmdHeader)]);
+	content = (const RVL_Content_Entry*)(&tmd_u8[sizeof(*tmdHeader)]);
 	nbr_cont_actual = (wadInfo.tmd_size - sizeof(*tmdHeader)) / sizeof(*content);
 	if (nbr_cont > nbr_cont_actual) {
 		nbr_cont = nbr_cont_actual;
@@ -522,7 +538,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			// Verify the content.
 			// TODO: Only decrypt the title key once?
 			// TODO: Return failure if any contents fail.
-			int vret = verify_content(f_wad, encKey, &ticket, content, content_addr);
+			int vret = verify_content(f_wad, encKey, ticket, content, content_addr);
 			if (vret != 0) {
 				ret = 1;
 			}
@@ -537,7 +553,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	putchar('\n');
 
 end:
-	free(tmd);
+	free(ticket_u8);
+	free(tmd_u8);
 	return ret;
 }
 

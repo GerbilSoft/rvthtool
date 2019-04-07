@@ -176,12 +176,19 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 		ret = 3;
 		goto end;
+	} else if (wadInfo.ticket_size > WAD_TICKET_SIZE_MAX) {
+		fputs("*** ERROR: WAD file '", stderr);
+		_fputts(src_wad, stderr);
+		fprintf(stderr, "' ticket size is too big. (%u; should be %u)\n",
+			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+		ret = 4;
+		goto end;
 	} else if (wadInfo.tmd_size < sizeof(RVL_TMD_Header)) {
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' TMD size is too small. (%u; should be at least %u)\n",
 			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
-		ret = 4;
+		ret = 5;
 		goto end;
 	} else if (wadInfo.tmd_size > WAD_TMD_SIZE_MAX) {
 		// Too big.
@@ -189,7 +196,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
 			wadInfo.tmd_size);
-		ret = 5;
+		ret = 6;
 		goto end;
 	} else if (wadInfo.footer_size > WAD_FOOTER_SIZE_MAX) {
 		// Too big.
@@ -198,7 +205,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' %s size is too big. (%u; should be less than 128 KB)\n",
 			s_footer_name, wadInfo.tmd_size);
-		ret = 6;
+		ret = 7;
 		goto end;
 	}
 
@@ -212,7 +219,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("' data size is invalid.\n", stderr);
-			ret = 7;
+			ret = 8;
 			goto end;
 		}
 		wadInfo.data_size = (uint32_t)src_file_size - wadInfo.data_address;
@@ -223,14 +230,14 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("' data address is invalid.\n", stderr);
-			ret = 8;
+			ret = 9;
 			goto end;
 		} else if (src_file_size - wadInfo.data_address < wadInfo.data_size) {
 			// Data size is too small.
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("' data size is invalid.\n", stderr);
-			ret = 9;
+			ret = 10;
 			goto end;
 		}
 
@@ -243,7 +250,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		_fputts(src_wad, stderr);
 		fprintf(stderr, "' data size is too big. (%u; should be less than 128 MB)\n",
 			wadInfo.data_size);
-		ret = 10;
+		ret = 11;
 		goto end;
 	}
 
@@ -251,19 +258,19 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	buf = malloc(sizeof(*buf));
 	if (!buf) {
 		fputs("*** ERROR: Unable to allocate memory buffer.\n", stderr);
-		ret = 11;
+		ret = 12;
 		goto end;
 	}
 
 	// Load the ticket.
 	fseeko(f_src_wad, wadInfo.ticket_address, SEEK_SET);
-	size = fread(&buf->ticket, 1, sizeof(buf->ticket), f_src_wad);
-	if (size != sizeof(RVL_Ticket)) {
+	size = fread(buf, 1, wadInfo.ticket_size, f_src_wad);
+	if (size != wadInfo.ticket_size) {
 		// Read error.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
 		fputs("': Unable to read the ticket.\n", stderr);
-		ret = 12;
+		ret = 13;
 		goto end;
 	}
 
@@ -304,7 +311,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			fputs("*** ERROR: WAD file '", stderr);
 			_fputts(src_wad, stderr);
 			fputs("': Unknown issuer.\n", stderr);
-			ret = 13;
+			ret = 14;
 			goto end;
 	}
 
@@ -322,14 +329,14 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 				// Should not happen...
 				assert(!"src_key: Invalid cryptoType.");
 				fputs("*** ERROR: Unable to select encryption key.\n", stderr);
-				ret = 14;
+				ret = 15;
 				goto end;
 		}
 	} else {
 		if ((RVL_CryptoType_e)recrypt_key == src_key) {
 			// No point in recrypting to the same key...
 			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
-			ret = 15;
+			ret = 16;
 			goto end;
 		}
 	}
@@ -353,7 +360,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			// This should not happen...
 			assert(!"recrypt_key: Invalid key index.");
 			fputs("*** ERROR: Invalid recrypt_key value.\n", stderr);
-			ret = 16;
+			ret = 17;
 			goto end;
 	}
 
@@ -508,11 +515,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	if (likely(toKey != RVL_KEY_DEBUG)) {
 		// Retail: Fakesign the ticket.
 		// Dolphin and cIOSes ignore the signature anyway.
-		cert_fakesign_ticket(&buf->ticket);
+		cert_fakesign_ticket(buf->u8, wadInfo.ticket_size);
 	} else {
 		// Debug: Use the real signing keys.
 		// Debug IOS requires a valid signature.
-		cert_realsign_ticket(&buf->ticket, &rvth_privkey_debug_ticket);
+		cert_realsign_ticket(buf->u8, wadInfo.ticket_size, &rvth_privkey_debug_ticket);
 	}
 
 	// Write the ticket.

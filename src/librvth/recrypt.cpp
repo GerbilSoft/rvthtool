@@ -550,14 +550,15 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		}
 		// Sign the ticket.
 		// TODO: Error checking.
+		// TODO: Support larger tickets.
 		if (likely(toKey != RVL_KEY_DEBUG)) {
 			// Retail: Fakesign the ticket.
 			// Dolphin and cIOSes ignore the signature anyway.
-			cert_fakesign_ticket(&hdr_new.ticket);
+			cert_fakesign_ticket((uint8_t*)&hdr_new.ticket, sizeof(hdr_new.ticket));
 		} else {
 			// Debug: Use the real signing keys.
 			// Debug IOS requires a valid signature.
-			cert_realsign_ticket(&hdr_new.ticket, &rvth_privkey_debug_ticket);
+			cert_realsign_ticket((uint8_t*)&hdr_new.ticket, sizeof(hdr_new.ticket), &rvth_privkey_debug_ticket);
 		}
 
 		// Starting position.

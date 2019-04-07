@@ -32,6 +32,9 @@ extern "C" {
 // Read buffer size.
 #define READ_BUFFER_SIZE (1024*1024)
 
+// Maximum ticket size supported by wadresign.
+#define WAD_TICKET_SIZE_MAX 1024
+
 // Maximum TMD size supported by wadresign.
 #define WAD_TMD_SIZE_MAX (1024*1024)
 
