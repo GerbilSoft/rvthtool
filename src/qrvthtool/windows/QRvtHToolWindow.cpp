@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
+#include "config.librvth.h"
 #include "QRvtHToolWindow.hpp"
 
 // librvth
@@ -219,8 +220,11 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 			case RVTH_ImageType_HDD_Reader: {
 				// TODO: Option to hide the serial number?
 				// TODO: Handle pErr.
+				imageType = QRvtHToolWindow::tr("RVT-H Reader");
+
+#ifdef HAVE_QUERY
 				QString qs_full_serial;
-#ifdef _WIN32
+# ifdef _WIN32
 				wchar_t *const s_full_serial = rvth_get_device_serial_number(
 					reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
 				if (s_full_serial) {
@@ -228,20 +232,20 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 						reinterpret_cast<const char16_t*>(s_full_serial));
 					free(s_full_serial);
 				}
-#else /* !_WIN32 */
+# else /* !_WIN32 */
 				char *const s_full_serial = rvth_get_device_serial_number(
 					filename.toUtf8().constData(), nullptr);
 				if (s_full_serial) {
 					qs_full_serial = QString::fromUtf8(s_full_serial);
 					free(s_full_serial);
 				}
-#endif /* _WIN32 */
+# endif /* _WIN32 */
 
-				imageType = QRvtHToolWindow::tr("RVT-H Reader");
 				if (!qs_full_serial.isEmpty()) {
 					imageType += QChar(L' ');
 					imageType += qs_full_serial;
 				}
+#endif /* HAVE_QUERY */
 
 				break;
 			}

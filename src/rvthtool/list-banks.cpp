@@ -18,6 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ***************************************************************************/
 
+#include "config.librvth.h"
 #include "list-banks.hpp"
 
 #include "librvth/rvth.hpp"
@@ -308,14 +309,16 @@ int list_banks(const TCHAR *rvth_filename)
 	// Check if this is an HDD image.
 	switch (rvth->imageType()) {
 		case RVTH_ImageType_HDD_Reader: {
+			fputs("Type: RVT-H Reader System", stdout);
+#ifdef HAVE_QUERY
 			// Get the serial number.
 			TCHAR *const s_full_serial = rvth_get_device_serial_number(rvth_filename, nullptr);
-			fputs("Type: RVT-H Reader System", stdout);
 			if (s_full_serial) {
 				fputs(" [", stdout);
 				_fputts(s_full_serial, stdout);
 				putchar(']');
 			}
+#endif /* HAVE_QUERY */
 			putchar('\n');
 
 			if (!rvth->hasNHCD()) {
