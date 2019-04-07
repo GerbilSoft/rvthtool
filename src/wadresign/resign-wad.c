@@ -169,11 +169,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Verify the various sizes.
-	if (wadInfo.ticket_size != sizeof(RVL_Ticket)) {
-		// Incorrect ticket size.
+	if (wadInfo.ticket_size < sizeof(RVL_Ticket)) {
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "' ticket size is incorrect. (%u; should be %u)\n",
+		fprintf(stderr, "' ticket size is too small. (%u; should be %u)\n",
 			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 		ret = 3;
 		goto end;

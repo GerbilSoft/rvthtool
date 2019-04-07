@@ -336,11 +336,10 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	}
 
 	// Verify the ticket and TMD sizes.
-	if (wadInfo.ticket_size != sizeof(RVL_Ticket)) {
-		// Incorrect ticket size.
+	if (wadInfo.ticket_size < sizeof(RVL_Ticket)) {
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' ticket size is incorrect. (%u; should be %u)\n",
+		fprintf(stderr, "' ticket size is too small. (%u; should be %u)\n",
 			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 		ret = 3;
 		goto end;
@@ -472,6 +471,12 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	putchar('\n');
 
+	if (wadInfo.ticket_size > sizeof(RVL_Ticket)) {
+		fputs("*** WARNING: WAD file '", stderr);
+		_fputts(wad_filename, stderr);
+		fprintf(stderr, "' ticket size is too big. (%u; should be %u)\n\n",
+			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+	}
 	if (s_invalidKey) {
 		// Invalid common key index for retail.
 		// NOTE: A good number of retail WADs have an
