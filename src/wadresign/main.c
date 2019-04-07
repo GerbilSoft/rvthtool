@@ -200,11 +200,16 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		return EXIT_FAILURE;
 	} else if (!_tcscmp(argv[optind], _T("info"))) {
 		// Print WAD information.
+		int i;
 		if (argc < optind+2) {
 			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = print_wad_info(argv[optind+1], false);
+
+		ret = 0;
+		for (i = optind; i < argc; i++) {
+			ret |= print_wad_info(argv[i], false);
+		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
 		// Verify a WAD.
 		if (argc < optind+2) {
@@ -245,7 +250,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 
 		if (isFilename) {
 			// Probably a filename.
-			ret = print_wad_info(argv[optind], false);
+			int i;
+			ret = 0;
+			for (i = optind; i < argc; i++) {
+				ret |= print_wad_info(argv[i], false);
+			}
 		} else {
 			// Not a filename.
 			print_error(argv[0], _T("unrecognized command '%s'"), argv[optind]);
