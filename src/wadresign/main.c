@@ -212,11 +212,16 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
 		// Verify a WAD.
+		int i;
 		if (argc < optind+2) {
 			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = print_wad_info(argv[optind+1], true);
+
+		ret = 0;
+		for (i = optind+1; i < argc; i++) {
+			ret |= print_wad_info(argv[i], true);
+		}
 	} else if (!_tcscmp(argv[optind], _T("resign"))) {
 		// Resign a WAD.
 		if (argc < optind+2) {
