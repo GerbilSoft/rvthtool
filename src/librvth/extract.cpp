@@ -91,6 +91,10 @@ static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
 	size_t slash_pos = path.rfind(_T('\\'));
 	if (slash_pos != string::npos && slash_pos != path.size()-1) {
 		path.resize(slash_pos + 1);
+	} else {
+		// No filename. Assume it's a relative path,
+		// and use the current directory.
+		path = _T(".");
 	}
 
 	ULARGE_INTEGER freeBytesAvailableToCaller;
@@ -110,6 +114,10 @@ static int64_t getDiskFreeSpace_lba(const TCHAR *filename)
 	size_t slash_pos = path.rfind(_T('/'));
 	if (slash_pos != string::npos && slash_pos != path.size()-1) {
 		path.resize(slash_pos + 1);
+	} else {
+		// No filename. Assume it's a relative path,
+		// and use the current directory.
+		path = _T(".");
 	}
 
 	struct statvfs svbuf;
