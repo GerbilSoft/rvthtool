@@ -52,12 +52,6 @@ class MessageWidgetStack : public QWidget
 
 	protected slots:
 		/**
-		 * A MessageWidget has been dismissed.
-		 * @param widget MessageWidget.
-		 */
-		void messageWidget_dismissed_slot(QWidget *widget);
-
-		/**
 		 * A MessageWidget has been destroyed.
 		 * @param obj QObject that was destroyed.
 		 */

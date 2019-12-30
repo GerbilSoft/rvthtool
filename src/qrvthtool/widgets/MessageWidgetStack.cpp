@@ -22,7 +22,6 @@
 
 // Qt includes.
 #include <QtCore/QSet>
-#include <QtCore/QSignalMapper>
 #include <QtWidgets/QVBoxLayout>
 
 // Qt animation includes.
@@ -52,19 +51,11 @@ class MessageWidgetStackPrivate
 
 		// All active MessageWidgets.
 		QSet<MessageWidget*> messageWidgets;
-
-		// QSignalMapper for the dismissed() signal.
-		QSignalMapper *mapperMessageWidgets;
 };
 
 MessageWidgetStackPrivate::MessageWidgetStackPrivate(MessageWidgetStack *q)
 	: q_ptr(q)
-	, mapperMessageWidgets(new QSignalMapper(q))
-{
-	// Connect the QSignalMapper slot for MessageWidget dismissed().
-	QObject::connect(mapperMessageWidgets, SIGNAL(mapped(QWidget*)),
-			 q, SLOT(messageWidget_dismissed_slot(QWidget*)));
-}
+{ }
 
 MessageWidgetStackPrivate::~MessageWidgetStackPrivate()
 {
@@ -121,9 +112,14 @@ void MessageWidgetStack::showMessage(const QString &msg, MessageWidget::MsgIcon 
 	// Connect the signals.
 	QObject::connect(messageWidget, &QObject::destroyed,
 		this, &MessageWidgetStack::messageWidget_destroyed_slot);
-	QObject::connect(messageWidget, SIGNAL(dismissed(bool)),
-		d->mapperMessageWidgets, SLOT(map()));
-	d->mapperMessageWidgets->setMapping(messageWidget, messageWidget);
+	QObject::connect(messageWidget, &MessageWidget::dismissed,
+		[d, messageWidget]() {
+			// Remove and delete the widget.
+			if (d->messageWidgets.contains(qobject_cast<MessageWidget*>(messageWidget))) {
+				d->messageWidgets.remove(qobject_cast<MessageWidget*>(messageWidget));
+				delete messageWidget;
+			}
+		});
 
 	// Show the message.
 	d->ui.vboxMain->addWidget(messageWidget);
@@ -132,20 +128,6 @@ void MessageWidgetStack::showMessage(const QString &msg, MessageWidget::MsgIcon 
 }
 
 /** Slots. **/
-
-/**
- * A MessageWidget has been dismissed.
- * @param widget MessageWidget.
- */
-void MessageWidgetStack::messageWidget_dismissed_slot(QWidget *widget)
-{
-	// Remove and delete the widget.
-	Q_D(MessageWidgetStack);
-	if (d->messageWidgets.contains(qobject_cast<MessageWidget*>(widget))) {
-		d->messageWidgets.remove(qobject_cast<MessageWidget*>(widget));
-		delete widget;
-	}
-}
 
 /**
  * A MessageWidget has been destroyed.
