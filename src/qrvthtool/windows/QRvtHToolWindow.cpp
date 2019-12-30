@@ -87,7 +87,6 @@ class QRvtHToolWindowPrivate
 
 		// Filename.
 		QString filename;
-		QString displayFilename;	// filename without subdirectories
 
 		// TODO: Config class like mcrecover?
 		QString lastPath;
@@ -215,7 +214,7 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 		ui.grpBankList->setTitle(QRvtHToolWindow::tr("No RVT-H Reader disk image loaded."));
 	} else {
 		// Show the filename and device type.
-		// TODO: Get the device serial number.
+		const QString displayFilename = getDisplayFilename(filename);
 		QString title = displayFilename;
 		QString imageType;
 		switch (rvth->imageType()) {
@@ -357,7 +356,9 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 	Q_Q(QRvtHToolWindow);
 	RvtHModel::IconID iconID;
 	if (rvth) {
-		q->setWindowTitle(displayFilename);
+		// Set the file path. Qt automaticlaly takes the filename
+		// portion and prepends it to the application title.
+		q->setWindowFilePath(filename);
 
 		// If it's an RVT-H HDD image, use the RVT-H icon.
 		// Otherwise, get the icon for the first bank.
@@ -372,8 +373,10 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 			}
 		}
 	} else {
+		// No file is loaded.
+		q->setWindowFilePath(QString());
+
 		// Use the RVT-H icon as the default.
-		q->setWindowTitle(QString());
 		iconID = RvtHModel::ICON_RVTH;
 	}
 
@@ -634,9 +637,6 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	d->filename = filename;
 	d->model->setRvtH(d->rvth);
 
-	// Extract the filename from the path.
-	d->displayFilename = d->getDisplayFilename(filename);
-
 	// Update the UI.
 	d->updateLstBankList();
 	d->updateWindowTitle();
@@ -663,7 +663,6 @@ void QRvtHToolWindow::closeRvtH(void)
 
 	// Clear the filenames.
 	d->filename.clear();
-	d->displayFilename.clear();
 
 	// Update the UI.
 	d->updateLstBankList();

@@ -16,9 +16,6 @@
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
-  <property name="windowTitle">
-   <string notr="true">RVT-H Tool</string>
-  </property>
   <property name="unifiedTitleAndToolBarOnMac">
    <bool>true</bool>
   </property>
