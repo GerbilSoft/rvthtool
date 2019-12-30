@@ -181,11 +181,25 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 		return -EINVAL;
 	}
 
-	// TODO: Print source disc information.
-
 	// Print the bank information.
 	// TODO: Make sure the bank type is valid before printing the newline.
 	print_bank(rvth, bank);
+	putchar('\n');
+
+	// Print the source disc information.
+	// This requires temporarily opening the source disc here.
+	RvtH *const rvth_src_tmp = new RvtH(gcm_filename, &ret);
+	if (ret != 0 || !rvth_src_tmp->isOpen()) {
+		fputs("*** ERROR opening GCM image '", stderr);
+		_fputts(gcm_filename, stderr);
+		fprintf(stderr, "': %s\n", rvth_error(ret));
+		delete rvth_src_tmp;
+		delete rvth;
+		return ret;
+	}
+	fputs("Source GCM image:\n", stdout);
+	print_bank(rvth_src_tmp, 0);
+	delete rvth_src_tmp;
 	putchar('\n');
 
 	fputs("Importing '", stdout);
