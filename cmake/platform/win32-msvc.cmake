@@ -11,7 +11,7 @@ ENDIF()
 # No ANSI support.
 
 # Subsystem and minimum Windows version:
-# - If 32-bit: 5.00
+# - If 32-bit: 5.01
 # - If 64-bit: 5.02
 # ROM Properties does NOT support ANSI Windows.
 # MSVC 2010's minimum supported target OS is XP SP2.

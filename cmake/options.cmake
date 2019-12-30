@@ -4,7 +4,7 @@
 IF(UNIX AND NOT APPLE)
 	OPTION(ENABLE_UDEV "Enable UDEV for the 'query' command." ON)
 ELSE()
-	SET(ENABLE_UDEV OFF CACHE "Enable UDEV for the 'query' command." INTERAL FORCE)
+	SET(ENABLE_UDEV OFF CACHE INTERNAL "Enable UDEV for the 'query' command." FORCE)
 ENDIF()
 
 # Enable D-Bus for DockManager / Unity API.
@@ -30,7 +30,7 @@ OPTION(SPLIT_DEBUG "Split debug information into a separate file." ON)
 OPTION(INSTALL_DEBUG "Install the split debug files." ON)
 IF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 	# Cannot install debug files if we're not splitting them.
-	SET(INSTALL_DEBUG OFF CACHE "Install the split debug files." INTERNAL FORCE)
+	SET(INSTALL_DEBUG OFF CACHE INTERNAL "Install the split debug files." FORCE)
 ENDIF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 
 # Translations.
