@@ -243,17 +243,54 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 {
 	Q_Q(BankEntryView);
 
+	if (bankEntry) {
+		// Type.
+		QString s_type;
+		switch (bankEntry->type) {
+			case RVTH_BankType_Unknown:
+			default:
+				s_type = BankEntryView::tr("Unknown");
+				break;
+			case RVTH_BankType_Empty:
+				s_type = BankEntryView::tr("Empty");
+				break;
+			case RVTH_BankType_GCN:
+				s_type = BankEntryView::tr("GameCube");
+				break;
+			case RVTH_BankType_Wii_SL:
+				s_type = BankEntryView::tr("Wii (Single-Layer)");
+				break;
+			case RVTH_BankType_Wii_DL:
+				s_type = BankEntryView::tr("Wii (Dual-Layer)");
+				break;
+			case RVTH_BankType_Wii_DL_Bank2:
+				s_type = BankEntryView::tr("Wii (DL Bank 2)");
+				break;
+		}
+		ui.lblType->setText(s_type);
+		ui.lblType->show();
+		ui.lblTypeTitle->show();
+
+		// Size.
+		ui.lblSize->setText(formatFileSize(LBA_TO_BYTES(bankEntry->lba_len)));
+		ui.lblSize->show();
+		ui.lblSizeTitle->show();
+	} else {
+		// No bank entry.
+		ui.lblType->hide();
+		ui.lblTypeTitle->hide();
+		ui.lblSize->hide();
+		ui.lblSizeTitle->hide();
+	}
+
 	if (!bankEntry || bankEntry->type <= RVTH_BankType_Unknown ||
 	    bankEntry->type == RVTH_BankType_Wii_DL_Bank2 ||
 	    bankEntry->type >= RVTH_BankType_MAX)
 	{
 		// No bank entry is loaded, or the selected bank
 		// cannot be displayed. Hide all widgets.
+		// NOTE: Type and size are handled above.
 		ui.lblGameTitle->hide();
-		ui.lblTypeTitle->hide();
-		ui.lblType->hide();
-		ui.lblSizeTitle->hide();
-		ui.lblSize->hide();
 		ui.lblTimestampTitle->hide();
 		ui.lblTimestamp->hide();
 		ui.lblGameIDTitle->hide();
@@ -294,38 +331,6 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	}
 	ui.lblGameTitle->setText(s_title);
 	ui.lblGameTitle->show();
-
-	// Type.
-	QString s_type;
-	switch (bankEntry->type) {
-		case RVTH_BankType_Unknown:
-		default:
-			s_type = BankEntryView::tr("Unknown");
-			break;
-		case RVTH_BankType_Empty:
-			s_type = BankEntryView::tr("Empty");
-			break;
-		case RVTH_BankType_GCN:
-			s_type = BankEntryView::tr("GameCube");
-			break;
-		case RVTH_BankType_Wii_SL:
-			s_type = BankEntryView::tr("Wii (Single-Layer)");
-			break;
-		case RVTH_BankType_Wii_DL:
-			s_type = BankEntryView::tr("Wii (Dual-Layer)");
-			break;
-		case RVTH_BankType_Wii_DL_Bank2:
-			s_type = BankEntryView::tr("Wii (DL Bank 2)");
-			break;
-	}
-	ui.lblType->setText(s_type);
-	ui.lblType->show();
-	ui.lblTypeTitle->show();
-
-	// Size.
-	ui.lblSize->setText(formatFileSize(LBA_TO_BYTES(bankEntry->lba_len)));
-	ui.lblSize->show();
-	ui.lblSizeTitle->show();
 
 	// Timestamp.
 	if (bankEntry->timestamp >= 0) {
