@@ -43,9 +43,10 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
  * @param rvth_filename	RVT-H device or disk image filename.
  * @param s_bank	Bank number (as a string).
  * @param gcm_filename	Filename of the GCM image to import.
+ * @param ios_force	IOS version to force. (-1 to use the existing IOS)
  * @return 0 on success; non-zero on error.
  */
-int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename);
+int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int ios_force);
 
 #ifdef __cplusplus
 }

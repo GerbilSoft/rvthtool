@@ -867,10 +867,12 @@ end:
  * @param filename	[in] Source GCM filename.
  * @param callback	[in,opt] Progress callback.
  * @param userdata	[in,opt] User data for progress callback.
+ * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::import(unsigned int bank, const TCHAR *filename,
-	RvtH_Progress_Callback callback, void *userdata)
+	RvtH_Progress_Callback callback, void *userdata,
+	int ios_force)
 {
 	if (!filename || filename[0] == 0) {
 		errno = EINVAL;
@@ -917,11 +919,15 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 			(entry->crypto_type == RVL_CryptoType_Retail ||
 			 entry->crypto_type == RVL_CryptoType_Korean ||
 		         entry->ticket.sig_status != RVL_SigStatus_OK ||
-			 entry->tmd.sig_status != RVL_SigStatus_OK))
+			 entry->tmd.sig_status != RVL_SigStatus_OK ||
+			 (ios_force >= 3 && entry->ios_version != ios_force)))
 		{
-			// Retail or Korean encryption, or invalid signature.
+			// One of the following conditions:
+			// - Encryption: Retail or Korean
+			// - Signature: Invalid
+			// - IOS requested does not match the TMD IOS
 			// Convert to Debug.
-			ret = recryptWiiPartitions(bank, RVL_CryptoType_Debug, callback, userdata);
+			ret = recryptWiiPartitions(bank, RVL_CryptoType_Debug, callback, userdata, ios_force);
 		}
 		else
 		{

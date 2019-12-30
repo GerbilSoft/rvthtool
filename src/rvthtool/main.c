@@ -49,6 +49,9 @@
 # define ATTR_PRINTF(fmt, args)
 #endif
 
+// Uncomment this to display hidden options in the help message.
+//#define SHOW_HIDDEN_OPTIONS 1
+
 /**
  * Print an error message.
  * @param argv0 Program name.
@@ -123,6 +126,10 @@ static void print_help(const TCHAR *argv0)
 		"                            Importing to RVT-H will always use debug keys.\n"
 		"  -N, --ndev                Prepend extracted images with a 32 KB header\n"
 		"                            required by official SDK tools.\n"
+#ifdef SHOW_HIDDEN_OPTIONS
+		"  -I, --ios=xx              Force IOSxx when importing a disc image to\n"
+		"                            an RVT-H Reader."
+#endif /* SHOW_HIDDEN_OPTIONS */
 		"  -h, --help                Display this help and exit.\n"
 		"\n"
 		, stdout);
@@ -137,6 +144,10 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// -1 == default; no recryption, except when importing retail to RVT-H.
 	// Other values are from RVL_CryptoType_e.
 	int recrypt_key = -1;
+
+	// IOS to force when importing a disc image.
+	// Default is -1, or "use existing IOS".
+	int ios_force = -1;
 
 #ifdef _WIN32
 	// Set Win32 security options.
@@ -166,12 +177,13 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		static const struct option long_options[] = {
 			{_T("recrypt"),	required_argument,	0, _T('k')},
 			{_T("ndev"),	no_argument,		0, _T('N')},
+			{_T("ios"),	required_argument,	0, _T('I')},
 			{_T("help"),	no_argument,		0, _T('h')},
 
 			{NULL, 0, 0, 0}
 		};
 
-		int c = getopt_long(argc, argv, _T("k:Nh"), long_options, NULL);
+		int c = getopt_long(argc, argv, _T("k:NI:h"), long_options, NULL);
 		if (c == -1)
 			break;
 
@@ -202,6 +214,21 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				// TODO: Show error if not using 'extract'?
 				flags |= RVTH_EXTRACT_PREPEND_SDK_HEADER;
 				break;
+
+			case 'I': {
+				// Force an IOS version.
+				char *endptr;
+				int ios_force_tmp = strtol(optarg, &endptr, 0);
+				if (*endptr != '\0') {
+					print_error(argv[0], _T("unable to parse '%s' as an IOS version"), optarg);
+					return EXIT_FAILURE;
+				} else if (ios_force_tmp < 3 || ios_force_tmp >= 100) {
+					print_error(argv[0], _T("IOS%d is not valid"), ios_force_tmp);
+					return EXIT_FAILURE;
+				}
+				ios_force = ios_force_tmp;
+				break;
+			}
 
 			case 'h':
 				print_help(argv[0]);
@@ -254,7 +281,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			print_error(argv[0], _T("missing parameters for 'import'"));
 			return EXIT_FAILURE;
 		}
-		ret = import(argv[optind+1], argv[optind+2], argv[optind+3]);
+		ret = import(argv[optind+1], argv[optind+2], argv[optind+3], ios_force);
 	} else if (!_tcscmp(argv[optind], _T("delete"))) {
 		// Delete a bank.
 		if (argc < 3) {

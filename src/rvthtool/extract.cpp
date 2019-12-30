@@ -153,9 +153,10 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
  * @param rvth_filename	RVT-H device or disk image filename.
  * @param s_bank	Bank number (as a string).
  * @param gcm_filename	Filename of the GCM image to import.
+ * @param ios_force	IOS version to force. (-1 to use the existing IOS)
  * @return 0 on success; non-zero on error.
  */
-int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename)
+int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_filename, int ios_force)
 {
 	// TODO: Verification for overwriting images.
 
@@ -199,13 +200,28 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	}
 	fputs("Source disc image:\n", stdout);
 	print_bank(rvth_src_tmp, 0);
-	delete rvth_src_tmp;
 	putchar('\n');
+
+	// If this is a Wii image and the IOS version doesn't match
+	// the forced version, print a notice.
+	if (ios_force >= 3) {
+		const RvtH_BankEntry *const entry = rvth_src_tmp->bankEntry(0);
+		if (entry &&
+			(entry->type == RVTH_BankType_Wii_SL ||
+			 entry->type == RVTH_BankType_Wii_DL))
+		{
+			if (entry->ios_version != ios_force) {
+				fprintf(stdout, "*** IOS version will be changed from %u to %d.\n\n",
+					entry->ios_version, ios_force);
+			}
+		}
+	}
+	delete rvth_src_tmp;
 
 	fputs("Importing '", stdout);
 	_fputts(gcm_filename, stdout);
 	printf("' into Bank %u...\n", bank+1);
-	ret = rvth->import(bank, gcm_filename, progress_callback);
+	ret = rvth->import(bank, gcm_filename, progress_callback, nullptr, ios_force);
 	if (ret == 0) {
 		fputc('\'', stdout);
 		_fputts(gcm_filename, stdout);

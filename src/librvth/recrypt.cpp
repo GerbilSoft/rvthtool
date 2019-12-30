@@ -327,11 +327,13 @@ int RvtH::recryptID(unsigned int bank)
  * @param cryptoType	[in] New encryption type.
  * @param callback	[in,opt] Progress callback.
  * @param userdata	[in,opt] User data for progress callback.
+ * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::recryptWiiPartitions(unsigned int bank,
 	RVL_CryptoType_e cryptoType,
-	RvtH_Progress_Callback callback, void *userdata)
+	RvtH_Progress_Callback callback, void *userdata,
+	int ios_force)
 {
 	uint32_t lba_size;
 
@@ -582,6 +584,15 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		// clear the buffer first.
 		memset(tmdHeader->issuer, 0, sizeof(tmdHeader->issuer));
 		strncpy(tmdHeader->issuer, issuer_TMD, sizeof(tmdHeader->issuer));
+
+		// Change the IOS if necessary.
+		if (ios_force >= 3) {
+			uint32_t ios_uint = static_cast<uint32_t>(ios_force);
+			if (ios_uint != be32_to_cpu(tmdHeader->sys_version.lo)) {
+				tmdHeader->sys_version.lo = cpu_to_be32(ios_uint);
+			}
+		}
+
 		// Sign the TMD.
 		// TODO: Error checking.
 		if (likely(toKey != RVL_KEY_DEBUG)) {

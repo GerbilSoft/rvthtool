@@ -361,11 +361,13 @@ class RvtH {
 		 * @param filename	[in] Source GCM filename.
 		 * @param callback	[in,opt] Progress callback.
 		 * @param userdata	[in,opt] User data for progress callback.
+		 * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int import(unsigned int bank, const TCHAR *filename,
 			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+			void *userdata = nullptr,
+			int ios_force = -1);
 
 	public:
 		/** Recryption functions (recrypt.cpp) **/
@@ -389,12 +391,14 @@ class RvtH {
 		 * @param cryptoType	[in] New encryption type.
 		 * @param callback	[in,opt] Progress callback.
 		 * @param userdata	[in,opt] User data for progress callback.
+		 * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int recryptWiiPartitions(unsigned int bank,
 			RVL_CryptoType_e cryptoType,
 			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+			void *userdata = nullptr,
+			int ios_force = -1);
 		
 	private:
 		// Reference-counted FILE*.
