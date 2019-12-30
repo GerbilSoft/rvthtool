@@ -18,6 +18,10 @@ Low-level changes:
 Other changes:
 * Realsigned tickets and TMDs are now explicitly indicated as such.
 
+Bug fixes:
+* Dual-layer images weren't imported properly before. Debug builds asserted
+  at 4489 MB, but release builds silently failed.
+
 ## v1.1.1 - Brown Paper Bag Release (released 2018/09/17)
 
 * Extracting images broke because it failed when opening a file with 0 bytes
