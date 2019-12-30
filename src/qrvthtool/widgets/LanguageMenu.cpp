@@ -28,7 +28,6 @@
 #include <QtCore/QFile>
 #include <QtCore/QHash>
 #include <QtCore/QLocale>
-#include <QtCore/QSignalMapper>
 #include <QtGui/QIcon>
 #include <QAction>
 #include <QActionGroup>
@@ -51,9 +50,8 @@ class LanguageMenuPrivate
 		// Key: Locale ID; value: QAction
 		QHash<QString, QAction*> hashActions;
 
-		// Action group and signal mapper.
+		// Action group.
 		QActionGroup *actgrp;
-		QSignalMapper *mapper;
 
 		// Current language. (locale tag, e.g. "en_US")
 		// If empty, we're using the System Default language.
@@ -86,7 +84,6 @@ LanguageMenuPrivate::LanguageMenuPrivate(LanguageMenu *q)
 	: q_ptr(q)
 	, actLanguageSysDefault(nullptr)
 	, actgrp(nullptr)
-	, mapper(nullptr)
 {
 	init();
 }
@@ -101,11 +98,9 @@ void LanguageMenuPrivate::clear(void)
 	q->clear();		// This deletes the QActions!
 	hashActions.clear();
 
-	// Delete the QActionGroup and QSignalMapper.
+	// Delete the QActionGroup.
 	delete actgrp;
 	actgrp = nullptr;
-	delete mapper;
-	mapper = nullptr;
 }
 
 /**
@@ -142,15 +137,14 @@ void LanguageMenuPrivate::retranslateSystemDefault(void)
 		Q_Q(LanguageMenu);
 		actLanguageSysDefault = new QAction(q);
 		actLanguageSysDefault->setCheckable(true);
-		QObject::connect(actLanguageSysDefault, SIGNAL(triggered()),
-				 mapper, SLOT(map()));
+		QObject::connect(actLanguageSysDefault, &QAction::triggered,
+			[q]() { q->setLanguage(QString()); });
 	}
 
 	QString localeSys = QLocale::system().name();
 
 	//: Translation: System Default (retrieved from system settings)
 	actLanguageSysDefault->setText(LanguageMenu::tr("System Default (%1)", "ts-language").arg(localeSys));
-	mapper->setMapping(actLanguageSysDefault, QString());
 
 	// Check for an icon.
 	QIcon flagIcon = iconForLocale(localeSys);
@@ -167,12 +161,9 @@ void LanguageMenuPrivate::init(void)
 	// Clear the Language menu first.
 	this->clear();
 
-	// Initialize the QActionGroup and QSignalMapper.
+	// Initialize the QActionGroup.
 	Q_Q(LanguageMenu);
 	actgrp = new QActionGroup(q);
-	mapper = new QSignalMapper(q);
-	QObject::connect(mapper, SIGNAL(mapped(QString)),
-			 q, SLOT(setLanguage(QString)));
 
 	// Add the system default translation.
 	retranslateSystemDefault();
@@ -201,9 +192,8 @@ void LanguageMenuPrivate::init(void)
 
 		hashActions.insert(locale, action);
 		actgrp->addAction(action);
-		QObject::connect(action, SIGNAL(triggered()),
-				 mapper, SLOT(map()));
-		mapper->setMapping(action, locale);
+		QObject::connect(action, &QAction::triggered,
+			[q, locale]() { q->setLanguage(locale); });
 		q->addAction(action);
 	}
 }
