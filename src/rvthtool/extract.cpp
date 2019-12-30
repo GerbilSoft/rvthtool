@@ -97,6 +97,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
 		fprintf(stderr, "': %s\n", rvth_error(ret));
+		delete rvth;
 		return ret;
 	}
 
@@ -165,6 +166,7 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
 		fprintf(stderr, "': %s\n", rvth_error(ret));
+		delete rvth;
 		return ret;
 	}
 

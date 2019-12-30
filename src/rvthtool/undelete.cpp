@@ -89,6 +89,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		fputs("*** ERROR opening RVT-H device '", stderr);
 		_fputts(rvth_filename, stderr);
 		fprintf(stderr, "': %s\n", rvth_error(ret));
+		delete rvth;
 		return ret;
 	}
 
