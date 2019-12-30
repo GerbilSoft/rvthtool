@@ -32,19 +32,20 @@ ELSE(NOT WIN32)
 		MESSAGE(FATAL_ERROR "Architecture ${arch} is not supported.")
 	ENDIF(NOT arch MATCHES "^(i.|x)86$|^x86_64$|^amd64$")
 
-	SET(NETTLE_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/win32/${arch}/include")
+	SET(NETTLE_WIN32_BASE_PATH "${CMAKE_SOURCE_DIR}/extlib/nettle.win32/${arch}")
+	SET(NETTLE_INCLUDE_DIRS "${NETTLE_WIN32_BASE_PATH}/include")
 	IF(MSVC)
-		SET(NETTLE_LIBRARY "${CMAKE_SOURCE_DIR}/win32/${arch}/lib/libnettle-6.lib")
-		SET(HOGWEED_LIBRARY "${CMAKE_SOURCE_DIR}/win32/${arch}/lib/libhogweed-4.lib")
+		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib/libnettle-6.lib")
+		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib/libhogweed-4.lib")
 	ELSE(MSVC)
-		SET(NETTLE_LIBRARY "${CMAKE_SOURCE_DIR}/win32/${arch}/lib/libnettle.dll.a")
-		SET(HOGWEED_LIBRARY "${CMAKE_SOURCE_DIR}/win32/${arch}/lib/libhogweed.dll.a")
+		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib/libnettle.dll.a")
+		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib/libhogweed.dll.a")
 	ENDIF(MSVC)
 	SET(NETTLE_LIBRARIES ${NETTLE_LIBRARY} ${HOGWEED_LIBRARY})
 
 	# Copy and install the DLLs.
-	SET(NETTLE_NETTLE_DLL "${CMAKE_SOURCE_DIR}/win32/${arch}/lib/libnettle-6.dll")
-	SET(NETTLE_HOGWEED_DLL "${CMAKE_SOURCE_DIR}/win32/${arch}/lib/libhogweed-4.dll")
+	SET(NETTLE_NETTLE_DLL "${NETTLE_WIN32_BASE_PATH}/lib/libnettle-6.dll")
+	SET(NETTLE_HOGWEED_DLL "${NETTLE_WIN32_BASE_PATH}/lib/libhogweed-4.dll")
 
 	# Destination directory.
 	# If CMAKE_CFG_INTDIR is set, a Debug or Release subdirectory is being used.
