@@ -26,6 +26,7 @@ IF(NOT WIN32)
 	endif()
 ELSE(NOT WIN32)
 	# Use the included Win32 build of Nettle.
+	INCLUDE(DirInstallPaths)
 	STRING(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" arch)
 	IF(NOT arch MATCHES "^(i.|x)86$|^x86_64$|^amd64$")
 		MESSAGE(FATAL_ERROR "Architecture ${arch} is not supported.")
