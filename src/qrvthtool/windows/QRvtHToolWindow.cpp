@@ -59,6 +59,9 @@
 # include <windows.h>
 #endif /* Q_OS_WIN */
 
+// Other windows.
+#include "AboutDialog.hpp"
+
 /** QRvtHToolWindowPrivate **/
 
 #include "ui_QRvtHToolWindow.h"
@@ -909,8 +912,7 @@ void QRvtHToolWindow::on_actionExit_triggered(void)
  */
 void QRvtHToolWindow::on_actionAbout_triggered(void)
 {
-	// TODO
-	//AboutDialog::ShowSingle(this);
+	AboutDialog::ShowSingle(this);
 }
 
 /** RVT-H disk image actions **/

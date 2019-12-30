@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	app->setApplicationName(QLatin1String("qrvthtool"));
 	app->setApplicationDisplayName(QLatin1String("RVT-H Tool"));
 	app->setOrganizationDomain(QLatin1String("gerbilsoft.com"));
-	app->setOrganizationName(QLatin1String("Gerbil Software"));
+	app->setOrganizationName(QLatin1String("GerbilSoft"));
 	app->setApplicationVersion(QLatin1String(VERSION_STRING));
 
 	// Initialize the TranslationManager.

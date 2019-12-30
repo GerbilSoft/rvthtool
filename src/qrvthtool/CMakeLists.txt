@@ -95,6 +95,7 @@ SET(qrvthtool_SRCS
 
 	windows/QRvtHToolWindow.cpp
 	windows/SelectDeviceDialog.cpp
+	windows/AboutDialog.cpp
 	)
 
 # Headers with Qt objects.
@@ -114,6 +115,7 @@ SET(qrvthtool_MOC_H
 
 	windows/QRvtHToolWindow.hpp
 	windows/SelectDeviceDialog.hpp
+	windows/AboutDialog.hpp
 	)
 QT5_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
 
@@ -123,6 +125,7 @@ SET(qrvthtool_UIS
 
 	windows/QRvtHToolWindow.ui
 	windows/SelectDeviceDialog.ui
+	windows/AboutDialog.ui
 	)
 QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
 
