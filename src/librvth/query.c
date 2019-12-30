@@ -26,9 +26,11 @@
 
 /**
  * Create a full serial number string.
- *
- * Converts 10xxxxxx to "HUA10xxxxxxY" and 20xxxxxx to "HMA20xxxxxxY".
  * This includes the check digit.
+ *
+ * TODO: Figure out if there's a way to determine HMA (wireless)
+ * vs. HUA (wired). Both wireless and wired systems have been
+ * seen with serial numbers 20xxxxxx.
  *
  * @param serial Serial number as provided by the RVT-H Reader.
  * @return Allocated serial number string.
@@ -68,13 +70,7 @@ TCHAR *rvth_create_full_serial_number(unsigned int serial)
 		serial_tmp = 10 - serial_tmp;
 	}
 
-	if (serial < 20000000) {
-		// 10xxxxxx: RVT-H Reader (Wired)
-		_sntprintf(buf, sizeof(buf), _T("HUA%08u%01u"), serial, serial_tmp);
-	} else {
-		// 20xxxxxx: RVT-H Reader (Wireless)
-		_sntprintf(buf, sizeof(buf), _T("HMA%08u%01u"), serial, serial_tmp);
-	}
+	_sntprintf(buf, sizeof(buf), _T("%08u%01u"), serial, serial_tmp);
 	return _tcsdup(buf);
 }
 

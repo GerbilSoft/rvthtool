@@ -64,9 +64,11 @@ typedef struct _RvtH_QueryEntry {
 
 /**
  * Create a full serial number string.
- *
- * Converts 10xxxxxx to "HUA10xxxxxxY" and 20xxxxxx to "HMA20xxxxxxY".
  * This includes the check digit.
+ *
+ * TODO: Figure out if there's a way to determine HMA (wireless)
+ * vs. HUA (wired). Both wireless and wired systems have been
+ * seen with serial numbers 20xxxxxx.
  *
  * @param serial Serial number as provided by the RVT-H Reader.
  * @return Allocated serial number string.
