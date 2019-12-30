@@ -80,6 +80,9 @@
           </property>
           <item>
            <widget class="QLabel" name="lblCredits">
+            <property name="textFormat">
+             <enum>Qt::RichText</enum>
+            </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
