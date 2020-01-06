@@ -79,6 +79,9 @@ class QRvtHToolWindowPrivate
 		// TODO: Config class like mcrecover?
 		QString lastPath;
 
+		// NHCD table status for the frame title.
+		QString nhcd_status;
+
 		// Last icon ID.
 		RvtHModel::IconID lastIconID;
 
@@ -263,9 +266,15 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 		}
 
 		if (!imageType.isEmpty()) {
-			ui.grpBankList->setTitle(
-				QRvtHToolWindow::tr("%1 [%2]")
-				.arg(displayFilename).arg(imageType));
+			if (!nhcd_status.isEmpty()) {
+				ui.grpBankList->setTitle(
+					QRvtHToolWindow::tr("%1 [%2] [%3]")
+					.arg(displayFilename).arg(imageType).arg(nhcd_status));
+			} else {
+				ui.grpBankList->setTitle(
+					QRvtHToolWindow::tr("%1 [%2]")
+					.arg(displayFilename).arg(imageType));
+			}
 		} else {
 			ui.grpBankList->setTitle(displayFilename);
 		}
@@ -632,6 +641,9 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	d->filename = filename;
 	d->model->setRvtH(d->rvth);
 
+	d->nhcd_status.clear();
+	d->write_enabled = false;
+
 	// Check the NHCD table status.
 	bool checkNHCD = false;
 	switch (d->rvth->imageType()) {
@@ -646,7 +658,6 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 			break;
 	}
 
-	d->write_enabled = false;
 	if (checkNHCD) {
 		QString message;
 		switch (d->rvth->nhcd_status()) {
@@ -660,14 +671,17 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 			case NHCD_STATUS_UNKNOWN:
 			case NHCD_STATUS_MISSING:
 				message = tr("NHCD table is missing.");
+				d->nhcd_status = QLatin1String("!NHCD");
 				break;
 
 			case NHCD_STATUS_HAS_MBR:
 				message = tr("This appears to be a PC MBR-partitioned HDD.");
+				d->nhcd_status = QLatin1String("MBR?");
 				break;
 
 			case NHCD_STATUS_HAS_GPT:
 				message = tr("This appears to be a PC GPT-partitioned HDD.");
+				d->nhcd_status = QLatin1String("GPT?");
 				break;
 		}
 
@@ -701,8 +715,9 @@ void QRvtHToolWindow::closeRvtH(void)
 	delete d->rvth;
 	d->rvth = nullptr;
 
-	// Clear the filenames.
+	// Clear the filename and NHCD status.
 	d->filename.clear();
+	d->nhcd_status.clear();
 
 	// Update the UI.
 	d->updateLstBankList();
