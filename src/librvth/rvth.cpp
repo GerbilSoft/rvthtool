@@ -131,7 +131,7 @@ int RvtH::openGcm(RefFile *f_img)
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
 	m_file = f_img->ref();
-	m_has_NHCD = false;
+	m_NHCD_status = NHCD_STATUS_MISSING;
 	entry = m_entries;
 	entry->lba_start = reader->lba_start();
 	entry->lba_len = reader->lba_len();
@@ -175,6 +175,87 @@ fail:
 }
 
 /**
+ * Check for MBR and/or GPT.
+ * @param f_img	[in] RefFile*
+ * @param pMBR	[out] True if the HDD has an MBR.
+ * @param pGPT	[out] True if the HDD has a GPT.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int RvtH::checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT)
+{
+	uint8_t sector_buffer[LBA_SIZE];
+	*pMBR = false;
+	*pGPT = false;
+
+	// Read LBA 0.
+	size_t size = f_img->seekoAndRead(LBA_TO_BYTES(0), SEEK_SET, sector_buffer, 1, sizeof(sector_buffer));
+	if (size != sizeof(sector_buffer)) {
+		// Short read.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		return -err;
+	}
+
+	if (sector_buffer[0x1FE] == 0x55 && sector_buffer[0x1FF] == 0xAA) {
+		// Found an MBR signature.
+		*pMBR = true;
+
+		// Check for a protective GPT partition.
+		if (sector_buffer[0x1BE + 4] == 0xEE ||
+		    sector_buffer[0x1CE + 4] == 0xEE ||
+		    sector_buffer[0x1DE + 4] == 0xEE ||
+		    sector_buffer[0x1EE + 4] == 0xEE)
+		{
+			// Found a protective GPT partition.
+			*pGPT = true;
+			return 0;
+		}
+	}
+
+	// Check for "EFI PART" at LBA 1.
+	// Note that LBA 1 might be either 512 or 4096, depending on
+	// the drive's sector size. We'll check both.
+
+	// Check 512. (512-byte sectors)
+	size = f_img->seekoAndRead(512, SEEK_SET, sector_buffer, 1, sizeof(sector_buffer));
+	if (size != sizeof(sector_buffer)) {
+		// Short read.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		return err;
+	}
+
+	if (!memcmp(&sector_buffer[0], "EFI PART", 8)) {
+		// Found "EFI PART".
+		*pGPT = true;
+		return 0;
+	}
+
+	// Check 4096. (4k sectors)
+	size = f_img->seekoAndRead(4096, SEEK_SET, sector_buffer, 1, sizeof(sector_buffer));
+	if (size != sizeof(sector_buffer)) {
+		// Short read.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		return err;
+	}
+
+	if (!memcmp(&sector_buffer[0], "EFI PART", 8)) {
+		// Found "EFI PART".
+		*pGPT = true;
+		return 0;
+	}
+
+	return 0;
+}
+
+/**
  * Open an RVT-H disk image.
  * @param f_img	[in] RefFile*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
@@ -191,17 +272,8 @@ int RvtH::openHDD(RefFile *f_img)
 	size_t size;
 
 	// Check the bank table header.
-	ret = f_img->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET);
-	if (ret != 0) {
-		// Seek error.
-		err = errno;
-		if (err == 0) {
-			err = EIO;
-		}
-		ret = -err;
-		goto fail;
-	}
-	size = f_img->read(&nhcd_header, 1, sizeof(nhcd_header));
+	size = f_img->seekoAndRead(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET,
+		&nhcd_header, 1, sizeof(nhcd_header));
 	if (size != sizeof(nhcd_header)) {
 		// Short read.
 		err = errno;
@@ -220,14 +292,30 @@ int RvtH::openHDD(RefFile *f_img)
 	// Check the magic number.
 	if (nhcd_header.magic == be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
 		// Magic number is correct.
-		m_has_NHCD = true;
+		m_NHCD_status = NHCD_STATUS_OK;
 	} else {
 		// Incorrect magic number.
 		// We'll continue with a default bank table.
 		// HDD will be non-writable.
 		uint32_t lba_start;
 
-		m_has_NHCD = false;
+		// Check for MBR or GPT for better error reporting.
+		bool hasMBR = false, hasGPT = false;
+		ret = checkMBR(f_img, &hasMBR, &hasGPT);
+		if (ret != 0) {
+			// Error checking for MBR or GPT.
+			err = -ret;
+			goto fail;
+		}
+
+		if (hasGPT) {
+			m_NHCD_status = NHCD_STATUS_HAS_GPT;
+		} else if (hasMBR) {
+			m_NHCD_status = NHCD_STATUS_HAS_MBR;
+		} else {
+			m_NHCD_status = NHCD_STATUS_MISSING;
+		}
+
 		m_bankCount = 8;
 		m_entries = (RvtH_BankEntry*)calloc(m_bankCount, sizeof(RvtH_BankEntry));
 		if (!m_entries) {
@@ -385,7 +473,7 @@ RvtH::RvtH(const TCHAR *filename, int *pErr)
 	: m_file(nullptr)
 	, m_bankCount(0)
 	, m_imageType(RVTH_ImageType_Unknown)
-	, m_has_NHCD(false)
+	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
 	, m_entries(nullptr)
 {
 	// Open the disk image.

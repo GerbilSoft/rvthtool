@@ -162,6 +162,21 @@ class RefFile
 			::rewind(m_file);
 		}
 
+		/** Convenience wrappers. **/
+
+		inline size_t seekoAndRead(int64_t offset, int whence, void *ptr, size_t size, size_t nmemb)
+		{
+			int ret = this->seeko(offset, whence);
+			if (ret != 0) {
+				if (errno == 0) {
+					errno = EIO;
+				}
+				return 0;
+			}
+
+			return this->read(ptr, size, nmemb);
+		}
+
 		/** Convenience wrappers for various RefFile fields. **/
 
 		inline const TCHAR *filename(void) const

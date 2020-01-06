@@ -54,7 +54,7 @@ int RvtH::makeWritable(void)
 	}
 
 	// If we're using a fake NHCD table, we can't write to it.
-	if (!m_has_NHCD) {
+	if (m_NHCD_status != NHCD_STATUS_OK) {
 		// Fake NHCD table is in use.
 		return RVTH_ERROR_NHCD_TABLE_MAGIC;
 	}

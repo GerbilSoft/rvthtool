@@ -54,6 +54,16 @@ typedef struct PACKED _NHCD_BankTable_Header {
 } NHCD_BankTable_Header;
 ASSERT_STRUCT(NHCD_BankTable_Header, 512);
 
+// NHCD header status.
+// TOOD: Maybe move "MBR" and "GPT" to a separate value and/or use a bitfield.
+typedef enum {
+	NHCD_STATUS_UNKNOWN	= 0,	// Unknown
+	NHCD_STATUS_OK		= 1,	// NHCD is present
+	NHCD_STATUS_MISSING	= 2,	// NHCD is missing
+	NHCD_STATUS_HAS_MBR	= 3,	// NHCD is missing; MBR is present
+	NHCD_STATUS_HAS_GPT	= 4,	// NHCD is missing; EFI GPT is present
+} NHCD_Status_e;
+
 /**
  * RVT-H bank entry.
  * All fields are in big-endian.

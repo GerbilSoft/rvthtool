@@ -306,9 +306,15 @@ int list_banks(const TCHAR *rvth_filename)
 		return ret;
 	}
 
+	fputs("File: ", stdout);
+	_fputts(rvth_filename, stdout);
+	putchar('\n');
+
 	// Check if this is an HDD image.
+	bool checkNHCD = false;
 	switch (rvth->imageType()) {
 		case RVTH_ImageType_HDD_Reader: {
+			checkNHCD = true;
 			fputs("Type: RVT-H Reader System", stdout);
 #ifdef HAVE_QUERY
 			// Get the serial number.
@@ -320,20 +326,12 @@ int list_banks(const TCHAR *rvth_filename)
 			}
 #endif /* HAVE_QUERY */
 			putchar('\n');
-
-			if (!rvth->hasNHCD()) {
-				fputs("*** WARNING: NHCD table is missing.\n"
-				      "*** Using defaults. Writing will be disabled.\n", stdout);
-			}
 			break;
 		}
 
 		case RVTH_ImageType_HDD_Image:
+			checkNHCD = true;
 			fputs("Type: RVT-H Reader Disk Image\n", stdout);
-			if (!rvth->hasNHCD()) {
-				fputs("*** WARNING: NHCD table is missing.\n"
-				      "*** Using defaults. Writing will be disabled.\n", stdout);
-			}
 			break;
 		case RVTH_ImageType_GCM:
 			// TODO: CISO/WBFS.
@@ -348,6 +346,36 @@ int list_banks(const TCHAR *rvth_filename)
 			delete rvth;
 			return -EIO;
 	}
+
+	if (checkNHCD) {
+		bool isDefaultNHCD = false;
+		switch (rvth->nhcd_status()) {
+			case NHCD_STATUS_OK:
+				break;
+
+			default:
+			case NHCD_STATUS_UNKNOWN:
+			case NHCD_STATUS_MISSING:
+				isDefaultNHCD = true;
+				fputs("*** WARNING: NHCD table is missing.\n", stdout);
+				break;
+
+			case NHCD_STATUS_HAS_MBR:
+				isDefaultNHCD = true;
+				fputs("*** WARNING: This appears to be a PC MBR-partitioned HDD.\n", stdout);
+				break;
+
+			case NHCD_STATUS_HAS_GPT:
+				isDefaultNHCD = true;
+				fputs("*** WARNING: This appears to be a PC GPT-partitioned HDD.\n", stdout);
+				break;
+		}
+
+		if (isDefaultNHCD) {
+			fputs("*** Using defaults. Writing will be disabled.\n", stdout);
+		}
+	}
+
 	putchar('\n');
 
 	// Print the bank table.

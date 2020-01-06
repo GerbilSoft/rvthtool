@@ -34,6 +34,7 @@
 
 // Enums
 #include "rvth_enums.h"
+#include "nhcd_structs.h"
 
 // RefFile class
 #ifdef __cplusplus
@@ -185,6 +186,15 @@ class RvtH {
 		int openGcm(RefFile *f_img);
 
 		/**
+		 * Check for MBR and/or GPT.
+		 * @param f_img	[in] RefFile*
+		 * @param pMBR	[out] True if the HDD has an MBR.
+		 * @param pGPT	[out] True if the HDD has a GPT.
+		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+		 */
+		static int checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT);
+
+		/**
 		 * Open an RVT-H disk image.
 		 * @param f_img	[in] RefFile*
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
@@ -256,14 +266,15 @@ class RvtH {
 		RvtH_ImageType_e imageType(void) const { return m_imageType; }
 
 		/**
-		 * Is an NHCD table present?
+		 * Get the NHCD table status.
 		 *
-		 * This is always false for optical disc images,
-		 * and false for wiped RVT-H devices and disk images.
+		 * For optical disc images, this is always NHCD_STATUS_MISSING.
+		 * For HDD images, this should be NHCD_STATUS_OK unless the
+		 * NHCD table was wiped or a PC-partitioned disk was selected.
 		 *
-		 * @return True if the RVT-H object has an NHCD table; false if not.
+		 * @return NHCD table status.
 		 */
-		inline bool hasNHCD(void) const { return m_has_NHCD; }
+		NHCD_Status_e nhcd_status(void) const { return m_NHCD_status; }
 
 		/**
 		 * Get a bank table entry.
@@ -412,8 +423,8 @@ class RvtH {
 		// Image type.
 		RvtH_ImageType_e m_imageType;
 
-		// Is the NHCD header present?
-		bool m_has_NHCD;
+		// NHCD header status.
+		NHCD_Status_e m_NHCD_status;
 
 		// BankEntry objects.
 		RvtH_BankEntry *m_entries;

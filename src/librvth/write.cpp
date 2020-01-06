@@ -50,7 +50,7 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	: m_file(nullptr)
 	, m_bankCount(0)
 	, m_imageType(RVTH_ImageType_Unknown)
-	, m_has_NHCD(false)
+	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
 	, m_entries(nullptr)
 {
 	RvtH_BankEntry *entry;
