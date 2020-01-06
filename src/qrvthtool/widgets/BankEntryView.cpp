@@ -241,8 +241,6 @@ QString BankEntryViewPrivate::sigStatusString(
  */
 void BankEntryViewPrivate::updateWidgetDisplay(void)
 {
-	Q_Q(BankEntryView);
-
 	if (bankEntry) {
 		// Type.
 		QString s_type;
