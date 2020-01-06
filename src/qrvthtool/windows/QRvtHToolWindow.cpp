@@ -637,6 +637,47 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	d->filename = filename;
 	d->model->setRvtH(d->rvth);
 
+	// Check the NHCD table status.
+	bool checkNHCD = false;
+	switch (d->rvth->imageType()) {
+		case RVTH_ImageType_HDD_Reader:
+		case RVTH_ImageType_HDD_Image:
+			// NHCD table should be present.
+			checkNHCD = true;
+			break;
+
+		default:
+			// No NHCD table here.
+			break;
+	}
+
+	if (checkNHCD) {
+		QString message;
+		switch (d->rvth->nhcd_status()) {
+			case NHCD_STATUS_OK:
+				break;
+
+			default:
+			case NHCD_STATUS_UNKNOWN:
+			case NHCD_STATUS_MISSING:
+				message = tr("NHCD table is missing.");
+				break;
+
+			case NHCD_STATUS_HAS_MBR:
+				message = tr("This appears to be a PC MBR-partitioned HDD.");
+				break;
+
+			case NHCD_STATUS_HAS_GPT:
+				message = tr("This appears to be a PC GPT-partitioned HDD.");
+				break;
+		}
+
+		if (!message.isEmpty()) {
+			message += QChar(L'\n') + tr("Using defaults. Writing will be disabled.");
+			d->ui.msgWidget->showMessage(message, MessageWidget::ICON_CRITICAL);
+		}
+	}
+
 	// Update the UI.
 	d->updateLstBankList();
 	d->updateWindowTitle();
