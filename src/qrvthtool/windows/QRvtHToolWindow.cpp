@@ -79,11 +79,16 @@ class QRvtHToolWindowPrivate
 		// TODO: Config class like mcrecover?
 		QString lastPath;
 
+		// Last icon ID.
+		RvtHModel::IconID lastIconID;
+
 		// Initialized columns?
 		bool cols_init;
 
-		// Last icon ID.
-		RvtHModel::IconID lastIconID;
+		// Enable write operations?
+		// Should be enabled for RVT-H Readers with valid
+		// NHCD tables and disabled otherwise.
+		bool write_enabled;
 
 		/**
 		 * Update the RVT-H Reader disk image's QTreeView.
@@ -153,8 +158,9 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, rvth(nullptr)
 	, model(new RvtHModel(q))
 	, proxyModel(new RvtHSortFilterProxyModel(q))
-	, cols_init(false)
 	, lastIconID(RvtHModel::ICON_MAX)
+	, cols_init(false)
+	, write_enabled(false)
 	, lblRecryptionKey(nullptr)
 	, cboRecryptionKey(nullptr)
 	, lblMessage(nullptr)
@@ -298,9 +304,10 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
 			// Enable Extract if the bank is *not* empty.
 			ui.actionExtract->setEnabled(entry->type != RVTH_BankType_Empty);
 
-			// If this is an actual RVT-H Reader, we can
-			// enable the writing functions.
-			if (rvth->imageType() == RVTH_ImageType_HDD_Reader) {
+			// d->write_enabled indicates if we can use writing functions.
+			// True if using an actual RVT-H Reader with valid NHCD table;
+			// false otherwise.
+			if (this->write_enabled) {
 				if (entry->type == RVTH_BankType_Empty) {
 					// Bank is empty.
 					// Enable Import; disable Delete and Undelete.
@@ -639,10 +646,14 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 			break;
 	}
 
+	d->write_enabled = false;
 	if (checkNHCD) {
 		QString message;
 		switch (d->rvth->nhcd_status()) {
 			case NHCD_STATUS_OK:
+				if (d->rvth->imageType() == RVTH_ImageType_HDD_Reader) {
+					d->write_enabled = true;
+				}
 				break;
 
 			default:
