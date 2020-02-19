@@ -51,7 +51,6 @@ SET(librvth_H
 	rvth.hpp
 	rvth_time.h
 	RefFile.hpp
-	tcharx.h
 	disc_header.hpp
 	query.h
 	ptbl.h

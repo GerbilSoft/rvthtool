@@ -2,20 +2,8 @@
  * RVT-H Tool (librvth)                                                    *
  * tcharx.h: TCHAR support for Windows and Linux.                          *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #ifndef __RVTHTOOL_LIBRVTH_TCHAR_H__
@@ -45,9 +33,12 @@ typedef char TCHAR;
 #define _istalpha(c) isalpha(c)
 
 // stdio.h
-#define _fputts(s, stream) fputs(s, stream)
+#define _fputts(s, stream) fputs((s), (stream))
+#define _fputtc(c, stream) fputc((c), (stream))
 
-#define _tfopen(filename, mode) fopen((filename), (mode))
+#define _tfopen(filename, mode)		fopen((filename), (mode))
+#define _tmkdir(path, mode)		mkdir((path), (mode))
+#define _tremove(pathname)		remove(pathname)
 
 #define _tprintf printf
 #define _ftprintf fprintf
@@ -63,7 +54,13 @@ typedef char TCHAR;
 #define _tcstoul(nptr, endptr, base)	strtoul((nptr), (endptr), (base))
 
 // string.h
-#define _tcsdup(s) strdup(s)
+#define _tcschr(s, c)			strchr((s), (c))
+#define _tcscmp(s1, s2)			strcmp((s1), (s2))
+#define _tcsdup(s)			strdup(s)
+#define _tcserror(errnum)		strerror(errnum)
+#define _tcslen(s)			strlen(s)
+#define _tcsncmp(s1, s2, n)		strncmp((s1), (s2), (n))
+#define _tcsrchr(s, c)			strrchr((s), (c))
 
 #endif /* _WIN32 */
 
