@@ -19,6 +19,7 @@
 
 // C includes. (C++ namespace)
 #include <cassert>
+#include <cerrno>
 #include <cstdio>
 
 // C++ includes.
