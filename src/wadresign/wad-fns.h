@@ -42,7 +42,7 @@ extern "C" {
 #define WAD_DATA_SIZE_MAX (128*1024*1024)
 
 // Maximum footer size supported by wadresign.
-#define WAD_FOOTER_SIZE_MAX (128*1024)
+#define WAD_FOOTER_SIZE_MAX (1024*1024)
 
 /**
  * Struct of WAD section addresses and sizes.

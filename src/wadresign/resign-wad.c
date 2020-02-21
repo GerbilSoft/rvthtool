@@ -203,8 +203,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		// TODO: Define a maximum footer size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "' %s size is too big. (%u; should be less than 128 KB)\n",
-			s_footer_name, wadInfo.tmd_size);
+		fprintf(stderr, "' %s size is too big. (%u; should be less than 1 MB)\n",
+			s_footer_name, wadInfo.footer_size);
 		ret = 7;
 		goto end;
 	}
