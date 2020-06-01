@@ -2,20 +2,8 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * wii_wad.h: Nintendo Wii WAD file data structures.                       *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #ifndef __RVTHTOOL_LIBWIICRYPTO_WII_WAD_H__
@@ -60,16 +48,16 @@ ASSERT_STRUCT(Wii_WAD_Header, 32);
 
 /**
  * Nintendo Wii WAD file header.
- * EARLY VERSION; used with some early devkit software.
+ * BroadOn WAD format.
  *
- * To identify the early version, check for an invalid WAD type,
+ * To identify the BroadOn format, check for an invalid WAD type,
  * then the ticket size.
  *
- * NOTE: Sections are NOT 64-byte aligned in early WADs!
+ * NOTE: Sections are NOT 64-byte aligned in BroadOn WADs!
  *
  * All fields are big-endian.
  */
-typedef struct PACKED _Wii_WAD_Header_EARLY {
+typedef struct PACKED _Wii_WAD_Header_BWF {
 	uint32_t header_size;		// [0x000] Header size. (0x0020)
 	uint32_t data_offset;		// [0x004] Data offset. (usually 0x1140)
 	uint32_t cert_chain_size;	// [0x008] Certificate chain size.
@@ -78,8 +66,8 @@ typedef struct PACKED _Wii_WAD_Header_EARLY {
 	uint32_t name_size;		// [0x014] Name size.
 	uint32_t unknown;		// [0x018] Unknown.
 	uint32_t reserved;		// [0x01C] Reserved.
-} Wii_WAD_Header_EARLY;
-ASSERT_STRUCT(Wii_WAD_Header_EARLY, 32);
+} Wii_WAD_Header_BWF;
+ASSERT_STRUCT(Wii_WAD_Header_BWF, 32);
 
 /**
  * content.bin header.

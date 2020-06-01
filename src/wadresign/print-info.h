@@ -32,15 +32,15 @@ const char *issuer_type(RVL_Cert_Issuer issuer);
 /**
  * Identify a WAD file's type.
  *
- * This is mostly for informational purposes, except for early devkit WAD files,
+ * This is mostly for informational purposes, except for BroadOn WAD files,
  * in which case the format is slightly different.
  *
  * @param pBuf		[in] Header data.
  * @param buf_len	[in] Length of buf. (Should be at least 64.)
- * @param pIsEarly 	[out] `bool` to store if the WAD file is an early devkit WAD file or not.
+ * @param pIsBWF 	[out] `bool` to store if the WAD file is a BroadOn WAD file or not.
  * @return WAD file type as a string, or NULL on error.
  */
-const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly);
+const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF);
 
 /**
  * 'info' command. (internal function)

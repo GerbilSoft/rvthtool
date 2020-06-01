@@ -2,20 +2,8 @@
  * RVT-H Tool: WAD Resigner                                                *
  * wad-fns.h: General WAD functions.                                       *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #ifndef __RVTHTOOL_WADRESIGN_WAD_FNS_H__
@@ -59,7 +47,7 @@ typedef struct _WAD_Info_t {
 	uint32_t data_size;	// If 0, assume "rest of file".
 
 	// Standard WADs have an optional footer.
-	// Early devkit WADs have an optional name,
+	// BroadOn WADs have an optional name,
 	// usually located before the data.
 	uint32_t footer_address;
 	uint32_t footer_size;
@@ -74,12 +62,12 @@ typedef struct _WAD_Info_t {
 int getWadInfo(const Wii_WAD_Header *pWadHeader, WAD_Info_t *pWadInfo);
 
 /**
- * Get WAD info for an early WAD file.
- * @param pWadHeader	[in] Early WAD header.
+ * Get WAD info for a BroadOn WAD file.
+ * @param pWadHeader	[in] BroadOn header.
  * @param pWadInfo	[out] WAD info struct.
  * @return 0 on success; non-zero on error;
  */
-int getWadInfo_early(const Wii_WAD_Header_EARLY *pWadHeader, WAD_Info_t *pWadInfo);
+int getWadInfo_BWF(const Wii_WAD_Header_BWF *pWadHeader, WAD_Info_t *pWadInfo);
 
 #ifdef __cplusplus
 }

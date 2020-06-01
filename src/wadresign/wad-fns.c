@@ -2,20 +2,8 @@
  * RVT-H Tool: WAD Resigner                                                *
  * wad-fns.h: General WAD functions.                                       *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "wad-fns.h"
@@ -72,14 +60,14 @@ int getWadInfo(const Wii_WAD_Header *pWadHeader, WAD_Info_t *pWadInfo)
 }
 
 /**
- * Get WAD info for an early WAD file.
- * @param pWadHeader	[in] Early WAD header.
+ * Get WAD info for a BroadOn WAD file.
+ * @param pWadHeader	[in] BroadOn WAD header.
  * @param pWadInfo	[out] WAD info struct.
  * @return 0 on success; non-zero on error;
  */
-int getWadInfo_early(const Wii_WAD_Header_EARLY *pWadHeader, WAD_Info_t *pWadInfo)
+int getWadInfo_BWF(const Wii_WAD_Header_BWF *pWadHeader, WAD_Info_t *pWadInfo)
 {
-	// Make sure this is in fact an early WAD.
+	// Make sure this is in fact a BroadOn WAD.
 	if (pWadHeader->header_size != cpu_to_be32(0x0020)) {
 		// Wrong header size.
 		return 1;
@@ -90,7 +78,7 @@ int getWadInfo_early(const Wii_WAD_Header_EARLY *pWadHeader, WAD_Info_t *pWadInf
 		return 2;
 	}
 
-	// Early WAD files have NO alignment.
+	// BroadOn WAD files have NO alignment.
 
 	pWadInfo->cert_chain_address = be32_to_cpu(pWadHeader->header_size);
 	pWadInfo->cert_chain_size = be32_to_cpu(pWadHeader->cert_chain_size);

@@ -2,20 +2,8 @@
  * RVT-H Tool: WAD Resigner                                                *
  * print-info.c: Print WAD information.                                    *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "print-info.h"
@@ -42,7 +30,7 @@
 
 typedef union _WAD_Header {
 	Wii_WAD_Header wad;
-	Wii_WAD_Header_EARLY wadE;
+	Wii_WAD_Header_BWF bwf;
 } WAD_Header;
 
 /**
@@ -77,15 +65,15 @@ const char *issuer_type(RVL_Cert_Issuer issuer)
 /**
  * Identify a WAD file's type.
  *
- * This is mostly for informational purposes, except for early devkit WAD files,
+ * This is mostly for informational purposes, except for BroadOn WAD files,
  * in which case the format is slightly different.
  *
  * @param pBuf		[in] Header data.
  * @param buf_len	[in] Length of buf. (Should be at least 64.)
- * @param pIsEarly [out] `bool` to store if the WAD file is an early devkit WAD file or not.
+ * @param pIsBWF	[out] `bool` to store if the WAD file is a BroadOn WAD file or not.
  * @return WAD file type as a string, or NULL on error.
  */
-const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly)
+const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF)
 {
 	const char *s_wad_type = NULL;
 	const WAD_Header *const header = (const WAD_Header*)buf;
@@ -103,20 +91,20 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsEarly
 		return NULL;
 	}
 
-	*pIsEarly = false;
+	*pIsBWF = false;
 	if (header->wad.type == cpu_to_be32(WII_WAD_TYPE_Is)) {
-		s_wad_type = "Is";
+		s_wad_type = "Installable";
 	} else if (header->wad.type == cpu_to_be32(WII_WAD_TYPE_ib)) {
-		s_wad_type = "ib";
+		s_wad_type = "Boot2";
 	} else if (header->wad.type == cpu_to_be32(WII_WAD_TYPE_Bk)) {
-		s_wad_type = "Bk";
+		s_wad_type = "Backup";
 	} else {
-		// This might be an early WAD.
-		if (header->wadE.ticket_size == cpu_to_be32(sizeof(RVL_Ticket))) {
+		// This might be a BroadOn WAD.
+		if (header->bwf.ticket_size == cpu_to_be32(sizeof(RVL_Ticket))) {
 			// Ticket size is correct.
-			// This is probably an early WAD.
-			s_wad_type = "Early Devkit";
-			*pIsEarly = true;
+			// This is probably a BroadOn WAD.
+			s_wad_type = "BroadOn WAD Format";
+			*pIsBWF = true;
 		}
 	}
 
@@ -270,7 +258,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	int ret;
 	size_t size;
 	const char *s_wad_type = NULL;
-	bool isEarly = false;
+	bool isBWF = false;
 	WAD_Header header;
 	WAD_Info_t wadInfo;
 
@@ -311,7 +299,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	// Identify the WAD type.
 	// TODO: More extensive error handling?
-	s_wad_type = identify_wad_type((const uint8_t*)&header, sizeof(header), &isEarly);
+	s_wad_type = identify_wad_type((const uint8_t*)&header, sizeof(header), &isBWF);
 	if (!s_wad_type) {
 		// Unrecognized WAD type.
 		fputs("*** ERROR: WAD file '", stderr);
@@ -322,10 +310,10 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	}
 
 	// Determine the sizes and addresses of various components.
-	if (!isEarly) {
+	if (!isBWF) {
 		ret = getWadInfo(&header.wad, &wadInfo);
 	} else {
-		ret = getWadInfo_early(&header.wadE, &wadInfo);
+		ret = getWadInfo_BWF(&header.bwf, &wadInfo);
 	}
 	if (ret != 0) {
 		// Unable to get WAD information.
@@ -546,7 +534,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 		// Next content.
 		content_addr += (uint32_t)be64_to_cpu(content->size);
-		if (likely(!isEarly)) {
+		if (likely(!isBWF)) {
 			content_addr = ALIGN(64, content_addr);
 		}
 	}

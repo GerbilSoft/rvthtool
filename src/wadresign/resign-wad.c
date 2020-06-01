@@ -2,20 +2,8 @@
  * RVT-H Tool: WAD Resigner                                                *
  * print-info.c: Print WAD information.                                    *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "resign-wad.h"
@@ -42,7 +30,7 @@
 
 typedef union _WAD_Header {
 	Wii_WAD_Header wad;
-	Wii_WAD_Header_EARLY wadE;
+	Wii_WAD_Header_BWF bwf;
 } WAD_Header;
 
 // Read buffer.
@@ -76,7 +64,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 {
 	int ret;
 	size_t size;
-	bool isEarly = false;
+	bool isBWF = false;
 	WAD_Header header;
 	WAD_Info_t wadInfo;
 	RVL_CryptoType_e src_key;
@@ -141,8 +129,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Identify the WAD type.
 	// TODO: More extensive error handling?
 	// NOTE: Not saving the string, since we only need to know if
-	// it's an early WAD or not.
-	if (identify_wad_type((const uint8_t*)&header, sizeof(header), &isEarly) == NULL) {
+	// it's a BroadOn WAD or not.
+	if (identify_wad_type((const uint8_t*)&header, sizeof(header), &isBWF) == NULL) {
 		// Unrecognized WAD type.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
@@ -152,11 +140,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Determine the sizes and addresses of various components.
-	if (unlikely(!isEarly)) {
+	if (unlikely(!isBWF)) {
 		ret = getWadInfo(&header.wad, &wadInfo);
 		s_footer_name = "footer";
 	} else {
-		ret = getWadInfo_early(&header.wadE, &wadInfo);
+		ret = getWadInfo_BWF(&header.bwf, &wadInfo);
 		s_footer_name = "name";
 	}
 	if (ret != 0) {
@@ -212,7 +200,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Verify the data size.
 	fseeko(f_src_wad, 0, SEEK_END);
 	src_file_size = (uint32_t)ftello(f_src_wad);
-	if (isEarly) {
+	if (isBWF) {
 		// Data size is the rest of the file.
 		if (src_file_size < wadInfo.data_address) {
 			// Not valid...
@@ -406,9 +394,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			sizeof(*cert_ticket) + sizeof(*cert_dev)));
 	}
 
-	if (isEarly) {
+	if (isBWF) {
 		// Convert the WAD header to the standard format.
-		printf("Converting the early devkit WAD header to standard WAD format...\n");
+		printf("Converting the BroadOn WAD header to standard WAD format...\n");
 		// Type is 'Is' for most WADs, 'ib' for boot2.
 		if (unlikely(
 			buf->ticket.title_id.hi == cpu_to_be32(0x00000001) &&
@@ -647,7 +635,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Copy the footer/name.
 	if (wadInfo.footer_size != 0) {
-		if (likely(!isEarly)) {
+		if (likely(!isBWF)) {
 			printf("Copying the WAD footer...\n");
 		} else {
 			printf("Converting the WAD name to a footer...\n");
