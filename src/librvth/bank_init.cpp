@@ -485,7 +485,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 
 	if (boot.bi2.dolLimit != cpu_to_be32(0)) {
 		// Calculate the total size of all sections.
-		// FIXME: ALIGN() macros aren't working...
+		// FIXME: ALIGN_BYTES() macros aren't working...
 		const uint32_t dolLimit = be32_to_cpu(boot.bi2.dolLimit);
 		uint32_t dolSize = 0;
 		for (i = 0; i < ARRAY_SIZE(dol.text); i++) {

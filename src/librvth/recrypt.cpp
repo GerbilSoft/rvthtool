@@ -565,7 +565,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 		// Starting position.
 		data_pos = offsetof(RVL_PartitionHeader, data);
-		data_pos = ALIGN(64, data_pos);
+		data_pos = ALIGN_BYTES(64, data_pos);
 
 		// Copy in the TMD.
 		tmd_size = be32_to_cpu(hdr_orig.tmd_size);
@@ -608,7 +608,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		// TMD parameters.
 		hdr_new.tmd_size = hdr_orig.tmd_size;
 		hdr_new.tmd_offset = cpu_to_be32(data_pos >> 2);
-		data_pos += ALIGN(64, tmd_size);
+		data_pos += ALIGN_BYTES(64, tmd_size);
 
 		// Write the new certificate chain.
 		// NOTE: RVT-H images usually have a development certificate,

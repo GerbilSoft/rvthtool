@@ -201,7 +201,7 @@ static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
 		// NOTE: AES works on 16-byte blocks, so we have to
 		// read and decrypt the full 16-byte block. The SHA-1
 		// is only taken for the actual used data, though.
-		uint32_t data_sz_align = ALIGN(16, data_sz);
+		uint32_t data_sz_align = ALIGN_BYTES(16, data_sz);
 
 		errno = 0;
 		size = fread(buf, 1, data_sz_align, f_wad);
@@ -535,7 +535,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		// Next content.
 		content_addr += (uint32_t)be64_to_cpu(content->size);
 		if (likely(!isBWF)) {
-			content_addr = ALIGN(64, content_addr);
+			content_addr = ALIGN_BYTES(64, content_addr);
 		}
 	}
 	putchar('\n');

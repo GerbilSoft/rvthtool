@@ -48,7 +48,7 @@ static inline void fpAlign(FILE *fp)
 {
 	int64_t offset = ftello(fp);
 	if ((offset % 64) != 0) {
-		offset = ALIGN(64, offset);
+		offset = ALIGN_BYTES(64, offset);
 		fseeko(fp, offset, SEEK_SET);
 	}
 }

@@ -36,20 +36,20 @@ int getWadInfo(const Wii_WAD_Header *pWadHeader, WAD_Info_t *pWadInfo)
 	// Standard WAD files have 64-byte aligned sections,
 	// starting with the certificate chain.
 
-	pWadInfo->cert_chain_address = ALIGN(64, be32_to_cpu(pWadHeader->header_size));
+	pWadInfo->cert_chain_address = ALIGN_BYTES(64, be32_to_cpu(pWadHeader->header_size));
 	pWadInfo->cert_chain_size = be32_to_cpu(pWadHeader->cert_chain_size);
 
-	pWadInfo->ticket_address = ALIGN(64, pWadInfo->cert_chain_address + pWadInfo->cert_chain_size);
+	pWadInfo->ticket_address = ALIGN_BYTES(64, pWadInfo->cert_chain_address + pWadInfo->cert_chain_size);
 	pWadInfo->ticket_size = be32_to_cpu(pWadHeader->ticket_size);
 
-	pWadInfo->tmd_address = ALIGN(64, pWadInfo->ticket_address + pWadInfo->ticket_size);
+	pWadInfo->tmd_address = ALIGN_BYTES(64, pWadInfo->ticket_address + pWadInfo->ticket_size);
 	pWadInfo->tmd_size = be32_to_cpu(pWadHeader->tmd_size);
 
-	pWadInfo->data_address = ALIGN(64, pWadInfo->tmd_address + pWadInfo->tmd_size);
+	pWadInfo->data_address = ALIGN_BYTES(64, pWadInfo->tmd_address + pWadInfo->tmd_size);
 	pWadInfo->data_size = be32_to_cpu(pWadHeader->data_size);
 
 	if (pWadInfo->footer_size != 0) {
-		pWadInfo->footer_address = ALIGN(64, pWadInfo->data_address + pWadInfo->data_size);
+		pWadInfo->footer_address = ALIGN_BYTES(64, pWadInfo->data_address + pWadInfo->data_size);
 		pWadInfo->footer_size = be32_to_cpu(pWadHeader->footer_size);
 	} else {
 		// No footer.
