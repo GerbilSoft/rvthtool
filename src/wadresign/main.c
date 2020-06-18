@@ -103,6 +103,8 @@ static void print_help(const TCHAR *argv0)
 		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
 		"                            default, retail, korean, debug\n"
 		"                            Recrypting to retail will use fakesigning.\n"
+		"  -f, --format=FMT          Use the specified format FMT:\n"
+		"                            default, wad, bwf\n"
 		"  -h, --help                Display this help and exit.\n"
 		"\n"
 		, stdout);
@@ -116,6 +118,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// -1 == default; no recryption, except when importing retail to RVT-H.
 	// Other values are from RVL_CryptoType_e.
 	int recrypt_key = -1;
+
+	// Output format.
+	// -1 == default: standard .wad format.
+	// Other values are from WAD_Format_e.
+	int output_format = -1;
 
 	((void)argc);
 	((void)argv);
@@ -143,13 +150,14 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	while (true) {
 		static const struct option long_options[] = {
 			{_T("recrypt"),	required_argument,	0, _T('k')},
+			{_T("format"),	required_argument,	0, _T('f')},
 			{_T("ndev"),	no_argument,		0, _T('N')},
 			{_T("help"),	no_argument,		0, _T('h')},
 
 			{NULL, 0, 0, 0}
 		};
 
-		int c = getopt_long(argc, argv, _T("k:Nh"), long_options, NULL);
+		int c = getopt_long(argc, argv, _T("k:f:Nh"), long_options, NULL);
 		if (c == -1)
 			break;
 
@@ -171,6 +179,25 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					recrypt_key = RVL_CryptoType_Korean;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
+					return EXIT_FAILURE;
+				}
+				break;
+
+			case _T('f'):
+				// Output format.
+				if (!optarg) {
+					// NULL?
+					print_error(argv[0], _T("no output format specified"));
+					return EXIT_FAILURE;
+				}
+				if (!_tcsicmp(optarg, _T("default"))) {
+					output_format = -1;
+				} else if (!_tcsicmp(optarg, _T("standard"))) {
+					output_format = WAD_Format_Standard;
+				} else if (!_tcsicmp(optarg, _T("bwf"))) {
+					output_format = WAD_Format_BroadOn;
+				} else {
+					print_error(argv[0], _T("unknown output format '%s'"), optarg);
 					return EXIT_FAILURE;
 				}
 				break;
@@ -231,7 +258,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			print_error(argv[0], _T("Output WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key);
+		ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key, output_format);
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'info'.

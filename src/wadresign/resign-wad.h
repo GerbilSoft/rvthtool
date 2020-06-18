@@ -17,13 +17,22 @@ extern "C" {
 #endif
 
 /**
+ * WAD format.
+ */
+typedef enum {
+	WAD_Format_Standard	= 0,	// Standard (.wad)
+	WAD_Format_BroadOn	= 1,	// BroadOn WAD Format (.bwf)
+} WAD_Format_e;
+
+/**
  * 'resign' command.
  * @param src_wad	[in] Source WAD.
  * @param dest_wad	[in] Destination WAD.
  * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @param output_format	[in] Output format. (-1 for default)
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key);
+int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int output_format);
 
 #ifdef __cplusplus
 }
