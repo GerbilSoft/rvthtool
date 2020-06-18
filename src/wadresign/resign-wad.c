@@ -608,6 +608,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 
 	// Remaining data.
 	if (data_sz > 0) {
+		// NOTE: AES operates with 16-byte block sizes, so we have to
+		// round data_sz up to the next 16 bytes.
+		data_sz = ALIGN_BYTES(16, data_sz);
+
 		errno = 0;
 		size = fread(buf->u8, 1, data_sz, f_src_wad);
 		if (size != data_sz) {
