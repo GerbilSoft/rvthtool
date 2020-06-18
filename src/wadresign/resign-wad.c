@@ -311,6 +311,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			goto end;
 	}
 
+	// If the output format is 'default', use the same format as the input file.
+	// Default is the same as the input format.
+	if (output_format == -1) {
+		output_format = (isSrcBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
+	}
+
 	if (recrypt_key == -1) {
 		// Select the "opposite" key.
 		switch (src_key) {
@@ -330,10 +336,15 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		}
 	} else {
 		if ((RVL_CryptoType_e)recrypt_key == src_key) {
-			// No point in recrypting to the same key...
-			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
-			ret = 16;
-			goto end;
+			// Allow the same key if converting to a different format.
+			if (( isSrcBwf && output_format == WAD_Format_BroadOn) ||
+			    (!isSrcBwf && output_format != WAD_Format_BroadOn))
+			{
+				// No point in recrypting to the same key and format...
+				fputs("*** ERROR: Cannot recrypt to the same key and format.\n", stderr);
+				ret = 16;
+				goto end;
+			}
 		}
 	}
 
@@ -358,12 +369,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			fputs("*** ERROR: Invalid recrypt_key value.\n", stderr);
 			ret = 17;
 			goto end;
-	}
-
-	// Determine the output format.
-	// Default is the same as the input format.
-	if (output_format == -1) {
-		output_format = (isSrcBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
 	}
 
 	printf("Converting from %s to %s [", s_fromKey, s_toKey);
@@ -417,21 +422,19 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	if (output_format == WAD_Format_BroadOn) {
 		// TODO: Add meta.
 		// NOTE: Size of Wii BWF header is accounted for by padding. Not adding here for now...
-		printf("chain size: %04X; ticket: %04X; tmd: %04X\n", cert_chain_size, wadInfo.ticket_size, wadInfo.tmd_size);
 		data_offset = /*sizeof(Wii_WAD_Header_BWF) +*/
 			ALIGN_BYTES(64, cert_chain_size) +
 			ALIGN_BYTES(64, wadInfo.ticket_size) +
 			ALIGN_BYTES(64, wadInfo.tmd_size);
-		printf("data offset: %04X\n", data_offset);
 	} else {
 		// Data offset is implied based on alignments.
 		data_offset = 0;
 	}
 
-	// Do we need to convert wad->bwf or bwf->wad?
-	if (!isSrcBwf) {
-		if (output_format == WAD_Format_BroadOn) {
-			// wad->bwf
+	// Do we need to convert bwf->wad or wad->bwf?
+	if (isSrcBwf) {
+		if (output_format != WAD_Format_BroadOn) {
+			// bwf->wad
 			Wii_WAD_Header outHeader;
 			printf("Converting the BroadOn WAD header to standard WAD format...\n");
 			data_offset = 0;
@@ -464,9 +467,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			srcHeader.wad.cert_chain_size = cpu_to_be32(cert_chain_size);
 			size = fwrite(&srcHeader.wad, 1, sizeof(srcHeader.wad), f_dest_wad);
 		}
-	} else /*if (isSrcBwf)*/ {
-		if (output_format != WAD_Format_BroadOn) {
-			// bwf->wad
+	} else /*if (!isSrcBwf)*/ {
+		if (output_format == WAD_Format_BroadOn) {
+			// wad->bwf
 			Wii_WAD_Header_BWF outHeader;
 			printf("Converting the standard WAD header to BroadOn WAD format...\n");
 
