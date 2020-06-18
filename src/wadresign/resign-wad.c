@@ -86,7 +86,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// Files.
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
 	int64_t src_file_size, offset;
-	const char *s_footer_name;	// "footer" or "name"
 
 	// Certificates.
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
@@ -152,10 +151,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// Determine the sizes and addresses of various components.
 	if (unlikely(!isSrcBwf)) {
 		ret = getWadInfo(&srcHeader.wad, &wadInfo);
-		s_footer_name = "footer";
 	} else {
 		ret = getWadInfo_BWF(&srcHeader.bwf, &wadInfo);
-		s_footer_name = "name";
 	}
 	if (ret != 0) {
 		// Unable to get WAD information.
@@ -196,13 +193,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			wadInfo.tmd_size);
 		ret = 6;
 		goto end;
-	} else if (wadInfo.footer_size > WAD_FOOTER_SIZE_MAX) {
+	} else if (wadInfo.meta_size > WAD_META_SIZE_MAX) {
 		// Too big.
-		// TODO: Define a maximum footer size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "' %s size is too big. (%u; should be less than 1 MB)\n",
-			s_footer_name, wadInfo.footer_size);
+		fprintf(stderr, "' metadata size is too big. (%u; should be less than 1 MB)\n",
+			wadInfo.meta_size);
 		ret = 7;
 		goto end;
 	}
@@ -396,9 +392,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		goto end;
 	}
 
-	// TODO: WADs have "CRL" and "meta" sections.
-	// "Meta" section might be the footer...
-
 	// Get the certificates.
 	// TODO: Parse existing certificate chain to determine the ordering.
 	if (toKey != RVL_KEY_DEBUG) {
@@ -455,11 +448,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 			outHeader.header_size = cpu_to_be32(sizeof(outHeader));
 			outHeader.cert_chain_size = cpu_to_be32(cert_chain_size);
-			outHeader.reserved = 0;
+			outHeader.crl_size = cpu_to_be32(wadInfo.crl_size);
 			outHeader.ticket_size = cpu_to_be32(wadInfo.ticket_size);
 			outHeader.tmd_size = cpu_to_be32(wadInfo.tmd_size);
 			outHeader.data_size = cpu_to_be32(wadInfo.data_size);
-			outHeader.footer_size = cpu_to_be32(wadInfo.footer_size);
+			outHeader.meta_size = cpu_to_be32(wadInfo.meta_size);
 
 			// Write the WAD header.
 			errno = 0;
@@ -470,6 +463,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			errno = 0;
 			srcHeader.bwf.data_offset = cpu_to_be32(data_offset);
 			srcHeader.bwf.cert_chain_size = cpu_to_be32(cert_chain_size);
+
+			// FIXME: Copy the metadata to BWF correctly.
+			srcHeader.bwf.meta_size = 0;	//cpu_to_be32(wadInfo.meta_size);
+			srcHeader.bwf.meta_cid = 0;
+
 			size = fwrite(&srcHeader.bwf, 1, sizeof(srcHeader.bwf), f_dest_wad);
 		}
 	} else /*if (!isSrcBwf)*/ {
@@ -483,10 +481,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			outHeader.cert_chain_size = cpu_to_be32(cert_chain_size);
 			outHeader.ticket_size = cpu_to_be32(wadInfo.ticket_size);
 			outHeader.tmd_size = cpu_to_be32(wadInfo.tmd_size);
-			// FIXME: Copy the footer (metadata) to BWF correctly.
-			outHeader.name_size = 0;//cpu_to_be32(wadInfo.footer_size);
-			outHeader.unknown = 0;
-			outHeader.reserved = 0;
+			// FIXME: Copy the metadata to BWF correctly.
+			outHeader.meta_size = 0;	//cpu_to_be32(wadInfo.meta_size);
+			outHeader.meta_cid = 0;
+			outHeader.crl_size = cpu_to_be32(wadInfo.crl_size);
 
 			// Write the BWF header.
 			errno = 0;
@@ -569,6 +567,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		// 64-byte alignment. (WAD only)
 		fpAlign(f_dest_wad);
 	}
+
+	// TODO: Copy the CRL if it's present. (WAD: goes after cert chain)
+	// It seems Nintendo never used the CRL feature...
+	assert(wadInfo.crl_size == 0);
 
 	// Recrypt the ticket and TMD.
 	printf("Recrypting the ticket and TMD...\n");
@@ -743,25 +745,20 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		}
 	}
 
-	// Copy the footer/name.
-	// FIXME: Change to "metadata".
-	if (wadInfo.footer_size != 0) {
-		if (likely(!isSrcBwf)) {
-			printf("Copying the WAD footer...\n");
-		} else {
-			printf("Converting the WAD name to a footer...\n");
-		}
+	// Copy the metadata.
+	// FIXME: Copy before the data if the output format is BWF.
+	if (wadInfo.meta_size != 0) {
+		printf("Copying the WAD metadata...\n");
 
-		fseeko(f_src_wad, wadInfo.footer_address, SEEK_SET);
+		fseeko(f_src_wad, wadInfo.meta_address, SEEK_SET);
 		errno = 0;
-		size = fread(buf->u8, 1, wadInfo.footer_size, f_src_wad);
-		if (size != wadInfo.footer_size) {
+		size = fread(buf->u8, 1, wadInfo.meta_size, f_src_wad);
+		if (size != wadInfo.meta_size) {
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			fprintf(stderr, "*** ERROR reading source WAD %s: %s\n",
-				s_footer_name, strerror(err));
+			fprintf(stderr, "*** ERROR reading source WAD metadata: %s\n", strerror(err));
 			ret = -err;
 			goto end;
 		}
@@ -772,17 +769,21 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			fpAlign(f_dest_wad);
 		}
 
-		size = fwrite(buf->u8, 1, wadInfo.footer_size, f_dest_wad);
-		if (size != wadInfo.footer_size) {
+		size = fwrite(buf->u8, 1, wadInfo.meta_size, f_dest_wad);
+		if (size != wadInfo.meta_size) {
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			fprintf(stderr, "*** ERROR writing destination WAD footer: %s\n", strerror(err));
+			fprintf(stderr, "*** ERROR writing destination WAD metadata: %s\n", strerror(err));
 			ret = -err;
 			goto end;
 		}
 	}
+
+	// TODO: Copy the CRL if it's present. (BWF: goes after meta)
+	// It seems Nintendo never used the CRL feature...
+	assert(wadInfo.crl_size == 0);
 
 	if (!isDestBwf) {
 		// Make sure the file a multiple of 64 bytes. (WAD only)

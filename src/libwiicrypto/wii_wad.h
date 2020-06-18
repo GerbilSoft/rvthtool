@@ -38,11 +38,11 @@ typedef struct PACKED _Wii_WAD_Header {
 	uint32_t header_size;		// [0x000] Header size. (0x0020)
 	uint32_t type;			// [0x004] Type. ('Is\0\0', 'ib\0\0', 'Bk\0\0')
 	uint32_t cert_chain_size;	// [0x008] Certificate chain size.
-	uint32_t reserved;		// [0x00C] Reserved. (0)
+	uint32_t crl_size;		// [0x00C] Certificate revocation list size.
 	uint32_t ticket_size;		// [0x010] Ticket size. (0x2A4)
 	uint32_t tmd_size;		// [0x014] TMD size.
 	uint32_t data_size;		// [0x018] Data size.
-	uint32_t footer_size;		// [0x01C] Footer size.
+	uint32_t meta_size;		// [0x01C] Metadata size.
 } Wii_WAD_Header;
 ASSERT_STRUCT(Wii_WAD_Header, 32);
 
@@ -63,9 +63,9 @@ typedef struct PACKED _Wii_WAD_Header_BWF {
 	uint32_t cert_chain_size;	// [0x008] Certificate chain size.
 	uint32_t ticket_size;		// [0x00C] Ticket size. (0x2A4)
 	uint32_t tmd_size;		// [0x010] TMD size.
-	uint32_t name_size;		// [0x014] Name size.
-	uint32_t unknown;		// [0x018] Unknown.
-	uint32_t reserved;		// [0x01C] Reserved.
+	uint32_t meta_size;		// [0x014] Metadata size.
+	uint32_t meta_cid;		// [0x018] Metadata content index. (Not present in WAD!)
+	uint32_t crl_size;		// [0x01C] Certificate revocation list size.
 } Wii_WAD_Header_BWF;
 ASSERT_STRUCT(Wii_WAD_Header_BWF, 32);
 
