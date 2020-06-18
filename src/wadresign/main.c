@@ -192,7 +192,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				}
 				if (!_tcsicmp(optarg, _T("default"))) {
 					output_format = -1;
-				} else if (!_tcsicmp(optarg, _T("standard"))) {
+				} else if (!_tcsicmp(optarg, _T("wad"))) {
 					output_format = WAD_Format_Standard;
 				} else if (!_tcsicmp(optarg, _T("bwf"))) {
 					output_format = WAD_Format_BroadOn;
