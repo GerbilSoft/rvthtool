@@ -65,9 +65,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 {
 	int ret;
 	size_t size;
-	bool isSrcBwf = false;
 	RVL_CryptoType_e src_key;
 	RVL_AES_Keys_e toKey;
+
+	bool isSrcBwf = false;
+	bool isDestBwf = false;
 
 	// Data offset:
 	// - 0: Based on 64-byte alignment values. (WAD)
@@ -314,7 +316,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// If the output format is 'default', use the same format as the input file.
 	// Default is the same as the input format.
 	if (output_format == -1) {
+		isDestBwf = isSrcBwf;
 		output_format = (isSrcBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
+	} else {
+		// Set isDestBwf based on output_format.
+		isDestBwf = (output_format == WAD_Format_BroadOn);
 	}
 
 	if (recrypt_key == -1) {
@@ -337,9 +343,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	} else {
 		if ((RVL_CryptoType_e)recrypt_key == src_key) {
 			// Allow the same key if converting to a different format.
-			if (( isSrcBwf && output_format == WAD_Format_BroadOn) ||
-			    (!isSrcBwf && output_format != WAD_Format_BroadOn))
-			{
+			if (isSrcBwf == isDestBwf) {
 				// No point in recrypting to the same key and format...
 				fputs("*** ERROR: Cannot recrypt to the same key and format.\n", stderr);
 				ret = 16;
@@ -374,7 +378,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	printf("Converting from %s to %s [", s_fromKey, s_toKey);
 	fputs(isSrcBwf ? "bwf" : "wad", stdout);
 	fputs("->", stdout);
-	fputs(output_format == WAD_Format_BroadOn ? "bwf" : "wad", stdout);
+	fputs(isDestBwf ? "bwf" : "wad", stdout);
 	fputs("]...\n", stdout);
 
 	// Open the destination WAD file.
@@ -419,7 +423,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	}
 
 	// Determine the data offset.
-	if (output_format == WAD_Format_BroadOn) {
+	if (isDestBwf) {
 		// TODO: Add meta.
 		// NOTE: Size of Wii BWF header is accounted for by padding. Not adding here for now...
 		data_offset = /*sizeof(Wii_WAD_Header_BWF) +*/
@@ -433,7 +437,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 	// Do we need to convert bwf->wad or wad->bwf?
 	if (isSrcBwf) {
-		if (output_format != WAD_Format_BroadOn) {
+		if (!isDestBwf) {
 			// bwf->wad
 			Wii_WAD_Header outHeader;
 			printf("Converting the BroadOn WAD header to standard WAD format...\n");
@@ -461,14 +465,15 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			errno = 0;
 			size = fwrite(&outHeader, 1, sizeof(outHeader), f_dest_wad);
 		} else {
-			// wad->wad
-			// Modify the certificate chain size, then write the WAD header.
+			// bwf->bwf
+			// Modify the data offset and certificate chain size, then write the BWF header.
 			errno = 0;
-			srcHeader.wad.cert_chain_size = cpu_to_be32(cert_chain_size);
-			size = fwrite(&srcHeader.wad, 1, sizeof(srcHeader.wad), f_dest_wad);
+			srcHeader.bwf.data_offset = cpu_to_be32(data_offset);
+			srcHeader.bwf.cert_chain_size = cpu_to_be32(cert_chain_size);
+			size = fwrite(&srcHeader.bwf, 1, sizeof(srcHeader.bwf), f_dest_wad);
 		}
 	} else /*if (!isSrcBwf)*/ {
-		if (output_format == WAD_Format_BroadOn) {
+		if (isDestBwf) {
 			// wad->bwf
 			Wii_WAD_Header_BWF outHeader;
 			printf("Converting the standard WAD header to BroadOn WAD format...\n");
@@ -487,12 +492,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			errno = 0;
 			size = fwrite(&outHeader, 1, sizeof(outHeader), f_dest_wad);
 		} else {
-			// bwf->bwf
-			// Modify the data offset and certificate chain size, then write the BWF header.
+			// wad->wad
+			// Modify the certificate chain size, then write the WAD header.
 			errno = 0;
-			srcHeader.bwf.data_offset = cpu_to_be32(data_offset);
-			srcHeader.bwf.cert_chain_size = cpu_to_be32(cert_chain_size);
-			size = fwrite(&srcHeader.bwf, 1, sizeof(srcHeader.bwf), f_dest_wad);
+			srcHeader.wad.cert_chain_size = cpu_to_be32(cert_chain_size);
+			size = fwrite(&srcHeader.wad, 1, sizeof(srcHeader.wad), f_dest_wad);
 		}
 	}
 
@@ -507,7 +511,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		goto end;
 	}
 
-	if (output_format != WAD_Format_BroadOn) {
+	if (!isDestBwf) {
 		// 64-byte alignment. (WAD only)
 		fpAlign(f_dest_wad);
 	}
@@ -561,7 +565,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		}
 	}
 
-	if (output_format != WAD_Format_BroadOn) {
+	if (!isDestBwf) {
 		// 64-byte alignment. (WAD only)
 		fpAlign(f_dest_wad);
 	}
@@ -607,7 +611,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		goto end;
 	}
 
-	if (output_format != WAD_Format_BroadOn) {
+	if (!isDestBwf) {
 		// 64-byte alignment. (WAD only)
 		fpAlign(f_dest_wad);
 	}
@@ -657,7 +661,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		goto end;
 	}
 
-	if (output_format != WAD_Format_BroadOn) {
+	if (!isDestBwf) {
 		// 64-byte alignment. (WAD only)
 		fpAlign(f_dest_wad);
 	}
@@ -763,7 +767,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		}
 
 		// FIXME: 64-byte alignment on BWF?
-		if (output_format != WAD_Format_BroadOn) {
+		if (!isDestBwf) {
 			// 64-byte alignment.
 			fpAlign(f_dest_wad);
 		}
@@ -780,7 +784,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		}
 	}
 
-	if (output_format != WAD_Format_BroadOn) {
+	if (!isDestBwf) {
 		// Make sure the file a multiple of 64 bytes. (WAD only)
 		offset = ftello(f_dest_wad);
 		if (offset % 64 != 0) {
