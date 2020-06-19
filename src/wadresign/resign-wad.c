@@ -309,18 +309,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			goto end;
 	}
 
-	// If the output format is 'default', use the same format as the input file.
-	// Default is the same as the input format.
-	if (output_format == -1) {
+	if (recrypt_key == -1 && output_format == -1) {
+		// No key or format specified.
+		// Default to converting to the "opposite" key and the same format.
 		isDestBwf = isSrcBwf;
-		output_format = (isSrcBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
-	} else {
-		// Set isDestBwf based on output_format.
-		isDestBwf = (output_format == WAD_Format_BroadOn);
-	}
-
-	if (recrypt_key == -1) {
-		// Select the "opposite" key.
+		output_format = (isDestBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
 		switch (src_key) {
 			case RVL_CryptoType_Retail:
 			case RVL_CryptoType_Korean:
@@ -337,14 +330,31 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 				goto end;
 		}
 	} else {
-		if ((RVL_CryptoType_e)recrypt_key == src_key) {
-			// Allow the same key if converting to a different format.
-			if (isSrcBwf == isDestBwf) {
-				// No point in recrypting to the same key and format...
-				fputs("*** ERROR: Cannot recrypt to the same key and format.\n", stderr);
-				ret = 16;
-				goto end;
-			}
+		// If only key *or* format is specified, default the unspecified
+		// parameter to the same as the input file.
+		if (output_format == -1) {
+			isDestBwf = isSrcBwf;
+			output_format = (isDestBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
+		} else /*if (recrypt_key == -1)*/ {
+			isDestBwf = (output_format == WAD_Format_BroadOn);
+			recrypt_key = src_key;
+		}
+	}
+
+	assert(output_format != -1);
+	if (output_format == -1) {
+		// Default to WAD if something screwed up.
+		output_format = WAD_Format_Standard;
+		isDestBwf = false;
+	}
+
+	if ((RVL_CryptoType_e)recrypt_key == src_key) {
+		// Allow the same key only if converting to a different format.
+		if (isSrcBwf == isDestBwf) {
+			// No point in recrypting to the same key and format...
+			fputs("*** ERROR: Cannot recrypt to the same key and format.\n", stderr);
+			ret = 16;
+			goto end;
 		}
 	}
 
