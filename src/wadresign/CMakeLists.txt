@@ -1,4 +1,12 @@
-PROJECT(wadresign)
+# WAD Resigning and Conversion tool
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
+CMAKE_POLICY(SET CMP0048 NEW)
+IF(POLICY CMP0063)
+	# CMake 3.3: Enable symbol visibility presets for all
+	# target types, including static libraries and executables.
+	CMAKE_POLICY(SET CMP0063 NEW)
+ENDIF(POLICY CMP0063)
+PROJECT(wadresign LANGUAGES C)
 
 # Create the Win32 manifest file.
 IF(WIN32)
@@ -75,10 +83,6 @@ IF(MINGW)
 	SET(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -I \"${CMAKE_CURRENT_BINARY_DIR}/..\"")
 	SET(CMAKE_RC_FLAGS "${CMAKE_RC_FLAGS} -I \"${CMAKE_BINARY_DIR}\"")
 ENDIF(MINGW)
-
-# Win32: image version.
-INCLUDE(Win32ImageVersionLinkerFlags)
-WIN32_IMAGE_VERSION_LINKER_FLAGS(${VERSION_MAJOR} ${VERSION_MINOR})
 
 #################
 # Installation. #

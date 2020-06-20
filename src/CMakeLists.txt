@@ -1,3 +1,4 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(src)
 
 # C++11 compatibility header.
