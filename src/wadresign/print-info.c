@@ -269,6 +269,10 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	uint16_t title_version;
 	uint8_t ios_version = 0;
 
+	// A good number of vWii WAD files are incorrectly
+	// encrypted with the retail common key.
+	bool vWii_crypt_error = false;
+
 	// Certificate validation.
 	RVL_Cert_Issuer issuer_ticket;
 	const char *s_issuer_ticket, *s_issuer_tmd;
@@ -532,6 +536,13 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			// TODO: Return failure if any contents fail.
 			int vret = verify_content(f_wad, encKey, ticket, content, content_addr);
 			if (vret != 0) {
+				if (ret == 0 && encKey == RVL_KEY_vWii) {
+					// Check if this might be valid with the retail common key.
+					vret = verify_content(f_wad, RVL_KEY_RETAIL, ticket, content, content_addr);
+					if (vret == 0) {
+						vWii_crypt_error = true;
+					}
+				}
 				ret = 1;
 			}
 		}
@@ -543,6 +554,12 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		}
 	}
 	putchar('\n');
+
+	if (vWii_crypt_error) {
+		printf("*** WARNING: This WAD file should be encrypted using the vWii common\n"
+		       "    key, but it's actually encrypted with the retail common key.\n");
+		// FIXME: Add a way to fix this and indicate how to fix it.
+	}
 
 end:
 	free(ticket_u8);
