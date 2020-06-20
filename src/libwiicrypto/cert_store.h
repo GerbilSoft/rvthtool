@@ -37,6 +37,7 @@ typedef enum {
 	RVL_KEY_DEBUG	= 0,	// Debug common key
 	RVL_KEY_RETAIL	= 1,	// Retail common key
 	RVL_KEY_KOREAN	= 2,	// Korean common key
+	RVL_KEY_vWii	= 3,	// vWii common key [FIXME: Debug version?]
 
 	RVL_KEY_MAX
 } RVL_AES_Keys_e;

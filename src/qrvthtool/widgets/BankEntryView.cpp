@@ -401,6 +401,9 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 			case RVL_CryptoType_Korean:
 				s_encryption = BankEntryView::tr("Korean");
 				break;
+			case RVL_CryptoType_vWii:
+				s_encryption = BankEntryView::tr("vWii");
+				break;
 		}
 		ui.lblEncryption->setText(s_encryption);
 		ui.lblEncryption->show();

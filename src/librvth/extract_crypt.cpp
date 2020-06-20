@@ -258,13 +258,21 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 	if (!strncmp(ticket->issuer,
 	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
 	{
-		// Retail. Use RVL_KEY_RETAIL unless the Korean key is selected.
-		if (ticket->common_key_index != 1) {
-			commonKey = RVL_AES_Keys[RVL_KEY_RETAIL];
-			*crypto_type = RVL_CryptoType_Retail;
-		} else {
-			commonKey = RVL_AES_Keys[RVL_KEY_KOREAN];
-			*crypto_type = RVL_CryptoType_Korean;
+		// Retail.
+		switch (ticket->common_key_index) {
+			case 0:
+			default:
+				commonKey = RVL_AES_Keys[RVL_KEY_RETAIL];
+				*crypto_type = RVL_CryptoType_Retail;
+				break;
+			case 1:
+				commonKey = RVL_AES_Keys[RVL_KEY_KOREAN];
+				*crypto_type = RVL_CryptoType_Korean;
+				break;
+			case 2:
+				commonKey = RVL_AES_Keys[RVL_KEY_vWii];
+				*crypto_type = RVL_CryptoType_vWii;
+				break;
 		}
 	}
 	else if (!strncmp(ticket->issuer,

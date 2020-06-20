@@ -237,13 +237,16 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	if (entry->crypto_type != RVL_CryptoType_None) {
 		switch (entry->ticket.sig_type) {
 			case RVL_SigType_Retail:
-				// Retail may be either Common Key or Korean Key.
+				// Retail has a few keys.
 				switch (header.ticket.common_key_index) {
 					case 0:
 						entry->crypto_type = RVL_CryptoType_Retail;
 						break;
 					case 1:
 						entry->crypto_type = RVL_CryptoType_Korean;
+						break;
+					case 2:
+						entry->crypto_type = RVL_CryptoType_vWii;
 						break;
 					default:
 						entry->crypto_type = RVL_CryptoType_Unknown;
@@ -253,6 +256,7 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 
 			case RVL_SigType_Debug:
 				// There's only one debug key.
+				// FIXME: Debug vWii key?
 				if (header.ticket.common_key_index == 0) {
 					entry->crypto_type = RVL_CryptoType_Debug;
 				} else {

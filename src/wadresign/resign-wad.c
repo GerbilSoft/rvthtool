@@ -281,6 +281,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 					src_key = RVL_CryptoType_Korean;
 					s_fromKey = "Korean";
 					break;
+				case 2:
+					src_key = RVL_CryptoType_vWii;
+					s_fromKey = "vWii";
+					break;
 				default: {
 					// NOTE: A good number of retail WADs have an
 					// incorrect common key index for some reason.
@@ -317,6 +321,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		switch (src_key) {
 			case RVL_CryptoType_Retail:
 			case RVL_CryptoType_Korean:
+			case RVL_CryptoType_vWii:
 				recrypt_key = RVL_CryptoType_Debug;
 				break;
 			case RVL_CryptoType_Debug:
@@ -371,6 +376,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		case RVL_CryptoType_Korean:
 			toKey = RVL_KEY_KOREAN;
 			s_toKey = "Korean (fakesigned)";
+			break;
+		case RVL_CryptoType_vWii:
+			// FIXME: Is there a debug vWii key?
+			toKey = RVL_KEY_vWii;
+			s_toKey = "vWii (fakesigned)";
 			break;
 		default:
 			// Invalid key index.

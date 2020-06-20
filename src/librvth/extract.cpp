@@ -918,12 +918,13 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 			 entry->type == RVTH_BankType_Wii_DL) &&
 			(entry->crypto_type == RVL_CryptoType_Retail ||
 			 entry->crypto_type == RVL_CryptoType_Korean ||
+			 entry->crypto_type == RVL_CryptoType_vWii ||
 		         entry->ticket.sig_status != RVL_SigStatus_OK ||
 			 entry->tmd.sig_status != RVL_SigStatus_OK ||
 			 (ios_force >= 3 && entry->ios_version != ios_force)))
 		{
 			// One of the following conditions:
-			// - Encryption: Retail or Korean
+			// - Encryption: Retail, Korean, or vWii
 			// - Signature: Invalid
 			// - IOS requested does not match the TMD IOS
 			// Convert to Debug.

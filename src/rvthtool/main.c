@@ -203,6 +203,10 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					recrypt_key = RVL_CryptoType_Retail;
 				} else if (!_tcsicmp(optarg, _T("korean"))) {
 					recrypt_key = RVL_CryptoType_Korean;
+				} else if (!_tcsicmp(optarg, _T("vWii"))) {
+					// WARNING: This is most likely NOT VALID for discs.
+					// Keeping it in here anyway for completeness.
+					recrypt_key = RVL_CryptoType_vWii;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
 					return EXIT_FAILURE;

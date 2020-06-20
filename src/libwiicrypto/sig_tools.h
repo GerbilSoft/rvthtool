@@ -39,6 +39,7 @@ typedef enum {
 	RVL_CryptoType_Debug	= 2,	// RVT-R encryption.
 	RVL_CryptoType_Retail	= 3,	// Retail encryption.
 	RVL_CryptoType_Korean	= 4,	// Korean retail encryption.
+	RVL_CryptoType_vWii	= 5,	// vWii (for WADs only) [retail/debug?]
 
 	RVL_CryptoType_MAX
 } RVL_CryptoType_e;

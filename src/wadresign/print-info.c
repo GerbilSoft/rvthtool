@@ -438,6 +438,10 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 					encKey = RVL_KEY_KOREAN;
 					s_encKey = "Korean";
 					break;
+				case 2:
+					encKey = RVL_KEY_vWii;
+					s_encKey = "vWii";
+					break;
 				default: {
 					// NOTE: A good number of retail WADs have an
 					// incorrect common key index for some reason.

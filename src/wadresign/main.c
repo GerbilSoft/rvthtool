@@ -102,7 +102,7 @@ static void print_help(const TCHAR *argv0)
 		"Options:\n"
 		"\n"
 		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
-		"                            default, retail, korean, debug\n"
+		"                            default, retail, korean, vWii, debug\n"
 		"                            Recrypting to retail will use fakesigning.\n"
 		"  -f, --format=FMT          Use the specified format FMT:\n"
 		"                            default, wad, bwf\n"
@@ -178,6 +178,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					recrypt_key = RVL_CryptoType_Retail;
 				} else if (!_tcsicmp(optarg, _T("korean"))) {
 					recrypt_key = RVL_CryptoType_Korean;
+				} else if (!_tcsicmp(optarg, _T("vWii"))) {
+					recrypt_key = RVL_CryptoType_vWii;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
 					return EXIT_FAILURE;

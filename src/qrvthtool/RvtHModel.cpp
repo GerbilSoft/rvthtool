@@ -263,6 +263,7 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 						case RVL_CryptoType_Unknown:
 						case RVL_CryptoType_Retail:
 						case RVL_CryptoType_Korean:
+						case RVL_CryptoType_vWii:	// FIXME: Debug vWii?
 							// Should not happen...
 							return RvtHModel::ICON_MAX;
 

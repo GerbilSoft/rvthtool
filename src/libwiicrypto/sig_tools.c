@@ -46,6 +46,8 @@ const char *RVL_CryptoType_toString(RVL_CryptoType_e cryptoType)
 		"Retail",
 		// tr: RVL_CryptoType_Korean
 		"Korean",
+		// tr: RVL_CryptoType_vWii
+		"vWii",
 	};
 
 	assert(cryptoType >= RVL_CryptoType_Unknown);
@@ -193,15 +195,25 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	if (!strncmp(ticket->issuer,
 	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
 	{
-		// Retail. Use RVL_KEY_RETAIL unless the Korean key is selected.
-		fromKey = (ticket->common_key_index != 1
-			? RVL_KEY_RETAIL
-			: RVL_KEY_KOREAN);
+		// Retail.
+		switch (ticket->common_key_index) {
+			case 0:
+			default:
+				fromKey = RVL_KEY_RETAIL;
+				break;
+			case 1:
+				fromKey = RVL_KEY_KOREAN;
+				break;
+			case 2:
+				fromKey = RVL_KEY_vWii;
+				break;
+		}
 	}
 	else if (!strncmp(ticket->issuer,
 		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET], sizeof(ticket->issuer)))
 	{
 		// Debug. Use RVL_KEY_DEBUG.
+		// FIXME: Is there a debug vWii key?
 		fromKey = RVL_KEY_DEBUG;
 	}
 	else

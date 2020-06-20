@@ -473,6 +473,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Retail);	// Retail (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Korean);	// Korean (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Debug);	// Debug (fakesigned)
+	//cboRecryptionKey->addItem(QString(), RVL_CryptoType_Debug);	// vWii (fakesigned) [FIXME: Not usable for discs...}
 	cboRecryptionKey->setCurrentIndex(0);
 	ui.toolBar->insertWidget(ui.actionAbout, cboRecryptionKey);
 
