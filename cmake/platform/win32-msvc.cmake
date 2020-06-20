@@ -11,8 +11,9 @@ ENDIF()
 # No ANSI support.
 
 # Subsystem and minimum Windows version:
-# - If 32-bit: 5.01
-# - If 64-bit: 5.02
+# - If i386: 5.01
+# - If amd64: 5.02
+# - If arm or arm64: 6.02
 # ROM Properties does NOT support ANSI Windows.
 # MSVC 2010's minimum supported target OS is XP SP2.
 # MSVC 2012 and later has a minimum subsystem value of 5.01.
@@ -25,20 +26,22 @@ ENDIF()
 # NOTE: MS_ENH_RSA_AES_PROV is only available starting with
 # Windows XP. Because we're actually using some XP-specific
 # functionality now, the minimum version is now Windows XP.
-IF(MSVC AND CMAKE_CL_64)
-	# 64-bit, Unicode Windows only. (MSVC)
-	# (There is no 64-bit ANSI Windows.)
+IF(CPU_amd64)
+	# amd64 (64-bit), Unicode Windows only. (MSVC)
+	# (There is no amd64 ANSI Windows.)
 	# Minimum target version is Windows Server 2003 / XP 64-bit.
 	SET(RP_WIN32_SUBSYSTEM_VERSION "5.02")
-ELSEIF(NOT MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-	# 64-bit, Unicode Windows only. (MinGW)
-	# (There is no 64-bit ANSI Windows.)
-	# Minimum target version is Windows Server 2003 / XP 64-bit.
-	SET(RP_WIN32_SUBSYSTEM_VERSION "5.02")
-ELSE()
-	# 32-bit, Unicode Windows only.
+ELSEIF(CPU_arm OR CPU_arm64)
+	# ARM (32-bit or 64-bit), Unicode windows only. (MSVC)
+	# (There is no ARM ANSI Windows.)
+	# Minimum target version is Windows 8.
+	SET(RP_WIN32_SUBSYSTEM_VERSION "6.02")
+ELSEIF(CPU_i386)
+	# i386 (32-bit), Unicode Windows only.
 	# Minimum target version is Windows XP.
 	SET(RP_WIN32_SUBSYSTEM_VERSION "5.01")
+ELSE()
+	MESSAGE(FATAL_ERROR "Unsupported CPU.")
 ENDIF()
 SET(RP_LINKER_FLAGS_WIN32_EXE "/SUBSYSTEM:WINDOWS,${RP_WIN32_SUBSYSTEM_VERSION}")
 SET(RP_LINKER_FLAGS_CONSOLE_EXE "/SUBSYSTEM:CONSOLE,${RP_WIN32_SUBSYSTEM_VERSION}")
@@ -47,10 +50,6 @@ UNSET(RP_WIN32_SUBSYSTEM_VERSION)
 # Append the CFLAGS and LDFLAGS.
 SET(RP_C_FLAGS_COMMON			"${RP_C_FLAGS_COMMON} ${RP_C_FLAGS_WIN32}")
 SET(RP_CXX_FLAGS_COMMON			"${RP_CXX_FLAGS_COMMON} ${RP_C_FLAGS_WIN32} ${RP_CXX_FLAGS_WIN32}")
-SET(RP_EXE_LINKER_FLAGS_COMMON		"${RP_EXE_LINKER_FLAGS_COMMON} ${RP_EXE_LINKER_FLAGS_WIN32}")
-SET(RP_SHARED_LINKER_FLAGS_COMMON	"${RP_SHARED_LINKER_FLAGS_COMMON} ${RP_EXE_LINKER_FLAGS_WIN32}")
-SET(RP_MODULE_LINKER_FLAGS_COMMON	"${RP_MODULE_LINKER_FLAGS_COMMON} ${RP_EXE_LINKER_FLAGS_WIN32}")
 
 # Unset temporary variables.
 UNSET(RP_C_FLAGS_WIN32)
-UNSET(RP_EXE_LINKER_FLAGS_WIN32)
