@@ -29,8 +29,8 @@ extern "C" {
 // Maximum data size supported by wadresign.
 #define WAD_DATA_SIZE_MAX (128*1024*1024)
 
-// Maximum footer size supported by wadresign.
-#define WAD_FOOTER_SIZE_MAX (1024*1024)
+// Maximum metadata size supported by wadresign.
+#define WAD_META_SIZE_MAX (1024*1024)
 
 /**
  * Struct of WAD section addresses and sizes.
@@ -39,18 +39,16 @@ extern "C" {
 typedef struct _WAD_Info_t {
 	uint32_t cert_chain_address;
 	uint32_t cert_chain_size;
+	uint32_t crl_address;
+	uint32_t crl_size;
 	uint32_t ticket_address;
 	uint32_t ticket_size;
 	uint32_t tmd_address;
 	uint32_t tmd_size;
 	uint32_t data_address;
 	uint32_t data_size;	// If 0, assume "rest of file".
-
-	// Standard WADs have an optional footer.
-	// BroadOn WADs have an optional name,
-	// usually located before the data.
-	uint32_t footer_address;
-	uint32_t footer_size;
+	uint32_t meta_address;
+	uint32_t meta_size;
 } WAD_Info_t;
 
 /**

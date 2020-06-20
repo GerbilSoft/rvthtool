@@ -39,7 +39,10 @@ int getWadInfo(const Wii_WAD_Header *pWadHeader, WAD_Info_t *pWadInfo)
 	pWadInfo->cert_chain_address = ALIGN_BYTES(64, be32_to_cpu(pWadHeader->header_size));
 	pWadInfo->cert_chain_size = be32_to_cpu(pWadHeader->cert_chain_size);
 
-	pWadInfo->ticket_address = ALIGN_BYTES(64, pWadInfo->cert_chain_address + pWadInfo->cert_chain_size);
+	pWadInfo->crl_address = ALIGN_BYTES(64, pWadInfo->cert_chain_address + pWadInfo->cert_chain_size);
+	pWadInfo->crl_size = be32_to_cpu(pWadHeader->crl_size);
+
+	pWadInfo->ticket_address = ALIGN_BYTES(64, pWadInfo->crl_address + pWadInfo->crl_size);
 	pWadInfo->ticket_size = be32_to_cpu(pWadHeader->ticket_size);
 
 	pWadInfo->tmd_address = ALIGN_BYTES(64, pWadInfo->ticket_address + pWadInfo->ticket_size);
@@ -48,13 +51,14 @@ int getWadInfo(const Wii_WAD_Header *pWadHeader, WAD_Info_t *pWadInfo)
 	pWadInfo->data_address = ALIGN_BYTES(64, pWadInfo->tmd_address + pWadInfo->tmd_size);
 	pWadInfo->data_size = be32_to_cpu(pWadHeader->data_size);
 
-	if (pWadInfo->footer_size != 0) {
-		pWadInfo->footer_address = ALIGN_BYTES(64, pWadInfo->data_address + pWadInfo->data_size);
-		pWadInfo->footer_size = be32_to_cpu(pWadHeader->footer_size);
+	// Optional metadata field.
+	if (pWadInfo->meta_size != 0) {
+		pWadInfo->meta_address = ALIGN_BYTES(64, pWadInfo->data_address + pWadInfo->data_size);
+		pWadInfo->meta_size = be32_to_cpu(pWadHeader->meta_size);
 	} else {
-		// No footer.
-		pWadInfo->footer_address = 0;
-		pWadInfo->footer_size = 0;
+		// No metadata.
+		pWadInfo->meta_address = 0;
+		pWadInfo->meta_size = 0;
 	}
 	return 0;
 }
@@ -89,14 +93,18 @@ int getWadInfo_BWF(const Wii_WAD_Header_BWF *pWadHeader, WAD_Info_t *pWadInfo)
 	pWadInfo->tmd_address = pWadInfo->ticket_address + pWadInfo->ticket_size;
 	pWadInfo->tmd_size = be32_to_cpu(pWadHeader->tmd_size);
 
-	// Optional name field. (using the "footer" fields in WAD info)
-	if (pWadHeader->name_size != 0) {
-		pWadInfo->footer_address = pWadInfo->tmd_address + pWadInfo->tmd_size;
-		pWadInfo->footer_size = be32_to_cpu(pWadHeader->name_size);
+	// FIXME: How is the crl handled in BroadOn WAD files with regards to alignment?
+	pWadInfo->crl_address = pWadInfo->tmd_address + pWadInfo->tmd_size;
+	pWadInfo->crl_size = be32_to_cpu(pWadHeader->crl_size);
+
+	// Optional metadata field.
+	if (pWadHeader->meta_size != 0) {
+		pWadInfo->meta_address = pWadInfo->crl_address + pWadInfo->crl_size;
+		pWadInfo->meta_size = be32_to_cpu(pWadHeader->meta_size);
 	} else {
-		// No footer.
-		pWadInfo->footer_address = 0;
-		pWadInfo->footer_size = 0;
+		// No metadata.
+		pWadInfo->meta_address = 0;
+		pWadInfo->meta_size = 0;
 	}
 
 	// Data offset is explicitly specified.

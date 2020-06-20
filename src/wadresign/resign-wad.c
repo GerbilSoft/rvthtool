@@ -58,17 +58,27 @@ static inline void fpAlign(FILE *fp)
  * @param src_wad	[in] Source WAD.
  * @param dest_wad	[in] Destination WAD.
  * @param recrypt_key	[in] Key for recryption. (-1 for default)
+ * @param output_format	[in] Output format. (-1 for default)
  * @return 0 on success; negative POSIX error code or positive ID code on error.
  */
-int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
+int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int output_format)
 {
 	int ret;
 	size_t size;
-	bool isBWF = false;
-	WAD_Header header;
-	WAD_Info_t wadInfo;
 	RVL_CryptoType_e src_key;
 	RVL_AES_Keys_e toKey;
+
+	bool isSrcBwf = false;
+	bool isDestBwf = false;
+
+	// Data offset:
+	// - 0: Based on 64-byte alignment values. (WAD)
+	// - Non-zero: Manually calculated. (BWF)
+	uint32_t data_offset;
+
+	uint32_t cert_chain_size;
+	WAD_Header srcHeader;
+	WAD_Info_t wadInfo;
 
 	// Key names.
 	const char *s_fromKey, *s_toKey;
@@ -76,7 +86,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Files.
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
 	int64_t src_file_size, offset;
-	const char *s_footer_name;	// "footer" or "name"
 
 	// Certificates.
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
@@ -113,8 +122,8 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Re-read the WAD header and parse the addresses.
 	rewind(f_src_wad);
 	errno = 0;
-	size = fread(&header, 1, sizeof(header), f_src_wad);
-	if (size != sizeof(header)) {
+	size = fread(&srcHeader, 1, sizeof(srcHeader), f_src_wad);
+	if (size != sizeof(srcHeader)) {
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
@@ -130,7 +139,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// TODO: More extensive error handling?
 	// NOTE: Not saving the string, since we only need to know if
 	// it's a BroadOn WAD or not.
-	if (identify_wad_type((const uint8_t*)&header, sizeof(header), &isBWF) == NULL) {
+	if (identify_wad_type((const uint8_t*)&srcHeader, sizeof(srcHeader), &isSrcBwf) == NULL) {
 		// Unrecognized WAD type.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
@@ -140,12 +149,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Determine the sizes and addresses of various components.
-	if (unlikely(!isBWF)) {
-		ret = getWadInfo(&header.wad, &wadInfo);
-		s_footer_name = "footer";
+	if (unlikely(!isSrcBwf)) {
+		ret = getWadInfo(&srcHeader.wad, &wadInfo);
 	} else {
-		ret = getWadInfo_BWF(&header.bwf, &wadInfo);
-		s_footer_name = "name";
+		ret = getWadInfo_BWF(&srcHeader.bwf, &wadInfo);
 	}
 	if (ret != 0) {
 		// Unable to get WAD information.
@@ -186,13 +193,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			wadInfo.tmd_size);
 		ret = 6;
 		goto end;
-	} else if (wadInfo.footer_size > WAD_FOOTER_SIZE_MAX) {
+	} else if (wadInfo.meta_size > WAD_META_SIZE_MAX) {
 		// Too big.
-		// TODO: Define a maximum footer size somewhere.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "' %s size is too big. (%u; should be less than 1 MB)\n",
-			s_footer_name, wadInfo.footer_size);
+		fprintf(stderr, "' metadata size is too big. (%u; should be less than 1 MB)\n",
+			wadInfo.meta_size);
 		ret = 7;
 		goto end;
 	}
@@ -200,7 +206,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	// Verify the data size.
 	fseeko(f_src_wad, 0, SEEK_END);
 	src_file_size = (uint32_t)ftello(f_src_wad);
-	if (isBWF) {
+	if (isSrcBwf) {
 		// Data size is the rest of the file.
 		if (src_file_size < wadInfo.data_address) {
 			// Not valid...
@@ -303,8 +309,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			goto end;
 	}
 
-	if (recrypt_key == -1) {
-		// Select the "opposite" key.
+	if (recrypt_key == -1 && output_format == -1) {
+		// No key or format specified.
+		// Default to converting to the "opposite" key and the same format.
+		isDestBwf = isSrcBwf;
+		output_format = (isDestBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
 		switch (src_key) {
 			case RVL_CryptoType_Retail:
 			case RVL_CryptoType_Korean:
@@ -321,9 +330,29 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 				goto end;
 		}
 	} else {
-		if ((RVL_CryptoType_e)recrypt_key == src_key) {
-			// No point in recrypting to the same key...
-			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
+		// If only key *or* format is specified, default the unspecified
+		// parameter to the same as the input file.
+		if (output_format == -1) {
+			isDestBwf = isSrcBwf;
+			output_format = (isDestBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
+		} else /*if (recrypt_key == -1)*/ {
+			isDestBwf = (output_format == WAD_Format_BroadOn);
+			recrypt_key = src_key;
+		}
+	}
+
+	assert(output_format != -1);
+	if (output_format == -1) {
+		// Default to WAD if something screwed up.
+		output_format = WAD_Format_Standard;
+		isDestBwf = false;
+	}
+
+	if ((RVL_CryptoType_e)recrypt_key == src_key) {
+		// Allow the same key only if converting to a different format.
+		if (isSrcBwf == isDestBwf) {
+			// No point in recrypting to the same key and format...
+			fputs("*** ERROR: Cannot recrypt to the same key and format.\n", stderr);
 			ret = 16;
 			goto end;
 		}
@@ -352,7 +381,11 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 			goto end;
 	}
 
-	printf("Converting from %s to %s...\n", s_fromKey, s_toKey);
+	printf("Converting from %s to %s [", s_fromKey, s_toKey);
+	fputs(isSrcBwf ? "bwf" : "wad", stdout);
+	fputs("->", stdout);
+	fputs(isDestBwf ? "bwf" : "wad", stdout);
+	fputs("]...\n", stdout);
 
 	// Open the destination WAD file.
 	errno = 0;
@@ -370,6 +403,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 	}
 
 	// Get the certificates.
+	// TODO: Parse existing certificate chain to determine the ordering.
 	if (toKey != RVL_KEY_DEBUG) {
 		// Retail certificates.
 		// Order: CA, TMD, Ticket
@@ -378,46 +412,104 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_TICKET);
 		cert_dev	= NULL;
 		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TMD];
-		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
-			sizeof(*cert_CA) + sizeof(*cert_TMD) +
-			sizeof(*cert_ticket)));
+		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket));
 	} else {
 		// Debug certificates.
-		// Order: CA, TMD, Ticket
+		// Order: CA, TMD, Ticket, MS
+		// FIXME: Not "dev" - MS is the "Mastering Server".
 		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
 		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
 		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
 		cert_dev	= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DEBUG_DEV);
 		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TMD];
-		header.wad.cert_chain_size = cpu_to_be32((uint32_t)(
-			sizeof(*cert_CA) + sizeof(*cert_TMD) +
-			sizeof(*cert_ticket) + sizeof(*cert_dev)));
+		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_dev));
 	}
 
-	if (isBWF) {
-		// Convert the WAD header to the standard format.
-		printf("Converting the BroadOn WAD header to standard WAD format...\n");
-		// Type is 'Is' for most WADs, 'ib' for boot2.
-		if (unlikely(
-			buf->ticket.title_id.hi == cpu_to_be32(0x00000001) &&
-			buf->ticket.title_id.lo == cpu_to_be32(0x00000001)))
-		{
-			header.wad.type = cpu_to_be32(WII_WAD_TYPE_ib);
+	// Determine the data offset.
+	if (isDestBwf) {
+		// TODO: Add meta.
+		// NOTE: Size of Wii BWF header is accounted for by padding. Not adding here for now...
+		data_offset = /*sizeof(Wii_WAD_Header_BWF) +*/
+			ALIGN_BYTES(64, cert_chain_size) +
+			ALIGN_BYTES(64, wadInfo.ticket_size) +
+			ALIGN_BYTES(64, wadInfo.tmd_size);
+	} else {
+		// Data offset is implied based on alignments.
+		data_offset = 0;
+	}
+
+	// Do we need to convert bwf->wad or wad->bwf?
+	if (isSrcBwf) {
+		if (!isDestBwf) {
+			// bwf->wad
+			Wii_WAD_Header outHeader;
+			printf("Converting the BroadOn WAD header to standard WAD format...\n");
+			data_offset = 0;
+
+			// Type is 'Is' for most WADs, 'ib' for boot2.
+			if (unlikely(
+				buf->ticket.title_id.hi == cpu_to_be32(0x00000001) &&
+				buf->ticket.title_id.lo == cpu_to_be32(0x00000001)))
+			{
+				outHeader.type = cpu_to_be32(WII_WAD_TYPE_ib);
+			} else {
+				outHeader.type = cpu_to_be32(WII_WAD_TYPE_Is);
+			}
+
+			outHeader.header_size = cpu_to_be32(sizeof(outHeader));
+			outHeader.cert_chain_size = cpu_to_be32(cert_chain_size);
+			outHeader.crl_size = cpu_to_be32(wadInfo.crl_size);
+			outHeader.ticket_size = cpu_to_be32(wadInfo.ticket_size);
+			outHeader.tmd_size = cpu_to_be32(wadInfo.tmd_size);
+			outHeader.data_size = cpu_to_be32(wadInfo.data_size);
+			outHeader.meta_size = cpu_to_be32(wadInfo.meta_size);
+
+			// Write the WAD header.
+			errno = 0;
+			size = fwrite(&outHeader, 1, sizeof(outHeader), f_dest_wad);
 		} else {
-			header.wad.type = cpu_to_be32(WII_WAD_TYPE_Is);
-		}
+			// bwf->bwf
+			// Modify the data offset and certificate chain size, then write the BWF header.
+			errno = 0;
+			srcHeader.bwf.data_offset = cpu_to_be32(data_offset);
+			srcHeader.bwf.cert_chain_size = cpu_to_be32(cert_chain_size);
 
-		header.wad.reserved = 0;
-		header.wad.ticket_size = cpu_to_be32(wadInfo.ticket_size);
-		header.wad.tmd_size = cpu_to_be32(wadInfo.tmd_size);
-		header.wad.data_size = cpu_to_be32(wadInfo.data_size);
-		header.wad.footer_size = cpu_to_be32(wadInfo.footer_size);
+			// FIXME: Copy the metadata to BWF correctly.
+			srcHeader.bwf.meta_size = 0;	//cpu_to_be32(wadInfo.meta_size);
+			srcHeader.bwf.meta_cid = 0;
+
+			size = fwrite(&srcHeader.bwf, 1, sizeof(srcHeader.bwf), f_dest_wad);
+		}
+	} else /*if (!isSrcBwf)*/ {
+		if (isDestBwf) {
+			// wad->bwf
+			Wii_WAD_Header_BWF outHeader;
+			printf("Converting the standard WAD header to BroadOn WAD format...\n");
+
+			outHeader.header_size = cpu_to_be32(sizeof(outHeader));
+			outHeader.data_offset = cpu_to_be32(data_offset);
+			outHeader.cert_chain_size = cpu_to_be32(cert_chain_size);
+			outHeader.ticket_size = cpu_to_be32(wadInfo.ticket_size);
+			outHeader.tmd_size = cpu_to_be32(wadInfo.tmd_size);
+			// FIXME: Copy the metadata to BWF correctly.
+			outHeader.meta_size = 0;	//cpu_to_be32(wadInfo.meta_size);
+			outHeader.meta_cid = 0;
+			outHeader.crl_size = cpu_to_be32(wadInfo.crl_size);
+
+			// Write the BWF header.
+			errno = 0;
+			size = fwrite(&outHeader, 1, sizeof(outHeader), f_dest_wad);
+		} else {
+			// wad->wad
+			// Modify the certificate chain size, then write the WAD header.
+			errno = 0;
+			srcHeader.wad.cert_chain_size = cpu_to_be32(cert_chain_size);
+			size = fwrite(&srcHeader.wad, 1, sizeof(srcHeader.wad), f_dest_wad);
+		}
 	}
 
-	// Write the WAD header.
-	errno = 0;
-	size = fwrite(&header.wad, 1, sizeof(header.wad), f_dest_wad);
-	if (size != sizeof(header.wad)) {
+	// Both WAD and BWF headers are 32 bytes.
+	if (size != 32) {
 		int err = errno;
 		if (err == 0) {
 			err = EIO;
@@ -427,8 +519,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 
-	// 64-byte alignment.
-	fpAlign(f_dest_wad);
+	if (!isDestBwf) {
+		// 64-byte alignment. (WAD only)
+		fpAlign(f_dest_wad);
+	}
 
 	// Write the certificates.
 	printf("Writing certificate chain...\n");
@@ -479,8 +573,14 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		}
 	}
 
-	// 64-byte alignment.
-	fpAlign(f_dest_wad);
+	if (!isDestBwf) {
+		// 64-byte alignment. (WAD only)
+		fpAlign(f_dest_wad);
+	}
+
+	// TODO: Copy the CRL if it's present. (WAD: goes after cert chain)
+	// It seems Nintendo never used the CRL feature...
+	assert(wadInfo.crl_size == 0);
 
 	// Recrypt the ticket and TMD.
 	printf("Recrypting the ticket and TMD...\n");
@@ -523,8 +623,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 
-	// 64-byte alignment.
-	fpAlign(f_dest_wad);
+	if (!isDestBwf) {
+		// 64-byte alignment. (WAD only)
+		fpAlign(f_dest_wad);
+	}
 
 	// Load the TMD.
 	fseeko(f_src_wad, wadInfo.tmd_address, SEEK_SET);
@@ -571,8 +673,24 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		goto end;
 	}
 
-	// 64-byte alignment.
-	fpAlign(f_dest_wad);
+	if (!isDestBwf) {
+		// 64-byte alignment. (WAD only)
+		fpAlign(f_dest_wad);
+	}
+
+	if (data_offset > 0) {
+		// Seek to the data offset.
+		int fsret = fseek(f_dest_wad, data_offset, SEEK_SET);
+		if (fsret != 0) {
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			fprintf(stderr, "*** ERROR seeking in destination WAD: %s\n", strerror(err));
+			ret = -err;
+			goto end;
+		}
+	}
 
 	// Copy the data, one megabyte at a time.
 	// TODO: Show progress? (WADs are small enough that this probably isn't needed...)
@@ -637,61 +755,66 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key)
 		}
 	}
 
-	// Copy the footer/name.
-	if (wadInfo.footer_size != 0) {
-		if (likely(!isBWF)) {
-			printf("Copying the WAD footer...\n");
-		} else {
-			printf("Converting the WAD name to a footer...\n");
-		}
+	// Copy the metadata.
+	// FIXME: Copy before the data if the output format is BWF.
+	if (wadInfo.meta_size != 0) {
+		printf("Copying the WAD metadata...\n");
 
-		fseeko(f_src_wad, wadInfo.footer_address, SEEK_SET);
+		fseeko(f_src_wad, wadInfo.meta_address, SEEK_SET);
 		errno = 0;
-		size = fread(buf->u8, 1, wadInfo.footer_size, f_src_wad);
-		if (size != wadInfo.footer_size) {
+		size = fread(buf->u8, 1, wadInfo.meta_size, f_src_wad);
+		if (size != wadInfo.meta_size) {
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			fprintf(stderr, "*** ERROR reading source WAD %s: %s\n",
-				s_footer_name, strerror(err));
+			fprintf(stderr, "*** ERROR reading source WAD metadata: %s\n", strerror(err));
 			ret = -err;
 			goto end;
 		}
 
-		// 64-byte alignment.
-		fpAlign(f_dest_wad);
+		// FIXME: 64-byte alignment on BWF?
+		if (!isDestBwf) {
+			// 64-byte alignment.
+			fpAlign(f_dest_wad);
+		}
 
-		size = fwrite(buf->u8, 1, wadInfo.footer_size, f_dest_wad);
-		if (size != wadInfo.footer_size) {
+		size = fwrite(buf->u8, 1, wadInfo.meta_size, f_dest_wad);
+		if (size != wadInfo.meta_size) {
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 			}
-			fprintf(stderr, "*** ERROR writing destination WAD footer: %s\n", strerror(err));
+			fprintf(stderr, "*** ERROR writing destination WAD metadata: %s\n", strerror(err));
 			ret = -err;
 			goto end;
 		}
 	}
 
-	// Make sure the file is 64-byte aligned.
-	offset = ftello(f_dest_wad);
-	if (offset % 64 != 0) {
-		const unsigned int count = 64 - (unsigned int)(offset % 64);
+	// TODO: Copy the CRL if it's present. (BWF: goes after meta)
+	// It seems Nintendo never used the CRL feature...
+	assert(wadInfo.crl_size == 0);
 
-		// Using a fixed memset() for performance reasons.
-		memset(buf->u8, 0, 64);
+	if (!isDestBwf) {
+		// Make sure the file a multiple of 64 bytes. (WAD only)
+		offset = ftello(f_dest_wad);
+		if (offset % 64 != 0) {
+			const unsigned int count = 64 - (unsigned int)(offset % 64);
 
-		errno = 0;
-		size = fwrite(buf->u8, 1, count, f_dest_wad);
-		if (size != count) {
-			int err = errno;
-			if (err == 0) {
-				err = EIO;
+			// Using a fixed memset() for performance reasons.
+			memset(buf->u8, 0, 64);
+
+			errno = 0;
+			size = fwrite(buf->u8, 1, count, f_dest_wad);
+			if (size != count) {
+				int err = errno;
+				if (err == 0) {
+					err = EIO;
+				}
+				fprintf(stderr, "*** ERROR writing destination WAD padding: %s\n", strerror(err));
+				ret = -err;
+				goto end;
 			}
-			fprintf(stderr, "*** ERROR writing destination WAD padding: %s\n", strerror(err));
-			ret = -err;
-			goto end;
 		}
 	}
 
