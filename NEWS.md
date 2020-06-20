@@ -6,9 +6,11 @@ New features:
 * GUI frontend written using the Qt Toolkit.
 * [Win32] Implemented the `query` command.
 * wadresign: Command line tool to recrypt and resign WAD files.
-  * Can read retail, Korean, debug, and early devkit WADs.
-  * Can create retail (fakesigned), Korean (fakesigned), and debug
-    (realsigned) WAD files.
+  * Can decrypt WADs using any key: retail, Korean, debug
+  * Can encrypt WADs using any key. The resulting WAD will be fakesigned if
+    encrypting for retail or Korean, or realsigned if encrypting for debug.
+  * Both standard and BroadOn WAD format are supported for both input and
+    output.
   * **WARNING:** Use with caution if converting system titles for use
     on real hardware.
 
