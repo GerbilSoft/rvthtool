@@ -43,7 +43,8 @@
 # define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
 
-#ifdef __GNUC__
+// FIXME: gcc doesn't support printf attributes for wide strings.
+#if defined(__GNUC__) && !defined(_WIN32)
 # define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
 #else
 # define ATTR_PRINTF(fmt, args)
