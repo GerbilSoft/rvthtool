@@ -40,13 +40,13 @@ environment:
       configuration: Release
       compiler: msvc2013
 
-    - platform: x86
-      configuration: Debug
-      compiler: mingw-w64
+#    - platform: x86
+#      configuration: Debug
+#      compiler: mingw-w64
 
-    - platform: x64
-      configuration: Debug
-      compiler: mingw-w64
+#    - platform: x64
+#      configuration: Debug
+#      compiler: mingw-w64
 
 # Run CMake.
 before_build:
