@@ -340,7 +340,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		if (output_format == -1) {
 			isDestBwf = isSrcBwf;
 			output_format = (isDestBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
-		} else /*if (recrypt_key == -1)*/ {
+		} else if (recrypt_key == -1) {
 			isDestBwf = (output_format == WAD_Format_BroadOn);
 			recrypt_key = src_key;
 		}
