@@ -76,15 +76,21 @@ SET(certs_FILES
 	certs/Root-CA00000001-XS00000003.cert
 	certs/Root-CA00000001-CP00000004.cert
 
+	# 3DS: ppki
+	#certs/Root-CTR-ppki.cert
+	certs/Root-CA00000003.cert
+	certs/Root-CA00000003-XS0000000c.cert
+	certs/Root-CA00000003-CP0000000b.cert
+
+	# Wii U: ppki
+	#certs/Root-WUP-ppki.cert
+
 	# Wii U: dpki
 	#certs/Root-WUP-dpki.cert
 	certs/Root-CA00000004.cert
 	certs/Root-CA00000004-XS0000000f.cert
 	certs/Root-CA00000004-CP00000010.cert
 	certs/Root-CA00000004-SP0000000e.cert
-
-	# Wii U: ppki
-	#certs/Root-WUP-ppki.cert
 	)
 
 UNSET(h_files)
