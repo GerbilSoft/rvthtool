@@ -50,6 +50,57 @@ ELSE()
 	MESSAGE(FATAL_ERROR "No crypto wrappers are available for this platform.")
 ENDIF()
 
+#########
+# bin2h #
+#########
+
+ADD_EXECUTABLE(bin2h bin2h.c)
+
+################
+# Certificates #
+################
+
+SET(certs_FILES
+	# Wii: dpki
+	certs/Root-RVL-dpki.cert
+	certs/Root-CA00000002.cert
+	certs/Root-CA00000002-XS00000006.cert
+	certs/Root-CA00000002-CP00000007.cert
+	certs/Root-CA00000002-MS00000003.cert
+	certs/Root-CA00000002-XS00000004.cert
+	certs/Root-CA00000002-CP00000005.cert
+
+	# Wii: ppki
+	certs/Root-RVL-ppki.cert
+	certs/Root-CA00000001.cert
+	certs/Root-CA00000001-XS00000003.cert
+	certs/Root-CA00000001-CP00000004.cert
+
+	# Wii U: dpki
+	#certs/Root-WUP-dpki.cert
+	certs/Root-CA00000004.cert
+	certs/Root-CA00000004-XS0000000f.cert
+	certs/Root-CA00000004-CP00000010.cert
+	certs/Root-CA00000004-SP0000000e.cert
+
+	# Wii U: ppki
+	#certs/Root-WUP-ppki.cert
+	)
+
+UNSET(h_files)
+FOREACH(_cert ${certs_FILES})
+	STRING(REPLACE ".cert" ".h" _hfile ${_cert})
+	LIST(APPEND h_files "${CMAKE_CURRENT_BINARY_DIR}/${_hfile}")
+	ADD_CUSTOM_COMMAND(OUTPUT "${_hfile}"
+		COMMAND bin2h "${_cert}" "${CMAKE_CURRENT_BINARY_DIR}/${_hfile}"
+		DEPENDS bin2h.c ${_cert}
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		)
+	UNSET(_hfile)
+ENDFOREACH()
+
+ADD_CUSTOM_TARGET(certs DEPENDS ${h_files})
+
 ######################
 # Build the library. #
 ######################
@@ -59,6 +110,7 @@ ADD_LIBRARY(wiicrypto STATIC
 	${libwiicrypto_RSA_SRCS}
 	${libwiicrypto_AES_SRCS}
 	)
+ADD_DEPENDENCIES(wiicrypto certs)
 
 # Include paths:
 # - Public: Current source and binary directories.

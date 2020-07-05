@@ -235,7 +235,7 @@ ASSERT_STRUCT(RVL_PubKey_RSA4096, 0x280);
  */
 typedef struct _RVL_Cert_RSA4096_KeyOnly {
 	RVL_Sig_Dummy sig;	// [0x000] Dummy signature.
-	RVL_PubKey_RSA4096 pub;	// [0x040] Public key.
+	RVL_PubKey_RSA4096 pub;	// [0x080] Public key.
 } RVL_Cert_RSA4096_KeyOnly;
 ASSERT_STRUCT(RVL_Cert_RSA4096_KeyOnly, 0x300);
 
