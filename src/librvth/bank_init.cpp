@@ -180,11 +180,11 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 
 	// Check the ticket signature issuer.
 	switch (cert_get_issuer_from_name(header.ticket.issuer)) {
-		case RVL_CERT_ISSUER_RETAIL_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
 			// Retail certificate.
 			entry->ticket.sig_type = RVL_SigType_Retail;
 			break;
-		case RVL_CERT_ISSUER_DEBUG_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
 			// Debug certificate.
 			entry->ticket.sig_type = RVL_SigType_Debug;
 			break;
@@ -201,11 +201,11 @@ int rvth_init_BankEntry_crypto(RvtH_BankEntry *entry)
 	// TODO: Verify header.tmd_offset?
 	tmdHeader = (const RVL_TMD_Header*)header.data;
 	switch (cert_get_issuer_from_name(tmdHeader->issuer)) {
-		case RVL_CERT_ISSUER_RETAIL_TMD:
+		case RVL_CERT_ISSUER_PPKI_TMD:
 			// Retail certificate.
 			entry->tmd.sig_type = RVL_SigType_Retail;
 			break;
-		case RVL_CERT_ISSUER_DEBUG_TMD:
+		case RVL_CERT_ISSUER_DPKI_TMD:
 			// Debug certificate.
 			entry->tmd.sig_type = RVL_SigType_Debug;
 			break;

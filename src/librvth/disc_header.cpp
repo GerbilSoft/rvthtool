@@ -347,13 +347,13 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
 
 	// Try decrypting the partition header.
 	switch (cert_get_issuer_from_name(pthdr->ticket.issuer)) {
-		case RVL_CERT_ISSUER_RETAIL_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
 			// Retail certificate.
 			common_key = ((pthdr->ticket.common_key_index == 1)
 					? RVL_AES_Keys[RVL_KEY_KOREAN]
 					: RVL_AES_Keys[RVL_KEY_RETAIL]);
 			break;
-		case RVL_CERT_ISSUER_DEBUG_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
 			// Debug certificate.
 			common_key = RVL_AES_Keys[RVL_KEY_DEBUG];
 			break;

@@ -193,7 +193,7 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 
 	// Check the 'from' key.
 	if (!strncmp(ticket->issuer,
-	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
+	    RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
 	{
 		// Retail.
 		switch (ticket->common_key_index) {
@@ -210,7 +210,7 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 		}
 	}
 	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET], sizeof(ticket->issuer)))
+		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
 		// Debug. Use RVL_KEY_DEBUG.
 		// FIXME: Is there a debug vWii key?
@@ -235,9 +235,9 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	key_from = RVL_AES_Keys[fromKey];
 	key_to = RVL_AES_Keys[toKey];
 	if (likely(toKey != RVL_KEY_DEBUG)) {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET];
+		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET];
 	} else {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET];
+		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET];
 	}
 
 	// Initialize the AES context.

@@ -256,7 +256,7 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 
 	// Check the 'from' key.
 	if (!strncmp(ticket->issuer,
-	    RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TICKET], sizeof(ticket->issuer)))
+	    RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
 	{
 		// Retail.
 		switch (ticket->common_key_index) {
@@ -276,7 +276,7 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 		}
 	}
 	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TICKET], sizeof(ticket->issuer)))
+		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
 		// Debug. Use RVL_KEY_DEBUG.
 		commonKey = RVL_AES_Keys[RVL_KEY_DEBUG];

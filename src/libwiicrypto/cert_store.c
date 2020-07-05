@@ -48,22 +48,25 @@ const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16] = {
 // Signature issuers.
 const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
 	NULL,				// RVL_CERT_ISSUER_UNKNOWN
-	"Root",				// RVL_CERT_ISSUER_ROOT
 
 	// Debug
-	"Root-CA00000002",		// RVL_CERT_ISSUER_DEBUG_CA
-	"Root-CA00000002-XS00000006",	// RVL_CERT_ISSUER_DEBUG_TICKET
-	"Root-CA00000002-CP00000007",	// RVL_CERT_ISSUER_DEBUG_TMD
-	"Root-CA00000002-MS00000003",	// RVL_CERT_ISSUER_DEBUG_DEV
+	"Root",				// RVL_CERT_ISSUER_DPKI_ROOT
+	"Root-CA00000002",		// RVL_CERT_ISSUER_DPKI_CA
+	"Root-CA00000002-XS00000006",	// RVL_CERT_ISSUER_DPKI_TICKET
+	"Root-CA00000002-CP00000007",	// RVL_CERT_ISSUER_DPKI_TMD
+	"Root-CA00000002-MS00000003",	// RVL_CERT_ISSUER_DPKI_MS
 
 	// Retail
-	"Root-CA00000001",		// RVL_CERT_ISSUER_RETAIL_CA
-	"Root-CA00000001-XS00000003",	// RVL_CERT_ISSUER_RETAIL_TICKET
-	"Root-CA00000001-CP00000004",	// RVL_CERT_ISSUER_RETAIL_TMD
+	"Root",				// RVL_CERT_ISSUER_PPKI_ROOT
+	"Root-CA00000001",		// RVL_CERT_ISSUER_PPKI_CA
+	"Root-CA00000001-XS00000003",	// RVL_CERT_ISSUER_PPKI_TICKET
+	"Root-CA00000001-CP00000004",	// RVL_CERT_ISSUER_PPKI_TMD
 };
 
-// Root certificate.
-static const RVL_Cert_RSA4096_KeyOnly cert_root = {
+/** Retail certificates. **/
+
+// PPKI root certificate.
+static const RVL_Cert_RSA4096_KeyOnly cert_ppki_root = {
 	// NOTE: The root certificate is not signed, since it's
 	// not included in the standard certificate chain.
 
@@ -116,10 +119,8 @@ static const RVL_Cert_RSA4096_KeyOnly cert_root = {
 	}
 };
 
-/** Retail certificates. **/
-
-// CA certificate. (retail)
-static const RVL_Cert_RSA4096_RSA2048 cert_retail_ca = {
+// CA certificate. (prod)
+static const RVL_Cert_RSA4096_RSA2048 cert_ppki_ca = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA4096),	// Signature type
@@ -189,8 +190,8 @@ static const RVL_Cert_RSA4096_RSA2048 cert_retail_ca = {
 	}
 };
 
-// Ticket signing certificate. (retail)
-static const RVL_Cert_RSA2048 cert_retail_ticket = {
+// Ticket signing certificate. (prod)
+static const RVL_Cert_RSA2048 cert_ppki_ticket = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA2048),	// Signature type
@@ -244,8 +245,8 @@ static const RVL_Cert_RSA2048 cert_retail_ticket = {
 	}
 };
 
-// TMD signing certificate. (retail)
-static const RVL_Cert_RSA2048 cert_retail_tmd = {
+// TMD signing certificate. (prod)
+static const RVL_Cert_RSA2048 cert_ppki_tmd = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA2048),	// Signature type
@@ -301,8 +302,64 @@ static const RVL_Cert_RSA2048 cert_retail_tmd = {
 
 /** Debug certificates. **/
 
-// CA certificate. (debug)
-static const RVL_Cert_RSA4096_RSA2048 cert_debug_ca = {
+// DPKI root certificate.
+static const RVL_Cert_RSA4096_KeyOnly cert_dpki_root = {
+	// NOTE: The root certificate is not signed, since it's
+	// not included in the standard certificate chain.
+
+	// FIXME: Get the actual dpki root certificate.
+
+	// Signature
+	{0, { 0 }, ""},
+
+	// Public key
+	{
+	 BE32_CONST(RVL_CERT_KEYTYPE_RSA4096),	// Key type
+	 "Root",				// Child certificate identity
+	 BE32_CONST(0),				// Unknown...
+	 // Modulus
+	 {
+	  0xF8,0x24,0x6C,0x58,0xBA,0xE7,0x50,0x03,0x01,0xFB,0xB7,0xC2,0xEB,0xE0,0x01,0x05,
+	  0x71,0xDA,0x92,0x23,0x78,0xF0,0x51,0x4E,0xC0,0x03,0x1D,0xD0,0xD2,0x1E,0xD3,0xD0,
+	  0x7E,0xFC,0x85,0x20,0x69,0xB5,0xDE,0x9B,0xB9,0x51,0xA8,0xBC,0x90,0xA2,0x44,0x92,
+	  0x6D,0x37,0x92,0x95,0xAE,0x94,0x36,0xAA,0xA6,0xA3,0x02,0x51,0x0C,0x7B,0x1D,0xED,
+	  0xD5,0xFB,0x20,0x86,0x9D,0x7F,0x30,0x16,0xF6,0xBE,0x65,0xD3,0x83,0xA1,0x6D,0xB3,
+	  0x32,0x1B,0x95,0x35,0x18,0x90,0xB1,0x70,0x02,0x93,0x7E,0xE1,0x93,0xF5,0x7E,0x99,
+	  0xA2,0x47,0x4E,0x9D,0x38,0x24,0xC7,0xAE,0xE3,0x85,0x41,0xF5,0x67,0xE7,0x51,0x8C,
+	  0x7A,0x0E,0x38,0xE7,0xEB,0xAF,0x41,0x19,0x1B,0xCF,0xF1,0x7B,0x42,0xA6,0xB4,0xED,
+	  0xE6,0xCE,0x8D,0xE7,0x31,0x8F,0x7F,0x52,0x04,0xB3,0x99,0x0E,0x22,0x67,0x45,0xAF,
+	  0xD4,0x85,0xB2,0x44,0x93,0x00,0x8B,0x08,0xC7,0xF6,0xB7,0xE5,0x6B,0x02,0xB3,0xE8,
+	  0xFE,0x0C,0x9D,0x85,0x9C,0xB8,0xB6,0x82,0x23,0xB8,0xAB,0x27,0xEE,0x5F,0x65,0x38,
+	  0x07,0x8B,0x2D,0xB9,0x1E,0x2A,0x15,0x3E,0x85,0x81,0x80,0x72,0xA2,0x3B,0x6D,0xD9,
+	  0x32,0x81,0x05,0x4F,0x6F,0xB0,0xF6,0xF5,0xAD,0x28,0x3E,0xCA,0x0B,0x7A,0xF3,0x54,
+	  0x55,0xE0,0x3D,0xA7,0xB6,0x83,0x26,0xF3,0xEC,0x83,0x4A,0xF3,0x14,0x04,0x8A,0xC6,
+	  0xDF,0x20,0xD2,0x85,0x08,0x67,0x3C,0xAB,0x62,0xA2,0xC7,0xBC,0x13,0x1A,0x53,0x3E,
+	  0x0B,0x66,0x80,0x6B,0x1C,0x30,0x66,0x4B,0x37,0x23,0x31,0xBD,0xC4,0xB0,0xCA,0xD8,
+	  0xD1,0x1E,0xE7,0xBB,0xD9,0x28,0x55,0x48,0xAA,0xEC,0x1F,0x66,0xE8,0x21,0xB3,0xC8,
+	  0xA0,0x47,0x69,0x00,0xC5,0xE6,0x88,0xE8,0x0C,0xCE,0x3C,0x61,0xD6,0x9C,0xBB,0xA1,
+	  0x37,0xC6,0x60,0x4F,0x7A,0x72,0xDD,0x8C,0x7B,0x3E,0x3D,0x51,0x29,0x0D,0xAA,0x6A,
+	  0x59,0x7B,0x08,0x1F,0x9D,0x36,0x33,0xA3,0x46,0x7A,0x35,0x61,0x09,0xAC,0xA7,0xDD,
+	  0x7D,0x2E,0x2F,0xB2,0xC1,0xAE,0xB8,0xE2,0x0F,0x48,0x92,0xD8,0xB9,0xF8,0xB4,0x6F,
+	  0x4E,0x3C,0x11,0xF4,0xF4,0x7D,0x8B,0x75,0x7D,0xFE,0xFE,0xA3,0x89,0x9C,0x33,0x59,
+	  0x5C,0x5E,0xFD,0xEB,0xCB,0xAB,0xE8,0x41,0x3E,0x3A,0x9A,0x80,0x3C,0x69,0x35,0x6E,
+	  0xB2,0xB2,0xAD,0x5C,0xC4,0xC8,0x58,0x45,0x5E,0xF5,0xF7,0xB3,0x06,0x44,0xB4,0x7C,
+	  0x64,0x06,0x8C,0xDF,0x80,0x9F,0x76,0x02,0x5A,0x2D,0xB4,0x46,0xE0,0x3D,0x7C,0xF6,
+	  0x2F,0x34,0xE7,0x02,0x45,0x7B,0x02,0xA4,0xCF,0x5D,0x9D,0xD5,0x3C,0xA5,0x3A,0x7C,
+	  0xA6,0x29,0x78,0x8C,0x67,0xCA,0x08,0xBF,0xEC,0xCA,0x43,0xA9,0x57,0xAD,0x16,0xC9,
+	  0x4E,0x1C,0xD8,0x75,0xCA,0x10,0x7D,0xCE,0x7E,0x01,0x18,0xF0,0xDF,0x6B,0xFE,0xE5,
+	  0x1D,0xDB,0xD9,0x91,0xC2,0x6E,0x60,0xCD,0x48,0x58,0xAA,0x59,0x2C,0x82,0x00,0x75,
+	  0xF2,0x9F,0x52,0x6C,0x91,0x7C,0x6F,0xE5,0x40,0x3E,0xA7,0xD4,0xA5,0x0C,0xEC,0x3B,
+	  0x73,0x84,0xDE,0x88,0x6E,0x82,0xD2,0xEB,0x4D,0x4E,0x42,0xB5,0xF2,0xB1,0x49,0xA8,
+	  0x1E,0xA7,0xCE,0x71,0x44,0xDC,0x29,0x94,0xCF,0xC4,0x4E,0x1F,0x91,0xCB,0xD4,0x95},
+	 // Exponent
+	 BE32_CONST(0x00010001),
+	 // Padding
+	 { 0 }
+	}
+};
+
+// CA certificate. (devel)
+static const RVL_Cert_RSA4096_RSA2048 cert_dpki_ca = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA4096),	// Signature type
@@ -373,7 +430,7 @@ static const RVL_Cert_RSA4096_RSA2048 cert_debug_ca = {
 };
 
 // Ticket signing certificate. (debug)
-static const RVL_Cert_RSA2048 cert_debug_ticket = {
+static const RVL_Cert_RSA2048 cert_dpki_ticket = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA2048),	// Signature type
@@ -428,7 +485,7 @@ static const RVL_Cert_RSA2048 cert_debug_ticket = {
 };
 
 // TMD signing certificate. (debug)
-static const RVL_Cert_RSA2048 cert_debug_tmd = {
+static const RVL_Cert_RSA2048 cert_dpki_tmd = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA2048),	// Signature type
@@ -482,8 +539,8 @@ static const RVL_Cert_RSA2048 cert_debug_tmd = {
 	}
 };
 
-// Development certificate. (debug)
-static const RVL_Cert_RSA2048_ECC cert_debug_dev = {
+// Mastering Server certificate. (debug)
+static const RVL_Cert_RSA2048_ECC cert_dpki_ms = {
 	// Signature
 	{
 	 BE32_CONST(RVL_CERT_SIGTYPE_RSA2048),	// Signature type
@@ -524,13 +581,14 @@ static const RVL_Cert_RSA2048_ECC cert_debug_dev = {
 };
 
 /** Certificate access functions. **/
-
+#include <stdio.h>
 /**
- * Convert a certificate issuer name to RVT_Cert_Issuer.
+ * Convert a certificate issuer name to RVT_Cert_Issuer, with a PKI specification.
  * @param s_issuer Issuer name.
+ * @param pki PKI. (If RVL_PKI_UNKNOWN, check all PKIs. Not valid for "Root".)
  * @return RVL_Cert_Issuer, or RVL_CERT_ISSUER_UNKNOWN if invalid.
  */
-RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer)
+RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI pki)
 {
 	unsigned int i;
 
@@ -543,7 +601,29 @@ RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer)
 		return RVL_CERT_ISSUER_UNKNOWN;
 	}
 
-	for (i = RVL_CERT_ISSUER_ROOT; i < RVL_CERT_ISSUER_MAX; i++) {
+	RVL_Cert_Issuer min, max;	// max is inclusive here
+	switch (pki) {
+		case RVL_PKI_DPKI:
+			min = RVL_CERT_ISSUER_DPKI_MIN;
+			max = RVL_CERT_ISSUER_DPKI_MAX;
+			break;
+		case RVL_PKI_PPKI:
+			min = RVL_CERT_ISSUER_PPKI_MIN;
+			max = RVL_CERT_ISSUER_PPKI_MAX;
+			break;
+		default:
+			// If the issuer is "Root" and a PKI isn't specified, something's wrong.
+			if (pki == RVL_PKI_UNKNOWN && !strncmp(s_issuer, "Root", 5)) {
+				// Unable to handle this one.
+				errno = EINVAL;
+				return RVL_CERT_ISSUER_UNKNOWN;
+			}
+			min = RVL_CERT_ISSUER_UNKNOWN+1;
+			max = RVL_CERT_ISSUER_MAX-1;
+			break;
+	}
+
+	for (i = min; i <= max; i++) {
 		if (!strcmp(s_issuer, RVL_Cert_Issuers[i])) {
 			// Found a match!
 			return (RVL_Cert_Issuer)i;
@@ -564,18 +644,19 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer)
 {
 	static const RVL_Cert *const certs[RVL_CERT_ISSUER_MAX] = {
 		NULL,					// RVL_CERT_ISSUER_UNKNOWN
-		(const RVL_Cert*)&cert_root,		// RVL_CERT_ISSUER_ROOT
 
 		// Debug
-		(const RVL_Cert*)&cert_debug_ca,	// RVL_CERT_ISSUER_DEBUG_CA
-		(const RVL_Cert*)&cert_debug_ticket,	// RVL_CERT_ISSUER_DEBUG_TICKET
-		(const RVL_Cert*)&cert_debug_tmd,	// RVL_CERT_ISSUER_DEBUG_TMD
-		(const RVL_Cert*)&cert_debug_dev,	// RVL_CERT_ISSUER_DEBUG_DEV
+		(const RVL_Cert*)&cert_dpki_root,	// RVL_CERT_ISSUER_DPKI_ROOT
+		(const RVL_Cert*)&cert_dpki_ca,		// RVL_CERT_ISSUER_DPKI_CA
+		(const RVL_Cert*)&cert_dpki_ticket,	// RVL_CERT_ISSUER_DPKI_TICKET
+		(const RVL_Cert*)&cert_dpki_tmd,	// RVL_CERT_ISSUER_DPKI_TMD
+		(const RVL_Cert*)&cert_dpki_ms,		// RVL_CERT_ISSUER_DPKI_MS
 
 		// Retail
-		(const RVL_Cert*)&cert_retail_ca,	// RVL_CERT_ISSUER_RETAIL_CA
-		(const RVL_Cert*)&cert_retail_ticket,	// RVL_CERT_ISSUER_RETAIL_TICKET
-		(const RVL_Cert*)&cert_retail_tmd,	// RVL_CERT_ISSUER_RETAIL_TMD
+		(const RVL_Cert*)&cert_ppki_root,	// RVL_CERT_ISSUER_PPKI_ROOT
+		(const RVL_Cert*)&cert_ppki_ca,		// RVL_CERT_ISSUER_PPKI_CA
+		(const RVL_Cert*)&cert_ppki_ticket,	// RVL_CERT_ISSUER_PPKI_TICKET
+		(const RVL_Cert*)&cert_ppki_tmd,	// RVL_CERT_ISSUER_PPKI_TMD
 	};
 
 	assert(issuer > RVL_CERT_ISSUER_UNKNOWN && issuer < RVL_CERT_ISSUER_MAX);
@@ -587,17 +668,36 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer)
 }
 
 /**
- * Get a standard certificate by issuer name.
+ * Get a standard certificate by issuer name, with a PKI specification.
  * @param s_issuer Issuer name.
+ * @param pki PKI. (If RVL_PKI_UNKNOWN, check all PKIs. Not valid for "Root".)
  * @return RVL_Cert*, or NULL if invalid.
  */
-const RVL_Cert *cert_get_from_name(const char *s_issuer)
+const RVL_Cert *cert_get_from_name_with_pki(const char *s_issuer, RVL_PKI pki)
 {
-	RVL_Cert_Issuer issuer = cert_get_issuer_from_name(s_issuer);
+	RVL_Cert_Issuer issuer = cert_get_issuer_from_name_with_pki(s_issuer, pki);
 	if (issuer == RVL_CERT_ISSUER_UNKNOWN) {
 		return NULL;
 	}
 	return cert_get(issuer);
+}
+
+/**
+ * Get the PKI for an RVL_Cert_Issuer.
+ * @param issuer RVL_Cert_Issuer.
+ * @return PKI.
+ */
+RVL_PKI cert_get_pki_from_issuer(RVL_Cert_Issuer issuer)
+{
+	RVL_PKI ret = RVL_PKI_UNKNOWN;
+
+	if (issuer >= RVL_CERT_ISSUER_DPKI_MIN && issuer <= RVL_CERT_ISSUER_DPKI_MAX) {
+		ret = RVL_PKI_DPKI;
+	} if (issuer >= RVL_CERT_ISSUER_PPKI_MIN && issuer <= RVL_CERT_ISSUER_PPKI_MAX) {
+		ret = RVL_PKI_PPKI;
+	}
+
+	return ret;
 }
 
 /**
@@ -609,18 +709,19 @@ unsigned int cert_get_size(RVL_Cert_Issuer issuer)
 {
 	static const unsigned int cert_sizes[RVL_CERT_ISSUER_MAX] = {
 		0U,						// RVL_CERT_ISSUER_UNKNOWN
-		(unsigned int)sizeof(cert_root),		// RVL_CERT_ISSUER_ROOT
 
-		// Debug
-		(unsigned int)sizeof(cert_debug_ca),		// RVL_CERT_ISSUER_DEBUG_CA
-		(unsigned int)sizeof(cert_debug_ticket),	// RVL_CERT_ISSUER_DEBUG_TICKET
-		(unsigned int)sizeof(cert_debug_tmd),		// RVL_CERT_ISSUER_DEBUG_TMD
-		(unsigned int)sizeof(cert_debug_dev),		// RVL_CERT_ISSUER_DEBUG_DEV
+		// dpki (debug)
+		(unsigned int)sizeof(cert_dpki_root),	// RVL_CERT_ISSUER_DPKI_ROOT
+		(unsigned int)sizeof(cert_dpki_ca),	// RVL_CERT_ISSUER_DPKI_CA
+		(unsigned int)sizeof(cert_dpki_ticket),	// RVL_CERT_ISSUER_DPKI_TICKET
+		(unsigned int)sizeof(cert_dpki_tmd),	// RVL_CERT_ISSUER_DPKI_TMD
+		(unsigned int)sizeof(cert_dpki_ms),	// RVL_CERT_ISSUER_DPKI_MS
 
-		// Retail
-		(unsigned int)sizeof(cert_retail_ca),		// RVL_CERT_ISSUER_RETAIL_CA
-		(unsigned int)sizeof(cert_retail_ticket),	// RVL_CERT_ISSUER_RETAIL_TICKET
-		(unsigned int)sizeof(cert_retail_tmd),		// RVL_CERT_ISSUER_RETAIL_TMD
+		// ppki (retail)
+		(unsigned int)sizeof(cert_ppki_root),	// RVL_CERT_ISSUER_PPKI_ROOT
+		(unsigned int)sizeof(cert_ppki_ca),	// RVL_CERT_ISSUER_PPKI_CA
+		(unsigned int)sizeof(cert_ppki_ticket),	// RVL_CERT_ISSUER_PPKI_TICKET
+		(unsigned int)sizeof(cert_ppki_tmd),	// RVL_CERT_ISSUER_PPKI_TMD
 	};
 
 	assert(issuer > RVL_CERT_ISSUER_UNKNOWN && issuer < RVL_CERT_ISSUER_MAX);

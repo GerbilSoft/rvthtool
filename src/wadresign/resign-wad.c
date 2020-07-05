@@ -90,7 +90,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// Certificates.
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
 	const RVL_Cert_RSA2048 *cert_TMD, *cert_ticket;
-	const RVL_Cert_RSA2048_ECC *cert_dev;
+	const RVL_Cert_RSA2048_ECC *cert_ms;
 	const char *issuer_TMD;
 
 	// Read buffer.
@@ -270,7 +270,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 	// Check the encryption key.
 	switch (cert_get_issuer_from_name(buf->ticket.issuer)) {
-		case RVL_CERT_ISSUER_RETAIL_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
 			// Retail may be either Common Key or Korean Key.
 			switch (buf->ticket.common_key_index) {
 				case 0:
@@ -301,7 +301,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 				}
 			}
 			break;
-		case RVL_CERT_ISSUER_DEBUG_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
 			src_key = RVL_CryptoType_Debug;
 			s_fromKey = "debug";
 			break;
@@ -417,22 +417,22 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	if (toKey != RVL_KEY_DEBUG) {
 		// Retail certificates.
 		// Order: CA, TMD, Ticket
-		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_CA);
-		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_TMD);
-		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_RETAIL_TICKET);
-		cert_dev	= NULL;
-		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_RETAIL_TMD];
+		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_CA);
+		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TMD);
+		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TICKET);
+		cert_ms		= NULL;
+		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TMD];
 		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket));
 	} else {
 		// Debug certificates.
 		// Order: CA, TMD, Ticket, MS
 		// FIXME: Not "dev" - MS is the "Mastering Server".
-		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_CA);
-		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TMD);
-		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DEBUG_TICKET);
-		cert_dev	= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DEBUG_DEV);
-		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DEBUG_TMD];
-		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_dev));
+		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_CA);
+		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TMD);
+		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TICKET);
+		cert_ms		= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DPKI_MS);
+		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TMD];
+		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_ms));
 	}
 
 	// Determine the data offset.
@@ -569,10 +569,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		ret = -err;
 		goto end;
 	}
-	if (cert_dev) {
+	if (cert_ms) {
 		errno = 0;
-		size = fwrite(cert_dev, 1, sizeof(*cert_dev), f_dest_wad);
-		if (size != sizeof(*cert_dev)) {
+		size = fwrite(cert_ms, 1, sizeof(*cert_ms), f_dest_wad);
+		if (size != sizeof(*cert_ms)) {
 			int err = errno;
 			if (err == 0) {
 				err = EIO;

@@ -45,19 +45,17 @@ const char *issuer_type(RVL_Cert_Issuer issuer)
 		case RVL_CERT_ISSUER_UNKNOWN:
 			return "Unknown";
 
-		case RVL_CERT_ISSUER_ROOT:
-			// TODO: Separate roots for Debug and Retail?
-			return "Root";
-
-		case RVL_CERT_ISSUER_DEBUG_CA:
-		case RVL_CERT_ISSUER_DEBUG_TICKET:
-		case RVL_CERT_ISSUER_DEBUG_TMD:
-		case RVL_CERT_ISSUER_DEBUG_DEV:
+		case RVL_CERT_ISSUER_DPKI_ROOT:
+		case RVL_CERT_ISSUER_DPKI_CA:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TMD:
+		case RVL_CERT_ISSUER_DPKI_MS:
 			return "Debug";
 
-		case RVL_CERT_ISSUER_RETAIL_CA:
-		case RVL_CERT_ISSUER_RETAIL_TICKET:
-		case RVL_CERT_ISSUER_RETAIL_TMD:
+		case RVL_CERT_ISSUER_PPKI_ROOT:
+		case RVL_CERT_ISSUER_PPKI_CA:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TMD:
 			return "Retail";
 	}
 }
@@ -431,7 +429,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	issuer_ticket = cert_get_issuer_from_name(ticket->issuer);
 	switch (issuer_ticket) {
 		default:	// TODO: Show an error instead?
-		case RVL_CERT_ISSUER_RETAIL_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
 			// Retail may be either Common Key or Korean Key.
 			switch (ticket->common_key_index) {
 				case 0:
@@ -462,7 +460,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 				}
 			}
 			break;
-		case RVL_CERT_ISSUER_DEBUG_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
 			encKey = RVL_KEY_DEBUG;
 			s_encKey = "Debug";
 			break;

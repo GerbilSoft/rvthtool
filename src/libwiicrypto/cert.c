@@ -24,6 +24,7 @@
 #include "common.h"
 #include "byteswap.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -57,29 +58,19 @@ static const uint8_t pkcs1_der_sha1[15] = {
 };
 
 /**
- * Verify a ticket or TMD.
+ * Verify a ticket or TMD. (internal function)
  *
- * Both structs have the same initial layout:
- * - Signature type
- * - Signature
- * - Issuer
- *
- * Both Signature and Issuer are padded for 64-byte alignment.
- * The Signature covers Issuer and everything up to `size`.
- *
+ * @param issuer_cert Certificate to verify against.
  * @param data Data to verify.
  * @param size Size of data.
  * @return Signature status. (Sig_Status if positive; if negative, POSIX error code.)
  */
-int cert_verify(const uint8_t *data, size_t size)
+static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, size_t size)
 {
-	const RVL_Cert *cert;	// Certificate header.
-
 	// Signature (pointer into `data`)
+	const RVL_Cert *verify_cert;	// Certificate to verify.
 	const uint8_t *sig;
 	unsigned int sig_len;
-	const char *s_issuer;
-	RVL_Cert_Issuer issuer;
 
 	// Parent certificate.
 	const uint8_t *pubkey_mod;
@@ -103,16 +94,10 @@ int cert_verify(const uint8_t *data, size_t size)
 	// Includes sig->issuer[], which is always 64-byte aligned.
 	unsigned int data_sha1_offset;
 
-	if (!data || size <= 4) {
-		// Invalid parameters.
-		errno = EINVAL;
-		return -EINVAL;
-	}
-
 	// Determine the signature length.
-	cert = (const RVL_Cert*)data;
+	verify_cert = (const RVL_Cert*)data;
 	sig = &data[4];
-	switch (be32_to_cpu(cert->signature_type)) {
+	switch (be32_to_cpu(verify_cert->signature_type)) {
 		case RVL_CERT_SIGTYPE_RSA4096:
 			sig_len = 4096/8;
 			break;
@@ -124,39 +109,26 @@ int cert_verify(const uint8_t *data, size_t size)
 			errno = ENOTSUP;
 			return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
 	}
-	s_issuer = (const char*)(sig + sig_len + 0x3C);
-
-	// Get the issuer's certificate.
-	issuer = cert_get_issuer_from_name(s_issuer);
-	if (issuer == RVL_CERT_ISSUER_UNKNOWN) {
-		// Unknown issuer.
-		errno = EINVAL;
-		return SIG_ERROR_UNKNOWN_ISSUER;
-	}
-	cert = (const RVL_Cert*)cert_get(issuer);
-	if (!cert) {
-		// Unknown issuer.
-		errno = EINVAL;
-		return SIG_ERROR_UNKNOWN_ISSUER;
-	}
 
 	// Skip over the issuer certificate's signature.
-	switch (be32_to_cpu(cert->signature_type)) {
+	switch (be32_to_cpu(issuer_cert->signature_type)) {
 		case RVL_CERT_SIGTYPE_RSA4096:
-			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_RSA4096));
+			issuer_cert = (const RVL_Cert*)((const uint8_t*)issuer_cert + sizeof(RVL_Sig_RSA4096));
 			break;
 		case RVL_CERT_SIGTYPE_RSA2048:
-			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_RSA2048));
+			issuer_cert = (const RVL_Cert*)((const uint8_t*)issuer_cert + sizeof(RVL_Sig_RSA2048));
 			break;
-		case 0:
-			// Only valid if this is the root certificate.
-			if (issuer != RVL_CERT_ISSUER_ROOT) {
+		case 0: {
+			// Only valid if this is a root certificate.
+			const char *const s_issuer = (const char*)(sig + sig_len + 0x3C);
+			if (strncmp(s_issuer, "Root", 5) != 0) {
 				// Not root.
 				errno = ENOTSUP;
 				return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
 			}
-			cert = (const RVL_Cert*)((const uint8_t*)cert + sizeof(RVL_Sig_Dummy));
+			issuer_cert = (const RVL_Cert*)((const uint8_t*)issuer_cert + sizeof(RVL_Sig_Dummy));
 			break;
+		}
 		default:
 			// Unsupported signature type.
 			errno = ENOTSUP;
@@ -164,16 +136,16 @@ int cert_verify(const uint8_t *data, size_t size)
 	}
 
 	// Check the issuer certificate's public key type.
-	switch (be32_to_cpu(cert->signature_type)) {
+	switch (be32_to_cpu(issuer_cert->signature_type)) {
 		case RVL_CERT_KEYTYPE_RSA4096: {
-			const RVL_PubKey_RSA4096 *pubkey = (const RVL_PubKey_RSA4096*)cert;
+			const RVL_PubKey_RSA4096 *pubkey = (const RVL_PubKey_RSA4096*)issuer_cert;
 			pubkey_mod = pubkey->modulus;
 			pubkey_len = sizeof(pubkey->modulus);
 			pubkey_exp = be32_to_cpu(pubkey->exponent);
 			break;
 		}
 		case RVL_CERT_KEYTYPE_RSA2048: {
-			const RVL_PubKey_RSA2048 *pubkey = (const RVL_PubKey_RSA2048*)cert;
+			const RVL_PubKey_RSA2048 *pubkey = (const RVL_PubKey_RSA2048*)issuer_cert;
 			pubkey_mod = pubkey->modulus;
 			pubkey_len = sizeof(pubkey->modulus);
 			pubkey_exp = be32_to_cpu(pubkey->exponent);
@@ -288,6 +260,101 @@ int cert_verify(const uint8_t *data, size_t size)
 			// Not fakesigned.
 			ret |= SIG_FAIL_HASH_ERROR | SIG_ERROR_INVALID;
 		}
+	}
+
+	return ret;
+}
+
+/**
+ * Verify a ticket or TMD.
+ *
+ * Both structs have the same initial layout:
+ * - Signature type
+ * - Signature
+ * - Issuer
+ *
+ * Both Signature and Issuer are padded for 64-byte alignment.
+ * The Signature covers Issuer and everything up to `size`.
+ *
+ * @param data Data to verify.
+ * @param size Size of data.
+ * @return Signature status. (Sig_Status if positive; if negative, POSIX error code.)
+ */
+int cert_verify(const uint8_t *data, size_t size)
+{
+	// Signature (pointer into `data`)
+	const RVL_Cert *verify_cert;	// Certificate to verify.
+	const uint8_t *sig;
+	unsigned int sig_len;
+	const char *s_issuer;
+
+	int ret;	// our return value
+
+	if (!data || size <= 4) {
+		// Invalid parameters.
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
+	// Determine the signature length.
+	verify_cert = (const RVL_Cert*)data;
+	sig = &data[4];
+	switch (be32_to_cpu(verify_cert->signature_type)) {
+		case RVL_CERT_SIGTYPE_RSA4096:
+			sig_len = 4096/8;
+			break;
+		case RVL_CERT_SIGTYPE_RSA2048:
+			sig_len = 2048/8;
+			break;
+		default:
+			// Unsupported signature type.
+			errno = ENOTSUP;
+			return SIG_ERROR_UNSUPPORTED_SIGNATURE_TYPE;
+	}
+	// Get the signature issuer.
+	s_issuer = (const char*)(sig + sig_len + 0x3C);
+
+	// Get the issuer's certificate.
+	// NOTE: If it's Root, we won't be able to get the issuer directly.
+	// We'll need to test both dpki and ppki.
+	// TODO: Add a PKI specification to prevent errors where a certificate
+	// is signed by the wrong Root certificate? This isn't likely, since
+	// the Root keys for both PKIs aren't public.
+	if (!strncmp(s_issuer, "Root", 5)) {
+		// Try dpki first.
+		const RVL_Cert *issuer_cert = cert_get(RVL_CERT_ISSUER_DPKI_ROOT);
+		assert(issuer_cert != nullptr);
+		if (!issuer_cert) {
+			return -EIO;
+		}
+		ret = cert_verify_int(issuer_cert, data, size);
+		if (ret < 0) {
+			return ret;
+		}
+		if (ret != SIG_STATUS_OK) {
+			// Signature is not valid. Try ppki.
+			issuer_cert = cert_get(RVL_CERT_ISSUER_PPKI_ROOT);
+			assert(issuer_cert != nullptr);
+			if (!issuer_cert) {
+				return -EIO;
+			}
+			ret = cert_verify_int(issuer_cert, data, size);
+		}
+	} else {
+		const RVL_Cert *issuer_cert;
+
+		RVL_Cert_Issuer issuer = cert_get_issuer_from_name(s_issuer);
+		if (issuer == RVL_CERT_ISSUER_UNKNOWN) {
+			// Unknown issuer.
+			errno = EINVAL;
+			return SIG_ERROR_UNKNOWN_ISSUER;
+		}
+		issuer_cert = cert_get(issuer);
+		assert(issuer_cert != nullptr);
+		if (!issuer_cert) {
+			return -EIO;
+		}
+		ret = cert_verify_int(issuer_cert, data, size);
 	}
 
 	return ret;

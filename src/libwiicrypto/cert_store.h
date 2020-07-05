@@ -43,34 +43,67 @@ typedef enum {
 } RVL_AES_Keys_e;
 extern const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16];
 
+// Public key infrastructure.
+typedef enum {
+	RVL_PKI_UNKNOWN	= 0,	// unknown
+	RVL_PKI_DPKI	= 1,	// devel pki (debug)
+	RVL_PKI_PPKI	= 2,	// prod pki (retail)
+} RVL_PKI;
+
 // Certificate issuers.
 typedef enum {
 	RVL_CERT_ISSUER_UNKNOWN		= 0,
-	RVL_CERT_ISSUER_ROOT,
 
-	// Debug
-	RVL_CERT_ISSUER_DEBUG_CA,
-	RVL_CERT_ISSUER_DEBUG_TICKET,
-	RVL_CERT_ISSUER_DEBUG_TMD,
-	RVL_CERT_ISSUER_DEBUG_DEV,
+	// dpki (devel; debug)
+	RVL_CERT_ISSUER_DPKI_ROOT,	// Root
+	RVL_CERT_ISSUER_DPKI_CA,	// CA
+	RVL_CERT_ISSUER_DPKI_TICKET,	// XS
+	RVL_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
+	RVL_CERT_ISSUER_DPKI_MS,	// MS: Mastering Server
 
-	// Retail
-	RVL_CERT_ISSUER_RETAIL_CA,
-	RVL_CERT_ISSUER_RETAIL_TICKET,
-	RVL_CERT_ISSUER_RETAIL_TMD,
+	// ppki (prod; retail)
+	RVL_CERT_ISSUER_PPKI_ROOT,	// Root
+	RVL_CERT_ISSUER_PPKI_CA,	// CA
+	RVL_CERT_ISSUER_PPKI_TICKET,	// XS
+	RVL_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider
 
-	RVL_CERT_ISSUER_MAX
+	RVL_CERT_ISSUER_MAX,
+
+	// Min/max values.
+	RVL_CERT_ISSUER_DPKI_MIN	= RVL_CERT_ISSUER_DPKI_ROOT,
+	RVL_CERT_ISSUER_DPKI_MAX	= RVL_CERT_ISSUER_DPKI_MS,
+	RVL_CERT_ISSUER_PPKI_MIN	= RVL_CERT_ISSUER_PPKI_ROOT,
+	RVL_CERT_ISSUER_PPKI_MAX	= RVL_CERT_ISSUER_PPKI_TMD,
 } RVL_Cert_Issuer;
 
 // Signature issuers.
 extern const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX];
 
 /**
+ * Convert a certificate issuer name to RVT_Cert_Issuer, with a PKI specification.
+ * @param s_issuer Issuer name.
+ * @param pki PKI. (If RVL_PKI_UNKNOWN, check all PKIs. Not valid for "Root".)
+ * @return RVL_Cert_Issuer, or RVL_CERT_ISSUER_UNKNOWN if invalid.
+ */
+RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI pki);
+
+/**
  * Convert a certificate issuer name to RVT_Cert_Issuer.
+ * PKI is implied by the specified issuer. "Root" will not work here.
  * @param s_issuer Issuer name.
  * @return RVL_Cert_Issuer, or RVL_CERT_ISSUER_UNKNOWN if invalid.
  */
-RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer);
+static inline RVL_Cert_Issuer cert_get_issuer_from_name(const char *s_issuer)
+{
+	return cert_get_issuer_from_name_with_pki(s_issuer, RVL_PKI_UNKNOWN);
+}
+
+/**
+ * Get the PKI for an RVL_Cert_Issuer.
+ * @param issuer RVL_Cert_Issuer.
+ * @return PKI.
+ */
+RVL_PKI cert_get_pki_from_issuer(RVL_Cert_Issuer issuer);
 
 // Opaque type for all certificates.
 // Certificate users must check the certificate type value
@@ -88,11 +121,23 @@ ASSERT_STRUCT(RVL_Cert, 4);
 const RVL_Cert *cert_get(RVL_Cert_Issuer issuer);
 
 /**
+ * Get a standard certificate by issuer name, with a PKI specification.
+ * @param s_issuer Issuer name.
+ * @param pki PKI. (If RVL_PKI_UNKNOWN, check all PKIs. Not valid for "Root".)
+ * @return RVL_Cert*, or NULL if invalid.
+ */
+const RVL_Cert *cert_get_from_name_with_pki(const char *s_issuer, RVL_PKI pki);
+
+/**
  * Get a standard certificate by issuer name.
+ * PKI is implied by the specified issuer. "Root" will not work here.
  * @param s_issuer Issuer name.
  * @return RVL_Cert*, or NULL if invalid.
  */
-const RVL_Cert *cert_get_from_name(const char *s_issuer);
+static inline const RVL_Cert *cert_get_from_name(const char *s_issuer)
+{
+	return cert_get_from_name_with_pki(s_issuer, RVL_PKI_UNKNOWN);
+}
 
 /**
  * Get the size of a certificate.
