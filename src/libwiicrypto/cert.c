@@ -29,9 +29,10 @@
 #include <stdio.h>
 #include <string.h>
 
-// RSA and SHA-1 functions
+// RSA and hash functions
 #include "rsaw.h"
 #include <nettle/sha1.h>
+#include <nettle/sha2.h>
 
 /**
  * The signature is stored in PKCS #1 format.
@@ -55,6 +56,13 @@
 static const uint8_t pkcs1_der_sha1[15] = {
 	0x30,0x21,0x30,0x09,0x06,0x05,0x2B,0x0E,
 	0x03,0x02,0x1A,0x05,0x00,0x04,0x14
+};
+
+// DER identifier for SHA-256 hashes.
+static const uint8_t pkcs1_der_sha256[19] = {
+	0x30,0x31,0x30,0x0D,0x06,0x09,0x60,0x86,
+	0x48,0x01,0x65,0x03,0x04,0x02,0x01,0x05,
+	0x00,0x04,0x20
 };
 
 /**
@@ -81,28 +89,42 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 	int ret;	// our return value
 	int tmp_ret;	// function return values
 
-	// SHA-1 hash.
-	struct sha1_ctx sha1;
-	uint8_t digest[SHA1_DIGEST_SIZE];
+	// Hash data.
+	uint8_t digest[SHA256_DIGEST_SIZE];
+	unsigned int hash_digest_size;
+	bool isSha2;
 
 	/** Data offsets. **/
 	// DER identifier offset.
 	unsigned int sig_der_offset;
-	// SHA-1 offset in the signature.
-	unsigned int sig_sha1_offset;
-	// Start offset within `data` for SHA-1 calculation.
+	// Hash offset in the signature.
+	unsigned int sig_hash_offset;
+	// Start offset within `data` for hash calculation.
 	// Includes sig->issuer[], which is always 64-byte aligned.
-	unsigned int data_sha1_offset;
+	unsigned int data_hash_offset;
+	// DER to check.
+	const uint8_t *der_data;
+	size_t der_size;
 
 	// Determine the signature length.
 	verify_cert = (const RVL_Cert*)data;
 	sig = &data[4];
 	switch (be32_to_cpu(verify_cert->signature_type)) {
-		case RVL_CERT_SIGTYPE_RSA4096:
+		case RVL_CERT_SIGTYPE_RSA4096_SHA1:
 			sig_len = 4096/8;
+			isSha2 = false;
 			break;
-		case RVL_CERT_SIGTYPE_RSA2048:
+		case WUP_CERT_SIGTYPE_RSA4096_SHA256:
+			sig_len = 4096/8;
+			isSha2 = true;
+			break;
+		case RVL_CERT_SIGTYPE_RSA2048_SHA1:
 			sig_len = 2048/8;
+			isSha2 = false;
+			break;
+		case WUP_CERT_SIGTYPE_RSA2048_SHA256:
+			sig_len = 2048/8;
+			isSha2 = true;
 			break;
 		default:
 			// Unsupported signature type.
@@ -112,10 +134,12 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 
 	// Skip over the issuer certificate's signature.
 	switch (be32_to_cpu(issuer_cert->signature_type)) {
-		case RVL_CERT_SIGTYPE_RSA4096:
+		case RVL_CERT_SIGTYPE_RSA4096_SHA1:
+		case WUP_CERT_SIGTYPE_RSA4096_SHA256:
 			issuer_cert = (const RVL_Cert*)((const uint8_t*)issuer_cert + sizeof(RVL_Sig_RSA4096));
 			break;
-		case RVL_CERT_SIGTYPE_RSA2048:
+		case RVL_CERT_SIGTYPE_RSA2048_SHA1:
+		case WUP_CERT_SIGTYPE_RSA2048_SHA256:
 			issuer_cert = (const RVL_Cert*)((const uint8_t*)issuer_cert + sizeof(RVL_Sig_RSA2048));
 			break;
 		case 0: {
@@ -175,15 +199,28 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 		return tmp_ret;
 	}
 
-	// DER separator offset.
-	sig_der_offset = sig_len - 1 - sizeof(pkcs1_der_sha1) - SHA1_DIGEST_SIZE;
+	// Get signature data.
+	if (likely(!isSha2)) {
+		// SHA-1 signature.
+		der_data = pkcs1_der_sha1;
+		der_size = sizeof(pkcs1_der_sha1);
+		hash_digest_size = SHA1_DIGEST_SIZE;
+	} else {
+		// SHA-256 signature.
+		der_data = pkcs1_der_sha256;
+		der_size = sizeof(pkcs1_der_sha256);
+		hash_digest_size = SHA256_DIGEST_SIZE;
+	}
 
-	// SHA-1 offset in the signature.
-	sig_sha1_offset = sig_len - SHA1_DIGEST_SIZE;
+	// DER separator offset.
+	sig_der_offset = sig_len - 1 - der_size - hash_digest_size;
+
+	// Hash offset in the signature.
+	sig_hash_offset = sig_len - hash_digest_size;
 
 	// Start offset within `data` for SHA-1 calculation.
 	// Includes sig->issuer[], which is always 64-byte aligned.
-	data_sha1_offset = 4 + sig_len + 0x3C;
+	data_hash_offset = 4 + sig_len + 0x3C;
 
 	// Check for the PKCS#1 header and padding.
 	// Reference: https://tools.ietf.org/html/rfc2313
@@ -227,8 +264,8 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 	// This might be specific to the debug issuer, though.
 	// Reference: https://github.com/iversonjimmy/acer_cloud_wifi_copy/blob/master/sw_x/gvm_core/internal/csl/src/cslrsa.c#L165
 	if (buf[1] == 0x02) {
-		// There's still a 0x00 byte before the SHA-1 hash, though.
-		if (buf[sig_sha1_offset-1] != 0x00) {
+		// There's still a 0x00 byte before the hash, though.
+		if (buf[sig_hash_offset-1] != 0x00) {
 			// Missing 0x00 byte.
 			ret |= SIG_FAIL_NO_SEPARATOR_ERROR | SIG_ERROR_INVALID;
 		}
@@ -240,20 +277,29 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 		}
 
 		// Check the DER identifier.
-		if (memcmp(&buf[sig_der_offset+1], pkcs1_der_sha1, sizeof(pkcs1_der_sha1)) != 0) {
+		if (memcmp(&buf[sig_der_offset+1], der_data, der_size) != 0) {
 			// Incorrect or missing DER identifier.
 			ret |= SIG_FAIL_DER_TYPE_ERROR | SIG_ERROR_INVALID;
 		}
 	}
 
-	// Check the SHA-1 hash.
-	sha1_init(&sha1);
-	sha1_update(&sha1, size - data_sha1_offset, &data[data_sha1_offset]);
-	sha1_digest(&sha1, sizeof(digest), digest);
-	if (memcmp(digest, &buf[sig_sha1_offset], sizeof(digest)) != 0) {
-		// SHA-1 does not match.
-		// If strncmp() succeeds, it's fakesigned.
-		if (!strncmp((const char*)digest, (const char*)&buf[sig_sha1_offset], sizeof(digest))) {
+	// Check the hash.
+	if (likely(!isSha2)) {
+		struct sha1_ctx sha1;
+		sha1_init(&sha1);
+		sha1_update(&sha1, size - data_hash_offset, &data[data_hash_offset]);
+		sha1_digest(&sha1, SHA1_DIGEST_SIZE, digest);
+	} else {
+		struct sha256_ctx sha256;
+		sha256_init(&sha256);
+		sha256_update(&sha256, size - data_hash_offset, &data[data_hash_offset]);
+		sha256_digest(&sha256, SHA256_DIGEST_SIZE, digest);
+	}
+
+	if (memcmp(digest, &buf[sig_hash_offset], hash_digest_size) != 0) {
+		// Hash does not match.
+		// [SHA-1 only] If strncmp() succeeds, it's fakesigned.
+		if (likely(!isSha2) && !strncmp((const char*)digest, (const char*)&buf[sig_hash_offset], sizeof(digest))) {
 			// Fakesigned.
 			ret |= SIG_FAIL_HASH_FAKE | SIG_ERROR_INVALID;
 		} else {
@@ -300,10 +346,12 @@ int cert_verify(const uint8_t *data, size_t size)
 	verify_cert = (const RVL_Cert*)data;
 	sig = &data[4];
 	switch (be32_to_cpu(verify_cert->signature_type)) {
-		case RVL_CERT_SIGTYPE_RSA4096:
+		case RVL_CERT_SIGTYPE_RSA4096_SHA1:
+		case WUP_CERT_SIGTYPE_RSA4096_SHA256:
 			sig_len = 4096/8;
 			break;
-		case RVL_CERT_SIGTYPE_RSA2048:
+		case RVL_CERT_SIGTYPE_RSA2048_SHA1:
+		case WUP_CERT_SIGTYPE_RSA2048_SHA256:
 			sig_len = 2048/8;
 			break;
 		default:
@@ -383,7 +431,7 @@ int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size)
 	}
 
 	// Zero out the signature and padding.
-	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
 	memset(ticket->signature, 0, sizeof(ticket->signature));
 	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
 
@@ -430,7 +478,7 @@ int cert_realsign_ticket(uint8_t *ticket_u8, size_t size, const RSA2048PrivateKe
 	}
 
 	// Zero out the padding.
-	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
 	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
 
 	// Calculate the SHA-1 hash.
@@ -468,7 +516,7 @@ int cert_fakesign_tmd(uint8_t *tmd, size_t size)
 	}
 
 	// Zero out the signature and padding.
-	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
 	memset(tmdHeader->signature, 0, sizeof(tmdHeader->signature));
 	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
 
@@ -514,7 +562,7 @@ int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key)
 	}
 
 	// Zero out the padding.
-	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048);
+	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
 	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
 
 	// Calculate the SHA-1 hash.

@@ -48,13 +48,15 @@ typedef enum {
 	RVL_PKI_UNKNOWN	= 0,	// unknown
 	RVL_PKI_DPKI	= 1,	// devel pki (debug)
 	RVL_PKI_PPKI	= 2,	// prod pki (retail)
+	WUP_PKI_DPKI	= 3,	// Wii U devel pki (debug)
+	WUP_PKI_PPKI	= 4,	// Wii U prod pki (retail)
 } RVL_PKI;
 
 // Certificate issuers.
 typedef enum {
 	RVL_CERT_ISSUER_UNKNOWN		= 0,
 
-	// dpki (devel; debug)
+	// Wii dpki (devel; debug)
 	RVL_CERT_ISSUER_DPKI_ROOT,	// Root
 	RVL_CERT_ISSUER_DPKI_CA,	// CA
 	RVL_CERT_ISSUER_DPKI_TICKET,	// XS
@@ -64,11 +66,18 @@ typedef enum {
 	RVL_CERT_ISSUER_DPKI_XS04,
 	RVL_CERT_ISSUER_DPKI_CP05,
 
-	// ppki (prod; retail)
+	// Wii ppki (prod; retail)
 	RVL_CERT_ISSUER_PPKI_ROOT,	// Root
 	RVL_CERT_ISSUER_PPKI_CA,	// CA
 	RVL_CERT_ISSUER_PPKI_TICKET,	// XS
 	RVL_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider
+
+	// Wii U dpki (devel; debug)
+	//WUP_CERT_ISSUER_DPKI_ROOT,	// Root (TODO)
+	WUP_CERT_ISSUER_DPKI_CA,	// CA
+	WUP_CERT_ISSUER_DPKI_TICKET,	// XS
+	WUP_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
+	WUP_CERT_ISSUER_DPKI_SP,	// SP (FIXME: What is SP?)
 
 	RVL_CERT_ISSUER_MAX,
 
@@ -77,6 +86,8 @@ typedef enum {
 	RVL_CERT_ISSUER_DPKI_MAX	= RVL_CERT_ISSUER_DPKI_CP05,
 	RVL_CERT_ISSUER_PPKI_MIN	= RVL_CERT_ISSUER_PPKI_ROOT,
 	RVL_CERT_ISSUER_PPKI_MAX	= RVL_CERT_ISSUER_PPKI_TMD,
+	WUP_CERT_ISSUER_DPKI_MIN	= WUP_CERT_ISSUER_DPKI_CA,
+	WUP_CERT_ISSUER_DPKI_MAX	= WUP_CERT_ISSUER_DPKI_SP,
 } RVL_Cert_Issuer;
 
 // Signature issuers.
@@ -151,9 +162,11 @@ unsigned int cert_get_size(RVL_Cert_Issuer issuer);
 
 // Signature types.
 typedef enum {
-	RVL_CERT_SIGTYPE_RSA4096	= 0x00010000,	// RSA-4096
-	RVL_CERT_SIGTYPE_RSA2048	= 0x00010001,	// RSA-2048
+	RVL_CERT_SIGTYPE_RSA4096_SHA1	= 0x00010000,	// RSA-4096 with SHA-1
+	RVL_CERT_SIGTYPE_RSA2048_SHA1	= 0x00010001,	// RSA-2048 with SHA-1
 	RVL_CERT_SIGTYPE_ECC		= 0x00010002,	// Elliptic Curve
+	WUP_CERT_SIGTYPE_RSA4096_SHA256	= 0x00010003,	// RSA-4096 with SHA-256
+	WUP_CERT_SIGTYPE_RSA2048_SHA256	= 0x00010004,	// RSA-2048 with SHA-256
 } RVL_Cert_SigType_e;
 
 // Signature lengths.
