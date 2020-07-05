@@ -32,7 +32,7 @@
 #include "certs/Root-dpki.h"
 #include "certs/Root-ppki.h"
 
-// Wii: dpki
+// Wii: dpki (Debug)
 #include "certs/Root-CA00000002.h"
 #include "certs/Root-CA00000002-XS00000006.h"
 #include "certs/Root-CA00000002-CP00000007.h"
@@ -40,26 +40,31 @@
 #include "certs/Root-CA00000002-XS00000004.h"
 #include "certs/Root-CA00000002-CP00000005.h"
 
-// Wii: ppki
+// Wii: ppki (Retail)
 #include "certs/Root-CA00000001.h"
 #include "certs/Root-CA00000001-XS00000003.h"
 #include "certs/Root-CA00000001-CP00000004.h"
 
-// 3DS: dpki
+// 3DS: dpki (Debug)
 #include "certs/Root-CA00000004.h"
 #include "certs/Root-CA00000004-XS00000009.h"
 #include "certs/Root-CA00000004-CP0000000a.h"
 
-// 3DS: ppki
+// 3DS: ppki (Retail)
 #include "certs/Root-CA00000003.h"
 #include "certs/Root-CA00000003-XS0000000c.h"
 #include "certs/Root-CA00000003-CP0000000b.h"
 
-// Wii U: dpki
-//#include "certs/Root-CA00000004.h"	// included above for CTR
+// Wii U: dpki (Debug)
+//#include "certs/Root-CA00000004.h"		// included above for CTR
 #include "certs/Root-CA00000004-XS0000000f.h"
 #include "certs/Root-CA00000004-CP00000010.h"
 #include "certs/Root-CA00000004-SP0000000e.h"
+
+// Wii U: ppki (Retail)
+//#include "certs/Root-CA00000003.h"		// included above for 3DS
+//#include "certs/Root-CA00000003-XS0000000c.h"	// included above for 3DS
+//#include "certs/Root-CA00000003-CP0000000b.h"	// included above for 3DS
 
 // Encryption keys. (AES-128)
 const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16] = {
@@ -88,7 +93,7 @@ const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
 	"Root",				// RVL_CERT_ISSUER_DPKI_ROOT
 	"Root",				// RVL_CERT_ISSUER_PPKI_ROOT
 
-	// Wii: Debug
+	// Wii: dpki (Debug)
 	"Root-CA00000002",		// RVL_CERT_ISSUER_DPKI_CA
 	"Root-CA00000002-XS00000006",	// RVL_CERT_ISSUER_DPKI_TICKET
 	"Root-CA00000002-CP00000007",	// RVL_CERT_ISSUER_DPKI_TMD
@@ -97,26 +102,30 @@ const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
 	"Root-CA00000002-XS00000004",	// RVL_CERT_ISSUER_DPKI_XS04
 	"Root-CA00000002-CP00000005",	// RVL_CERT_ISSUER_DPKI_CP05
 
-	// Wii: Retail
+	// Wii: ppki (Retail)
 	"Root-CA00000001",		// RVL_CERT_ISSUER_PPKI_CA
 	"Root-CA00000001-XS00000003",	// RVL_CERT_ISSUER_PPKI_TICKET
 	"Root-CA00000001-CP00000004",	// RVL_CERT_ISSUER_PPKI_TMD
 
-	// 3DS: Debug
+	// 3DS: dpki (Debug)
 	"Root-CA00000004",		// CTR_CERT_ISSUER_DPKI_CA
 	"Root-CA00000004-XS00000009",	// CTR_CERT_ISSUER_DPKI_TICKET
 	"Root-CA00000004-CP0000000a",	// CTR_CERT_ISSUER_DPKI_TMD
 
-	// 3DS: Retail
+	// 3DS: ppki (Retail)
 	"Root-CA00000003",		// CTR_CERT_ISSUER_PPKI_CA
 	"Root-CA00000003-XS0000000c",	// CTR_CERT_ISSUER_PPKI_TICKET
 	"Root-CA00000003-CP0000000b",	// CTR_CERT_ISSUER_PPKI_TMD
 
-	// Wii U: Debug
+	// Wii U: dpki (Debug)
 	"Root-CA00000004",		// WUP_CERT_ISSUER_DPKI_CA (same as 3DS)
 	"Root-CA00000004-XS0000000f",	// WUP_CERT_ISSUER_DPKI_TICKET
 	"Root-CA00000004-CP00000010",	// WUP_CERT_ISSUER_DPKI_TMD
-	"Root-CA00000004-SP0000000e",	// WUP_CERT_ISSUER_DPKI_SP
+
+	// Wii U: ppki (Retail)
+	"Root-CA00000003",		// WUP_CERT_ISSUER_PPKI_CA (same as 3DS)
+	"Root-CA00000003-XS0000000c",	// WUP_CERT_ISSUER_PPKI_TICKET (same as 3DS)
+	"Root-CA00000003-CP0000000b",	// WUP_CERT_ISSUER_PPKI_TMD (same as 3DS)
 };
 
 /** Certificate access functions. **/
@@ -162,11 +171,10 @@ RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI
 			min = WUP_CERT_ISSUER_DPKI_MIN;
 			max = WUP_CERT_ISSUER_DPKI_MAX;
 			break;
-		/*case WUP_PKI_PPKI: // TODO
+		case WUP_PKI_PPKI:
 			min = WUP_CERT_ISSUER_PPKI_MIN;
-			min = WUP_CERT_ISSUER_PPKI_MAX;
+			max = WUP_CERT_ISSUER_PPKI_MAX;
 			break;
-		*/
 		default:
 			// If the issuer is "Root" and a PKI isn't specified, something's wrong.
 			if (pki == RVL_PKI_UNKNOWN && !strncmp(s_issuer, "Root", 5)) {
@@ -233,6 +241,11 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer)
 		(const RVL_Cert*)&Root_CA00000004_XS0000000f,	// WUP_CERT_ISSUER_DPKI_TICKET
 		(const RVL_Cert*)&Root_CA00000004_CP00000010,	// WUP_CERT_ISSUER_DPKI_TMD
 		(const RVL_Cert*)&Root_CA00000004_SP0000000e,	// WUP_CERT_ISSUER_DPKI_SP
+
+		// Wii U: ppki (Retail)
+		(const RVL_Cert*)&Root_CA00000003,		// CTR_CERT_ISSUER_PPKI_CA (same as 3DS)
+		(const RVL_Cert*)&Root_CA00000003_XS0000000c,	// CTR_CERT_ISSUER_PPKI_TICKET (same as 3DS)
+		(const RVL_Cert*)&Root_CA00000003_CP0000000b,	// CTR_CERT_ISSUER_PPKI_TMD (same as 3DS)
 	};
 
 	assert(issuer > RVL_CERT_ISSUER_UNKNOWN && issuer < RVL_CERT_ISSUER_MAX);
@@ -282,9 +295,9 @@ RVL_PKI cert_get_pki_from_issuer(RVL_Cert_Issuer issuer)
 		ret = CTR_PKI_PPKI;
 	} else if (issuer >= WUP_CERT_ISSUER_DPKI_MIN && issuer <= WUP_CERT_ISSUER_DPKI_MIN) {
 		ret = WUP_PKI_DPKI;
-	} /*else if (issuer >= WUP_CERT_ISSUER_PPKI_MIN && issuer <= WUP_CERT_ISSUER_PPKI_MIN) {
+	} else if (issuer >= WUP_CERT_ISSUER_PPKI_MIN && issuer <= WUP_CERT_ISSUER_PPKI_MIN) {
 		ret = WUP_PKI_PPKI;
-	}*/
+	}
 
 	return ret;
 }
@@ -331,6 +344,11 @@ unsigned int cert_get_size(RVL_Cert_Issuer issuer)
 		(unsigned int)sizeof(Root_CA00000004_XS0000000f),	// WUP_CERT_ISSUER_DPKI_TICKET
 		(unsigned int)sizeof(Root_CA00000004_CP00000010),	// WUP_CERT_ISSUER_DPKI_TMD
 		(unsigned int)sizeof(Root_CA00000004_SP0000000e),	// WUP_CERT_ISSUER_DPKI_SP
+
+		// Wii U: ppki (Retail)
+		(unsigned int)sizeof(Root_CA00000003),			// WUP_CERT_ISSUER_PPKI_CA (same as 3DS)
+		(unsigned int)sizeof(Root_CA00000003_XS0000000c),	// WUP_CERT_ISSUER_PPKI_TICKET (same as 3DS)
+		(unsigned int)sizeof(Root_CA00000003_CP0000000b),	// WUP_CERT_ISSUER_PPKI_TMD (same as 3DS)
 	};
 
 	assert(issuer > RVL_CERT_ISSUER_UNKNOWN && issuer < RVL_CERT_ISSUER_MAX);

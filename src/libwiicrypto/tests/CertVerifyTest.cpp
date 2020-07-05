@@ -137,10 +137,14 @@ INSTANTIATE_TEST_CASE_P(certVerifyTest, CertVerifyTest,
 		CTR_CERT_ISSUER_PPKI_TICKET,
 		CTR_CERT_ISSUER_PPKI_TMD,
 
-		//WUP_CERT_ISSUER_DPKI_CA,	// same as CTR
+		//WUP_CERT_ISSUER_DPKI_CA,	// same as 3DS
 		WUP_CERT_ISSUER_DPKI_TICKET,
 		WUP_CERT_ISSUER_DPKI_TMD,
 		WUP_CERT_ISSUER_DPKI_SP
+
+		//WUP_CERT_ISSUER_PPKI_CA,	// same as 3DS
+		//WUP_CERT_ISSUER_PPKI_TICKET,	// same as 3DS
+		//WUP_CERT_ISSUER_PPKI_TMD	// same as 3DS
 	), CertVerifyTest::test_case_suffix_generator);
 } }
 

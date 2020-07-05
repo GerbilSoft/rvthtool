@@ -97,6 +97,11 @@ typedef enum {
 	WUP_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
 	WUP_CERT_ISSUER_DPKI_SP,	// SP (FIXME: What is SP?)
 
+	// Wii U ppki (prod; retail)
+	WUP_CERT_ISSUER_PPKI_CA,	// CA (same as 3DS)
+	WUP_CERT_ISSUER_PPKI_TICKET,	// XS (same as 3DS)
+	WUP_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider (same as 3DS)
+
 	RVL_CERT_ISSUER_MAX,
 
 	// Min/max values.
@@ -112,6 +117,8 @@ typedef enum {
 
 	WUP_CERT_ISSUER_DPKI_MIN	= WUP_CERT_ISSUER_DPKI_CA,
 	WUP_CERT_ISSUER_DPKI_MAX	= WUP_CERT_ISSUER_DPKI_SP,
+	WUP_CERT_ISSUER_PPKI_MIN	= WUP_CERT_ISSUER_PPKI_CA,
+	WUP_CERT_ISSUER_PPKI_MAX	= WUP_CERT_ISSUER_PPKI_TMD,
 } RVL_Cert_Issuer;
 
 // Signature issuers.
