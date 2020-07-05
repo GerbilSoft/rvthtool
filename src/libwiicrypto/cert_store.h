@@ -198,6 +198,8 @@ typedef enum {
 	RVL_CERT_SIGTYPE_ECC		= 0x00010002,	// Elliptic Curve
 	WUP_CERT_SIGTYPE_RSA4096_SHA256	= 0x00010003,	// RSA-4096 with SHA-256
 	WUP_CERT_SIGTYPE_RSA2048_SHA256	= 0x00010004,	// RSA-2048 with SHA-256
+
+	WUP_CERT_SIGTYPE_FLAG_DISC	= 0x00020000,	// Set for disc titles
 } RVL_Cert_SigType_e;
 
 // Signature lengths.
