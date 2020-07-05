@@ -63,8 +63,11 @@ typedef enum {
 typedef enum {
 	RVL_CERT_ISSUER_UNKNOWN		= 0,
 
+	// Root certificates
+	RVL_CERT_ISSUER_DPKI_ROOT,	// Root (dpki)
+	RVL_CERT_ISSUER_PPKI_ROOT,	// Root (ppki)
+
 	// Wii dpki (devel; debug)
-	RVL_CERT_ISSUER_DPKI_ROOT,	// Root
 	RVL_CERT_ISSUER_DPKI_CA,	// CA
 	RVL_CERT_ISSUER_DPKI_TICKET,	// XS
 	RVL_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
@@ -74,25 +77,21 @@ typedef enum {
 	RVL_CERT_ISSUER_DPKI_CP05,
 
 	// Wii ppki (prod; retail)
-	RVL_CERT_ISSUER_PPKI_ROOT,	// Root
 	RVL_CERT_ISSUER_PPKI_CA,	// CA
 	RVL_CERT_ISSUER_PPKI_TICKET,	// XS
 	RVL_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider
 
 	// 3DS dpki (devel; debug)
-	//CTR_CERT_ISSUER_DPKI_ROOT,	// Root (TODO)
 	CTR_CERT_ISSUER_DPKI_CA,	// CA
 	CTR_CERT_ISSUER_DPKI_TICKET,	// XS
 	CTR_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
 
 	// 3DS ppki (prod; retail)
-	//CTR_CERT_ISSUER_PPKI_ROOT,	// Root (TODO)
 	CTR_CERT_ISSUER_PPKI_CA,	// CA
 	CTR_CERT_ISSUER_PPKI_TICKET,	// XS
 	CTR_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider
 
 	// Wii U dpki (devel; debug)
-	//WUP_CERT_ISSUER_DPKI_ROOT,	// Root (TODO) (same as 3DS?)
 	WUP_CERT_ISSUER_DPKI_CA,	// CA (same as 3DS)
 	WUP_CERT_ISSUER_DPKI_TICKET,	// XS
 	WUP_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider

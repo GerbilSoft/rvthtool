@@ -61,8 +61,10 @@ ADD_EXECUTABLE(bin2h bin2h.c)
 ################
 
 SET(certs_FILES
+	certs/Root-dpki.cert
+	certs/Root-ppki.cert
+
 	# Wii: dpki
-	certs/Root-RVL-dpki.cert
 	certs/Root-CA00000002.cert
 	certs/Root-CA00000002-XS00000006.cert
 	certs/Root-CA00000002-CP00000007.cert
@@ -71,7 +73,6 @@ SET(certs_FILES
 	certs/Root-CA00000002-CP00000005.cert
 
 	# Wii: ppki
-	certs/Root-RVL-ppki.cert
 	certs/Root-CA00000001.cert
 	certs/Root-CA00000001-XS00000003.cert
 	certs/Root-CA00000001-CP00000004.cert
