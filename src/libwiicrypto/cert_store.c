@@ -969,9 +969,11 @@ RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI
 		case WUP_PKI_DPKI:
 			min = WUP_CERT_ISSUER_DPKI_MIN;
 			min = WUP_CERT_ISSUER_DPKI_MAX;
+			break;
 		/*case WUP_PKI_PPKI: // TODO
 			min = WUP_CERT_ISSUER_PPKI_MIN;
 			min = WUP_CERT_ISSUER_PPKI_MAX;
+			break;
 		*/
 		default:
 			// If the issuer is "Root" and a PKI isn't specified, something's wrong.
