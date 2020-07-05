@@ -46,10 +46,17 @@ extern const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16];
 // Public key infrastructure.
 typedef enum {
 	RVL_PKI_UNKNOWN	= 0,	// unknown
-	RVL_PKI_DPKI	= 1,	// devel pki (debug)
-	RVL_PKI_PPKI	= 2,	// prod pki (retail)
-	WUP_PKI_DPKI	= 3,	// Wii U devel pki (debug)
-	WUP_PKI_PPKI	= 4,	// Wii U prod pki (retail)
+	RVL_PKI_DPKI,	// devel pki (debug)
+	RVL_PKI_PPKI,	// prod pki (retail)
+
+	// NOTE: 3DS and Wii U use the same PKIs.
+	// Keeping them separate here for various reasons.
+
+	CTR_PKI_DPKI,	// 3DS/Wii U devel pki (debug)
+	CTR_PKI_PPKI,	// 3DS/Wii U prod pki (retail)
+
+	WUP_PKI_DPKI,	// 3DS/Wii U devel pki (debug)
+	WUP_PKI_PPKI,	// 3DS/Wii U prod pki (retail)
 } RVL_PKI;
 
 // Certificate issuers.
@@ -72,6 +79,12 @@ typedef enum {
 	RVL_CERT_ISSUER_PPKI_TICKET,	// XS
 	RVL_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider
 
+	// 3DS dpki (devel; debug)
+	//CTR_CERT_ISSUER_DPKI_ROOT,	// Root (TODO)
+	CTR_CERT_ISSUER_DPKI_CA,	// CA
+	CTR_CERT_ISSUER_DPKI_TICKET,	// XS
+	CTR_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
+
 	// 3DS ppki (prod; retail)
 	//CTR_CERT_ISSUER_PPKI_ROOT,	// Root (TODO)
 	CTR_CERT_ISSUER_PPKI_CA,	// CA
@@ -79,8 +92,8 @@ typedef enum {
 	CTR_CERT_ISSUER_PPKI_TMD,	// CP: Content Provider
 
 	// Wii U dpki (devel; debug)
-	//WUP_CERT_ISSUER_DPKI_ROOT,	// Root (TODO)
-	WUP_CERT_ISSUER_DPKI_CA,	// CA
+	//WUP_CERT_ISSUER_DPKI_ROOT,	// Root (TODO) (same as 3DS?)
+	WUP_CERT_ISSUER_DPKI_CA,	// CA (same as 3DS)
 	WUP_CERT_ISSUER_DPKI_TICKET,	// XS
 	WUP_CERT_ISSUER_DPKI_TMD,	// CP: Content Provider
 	WUP_CERT_ISSUER_DPKI_SP,	// SP (FIXME: What is SP?)
@@ -93,6 +106,8 @@ typedef enum {
 	RVL_CERT_ISSUER_PPKI_MIN	= RVL_CERT_ISSUER_PPKI_ROOT,
 	RVL_CERT_ISSUER_PPKI_MAX	= RVL_CERT_ISSUER_PPKI_TMD,
 
+	CTR_CERT_ISSUER_DPKI_MIN	= CTR_CERT_ISSUER_DPKI_CA,
+	CTR_CERT_ISSUER_DPKI_MAX	= CTR_CERT_ISSUER_DPKI_TMD,
 	CTR_CERT_ISSUER_PPKI_MIN	= CTR_CERT_ISSUER_PPKI_CA,
 	CTR_CERT_ISSUER_PPKI_MAX	= CTR_CERT_ISSUER_PPKI_TMD,
 

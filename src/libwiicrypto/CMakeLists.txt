@@ -76,6 +76,12 @@ SET(certs_FILES
 	certs/Root-CA00000001-XS00000003.cert
 	certs/Root-CA00000001-CP00000004.cert
 
+	# 3DS: dpki
+	#certs/Root-CTR-dpki.cert
+	certs/Root-CA00000004.cert
+	certs/Root-CA00000004-XS00000009.cert
+	certs/Root-CA00000004-CP0000000a.cert
+
 	# 3DS: ppki
 	#certs/Root-CTR-ppki.cert
 	certs/Root-CA00000003.cert

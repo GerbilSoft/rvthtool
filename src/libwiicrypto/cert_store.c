@@ -43,6 +43,12 @@
 #include "certs/Root-CA00000001-XS00000003.h"
 #include "certs/Root-CA00000001-CP00000004.h"
 
+// 3DS: dpki
+//#include "certs/Root-CTR-ppki.h"
+#include "certs/Root-CA00000004.h"
+#include "certs/Root-CA00000004-XS00000009.h"
+#include "certs/Root-CA00000004-CP0000000a.h"
+
 // 3DS: ppki
 //#include "certs/Root-CTR-ppki.h"
 #include "certs/Root-CA00000003.h"
@@ -51,7 +57,7 @@
 
 // Wii U: dpki
 //#include "certs/Root-WUP-dpki.h"
-#include "certs/Root-CA00000004.h"
+//#include "certs/Root-CA00000004.h"	// included above for CTR
 #include "certs/Root-CA00000004-XS0000000f.h"
 #include "certs/Root-CA00000004-CP00000010.h"
 #include "certs/Root-CA00000004-SP0000000e.h"
@@ -95,6 +101,12 @@ const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
 	"Root-CA00000001-XS00000003",	// RVL_CERT_ISSUER_PPKI_TICKET
 	"Root-CA00000001-CP00000004",	// RVL_CERT_ISSUER_PPKI_TMD
 
+	// 3DS: Debug
+	//"Root",			// CTR_CERT_ISSUER_DPKI_ROOT (TODO)
+	"Root-CA00000004",		// CTR_CERT_ISSUER_DPKI_CA
+	"Root-CA00000004-XS00000009",	// CTR_CERT_ISSUER_DPKI_TICKET
+	"Root-CA00000004-CP0000000a",	// CTR_CERT_ISSUER_DPKI_TMD
+
 	// 3DS: Retail
 	//"Root",			// CTR_CERT_ISSUER_PPKI_ROOT (TODO)
 	"Root-CA00000003",		// CTR_CERT_ISSUER_PPKI_CA
@@ -103,7 +115,7 @@ const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
 
 	// Wii U: Debug
 	//"Root",				// WUP_CERT_ISSUER_DPKI_ROOT (TODO)
-	"Root-CA00000004",		// WUP_CERT_ISSUER_DPKI_CA
+	"Root-CA00000004",		// WUP_CERT_ISSUER_DPKI_CA (same as 3DS)
 	"Root-CA00000004-XS0000000f",	// WUP_CERT_ISSUER_DPKI_TICKET
 	"Root-CA00000004-CP00000010",	// WUP_CERT_ISSUER_DPKI_TMD
 	"Root-CA00000004-SP0000000e",	// WUP_CERT_ISSUER_DPKI_SP
@@ -139,6 +151,14 @@ RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI
 		case RVL_PKI_PPKI:
 			min = RVL_CERT_ISSUER_PPKI_MIN;
 			max = RVL_CERT_ISSUER_PPKI_MAX;
+			break;
+		case CTR_PKI_DPKI:
+			min = CTR_CERT_ISSUER_DPKI_MIN;
+			max = CTR_CERT_ISSUER_DPKI_MAX;
+			break;
+		case CTR_PKI_PPKI:
+			min = CTR_CERT_ISSUER_PPKI_MIN;
+			max = CTR_CERT_ISSUER_PPKI_MAX;
 			break;
 		case WUP_PKI_DPKI:
 			min = WUP_CERT_ISSUER_DPKI_MIN;
@@ -198,6 +218,12 @@ const RVL_Cert *cert_get(RVL_Cert_Issuer issuer)
 		(const RVL_Cert*)&Root_CA00000001_XS00000003,	// RVL_CERT_ISSUER_PPKI_TICKET
 		(const RVL_Cert*)&Root_CA00000001_CP00000004,	// RVL_CERT_ISSUER_PPKI_TMD
 
+		// 3DS: Debug
+		//(const RVL_Cert*)&Root_CTR_ppki,		// CTR_CERT_ISSUER_DPKI_ROOT (TODO)
+		(const RVL_Cert*)&Root_CA00000004,		// CTR_CERT_ISSUER_DPKI_CA
+		(const RVL_Cert*)&Root_CA00000004_XS00000009,	// CTR_CERT_ISSUER_DPKI_TICKET
+		(const RVL_Cert*)&Root_CA00000004_CP0000000a,	// CTR_CERT_ISSUER_DPKI_TMD
+
 		// 3DS: Retail
 		//(const RVL_Cert*)&Root_CTR_ppki,		// CTR_CERT_ISSUER_PPKI_ROOT (TODO)
 		(const RVL_Cert*)&Root_CA00000003,		// CTR_CERT_ISSUER_PPKI_CA
@@ -248,7 +274,15 @@ RVL_PKI cert_get_pki_from_issuer(RVL_Cert_Issuer issuer)
 		ret = RVL_PKI_DPKI;
 	} if (issuer >= RVL_CERT_ISSUER_PPKI_MIN && issuer <= RVL_CERT_ISSUER_PPKI_MAX) {
 		ret = RVL_PKI_PPKI;
-	}
+	} else if (issuer >= CTR_CERT_ISSUER_DPKI_MIN && issuer <= CTR_CERT_ISSUER_DPKI_MIN) {
+		ret = CTR_PKI_DPKI;
+	} else if (issuer >= CTR_CERT_ISSUER_PPKI_MIN && issuer <= CTR_CERT_ISSUER_PPKI_MIN) {
+		ret = CTR_PKI_PPKI;
+	} else if (issuer >= WUP_CERT_ISSUER_DPKI_MIN && issuer <= WUP_CERT_ISSUER_DPKI_MIN) {
+		ret = WUP_PKI_DPKI;
+	} /*else if (issuer >= WUP_CERT_ISSUER_PPKI_MIN && issuer <= WUP_CERT_ISSUER_PPKI_MIN) {
+		ret = WUP_PKI_PPKI;
+	}*/
 
 	return ret;
 }
@@ -277,6 +311,12 @@ unsigned int cert_get_size(RVL_Cert_Issuer issuer)
 		(unsigned int)sizeof(Root_CA00000001),			// RVL_CERT_ISSUER_PPKI_CA
 		(unsigned int)sizeof(Root_CA00000001_XS00000003),	// RVL_CERT_ISSUER_PPKI_TICKET
 		(unsigned int)sizeof(Root_CA00000001_CP00000004),	// RVL_CERT_ISSUER_PPKI_TMD
+
+		// 3DS: Debug
+		//(unsigned int)sizeof(Root_CTR_dpki),			// CTR_CERT_ISSUER_DPKI_ROOT (TODO)
+		(unsigned int)sizeof(Root_CA00000004),			// CTR_CERT_ISSUER_DPKI_CA
+		(unsigned int)sizeof(Root_CA00000004_XS00000009),	// CTR_CERT_ISSUER_DPKI_TICKET
+		(unsigned int)sizeof(Root_CA00000004_CP0000000a),	// CTR_CERT_ISSUER_DPKI_TMD
 
 		// 3DS: Retail
 		//(unsigned int)sizeof(Root_CTR_ppki),			// CTR_CERT_ISSUER_PPKI_ROOT (TODO)
