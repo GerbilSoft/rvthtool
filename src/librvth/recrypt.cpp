@@ -563,7 +563,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		} else {
 			// Debug: Use the real signing keys.
 			// Debug IOS requires a valid signature.
-			cert_realsign_ticket((uint8_t*)&hdr_new.ticket, sizeof(hdr_new.ticket), &rvth_privkey_debug_ticket);
+			cert_realsign_ticket((uint8_t*)&hdr_new.ticket, sizeof(hdr_new.ticket), &rvth_privkey_RVL_dpki_ticket);
 		}
 
 		// Starting position.
@@ -605,7 +605,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		} else {
 			// Debug: Use the real signing keys.
 			// Debug IOS requires a valid signature.
-			cert_realsign_tmd(&hdr_new.u8[data_pos], tmd_size, &rvth_privkey_debug_tmd);
+			cert_realsign_tmd(&hdr_new.u8[data_pos], tmd_size, &rvth_privkey_RVL_dpki_tmd);
 		}
 
 		// TMD parameters.

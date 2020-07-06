@@ -617,7 +617,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	} else {
 		// Debug: Use the real signing keys.
 		// Debug IOS requires a valid signature.
-		cert_realsign_ticket(buf->u8, wadInfo.ticket_size, &rvth_privkey_debug_ticket);
+		cert_realsign_ticket(buf->u8, wadInfo.ticket_size, &rvth_privkey_RVL_dpki_ticket);
 	}
 
 	// Write the ticket.
@@ -667,7 +667,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	} else {
 		// Debug: Use the real signing keys.
 		// Debug IOS requires a valid signature.
-		cert_realsign_tmd(buf->u8, wadInfo.tmd_size, &rvth_privkey_debug_tmd);
+		cert_realsign_tmd(buf->u8, wadInfo.tmd_size, &rvth_privkey_RVL_dpki_tmd);
 	}
 
 	// Write the TMD.
