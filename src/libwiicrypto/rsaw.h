@@ -58,19 +58,16 @@ int rsaw_encrypt(uint8_t *buf, size_t buf_size,
 
 /** Private key stuff. **/
 
-// These private keys consist of p, q, a, b, and c.
-// Technically, only p and q are important, but calculating
-// a, b, and c is a pain.
+// These private keys consist of p, q, and e.
+// Nettle also requires a, b, and c, but those can be
+// calculated at runtime.
 
 typedef struct _RSA2048PrivateKey {
 	uint8_t p[128];
 	uint8_t q[128];
-	uint8_t a[128];
-	uint8_t b[128];
-	uint8_t c[128];
 
 	// Exponent. (Same as the public key.)
-	uint32_t exponent;
+	uint32_t e;
 } RSA2048PrivateKey;
 
 /**

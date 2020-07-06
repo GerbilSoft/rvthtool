@@ -307,6 +307,13 @@ int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 	const uint8_t *sha1)
 {
 	struct rsa_private_key key;
+	struct {
+		mpz_t e;	// e
+		mpz_t p1;	// p-1
+		mpz_t q1;	// q-1
+		mpz_t phi;	// (p-1)*(q-1)
+		mpz_t d;	// 1 / (e mod phi)
+	} bncalc;
 	mpz_t signature;
 	int ret = 0;
 
@@ -322,18 +329,35 @@ int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 		return -EINVAL;
 	}
 
+	// Initialize the temporary bignums.
+	mpz_init(bncalc.e);
+	mpz_init(bncalc.p1);
+	mpz_init(bncalc.q1);
+	mpz_init(bncalc.phi);
+	mpz_init(bncalc.d);
+
 	// Initialize the RSA private key.
 	rsa_private_key_init(&key);
 	mpz_import(key.p, 1, 1, sizeof(priv_key_data->p), 1, 0, priv_key_data->p);
 	mpz_import(key.q, 1, 1, sizeof(priv_key_data->q), 1, 0, priv_key_data->q);
-	mpz_import(key.a, 1, 1, sizeof(priv_key_data->a), 1, 0, priv_key_data->a);
-	mpz_import(key.b, 1, 1, sizeof(priv_key_data->b), 1, 0, priv_key_data->b);
-	mpz_import(key.c, 1, 1, sizeof(priv_key_data->c), 1, 0, priv_key_data->c);
 	if (!rsa_private_key_prepare(&key)) {
 		// Error importing the private key.
 		errno = EIO;
 		return -EIO;
 	}
+
+	// Calculate a, b, and c.
+	mpz_sub_ui(bncalc.p1, key.p, 1);
+	mpz_sub_ui(bncalc.q1, key.q, 1);
+	mpz_mul(bncalc.phi, bncalc.p1, bncalc.q1);
+	mpz_set_ui(bncalc.e, priv_key_data->e);
+	mpz_invert(bncalc.d, bncalc.e, bncalc.phi);
+	// a = d % (p - 1)
+	mpz_fdiv_r(key.a, bncalc.d, bncalc.p1);
+	// b = d % (q - 1)
+	mpz_fdiv_r(key.b, bncalc.d, bncalc.q1);
+	// c = q^{-1} (mod p)
+	mpz_invert(key.c, key.q, key.p);
 
 	// Create the signature.
 	mpz_init(signature);
@@ -359,6 +383,11 @@ int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 end:
 	rsa_private_key_clear(&key);
 	mpz_clear(signature);
+	mpz_clear(bncalc.e);
+	mpz_clear(bncalc.p1);
+	mpz_clear(bncalc.q1);
+	mpz_clear(bncalc.phi);
+	mpz_clear(bncalc.d);
 	if (ret != 0) {
 		errno = -ret;
 	}
