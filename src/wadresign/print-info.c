@@ -38,7 +38,7 @@ typedef union _WAD_Header {
  * @param issuer RVL_Cert_Issuer
  * @return "Retail", "Debug", or "Unknown".
  */
-const char *issuer_type(RVL_Cert_Issuer issuer)
+static const char *issuer_type(RVL_Cert_Issuer issuer)
 {
 	switch (issuer) {
 		default:
@@ -485,7 +485,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	printf("- Ticket Signature: %s%s\n",
 		s_issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
-	// Check the ticket issuer and signature.
+	// Check the TMD issuer and signature.
 	s_issuer_tmd = issuer_type(cert_get_issuer_from_name(tmdHeader->issuer));
 	sig_status_tmd = sig_verify(tmd_u8, wadInfo.tmd_size);
 	printf("- TMD Signature:    %s%s\n",
