@@ -14,7 +14,14 @@ IF(WIN32)
 ENDIF(WIN32)
 
 # Sources.
-SET(nusresign_SRCS main.c)
+SET(nusresign_SRCS
+	main.c
+	resign-nus.cpp
+	)
+# Headers.
+SET(nusresign_H
+	resign-nus.hpp
+	)
 IF(WIN32)
 	SET(nusresign_RC resource.rc)
 ENDIF(WIN32)
@@ -50,6 +57,9 @@ TARGET_INCLUDE_DIRECTORIES(nusresign
 	)
 
 TARGET_LINK_LIBRARIES(nusresign PRIVATE wiicrypto)
+IF(MSVC)
+	TARGET_LINK_LIBRARIES(nusresign PRIVATE getopt_msvc)
+ENDIF(MSVC)
 
 # CMake-3.7.2 doesn't add include paths to windres.
 IF(MINGW)
