@@ -38,4 +38,4 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 }
 #endif
 
-#endif /* __RVTHTOOL_WADRESIGN_PRINT_INFO_H__ */
+#endif /* __RVTHTOOL_WADRESIGN_RESIGN_WAD_H__ */

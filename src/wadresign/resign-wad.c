@@ -1,6 +1,6 @@
 /***************************************************************************
  * RVT-H Tool: WAD Resigner                                                *
- * print-info.c: Print WAD information.                                    *
+ * resign-wad.c: Re-sign a WAD file.                                       *
  *                                                                         *
  * Copyright (c) 2018-2020 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *

@@ -2,20 +2,8 @@
  * RVT-H Tool: WAD Resigner                                                *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "config.version.h"
@@ -199,11 +187,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				}
 				break;
 
-			case 'h':
+			case _T('h'):
 				print_help(argv[0]);
 				return EXIT_SUCCESS;
 
-			case '?':
+			case _T('?'):
 			default:
 				print_error(argv[0], NULL);
 				return EXIT_FAILURE;
