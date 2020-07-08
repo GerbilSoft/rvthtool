@@ -2,20 +2,8 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * wii_structs.h: Nintendo Wii data structures.                            *
  *                                                                         *
- * Copyright (c) 2016-2018 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2016-2020 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 // NOTE: This file has Wii-specific structs only.
@@ -31,8 +19,6 @@
 extern "C" {
 #endif
 
-#pragma pack(1)
-
 // 34-bit value stored in uint32_t.
 // The value must be lshifted by 2.
 typedef uint32_t uint34_rshift2_t;
@@ -41,13 +27,13 @@ typedef uint32_t uint34_rshift2_t;
  * Wii volume group table.
  * Contains information about the (maximum of) four volume groups.
  * References:
- * - http://wiibrew.org/wiki/Wii_Disc#Partitions_information
+ * - https://wiibrew.org/wiki/Wii_Disc#Partitions_information
  * - http://blog.delroth.net/2011/06/reading-wii-discs-with-python/
  *
  * All fields are big-endian.
  */
 #define RVL_VolumeGroupTable_ADDRESS 0x40000
-typedef struct PACKED _RVL_VolumeGroupTable {
+typedef struct _RVL_VolumeGroupTable {
 	struct {
 		uint32_t count;		// Number of partitions in this volume group.
 		uint34_rshift2_t addr;	// Start address of this table, rshifted by 2.
@@ -57,25 +43,25 @@ typedef struct PACKED _RVL_VolumeGroupTable {
 /**
  * Wii partition table entry.
  * Contains information about an individual partition.
- * Reference: http://wiibrew.org/wiki/Wii_Disc#Partition_table_entry
+ * Reference: https://wiibrew.org/wiki/Wii_Disc#Partition_table_entry
  *
  * All fields are big-endian.
  */
-typedef struct PACKED _RVL_PartitionTableEntry {
+typedef struct _RVL_PartitionTableEntry {
 	uint34_rshift2_t addr;	// Start address of this partition, rshifted by 2.
 	uint32_t type;		// Type of partition. (0 == Game, 1 == Update, 2 == Channel Installer, other = title ID)
 } RVL_PartitionTableEntry;
 
 // Wii ticket constants.
-#define RVL_SIGNATURE_TYPE_RSA2048 0x10001
+#define RVL_SIGNATURE_TYPE_RSA2048_SHA1 0x10001
 #define RVL_COMMON_KEY_INDEX_DEFAULT 0
 #define RVL_COMMON_KEY_INDEX_KOREAN 1
 
 /**
  * Time limit structs for Wii ticket.
- * Reference: http://wiibrew.org/wiki/Ticket
+ * Reference: https://wiibrew.org/wiki/Ticket
  */
-typedef struct PACKED _RVL_TimeLimit {
+typedef struct _RVL_TimeLimit {
 	uint32_t enable;	// 1 == enable; 0 == disable
 	uint32_t seconds;	// Time limit, in seconds.
 } RVL_TimeLimit;
@@ -85,7 +71,7 @@ ASSERT_STRUCT(RVL_TimeLimit, 8);
  * Title ID struct/union.
  * TODO: Verify operation on big-endian systems.
  */
-typedef union PACKED _RVL_TitleID_t {
+typedef union _RVL_TitleID_t {
 	uint64_t id;
 	struct {
 		uint32_t hi;
@@ -97,21 +83,24 @@ ASSERT_STRUCT(RVL_TitleID_t, 8);
 
 /**
  * Wii ticket.
- * Reference: http://wiibrew.org/wiki/Ticket
+ * Reference: https://wiibrew.org/wiki/Ticket
  */
+#pragma pack(1)
 typedef struct PACKED _RVL_Ticket {
-	uint32_t signature_type;	// [0x000] Always 0x10001 for RSA-2048.
+	uint32_t signature_type;	// [0x000] Always 0x10001 for RSA-2048 with SHA-1.
 	uint8_t signature[0x100];	// [0x004] Signature.
 	uint8_t padding_sig[0x3C];	// [0x104] Padding. (always 0)
 
 	// The following fields are all covered by the above signature.
 	char issuer[0x40];		// [0x140] Signature issuer.
 	uint8_t ecdh_data[0x3C];	// [0x180] ECDH data.
-	uint8_t padding1[0x03];		// [0x1BC] Padding.
+	uint8_t version;		// [0x1BC] Ticket version. (Wii: v0)
+	uint8_t ca_crl_version;		// [0x1BD] CA CRL version. (0)
+	uint8_t signer_crl_version;	// [0x1BE] Signer CRL version. (0)
 	uint8_t enc_title_key[0x10];	// [0x1BF] Encrypted title key.
 	uint8_t unknown1;		// [0x1CF] Unknown.
-	uint8_t ticket_id[0x08];	// [0x1D0] Ticket ID. (IV for title key decryption for console-specific titles.)
-	uint8_t console_id[4];		// [0x1D8] Console ID.
+	uint64_t ticket_id;		// [0x1D0] Ticket ID. (IV for title key decryption for console-specific titles.)
+	uint32_t console_id;		// [0x1D8] Console ID.
 	RVL_TitleID_t title_id;		// [0x1DC] Title ID. (IV used for AES-CBC encryption.)
 	uint8_t unknown2[2];		// [0x1E4] Unknown, mostly 0xFFFF.
 	uint8_t ticket_version[2];	// [0x1E6] Ticket version.
@@ -125,13 +114,15 @@ typedef struct PACKED _RVL_Ticket {
 	RVL_TimeLimit time_limits[8];	// [0x264] Time limits.
 } RVL_Ticket;
 ASSERT_STRUCT(RVL_Ticket, 0x2A4);
+#pragma pack()
 
 /**
  * Wii TMD header.
- * Reference: http://wiibrew.org/wiki/Title_metadata
+ * Reference: https://wiibrew.org/wiki/Title_metadata
  */
+#pragma pack(1)
 typedef struct PACKED _RVL_TMD_Header {
-	uint32_t signature_type;	// [0x000] Always 0x10001 for RSA-2048.
+	uint32_t signature_type;	// [0x000] Always 0x10001 for RSA-2048 with SHA-1.
 	uint8_t signature[0x100];	// [0x004] Signature.
 	uint8_t padding_sig[0x3C];	// [0x104] Padding. (always 0)
 
@@ -155,6 +146,7 @@ typedef struct PACKED _RVL_TMD_Header {
 	// Following this header is a variable-length content table.
 } RVL_TMD_Header;
 ASSERT_STRUCT(RVL_TMD_Header, 0x1E4);
+#pragma pack()
 
 /**
  * Access rights.
@@ -166,16 +158,18 @@ typedef enum {
 
 /**
  * Wii content entry. (Stored after the TMD.)
- * Reference: http://wiibrew.org/wiki/Title_metadata
+ * Reference: https://wiibrew.org/wiki/Title_metadata
  */
+#pragma pack(1)
 typedef struct PACKED _RVL_Content_Entry {
 	uint32_t content_id;		// [0x000] Content ID
 	uint16_t index;			// [0x004] Index
 	uint16_t type;			// [0x006] Type (see RVL_Content_Type_e)
 	uint64_t size;			// [0x008] Size
-	uint8_t sha1_hash[20];		// [0x010] SHA-1 hash of the H3 table
+	uint8_t sha1_hash[20];		// [0x010] SHA-1 hash of the content (installed) or H3 table (disc).
 } RVL_Content_Entry;
 ASSERT_STRUCT(RVL_Content_Entry, 0x24);
+#pragma pack()
 
 /**
  * Content type (bitfield)
@@ -201,9 +195,9 @@ typedef enum {
 
 /**
  * Wii partition header.
- * Reference: http://wiibrew.org/wiki/Wii_Disc#Partition
+ * Reference: https://wiibrew.org/wiki/Wii_Disc#Partition
  */
-typedef union PACKED _RVL_PartitionHeader {
+typedef union _RVL_PartitionHeader {
 	struct {
 		RVL_Ticket ticket;			// [0x000]
 		uint32_t tmd_size;			// [0x2A4] TMD size.
@@ -239,16 +233,14 @@ typedef enum {
 
 /**
  * Region setting and age ratings.
- * Reference: http://wiibrew.org/wiki/Wii_Disc#Region_setting
+ * Reference: https://wiibrew.org/wiki/Wii_Disc#Region_setting
  */
 #define RVL_RegionSetting_ADDRESS 0x4E000
-typedef struct PACKED _RVL_RegionSetting {
+typedef struct _RVL_RegionSetting {
 	uint32_t region_code;	// Region code. (See GCN_Region_Code.)
 	uint8_t reserved[12];
 	uint8_t ratings[0x10];	// Country-specific age ratings.
 } RVL_RegionSetting;
-
-#pragma pack()
 
 #ifdef __cplusplus
 }

@@ -108,19 +108,6 @@ int cert_verify(const uint8_t *data, size_t size);
 int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size);
 
 /**
- * Sign a ticket with real encryption keys.
- *
- * NOTE: If changing the encryption type, the issuer and title key
- * must be updated *before* calling this function.
- *
- * @param ticket_u8 Ticket to sign.
- * @param size Size of ticket.
- * @param key RSA-2048 private key.
- * @return 0 on success; negative POSIX error code on error.
- */
-int cert_realsign_ticket(uint8_t *ticket_u8, size_t size, const RSA2048PrivateKey *key);
-
-/**
  * Fakesign a TMD.
  *
  * NOTE: If changing the encryption type, the issuer must be
@@ -133,17 +120,20 @@ int cert_realsign_ticket(uint8_t *ticket_u8, size_t size, const RSA2048PrivateKe
 int cert_fakesign_tmd(uint8_t *tmd, size_t size);
 
 /**
- * Sign a TMD with real encryption keys.
+ * Sign a ticket or TMD with real encryption keys.
  *
  * NOTE: If changing the encryption type, the issuer must be
  * updated *before* calling this function.
  *
- * @param tmd TMD to fakesign.
- * @param size Size of TMD.
- * @param key RSA-2048 private key.
+ * NOTE 2: For Wii, the full TMD must be signed.
+ * For Wii U, only the TMD header is signed.
+ *
+ * @param data		[in/out] Ticket or TMD to fakesign.
+ * @param size		[in] Size of ticket or TMD.
+ * @param key		[in] RSA-2048 private key.
  * @return 0 on success; negative POSIX error code on error.
  */
-int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key);
+int cert_realsign_ticketOrTMD(uint8_t *data, size_t size, const RSA2048PrivateKey *key);
 
 #ifdef __cplusplus
 }

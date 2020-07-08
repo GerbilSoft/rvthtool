@@ -430,8 +430,13 @@ int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size)
 		return -EINVAL;
 	}
 
+	if (ticket->signature_type != cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1)) {
+		// Only RSA-2048 with SHA-1 is supported for fakesigning.
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
 	// Zero out the signature and padding.
-	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
 	memset(ticket->signature, 0, sizeof(ticket->signature));
 	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
 
@@ -452,44 +457,6 @@ int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size)
 	} while (digest[0] != 0 && ++(*fake) != 0);
 
 	// TODO: If the first byte of the hash is not 0, failed.
-	return 0;
-}
-
-/**
- * Sign a ticket with real encryption keys.
- *
- * NOTE: If changing the encryption type, the issuer and title key
- * must be updated *before* calling this function.
- *
- * @param ticket_u8 Ticket to sign.
- * @param size Size of ticket.
- * @param key RSA-2048 private key.
- * @return 0 on success; negative POSIX error code on error.
- */
-int cert_realsign_ticket(uint8_t *ticket_u8, size_t size, const RSA2048PrivateKey *key)
-{
-	struct sha1_ctx sha1;
-	uint8_t digest[SHA1_DIGEST_SIZE];
-	RVL_Ticket *const ticket = (RVL_Ticket*)ticket_u8;
-
-	if (!ticket) {
-		errno = EINVAL;
-		return -EINVAL;
-	}
-
-	// Zero out the padding.
-	ticket->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
-	memset(ticket->padding_sig, 0, sizeof(ticket->padding_sig));
-
-	// Calculate the SHA-1 hash.
-	static const unsigned int signing_offset = offsetof(RVL_Ticket, issuer);
-	sha1_init(&sha1);
-	sha1_update(&sha1, size - signing_offset, (const uint8_t*)(&ticket_u8[signing_offset]));
-	sha1_digest(&sha1, sizeof(digest), digest);
-
-	// Sign the ticket.
-	// TODO: Check for errors.
-	rsaw_sha1_sign(ticket->signature, sizeof(ticket->signature), key, digest);
 	return 0;
 }
 
@@ -515,8 +482,13 @@ int cert_fakesign_tmd(uint8_t *tmd, size_t size)
 		return -EINVAL;
 	}
 
+	if (tmdHeader->signature_type != cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1)) {
+		// Only RSA-2048 with SHA-1 is supported for fakesigning.
+		errno = EINVAL;
+		return -EINVAL;
+	}
+
 	// Zero out the signature and padding.
-	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
 	memset(tmdHeader->signature, 0, sizeof(tmdHeader->signature));
 	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
 
@@ -540,39 +512,71 @@ int cert_fakesign_tmd(uint8_t *tmd, size_t size)
 }
 
 /**
- * Sign a TMD with real encryption keys.
+ * Sign a ticket or TMD with real encryption keys.
  *
  * NOTE: If changing the encryption type, the issuer must be
  * updated *before* calling this function.
  *
- * @param tmd TMD to fakesign.
- * @param size Size of TMD.
- * @param key RSA-2048 private key.
+ * NOTE 2: For Wii, the full TMD must be signed.
+ * For Wii U, only the TMD header is signed.
+ *
+ * @param data		[in/out] Ticket or TMD to fakesign.
+ * @param size		[in] Size of ticket or TMD.
+ * @param key		[in] RSA-2048 private key.
  * @return 0 on success; negative POSIX error code on error.
  */
-int cert_realsign_tmd(uint8_t *tmd, size_t size, const RSA2048PrivateKey *key)
+int cert_realsign_ticketOrTMD(uint8_t *data, size_t size, const RSA2048PrivateKey *key)
 {
-	struct sha1_ctx sha1;
-	uint8_t digest[SHA1_DIGEST_SIZE];
-	RVL_TMD_Header *const tmdHeader = (RVL_TMD_Header*)tmd;
+	uint8_t hash[SHA256_DIGEST_SIZE];
+	size_t hash_size;
+	RVL_Sig_RSA2048 *const sig = (RVL_Sig_RSA2048*)data;
+	bool doSHA256;
 
-	if (!tmd || size < sizeof(RVL_TMD_Header)) {
+	// Signature is in the first 0x140 bytes.
+	if (!data || size < 0x140) {
 		errno = EINVAL;
 		return -EINVAL;
 	}
 
-	// Zero out the padding.
-	tmdHeader->signature_type = cpu_to_be32(RVL_CERT_SIGTYPE_RSA2048_SHA1);
-	memset(tmdHeader->padding_sig, 0, sizeof(tmdHeader->padding_sig));
+	// Determine the algorithm to use.
+	switch (be32_to_cpu(sig->type)) {
+		case RVL_CERT_SIGTYPE_RSA2048_SHA1:
+			hash_size = SHA1_DIGEST_SIZE;
+			doSHA256 = false;
+			break;
+		case WUP_CERT_SIGTYPE_RSA2048_SHA256:
+			hash_size = SHA256_DIGEST_SIZE;
+			doSHA256 = true;
+			break;
+		default:
+			// Not supported.
+			errno = EINVAL;
+			return -EINVAL;
+	}
 
-	// Calculate the SHA-1 hash.
-	sha1_init(&sha1);
-	sha1_update(&sha1, size - offsetof(RVL_TMD_Header, issuer),
-		&tmd[offsetof(RVL_TMD_Header, issuer)]);
-	sha1_digest(&sha1, sizeof(digest), digest);
+	// Zero out the padding.
+	memset(sig->padding, 0, sizeof(sig->padding));
+
+	if (!doSHA256) {
+		// Calculate the SHA-1 hash.
+		struct sha1_ctx sha1;
+		hash_size = SHA1_DIGEST_SIZE;
+		sha1_init(&sha1);
+		sha1_update(&sha1, size - offsetof(RVL_Sig_RSA2048, issuer),
+			&data[offsetof(RVL_Sig_RSA2048, issuer)]);
+		sha1_digest(&sha1, SHA1_DIGEST_SIZE, hash);
+	} else {
+		// Calculate the SHA-256 hash.
+		struct sha256_ctx sha256;
+		hash_size = SHA256_DIGEST_SIZE;
+		sha256_init(&sha256);
+		sha256_update(&sha256, size - offsetof(RVL_Sig_RSA2048, issuer),
+			&data[offsetof(RVL_Sig_RSA2048, issuer)]);
+		sha256_digest(&sha256, SHA256_DIGEST_SIZE, hash);
+	}
 
 	// Sign the TMD.
 	// TODO: Check for errors.
-	rsaw_sha1_sign(tmdHeader->signature, sizeof(tmdHeader->signature), key, digest);
+	rsaw_rsa2048_sign(sig->sig, sizeof(sig->sig), key, hash, hash_size, doSHA256);
 	return 0;
 }

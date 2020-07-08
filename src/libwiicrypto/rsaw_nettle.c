@@ -294,17 +294,19 @@ end:
 }
 
 /**
- * Create an RSA signature using an RSA private key.
- * NOTE: This function only supports RSA-2048 keys.
+ * Create an RSA-2048 signature using an RSA private key.
  * @param buf			[out] Output buffer.
  * @param buf_size		[in] Size of `buf`.
  * @param priv_key_data		[in] RSA2048PrivateKey struct.
- * @param sha1			[in] SHA-1 hash. (Must be 20 bytes.)
+ * @param pHash			[in] Hash.
+ * @param hash_size		[in] Hash size. (20 for SHA-1, 32 for SHA-256)
+ * @param doSHA256		[in] If 1, do SHA-256. (TODO: Use an enum.)
  * @return 0 on success; negative POSIX error code on error.
  */
-int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
+int rsaw_rsa2048_sign(uint8_t *buf, size_t buf_size,
 	const RSA2048PrivateKey *priv_key_data,
-	const uint8_t *sha1)
+	const uint8_t *pHash, size_t hash_size,
+	int doSHA256)
 {
 	struct rsa_private_key key;
 	struct {
@@ -321,12 +323,26 @@ int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 	assert(buf_size != 0);
 	assert(buf_size >= 256);
 	assert(priv_key_data != NULL);
-	assert(sha1 != NULL);
+	assert(pHash != NULL);
 
-	if (!buf || buf_size == 0 || buf_size < 256 || !sha1) {
+	if (!buf || buf_size == 0 || buf_size < 256 || !pHash) {
 		// Invalid parameters.
-		errno = EIO;
+		errno = EINVAL;
 		return -EINVAL;
+	}
+
+	if (!doSHA256) {
+		// SHA-1: Hash size must be 20.
+		if (hash_size != SHA1_DIGEST_SIZE) {
+			errno = EINVAL;
+			return -EINVAL;
+		}
+	} else {
+		// SHA-256: Hash size must be 32.
+		if (hash_size != SHA256_DIGEST_SIZE) {
+			errno = EINVAL;
+			return -EINVAL;
+		}
 	}
 
 	// Initialize the temporary bignums.
@@ -361,10 +377,18 @@ int rsaw_sha1_sign(uint8_t *buf, size_t buf_size,
 
 	// Create the signature.
 	mpz_init(signature);
-	if (!rsa_sha1_sign_digest(&key, sha1, signature)) {
-		// Error signing the SHA-1 hash.
-		ret = -EIO;
-		goto end;
+	if (!doSHA256) {
+		if (!rsa_sha1_sign_digest(&key, pHash, signature)) {
+			// Error signing the SHA-1 hash.
+			ret = -EIO;
+			goto end;
+		}
+	} else {
+		if (!rsa_sha256_sign_digest(&key, pHash, signature)) {
+			// Error signing the SHA-256 hash.
+			ret = -EIO;
+			goto end;
+		}
 	}
 
 	// Encrypted data must not be more than (buf_size*8) bits.

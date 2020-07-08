@@ -415,7 +415,8 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			toKey = RVL_KEY_KOREAN;
 			break;
 		case RVL_CryptoType_vWii:
-			toKey = RVL_KEY_vWii;
+			// TODO: RVL_CryptoType_vWii_debug?
+			toKey = vWii_KEY_RETAIL;
 			break;
 		default:
 			// Invalid key index.
@@ -563,7 +564,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		} else {
 			// Debug: Use the real signing keys.
 			// Debug IOS requires a valid signature.
-			cert_realsign_ticket((uint8_t*)&hdr_new.ticket, sizeof(hdr_new.ticket), &rvth_privkey_RVL_dpki_ticket);
+			cert_realsign_ticketOrTMD((uint8_t*)&hdr_new.ticket, sizeof(hdr_new.ticket), &rvth_privkey_RVL_dpki_ticket);
 		}
 
 		// Starting position.
@@ -605,7 +606,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 		} else {
 			// Debug: Use the real signing keys.
 			// Debug IOS requires a valid signature.
-			cert_realsign_tmd(&hdr_new.u8[data_pos], tmd_size, &rvth_privkey_RVL_dpki_tmd);
+			cert_realsign_ticketOrTMD(&hdr_new.u8[data_pos], tmd_size, &rvth_privkey_RVL_dpki_tmd);
 		}
 
 		// TMD parameters.
@@ -695,11 +696,19 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			entry->tmd.sig_type = RVL_SigType_Debug;
 			entry->tmd.sig_status = RVL_SigStatus_OK;
 			break;
-		case RVL_KEY_vWii:
+		case vWii_KEY_RETAIL:
 			entry->crypto_type = RVL_CryptoType_vWii;
 			entry->ticket.sig_type = RVL_SigType_Retail;
 			entry->ticket.sig_status = RVL_SigStatus_Fake;
 			entry->tmd.sig_type = RVL_SigType_Retail;
+			entry->tmd.sig_status = RVL_SigStatus_Fake;
+			break;
+		case vWii_KEY_DEBUG:
+			// TODO: RVL_CryptoType_vWii_Debug?
+			entry->crypto_type = RVL_CryptoType_vWii;
+			entry->ticket.sig_type = RVL_SigType_Debug;
+			entry->ticket.sig_status = RVL_SigStatus_Fake;
+			entry->tmd.sig_type = RVL_SigType_Debug;
 			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
 		default:
