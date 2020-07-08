@@ -99,7 +99,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		sf_h3 += ".h3";
 	}
 
-	FILE *f_content = fopen(sf_app.c_str(), "rb");
+	FILE *f_content = _tfopen(sf_app.c_str(), _T("rb"));
 	if (!f_content) {
 		// Error opening the content file.
 		int err = errno;
