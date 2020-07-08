@@ -214,14 +214,14 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	// Construct the filenames.
 	tstring sf_tik = nus_dir;
 	sf_tik += DIR_SEP_CHR;
-	sf_tik += "title.tik";
+	sf_tik += _T("title.tik");
 
 	tstring sf_tmd = nus_dir;
 	sf_tmd += DIR_SEP_CHR;
-	sf_tmd += "title.tmd";
+	sf_tmd += _T("title.tmd");
 
 	// Open the ticket and TMD.
-	FILE *f_tik = _tfopen(sf_tik.c_str(), "rb");
+	FILE *f_tik = _tfopen(sf_tik.c_str(), _T("rb"));
 	if (!f_tik) {
 		int err = errno;
 		if (err == 0) {
@@ -231,7 +231,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		return -err;
 	}
 
-	FILE *f_tmd = _tfopen(sf_tmd.c_str(), "rb+");
+	FILE *f_tmd = _tfopen(sf_tmd.c_str(), _T("rb+"));
 	if (!f_tmd) {
 		fclose(f_tik);
 
