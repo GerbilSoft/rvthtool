@@ -24,6 +24,7 @@
 #endif /* _WIN32 */
 
 #include "resign-nus.hpp"
+#include "print-info.hpp"
 
 #ifdef __GNUC__
 # define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
@@ -176,31 +177,31 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		// Display help.
 		print_help(argv[0]);
 		return EXIT_FAILURE;
-	} /*else if (!_tcscmp(argv[optind], _T("info"))) {
+	} else if (!_tcscmp(argv[optind], _T("info"))) {
 		// Print WAD information.
 		int i;
 		if (argc < optind+2) {
-			print_error(argv[0], _T("WAD filename not specified"));
+			print_error(argv[0], _T("NUS directory not specified"));
 			return EXIT_FAILURE;
 		}
 
 		ret = 0;
 		for (i = optind; i < argc; i++) {
-			ret |= print_wad_info(argv[i], false);
+			ret |= print_nus_info(argv[i], false);
 		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
 		// Verify a WAD.
 		int i;
 		if (argc < optind+2) {
-			print_error(argv[0], _T("WAD filename not specified"));
+			print_error(argv[0], _T("NUS directory not specified"));
 			return EXIT_FAILURE;
 		}
 
 		ret = 0;
 		for (i = optind+1; i < argc; i++) {
-			ret |= print_wad_info(argv[i], true);
+			ret |= print_nus_info(argv[i], true);
 		}
-	}*/ else if (!_tcscmp(argv[optind], _T("resign"))) {
+	} else if (!_tcscmp(argv[optind], _T("resign"))) {
 		// Resign an NUS directory.
 		if (argc < optind+2) {
 			print_error(argv[0], _T("NUS directory not specified"));
@@ -228,14 +229,14 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 #endif /* _WIN32 */
 		}
 
-		/*if (isFilename) {
+		if (isFilename) {
 			// Probably a filename.
 			int i;
 			ret = 0;
 			for (i = optind; i < argc; i++) {
-				ret |= print_wad_info(argv[i], false);
+				ret |= print_nus_info(argv[i], false);
 			}
-		} else*/ {
+		} else {
 			// Not a filename.
 			print_error(argv[0], _T("unrecognized command '%s'"), argv[optind]);
 			ret = EXIT_FAILURE;

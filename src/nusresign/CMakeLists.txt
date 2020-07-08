@@ -17,10 +17,12 @@ ENDIF(WIN32)
 SET(nusresign_SRCS
 	main.c
 	resign-nus.cpp
+	print-info.cpp
 	)
 # Headers.
 SET(nusresign_H
 	resign-nus.hpp
+	print-info.hpp
 	)
 IF(WIN32)
 	SET(nusresign_RC resource.rc)

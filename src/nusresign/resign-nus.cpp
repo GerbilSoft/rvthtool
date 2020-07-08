@@ -29,12 +29,6 @@
 using std::tstring;
 using std::unique_ptr;
 
-#ifdef _WIN32
-# define DIR_SEP_CHR _T('\\')
-#else /* !_WIN32 */
-# define DIR_SEP_CHR _T('/')
-#endif
-
 /**
  * Update the certs at the end of the ticket or TMD, if present.
  * If the certs don't match the expected PKI, they will be replaced.
@@ -205,6 +199,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	rewind(f_tmd);
 
 	// Read the ticket and TMD.
+	// TODO: Check for errors?
 	unique_ptr<uint8_t[]> tik_data(new uint8_t[tik_size]);
 	fread(tik_data.get(), 1, tik_size, f_tik);
 	WUP_Ticket *const pTicket = reinterpret_cast<WUP_Ticket*>(tik_data.get());

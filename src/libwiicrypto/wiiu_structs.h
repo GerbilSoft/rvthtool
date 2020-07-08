@@ -94,10 +94,11 @@ ASSERT_STRUCT(WUP_TMD_Header, 0x204);
  * References:
  * - https://github.com/Maschell/JNUSLib/blob/3eb299d3a150107f5c4d474650fe6d05d91bf64c/src/de/mas/wiiu/jnus/entities/TMD.java
  */
+#define WUP_CONTENTINFO_ENTRIES 0x40
 typedef struct _WUP_TMD_ContentInfoTable {
 	// NOTE: This table is protected by an SHA-256 hash
 	// in the TMD header.
-	WUP_ContentInfo info[0x40];
+	WUP_ContentInfo info[WUP_CONTENTINFO_ENTRIES];
 
 	// Following this table is the content table,
 	// which has WUP_Content_Entry structs.

@@ -159,4 +159,10 @@ typedef unsigned char bool;
 # define RVTH_CDECL
 #endif
 
+#ifdef _WIN32
+# define DIR_SEP_CHR _T('\\')
+#else /* !_WIN32 */
+# define DIR_SEP_CHR _T('/')
+#endif
+
 #endif /* __RVTHTOOL_LIBWIICRYPTO_COMMON_H__ */
