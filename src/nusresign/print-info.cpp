@@ -254,5 +254,51 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 
 	putchar('\n');
 
+	// Print the TMD contents info.
+	// TODO: Show the separate contents tables?
+	// We're lumping everything together right now.
+	const uint16_t boot_index = be16_to_cpu(pTmdHeader->rvl.boot_index);
+	const WUP_TMD_ContentInfoTable *const cinfotbl =
+		reinterpret_cast<const WUP_TMD_ContentInfoTable*>(&tmd_data[sizeof(WUP_TMD_Header)]);
+	const WUP_ContentInfo *cinfo = cinfotbl->info;
+	const WUP_ContentInfo *const cinfo_end = &cinfo[WUP_CONTENTINFO_ENTRIES];
+
+	size_t cstart = sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable);
+	for (; cinfo < cinfo_end; cinfo++) {
+		const unsigned int indexOffset = be16_to_cpu(cinfo->indexOffset);
+		const unsigned int commandCount = be16_to_cpu(cinfo->commandCount);
+		if (indexOffset == 0 && commandCount == 0) {
+			// End of table.
+			break;
+		}
+
+		const size_t pos = cstart + (indexOffset * sizeof(WUP_Content_Entry));
+		const size_t len = (commandCount * sizeof(WUP_Content_Entry));
+		if (pos + len > tmd_size) {
+			// Out of bounds.
+			continue;
+		}
+
+		// Print the entries.
+		const WUP_Content_Entry *p =
+			reinterpret_cast<const WUP_Content_Entry*>(&tmd_data[pos]);
+		const WUP_Content_Entry *const p_end = &p[commandCount];
+		for (; p < p_end; p++) {
+			// TODO: Show the actual table index, or just the
+			// index field in the entry?
+			uint16_t content_index = be16_to_cpu(p->index);
+			printf("#%d: ID=%08x, type=%04X, size=%u",
+				be16_to_cpu(p->index),
+				be32_to_cpu(p->content_id),
+				be16_to_cpu(p->type),
+				(uint32_t)be64_to_cpu(p->size));
+			if (content_index == boot_index) {
+				fputs(", bootable", stdout);
+			}
+			putchar('\n');
+		}
+	}
+	putchar('\n');
+
 	return 0;
 }
