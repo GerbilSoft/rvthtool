@@ -293,23 +293,42 @@ RVL_PKI cert_get_pki_from_issuer(RVL_Cert_Issuer issuer)
 {
 	RVL_PKI ret = RVL_PKI_UNKNOWN;
 
+	switch (issuer) {
 	// NOTE: Using RVL platform for the Root certificates.
-	if (issuer == RVL_CERT_ISSUER_DPKI_ROOT) {
-		ret = RVL_PKI_DPKI;
-	} else if (issuer == RVL_CERT_ISSUER_PPKI_ROOT) {
-		ret = RVL_PKI_PPKI;
-	} else if (issuer >= RVL_CERT_ISSUER_DPKI_MIN && issuer <= RVL_CERT_ISSUER_DPKI_MAX) {
-		ret = RVL_PKI_DPKI;
-	} if (issuer >= RVL_CERT_ISSUER_PPKI_MIN && issuer <= RVL_CERT_ISSUER_PPKI_MAX) {
-		ret = RVL_PKI_PPKI;
-	} else if (issuer >= CTR_CERT_ISSUER_DPKI_MIN && issuer <= CTR_CERT_ISSUER_DPKI_MIN) {
-		ret = CTR_PKI_DPKI;
-	} else if (issuer >= CTR_CERT_ISSUER_PPKI_MIN && issuer <= CTR_CERT_ISSUER_PPKI_MIN) {
-		ret = CTR_PKI_PPKI;
-	} else if (issuer >= WUP_CERT_ISSUER_DPKI_MIN && issuer <= WUP_CERT_ISSUER_DPKI_MIN) {
-		ret = WUP_PKI_DPKI;
-	} else if (issuer >= WUP_CERT_ISSUER_PPKI_MIN && issuer <= WUP_CERT_ISSUER_PPKI_MIN) {
-		ret = WUP_PKI_PPKI;
+		case RVL_CERT_ISSUER_DPKI_ROOT:		ret = RVL_PKI_DPKI; break;
+		case RVL_CERT_ISSUER_PPKI_ROOT:		ret = RVL_PKI_PPKI; break;
+
+		case RVL_CERT_ISSUER_DPKI_CA:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TMD:
+		case RVL_CERT_ISSUER_DPKI_MS:
+		case RVL_CERT_ISSUER_DPKI_XS04:
+		case RVL_CERT_ISSUER_DPKI_CP05:		ret = RVL_PKI_DPKI; break;
+
+		case RVL_CERT_ISSUER_PPKI_CA:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TMD:		ret = RVL_PKI_PPKI; break;
+
+		case CTR_CERT_ISSUER_DPKI_CA:
+		case CTR_CERT_ISSUER_DPKI_TICKET:
+		case CTR_CERT_ISSUER_DPKI_TMD:		ret = CTR_PKI_DPKI; break;
+
+		case CTR_CERT_ISSUER_PPKI_CA:
+		case CTR_CERT_ISSUER_PPKI_TICKET:
+		case CTR_CERT_ISSUER_PPKI_TMD:		ret = CTR_PKI_PPKI; break;
+
+		case WUP_CERT_ISSUER_DPKI_CA:
+		case WUP_CERT_ISSUER_DPKI_TICKET:
+		case WUP_CERT_ISSUER_DPKI_TMD:
+		case WUP_CERT_ISSUER_DPKI_SP:		ret = WUP_PKI_DPKI; break;
+
+		case WUP_CERT_ISSUER_PPKI_CA:
+		case WUP_CERT_ISSUER_PPKI_TICKET:
+		case WUP_CERT_ISSUER_PPKI_TMD:		ret = WUP_PKI_PPKI; break;
+
+		default:
+			assert(!"Unrecognized PKI.");
+			break;
 	}
 
 	return ret;
