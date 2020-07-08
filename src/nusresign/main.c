@@ -21,6 +21,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef _WIN32
+# include "libwiicrypto/win32/secoptions.h"
+#endif /* _WIN32 */
+
+// for Windows Unicode support
+#include "tcharx.h"
+
 /**
  * Update the certs at the end of the ticket or TMD, if present.
  * If the certs don't match the expected PKI, they will be replaced.
@@ -112,7 +119,7 @@ static void updateExtraCerts(uint8_t *data, size_t size, bool isTMD, RVL_PKI pki
 	}
 }
 
-int main(int argc, char *argv[])
+int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 {
 	FILE *f_tik;
 	FILE *f_tmd;
@@ -130,13 +137,13 @@ int main(int argc, char *argv[])
 
 	if (argc < 3) {
 		fprintf(stderr, "NUS Resigner - converts retail to debug only right now...\n");
-		fprintf(stderr, "Syntax: %s title.tik title.tmd\n", argv[0]);
+		_ftprintf(stderr, _T("Syntax: %s title.tik title.tmd\n"), argv[0]);
 		return EXIT_FAILURE;
 	}
 
 	// Open the ticket and TMD.
-	f_tik = fopen(argv[1], "rb+");
-	f_tmd = fopen(argv[2], "rb+");
+	f_tik = _tfopen(argv[1], "rb+");
+	f_tmd = _tfopen(argv[2], "rb+");
 	if (!f_tik || !f_tmd) {
 		fprintf(stderr, "*** ERROR opening ticket or TMD, try again!\n");
 		return EXIT_FAILURE;

@@ -38,12 +38,6 @@
 #include "print-info.h"
 #include "resign-wad.h"
 
-#ifdef _MSC_VER
-# define RVTH_CDECL __cdecl
-#else
-# define RVTH_CDECL
-#endif
-
 #ifdef __GNUC__
 # define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
 #else

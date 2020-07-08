@@ -153,4 +153,10 @@ typedef unsigned char bool;
 # endif
 #endif /* __cplusplus */
 
+#ifdef _MSC_VER
+# define RVTH_CDECL __cdecl
+#else
+# define RVTH_CDECL
+#endif
+
 #endif /* __RVTHTOOL_LIBWIICRYPTO_COMMON_H__ */
