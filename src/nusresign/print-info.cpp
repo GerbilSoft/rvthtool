@@ -32,6 +32,9 @@
 using std::tstring;
 using std::unique_ptr;
 
+// Buffer size for verifying contents.
+#define READ_BUFFER_SIZE (1024*1024)
+
 /**
  * Is an issuer retail or debug?
  * @param issuer RVL_Cert_Issuer
@@ -68,6 +71,139 @@ static const char *issuer_type(RVL_Cert_Issuer issuer)
 }
 
 /**
+ * Verify a content entry.
+ * @param nus_dir	[in] NUS directory.
+ * @param title_key	[in] Decrypted title key.
+ * @param entry		[in] Content entry.
+ * @return 0 if the content is verified; 1 if not; negative POSIX error code on error.
+ */
+static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], const WUP_Content_Entry *entry)
+{
+	// Construct the filenames.
+	// FIXME: Content ID or content index?
+	// Assuming content ID for filename, content index for IV.
+	char cidbuf[16];
+	snprintf(cidbuf, sizeof(cidbuf), "%08X", be32_to_cpu(entry->content_id));
+	tstring sf_app = nus_dir;
+	sf_app += DIR_SEP_CHR;
+	sf_app += cidbuf;
+	sf_app += ".app";
+
+	const bool has_h3 = !!(entry->type & cpu_to_be16(0x0002));
+	tstring sf_h3;
+	if (has_h3) {
+		// H3 file is present.
+		// TODO: How is it checked?
+		sf_h3 += DIR_SEP_CHR;
+		sf_h3 += cidbuf;
+		sf_h3 += ".h3";
+	}
+
+	FILE *f_content = fopen(sf_app.c_str(), "rb");
+	if (!f_content) {
+		// Error opening the content file.
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		printf("- *** ERROR opening %s.app: %s\n", cidbuf, strerror(err));
+		return -err;
+	}
+
+	AesCtx *const aesw = aesw_new();
+	if (!aesw) {
+		// Error initializing AES...
+		fclose(f_content);
+		return -ENOMEM;
+	}
+
+	// IV is the 2-byte content index, followed by zeroes.
+	uint8_t iv[16];
+	memcpy(iv, &entry->index, 2);
+	memset(&iv[2], 0, 14);
+	aesw_set_key(aesw, title_key, 16);
+	aesw_set_iv(aesw, iv, sizeof(iv));
+
+	// Read buffer.
+	unique_ptr<uint8_t[]> buf(new uint8_t[READ_BUFFER_SIZE]);
+
+	// Read the content, decrypt it, and hash it.
+	// TODO: Verify size; check fseeko() errors.
+	struct sha1_ctx sha1;
+	sha1_init(&sha1);
+	int64_t data_sz = be64_to_cpu(entry->size);
+
+	int ret = 0;
+	for (; data_sz >= READ_BUFFER_SIZE; data_sz -= READ_BUFFER_SIZE) {
+		errno = 0;
+		size_t size = fread(buf.get(), 1, READ_BUFFER_SIZE, f_content);
+		if (size != READ_BUFFER_SIZE) {
+			ret = errno;
+			if (ret == 0) {
+				ret = -EIO;
+			}
+			goto end;
+		}
+
+		// Decrypt the data.
+		aesw_decrypt(aesw, buf.get(), READ_BUFFER_SIZE);
+
+		// Update the SHA-1.
+		sha1_update(&sha1, READ_BUFFER_SIZE, buf.get());
+	}
+
+	// Remaining data.
+	if (data_sz > 0) {
+		// NOTE: AES works on 16-byte blocks, so we have to
+		// read and decrypt the full 16-byte block. The SHA-1
+		// is only taken for the actual used data, though.
+		uint32_t data_sz_align = ALIGN_BYTES(16, data_sz);
+
+		errno = 0;
+		size_t size = fread(buf.get(), 1, data_sz_align, f_content);
+		if (size != data_sz_align) {
+			ret = errno;
+			if (ret == 0) {
+				ret = -EIO;
+			}
+			goto end;
+		}
+
+		// Decrypt the data.
+		aesw_decrypt(aesw, buf.get(), data_sz_align);
+
+		// Update the SHA-1.
+		// NOTE: Only uses the actual content, not the
+		// aligned data required for decryption.
+		sha1_update(&sha1, data_sz, buf.get());
+	}
+
+	// Finalize the SHA-1 and compare it.
+	uint8_t digest[SHA1_DIGEST_SIZE];
+	sha1_digest(&sha1, sizeof(digest), digest);
+	fputs("- Expected SHA-1: ", stdout);
+	for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
+		printf("%02x", entry->sha1_hash[size]);
+	}
+	putchar('\n');
+	printf("- Actual SHA-1:   ");
+	for (size_t size = 0; size < sizeof(digest); size++) {
+		printf("%02x", digest[size]);
+	}
+	if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
+		fputs(" [OK]\n", stdout);
+	} else {
+		fputs(" [ERROR]\n", stdout);
+		ret = 1;
+	}
+
+end:
+	fclose(f_content);
+	aesw_free(aesw);
+	return ret;
+}
+
+/**
  * 'info' command.
  * @param nus_dir	[in] NUS directory.
  * @param verify	[in] If true, verify the contents. [TODO]
@@ -75,9 +211,6 @@ static const char *issuer_type(RVL_Cert_Issuer issuer)
  */
 int print_nus_info(const TCHAR *nus_dir, bool verify)
 {
-	int ret;
-	size_t size;
-
 	// Construct the filenames.
 	tstring sf_tik = nus_dir;
 	sf_tik += DIR_SEP_CHR;
@@ -254,6 +387,27 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 
 	putchar('\n');
 
+	// Decrypted title key for contents verification.
+	uint8_t title_key[16];
+	if (verify) {
+		AesCtx *const aesw = aesw_new();
+		if (aesw) {
+			// IV is the 64-bit title ID, followed by zeroes.
+			uint8_t iv[16];
+			memcpy(iv, &pTicket->title_id, 8);
+			memset(&iv[8], 0, 8);
+
+			// Decrypt the title key.
+			memcpy(title_key, pTicket->enc_title_key, sizeof(title_key));
+			aesw_set_key(aesw, RVL_AES_Keys[encKey], 16);
+			aesw_set_iv(aesw, iv, sizeof(iv));
+			aesw_decrypt(aesw, title_key, sizeof(title_key));
+		} else {
+			// TODO: Print a warning message indicating we can't decrypt.
+			verify = false;
+		}
+	}
+
 	// Print the TMD contents info.
 	// TODO: Show the separate contents tables?
 	// We're lumping everything together right now.
@@ -264,6 +418,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	const WUP_ContentInfo *const cinfo_end = &cinfo[WUP_CONTENTINFO_ENTRIES];
 
 	size_t cstart = sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable);
+	int ret = 0;
 	for (; cinfo < cinfo_end; cinfo++) {
 		const unsigned int indexOffset = be16_to_cpu(cinfo->indexOffset);
 		const unsigned int commandCount = be16_to_cpu(cinfo->commandCount);
@@ -296,9 +451,19 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 				fputs(", bootable", stdout);
 			}
 			putchar('\n');
+
+			if (verify) {
+				// Verify the content.
+				// TODO: Only decrypt the title key once?
+				// TODO: Return failure if any contents fail.
+				int vret = verify_content(nus_dir, title_key, p);
+				if (vret != 0) {
+					ret = 1;
+				}
+			}
 		}
 	}
 	putchar('\n');
 
-	return 0;
+	return ret;
 }
