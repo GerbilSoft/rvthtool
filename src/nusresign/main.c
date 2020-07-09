@@ -23,8 +23,8 @@
 # include "libwiicrypto/win32/secoptions.h"
 #endif /* _WIN32 */
 
-#include "print-info.h"
-#include "resign-wad.h"
+#include "resign-nus.hpp"
+#include "print-info.hpp"
 
 #ifdef __GNUC__
 # define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
@@ -69,25 +69,21 @@ static void print_help(const TCHAR *argv0)
 		"\n"
 		"Supported commands:\n"
 		"\n"
-		"info file.wad\n"
-		"- Print information about the specified WAD file.\n"
+		"info nusdir/\n"
+		"- Print information about the specified NUS directory.\n"
 		"\n"
-		"resign source.wad dest.wad\n"
-		" - Resigns source.wad and creates dest.wad using the new key.\n"
-		"   Default converts Retail/Korean WADs to Debug, and\n"
-		"   Debug WADs to Retail. The format isn't changed unless\n"
-		"   the --format parameter is specified.\n"
+		"resign nusdir/\n"
+		" - Resigns the specified NUS directory in place.\n"
+		"   Default converts Retail NUS to Debug, and Debug NUS to retail.\n"
 		"\n"
-		"verify file.wad\n"
+		"verify nusdir/\n"
 		" - Verify the content hashes.\n"
 		"\n"
 		"Options:\n"
 		"\n"
 		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
-		"                            default, retail, korean, vWii, debug\n"
-		"                            Recrypting to retail will use fakesigning.\n"
-		"  -f, --format=FMT          Use the specified format FMT:\n"
-		"                            default, wad, bwf\n"
+		"                            default, retail, debug\n"
+		"                            Recrypting to retail will blank out the signatures.\n"
 		"  -h, --help                Display this help and exit.\n"
 		"\n"
 		, stdout);
@@ -98,14 +94,9 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	int ret;
 
 	// Key to use for recryption.
-	// -1 == default; no recryption, except when importing retail to RVT-H.
+	// -1 == default; convert from Retail to Debug or vice-versa.
 	// Other values are from RVL_CryptoType_e.
 	int recrypt_key = -1;
-
-	// Output format.
-	// -1 == default: standard .wad format.
-	// Other values are from WAD_Format_e.
-	int output_format = -1;
 
 	((void)argc);
 	((void)argv);
@@ -118,8 +109,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Set the C locale.
 	setlocale(LC_ALL, "");
 
-	puts("WAD Resigner v" VERSION_STRING "\n"
-		"Copyright (c) 2018-2019 by David Korth.");
+	puts("NUS Resigner v" VERSION_STRING "\n"
+		"Copyright (c) 2018-2020 by David Korth.");
 #ifdef RP_GIT_VERSION
 	puts(RP_GIT_VERSION);
 # ifdef RP_GIT_DESCRIBE
@@ -133,14 +124,12 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	while (true) {
 		static const struct option long_options[] = {
 			{_T("recrypt"),	required_argument,	0, _T('k')},
-			{_T("format"),	required_argument,	0, _T('f')},
-			{_T("ndev"),	no_argument,		0, _T('N')},
 			{_T("help"),	no_argument,		0, _T('h')},
 
 			{NULL, 0, 0, 0}
 		};
 
-		int c = getopt_long(argc, argv, _T("k:f:Nh"), long_options, NULL);
+		int c = getopt_long(argc, argv, _T("k:h"), long_options, NULL);
 		if (c == -1)
 			break;
 
@@ -152,37 +141,15 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					print_error(argv[0], _T("no recryption method specified"));
 					return EXIT_FAILURE;
 				}
+				// FIXME: Add separate WUP_CryptoType_* enumerations?
 				if (!_tcsicmp(optarg, _T("default"))) {
 					recrypt_key = -1;
 				} else if (!_tcsicmp(optarg, _T("debug"))) {
 					recrypt_key = RVL_CryptoType_Debug;
 				} else if (!_tcsicmp(optarg, _T("retail"))) {
 					recrypt_key = RVL_CryptoType_Retail;
-				} else if (!_tcsicmp(optarg, _T("korean"))) {
-					recrypt_key = RVL_CryptoType_Korean;
-				} else if (!_tcsicmp(optarg, _T("vWii"))) {
-					recrypt_key = RVL_CryptoType_vWii;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
-					return EXIT_FAILURE;
-				}
-				break;
-
-			case _T('f'):
-				// Output format.
-				if (!optarg) {
-					// NULL?
-					print_error(argv[0], _T("no output format specified"));
-					return EXIT_FAILURE;
-				}
-				if (!_tcsicmp(optarg, _T("default"))) {
-					output_format = -1;
-				} else if (!_tcsicmp(optarg, _T("wad"))) {
-					output_format = WAD_Format_Standard;
-				} else if (!_tcsicmp(optarg, _T("bwf"))) {
-					output_format = WAD_Format_BroadOn;
-				} else {
-					print_error(argv[0], _T("unknown output format '%s'"), optarg);
 					return EXIT_FAILURE;
 				}
 				break;
@@ -214,36 +181,33 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		// Print WAD information.
 		int i;
 		if (argc < optind+2) {
-			print_error(argv[0], _T("WAD filename not specified"));
+			print_error(argv[0], _T("NUS directory not specified"));
 			return EXIT_FAILURE;
 		}
 
 		ret = 0;
 		for (i = optind; i < argc; i++) {
-			ret |= print_wad_info(argv[i], false);
+			ret |= print_nus_info(argv[i], false);
 		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
 		// Verify a WAD.
 		int i;
 		if (argc < optind+2) {
-			print_error(argv[0], _T("WAD filename not specified"));
+			print_error(argv[0], _T("NUS directory not specified"));
 			return EXIT_FAILURE;
 		}
 
 		ret = 0;
 		for (i = optind+1; i < argc; i++) {
-			ret |= print_wad_info(argv[i], true);
+			ret |= print_nus_info(argv[i], true);
 		}
 	} else if (!_tcscmp(argv[optind], _T("resign"))) {
-		// Resign a WAD.
+		// Resign an NUS directory.
 		if (argc < optind+2) {
-			print_error(argv[0], _T("WAD filenames not specified"));
-			return EXIT_FAILURE;
-		} else if (argc < optind+3) {
-			print_error(argv[0], _T("Output WAD filename not specified"));
+			print_error(argv[0], _T("NUS directory not specified"));
 			return EXIT_FAILURE;
 		}
-		ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key, output_format);
+		ret = resign_nus(argv[optind+1], recrypt_key);
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'info'.
@@ -270,7 +234,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			int i;
 			ret = 0;
 			for (i = optind; i < argc; i++) {
-				ret |= print_wad_info(argv[i], false);
+				ret |= print_nus_info(argv[i], false);
 			}
 		} else {
 			// Not a filename.

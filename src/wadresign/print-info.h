@@ -23,13 +23,6 @@ extern "C" {
 #endif
 
 /**
- * Is an issuer retail or debug?
- * @param issuer RVL_Cert_Issuer
- * @return "Retail", "Debug", or "Unknown".
- */
-const char *issuer_type(RVL_Cert_Issuer issuer);
-
-/**
  * Identify a WAD file's type.
  *
  * This is mostly for informational purposes, except for BroadOn WAD files,

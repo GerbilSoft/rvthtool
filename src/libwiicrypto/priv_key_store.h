@@ -32,8 +32,11 @@ extern "C" {
 // Technically, only p and q are important, but calculating
 // a, b, and c is a pain.
 
-extern const RSA2048PrivateKey rvth_privkey_debug_ticket;
-extern const RSA2048PrivateKey rvth_privkey_debug_tmd;
+extern const RSA2048PrivateKey rvth_privkey_RVL_dpki_ticket;
+extern const RSA2048PrivateKey rvth_privkey_RVL_dpki_tmd;
+
+extern const RSA2048PrivateKey rvth_privkey_WUP_dpki_ticket;
+extern const RSA2048PrivateKey rvth_privkey_WUP_dpki_tmd;
 
 #ifdef __cplusplus
 }

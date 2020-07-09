@@ -22,6 +22,7 @@
 #define __RVTHTOOL_LIBWIICRYPTO_SIG_TOOLS_H__
 
 #include "wii_structs.h"
+#include "wiiu_structs.h"
 #include "cert_store.h"
 
 // C includes.
@@ -110,7 +111,7 @@ const char *RVL_SigStatus_toString_stsAppend(RVL_SigStatus_e sigStatus);
 RVL_SigStatus_e sig_verify(const uint8_t *data, size_t size);
 
 /**
- * Re-encrypt a ticket's title key.
+ * Re-encrypt a Wii ticket's title key.
  * This will also change the issuer if necessary.
  *
  * NOTE: This function will NOT fakesign the ticket.
@@ -122,6 +123,26 @@ RVL_SigStatus_e sig_verify(const uint8_t *data, size_t size);
  * @return 0 on success; non-zero on error.
  */
 int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey);
+
+/**
+ * Re-encrypt a Wii U ticket's title key.
+ * This will also change the issuer if necessary.
+ *
+ * NOTE: This function will NOT fakesign the ticket.
+ * Call cert_fakesign_ticket() afterwards.
+ * TODO: Real signing for debug.
+ *
+ * @param ticket Ticket.
+ * @param toKey New key.
+ * @return 0 on success; non-zero on error.
+ */
+static inline int sig_recrypt_ticket_WUP(WUP_Ticket *ticket, RVL_AES_Keys_e toKey)
+{
+	// The issuer and encrypted title key fields are located
+	// in the same place in both Wii and Wii U tickets, so
+	// we can reuse sig_recrypt_ticket().
+	return sig_recrypt_ticket((RVL_Ticket*)ticket, toKey);
+}
 
 #ifdef __cplusplus
 }

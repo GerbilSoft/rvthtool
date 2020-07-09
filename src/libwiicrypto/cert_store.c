@@ -80,9 +80,21 @@ const uint8_t RVL_AES_Keys[RVL_KEY_MAX][16] = {
 	{0x63,0xB8,0x2B,0xB4,0xF4,0x61,0x4E,0x2E,
 	 0x13,0xF2,0xFE,0xFB,0xBA,0x4C,0x9B,0x7E},
 
-	// RVL_KEY_vWii [FIXME: Debug version?]
+	 // vWii_KEY_DEBUG
+	{0x2A,0x9F,0x29,0x48,0xE6,0x23,0xCF,0x0D,
+	 0x0C,0x4C,0x07,0x96,0xB2,0x1D,0xCD,0xF6},
+
+	// vWii_KEY_RETAIL
 	{0x30,0xBF,0xC7,0x6E,0x7C,0x19,0xAF,0xBB,
 	 0x23,0x16,0x33,0x30,0xCE,0xD7,0xC2,0x8D},
+
+	// WUP_KEY_DEBUG
+	{0x2F,0x5C,0x1B,0x29,0x44,0xE7,0xFD,0x6F,
+	 0xC3,0x97,0x96,0x4B,0x05,0x76,0x91,0xFA},
+
+	// WUP_KEY_RETAIL
+	{0xD7,0xB0,0x04,0x02,0x65,0x9B,0xA2,0xAB,
+	 0xD2,0xCB,0x0D,0xB2,0x7F,0xA2,0xB6,0x56},
 };
 
 // Signature issuers.
@@ -281,23 +293,42 @@ RVL_PKI cert_get_pki_from_issuer(RVL_Cert_Issuer issuer)
 {
 	RVL_PKI ret = RVL_PKI_UNKNOWN;
 
+	switch (issuer) {
 	// NOTE: Using RVL platform for the Root certificates.
-	if (issuer == RVL_CERT_ISSUER_DPKI_ROOT) {
-		ret = RVL_PKI_DPKI;
-	} else if (issuer == RVL_CERT_ISSUER_PPKI_ROOT) {
-		ret = RVL_PKI_PPKI;
-	} else if (issuer >= RVL_CERT_ISSUER_DPKI_MIN && issuer <= RVL_CERT_ISSUER_DPKI_MAX) {
-		ret = RVL_PKI_DPKI;
-	} if (issuer >= RVL_CERT_ISSUER_PPKI_MIN && issuer <= RVL_CERT_ISSUER_PPKI_MAX) {
-		ret = RVL_PKI_PPKI;
-	} else if (issuer >= CTR_CERT_ISSUER_DPKI_MIN && issuer <= CTR_CERT_ISSUER_DPKI_MIN) {
-		ret = CTR_PKI_DPKI;
-	} else if (issuer >= CTR_CERT_ISSUER_PPKI_MIN && issuer <= CTR_CERT_ISSUER_PPKI_MIN) {
-		ret = CTR_PKI_PPKI;
-	} else if (issuer >= WUP_CERT_ISSUER_DPKI_MIN && issuer <= WUP_CERT_ISSUER_DPKI_MIN) {
-		ret = WUP_PKI_DPKI;
-	} else if (issuer >= WUP_CERT_ISSUER_PPKI_MIN && issuer <= WUP_CERT_ISSUER_PPKI_MIN) {
-		ret = WUP_PKI_PPKI;
+		case RVL_CERT_ISSUER_DPKI_ROOT:		ret = RVL_PKI_DPKI; break;
+		case RVL_CERT_ISSUER_PPKI_ROOT:		ret = RVL_PKI_PPKI; break;
+
+		case RVL_CERT_ISSUER_DPKI_CA:
+		case RVL_CERT_ISSUER_DPKI_TICKET:
+		case RVL_CERT_ISSUER_DPKI_TMD:
+		case RVL_CERT_ISSUER_DPKI_MS:
+		case RVL_CERT_ISSUER_DPKI_XS04:
+		case RVL_CERT_ISSUER_DPKI_CP05:		ret = RVL_PKI_DPKI; break;
+
+		case RVL_CERT_ISSUER_PPKI_CA:
+		case RVL_CERT_ISSUER_PPKI_TICKET:
+		case RVL_CERT_ISSUER_PPKI_TMD:		ret = RVL_PKI_PPKI; break;
+
+		case CTR_CERT_ISSUER_DPKI_CA:
+		case CTR_CERT_ISSUER_DPKI_TICKET:
+		case CTR_CERT_ISSUER_DPKI_TMD:		ret = CTR_PKI_DPKI; break;
+
+		case CTR_CERT_ISSUER_PPKI_CA:
+		case CTR_CERT_ISSUER_PPKI_TICKET:
+		case CTR_CERT_ISSUER_PPKI_TMD:		ret = CTR_PKI_PPKI; break;
+
+		case WUP_CERT_ISSUER_DPKI_CA:
+		case WUP_CERT_ISSUER_DPKI_TICKET:
+		case WUP_CERT_ISSUER_DPKI_TMD:
+		case WUP_CERT_ISSUER_DPKI_SP:		ret = WUP_PKI_DPKI; break;
+
+		case WUP_CERT_ISSUER_PPKI_CA:
+		case WUP_CERT_ISSUER_PPKI_TICKET:
+		case WUP_CERT_ISSUER_PPKI_TMD:		ret = WUP_PKI_PPKI; break;
+
+		default:
+			assert(!"Unrecognized PKI.");
+			break;
 	}
 
 	return ret;

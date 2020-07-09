@@ -37,7 +37,12 @@ typedef enum {
 	RVL_KEY_DEBUG	= 0,	// Debug common key
 	RVL_KEY_RETAIL	= 1,	// Retail common key
 	RVL_KEY_KOREAN	= 2,	// Korean common key
-	RVL_KEY_vWii	= 3,	// vWii common key [FIXME: Debug version?]
+
+	vWii_KEY_DEBUG	= 3,	// vWii dpki common key
+	vWii_KEY_RETAIL	= 4,	// vWii ppki common key
+
+	WUP_KEY_DEBUG	= 5,	// Wii U dpki common key
+	WUP_KEY_RETAIL	= 6,	// Wii U ppki common key
 
 	RVL_KEY_MAX
 } RVL_AES_Keys_e;
@@ -225,7 +230,7 @@ typedef enum {
  */
 typedef struct _RVL_Sig_Dummy {
 	uint32_t type;		// [0x000] Signature type. (Must be 0.)
-	uint8_t padding1[0x3C];	// [0x004] Padding.
+	uint8_t padding[0x3C];	// [0x004] Padding.
 	char issuer[64];	// [0x040] Issuer.
 } RVL_Sig_Dummy;
 ASSERT_STRUCT(RVL_Sig_Dummy, 0x080);
@@ -238,7 +243,7 @@ ASSERT_STRUCT(RVL_Sig_Dummy, 0x080);
 typedef struct _RVL_Sig_RSA4096 {
 	uint32_t type;					// [0x000] Signature type. (See Cert_SigType_e.)
 	uint8_t sig[RVL_CERT_SIGLENGTH_RSA4096];	// [0x004] Signature.
-	uint8_t padding1[0x3C];				// [0x204] Padding.
+	uint8_t padding[0x3C];				// [0x204] Padding.
 	char issuer[64];				// [0x240] Issuer.
 } RVL_Sig_RSA4096;
 ASSERT_STRUCT(RVL_Sig_RSA4096, 0x280);
@@ -254,7 +259,7 @@ typedef struct _RVL_PubKey_RSA4096 {
 	uint32_t unknown;		// [0x044] // Unknown...
 	uint8_t modulus[512];		// [0x048] Modulus.
 	uint32_t exponent;		// [0x248] Public exponent.
-	uint8_t padding2[0x34];		// [0x24C]
+	uint8_t padding[0x34];		// [0x24C]
 } RVL_PubKey_RSA4096;
 ASSERT_STRUCT(RVL_PubKey_RSA4096, 0x280);
 
@@ -291,7 +296,7 @@ ASSERT_STRUCT(RVL_Cert_RSA4096, 0x500);
 typedef struct _RVL_Sig_RSA2048 {
 	uint32_t type;					// [0x000] Signature type. (See Cert_SigType_e.)
 	uint8_t sig[RVL_CERT_SIGLENGTH_RSA2048];	// [0x004] Signature.
-	uint8_t padding1[0x3C];				// [0x104] Padding.
+	uint8_t padding[0x3C];				// [0x104] Padding.
 	char issuer[64];				// [0x140] Issuer.
 } RVL_Sig_RSA2048;
 ASSERT_STRUCT(RVL_Sig_RSA2048, 0x180);
@@ -307,7 +312,7 @@ typedef struct _RVL_PubKey_RSA2048 {
 	uint32_t unknown;		// [0x044] // Unknown...
 	uint8_t modulus[256];		// [0x048] Modulus.
 	uint32_t exponent;		// [0x148] Public exponent.
-	uint8_t padding2[0x34];		// [0x14C]
+	uint8_t padding[0x34];		// [0x14C]
 } RVL_PubKey_RSA2048;
 ASSERT_STRUCT(RVL_PubKey_RSA2048, 0x180);
 

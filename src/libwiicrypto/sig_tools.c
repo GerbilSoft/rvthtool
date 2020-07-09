@@ -195,7 +195,7 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	if (!strncmp(ticket->issuer,
 	    RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Retail.
+		// Wii: Retail.
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
@@ -205,16 +205,37 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 				fromKey = RVL_KEY_KOREAN;
 				break;
 			case 2:
-				fromKey = RVL_KEY_vWii;
+				fromKey = vWii_KEY_RETAIL;
 				break;
 		}
 	}
 	else if (!strncmp(ticket->issuer,
 		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Debug. Use RVL_KEY_DEBUG.
-		// FIXME: Is there a debug vWii key?
-		fromKey = RVL_KEY_DEBUG;
+		// Wii: Debug.
+		// TODO: Is there a debug Korean key?
+		// TODO: Is vWii debug index 1 or 2?
+		switch (ticket->common_key_index) {
+			case 0:
+			default:
+				fromKey = RVL_KEY_DEBUG;
+				break;
+			case 2:
+				fromKey = vWii_KEY_DEBUG;
+				break;
+		}
+	}
+	else if (!strncmp(ticket->issuer,
+		 RVL_Cert_Issuers[WUP_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
+	{
+		// Wii U: Retail.
+		fromKey = WUP_KEY_RETAIL;
+	}
+	else if (!strncmp(ticket->issuer,
+		 RVL_Cert_Issuers[WUP_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
+	{
+		// Wii U: Debug.
+		fromKey = WUP_KEY_DEBUG;
 	}
 	else
 	{
@@ -234,10 +255,25 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	// Key data and 'To' issuer.
 	key_from = RVL_AES_Keys[fromKey];
 	key_to = RVL_AES_Keys[toKey];
-	if (likely(toKey != RVL_KEY_DEBUG)) {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET];
-	} else {
-		issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET];
+	switch (toKey) {
+		case RVL_KEY_RETAIL:
+		case RVL_KEY_KOREAN:
+		case vWii_KEY_RETAIL:
+			issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET];
+			break;
+		case RVL_KEY_DEBUG:
+		case vWii_KEY_DEBUG:
+			issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET];
+			break;
+		case WUP_KEY_RETAIL:
+			issuer = RVL_Cert_Issuers[WUP_CERT_ISSUER_PPKI_TICKET];
+			break;
+		case WUP_KEY_DEBUG:
+			issuer = RVL_Cert_Issuers[WUP_CERT_ISSUER_DPKI_TICKET];
+			break;
+		default:
+			assert(!"Unsupported toKey value.");
+			return -EINVAL;
 	}
 
 	// Initialize the AES context.
