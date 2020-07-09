@@ -192,9 +192,31 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 
 	// Get the ticket and TMD sizes.
 	fseeko(f_tik, 0, SEEK_END);
-	fseeko(f_tmd, 0, SEEK_END);
 	const size_t tik_size = ftello(f_tik);
+	if (tik_size < sizeof(WUP_Ticket)) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		fprintf(stderr, "*** ERROR reading ticket file: Too small.\n");
+		return -EIO;
+	} else if (tik_size > (64*1024)) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		fprintf(stderr, "*** ERROR reading ticket file: Too big.\n");
+		return -EIO;
+	}
+	fseeko(f_tmd, 0, SEEK_END);
 	const size_t tmd_size = ftello(f_tmd);
+	if (tmd_size < (sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable))) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		fprintf(stderr, "*** ERROR reading TMD file: Too small.\n");
+		return -EIO;
+	} else if (tmd_size > (128*1024)) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		fprintf(stderr, "*** ERROR reading TMD file: Too big.\n");
+		return -EIO;
+	}
 	rewind(f_tik);
 	rewind(f_tmd);
 

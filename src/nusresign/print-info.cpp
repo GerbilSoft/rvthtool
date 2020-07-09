@@ -457,6 +457,11 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		fclose(f_tmd);
 		fprintf(stderr, "*** ERROR reading ticket file: Too small.\n");
 		return -EIO;
+	} else if (tik_size > (64*1024)) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		fprintf(stderr, "*** ERROR reading ticket file: Too big.\n");
+		return -EIO;
 	}
 	fseeko(f_tmd, 0, SEEK_END);
 	const size_t tmd_size = ftello(f_tmd);
@@ -464,6 +469,11 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		fclose(f_tik);
 		fclose(f_tmd);
 		fprintf(stderr, "*** ERROR reading TMD file: Too small.\n");
+		return -EIO;
+	} else if (tmd_size > (128*1024)) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		fprintf(stderr, "*** ERROR reading TMD file: Too big.\n");
 		return -EIO;
 	}
 	rewind(f_tik);
