@@ -89,11 +89,12 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	sf_app += cidbuf;
 	sf_app += ".app";
 
-	const bool has_h3 = !!(entry->type & cpu_to_be16(0x0002));
+	const bool hasH3 = !!(entry->type & cpu_to_be16(0x0002));
 	tstring sf_h3;
-	if (has_h3) {
+	if (hasH3) {
 		// H3 file is present.
 		// TODO: How is it checked?
+		sf_h3 = nus_dir;
 		sf_h3 += DIR_SEP_CHR;
 		sf_h3 += cidbuf;
 		sf_h3 += ".h3";
@@ -108,6 +109,52 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		}
 		printf("- *** ERROR opening %s.app: %s\n", cidbuf, strerror(err));
 		return -err;
+	}
+
+	// H3 table depends on the size of the contents.
+	// One H3 hash == 256 MB data
+	unique_ptr<uint8_t[]> hash_h3;
+	size_t hash_h3_len = 0;
+	if (hasH3) {
+		FILE *f_h3 = _tfopen(sf_h3.c_str(), _T("rb"));
+		if (!f_h3) {
+			// Error opening the H3 file.
+			fclose(f_content);
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			printf("- *** ERROR opening %s.h3: %s\n", cidbuf, strerror(err));
+			return -err;
+		}
+
+		// Get the size.
+		// Should be at least SHA1_DIGEST_SIZE and a multiple of SHA1_DIGEST_SIZE.
+		// Maximum of 256*20 bytes for the H3 file, or 64 GB of coverage.
+		fseeko(f_h3, 0, SEEK_END);
+		hash_h3_len = ftello(f_h3);
+		if (hash_h3_len == 0 || hash_h3_len % SHA1_DIGEST_SIZE != 0 || hash_h3_len > (SHA1_DIGEST_SIZE * 256)) {
+			// Invalid size.
+			fclose(f_h3);
+			fclose(f_content);
+			printf("- *** ERROR reading %s.h3: Size is incorrect\n", cidbuf);
+			return -EIO;
+		}
+
+		rewind(f_h3);
+		hash_h3.reset(new uint8_t[hash_h3_len]);
+		errno = 0;
+		size_t size = fread(hash_h3.get(), 1, hash_h3_len, f_h3);
+		if (size != hash_h3_len) {
+			// Read error.
+			int err = errno;
+			if (errno == 0) {
+				err = EIO;
+			}
+			fclose(f_content);
+			printf("- *** ERROR reading %s.h3: %s\n", cidbuf, strerror(err));
+			return -err;
+		}
 	}
 
 	AesCtx *const aesw = aesw_new();
@@ -129,73 +176,238 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 
 	// Read the content, decrypt it, and hash it.
 	// TODO: Verify size; check fseeko() errors.
-	struct sha1_ctx sha1;
-	sha1_init(&sha1);
 	int64_t data_sz = be64_to_cpu(entry->size);
 
 	int ret = 0;
-	for (; data_sz >= READ_BUFFER_SIZE; data_sz -= READ_BUFFER_SIZE) {
-		errno = 0;
-		size_t size = fread(buf.get(), 1, READ_BUFFER_SIZE, f_content);
-		if (size != READ_BUFFER_SIZE) {
-			ret = errno;
-			if (ret == 0) {
-				ret = -EIO;
+	tstring outfile = "/home/david/p/" + string(cidbuf) + ".bin";
+	FILE *f_out = fopen(outfile.c_str(), "wb");
+
+	if (!hasH3) {
+		// No H3 table. A single SHA-1 is used for the whole content.
+		struct sha1_ctx sha1;
+		sha1_init(&sha1);
+		for (; data_sz >= READ_BUFFER_SIZE; data_sz -= READ_BUFFER_SIZE) {
+			errno = 0;
+			size_t size = fread(buf.get(), 1, READ_BUFFER_SIZE, f_content);
+			if (size != READ_BUFFER_SIZE) {
+				ret = errno;
+				if (ret == 0) {
+					ret = -EIO;
+				}
+				goto end;
 			}
-			goto end;
+
+			// Decrypt the data.
+			aesw_decrypt(aesw, buf.get(), READ_BUFFER_SIZE);
+
+			// Update the SHA-1.
+			sha1_update(&sha1, READ_BUFFER_SIZE, buf.get());
 		}
 
-		// Decrypt the data.
-		aesw_decrypt(aesw, buf.get(), READ_BUFFER_SIZE);
+		// Remaining data.
+		if (data_sz > 0) {
+			// NOTE: AES works on 16-byte blocks, so we have to
+			// read and decrypt the full 16-byte block. The SHA-1
+			// is only taken for the actual used data, though.
+			uint32_t data_sz_align = ALIGN_BYTES(16, data_sz);
 
-		// Update the SHA-1.
-		sha1_update(&sha1, READ_BUFFER_SIZE, buf.get());
-	}
-
-	// Remaining data.
-	if (data_sz > 0) {
-		// NOTE: AES works on 16-byte blocks, so we have to
-		// read and decrypt the full 16-byte block. The SHA-1
-		// is only taken for the actual used data, though.
-		uint32_t data_sz_align = ALIGN_BYTES(16, data_sz);
-
-		errno = 0;
-		size_t size = fread(buf.get(), 1, data_sz_align, f_content);
-		if (size != data_sz_align) {
-			ret = errno;
-			if (ret == 0) {
-				ret = -EIO;
+			errno = 0;
+			size_t size = fread(buf.get(), 1, data_sz_align, f_content);
+			if (size != data_sz_align) {
+				ret = errno;
+				if (ret == 0) {
+					ret = -EIO;
+				}
+				goto end;
 			}
-			goto end;
+
+			// Decrypt the data.
+			aesw_decrypt(aesw, buf.get(), data_sz_align);
+
+			// Update the SHA-1.
+			// NOTE: Only uses the actual content, not the
+			// aligned data required for decryption.
+			sha1_update(&sha1, data_sz, buf.get());
 		}
 
-		// Decrypt the data.
-		aesw_decrypt(aesw, buf.get(), data_sz_align);
-
-		// Update the SHA-1.
-		// NOTE: Only uses the actual content, not the
-		// aligned data required for decryption.
-		sha1_update(&sha1, data_sz, buf.get());
-	}
-
-	// Finalize the SHA-1 and compare it.
-	uint8_t digest[SHA1_DIGEST_SIZE];
-	sha1_digest(&sha1, sizeof(digest), digest);
-	fputs("- Expected SHA-1: ", stdout);
-	for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
-		printf("%02x", entry->sha1_hash[size]);
-	}
-	putchar('\n');
-	printf("- Actual SHA-1:   ");
-	for (size_t size = 0; size < sizeof(digest); size++) {
-		printf("%02x", digest[size]);
-	}
-	if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
-		fputs(" [OK]\n", stdout);
+		// Finalize the SHA-1 and compare it.
+		uint8_t digest[SHA1_DIGEST_SIZE];
+		sha1_digest(&sha1, sizeof(digest), digest);
+		fputs("- Expected SHA-1: ", stdout);
+		for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
+			printf("%02x", entry->sha1_hash[size]);
+		}
+		putchar('\n');
+		printf("- Actual SHA-1:   ");
+		for (size_t size = 0; size < sizeof(digest); size++) {
+			printf("%02x", digest[size]);
+		}
+		if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
+			fputs(" [OK]\n", stdout);
+		} else {
+			fputs(" [ERROR]\n", stdout);
+			ret = 1;
+		}
 	} else {
-		fputs(" [ERROR]\n", stdout);
-		ret = 1;
+		// Has an H3 table. Content is encrypted in 64 KB blocks.
+		// H3 hash is the hash of all H2 tables for every 256 MB block.
+		// IV starts in hashes[block number % 16].
+		// TODO: Verify that the content is a multiple of 64 KB?
+		struct EncBlock {
+			// One hash block covers a 1 MB superblock.
+			struct {
+				// 16 H0 hashes, each of which covers one 64 KB block.
+				// For every megabyte of data, all 64 KB blocks have the same H0 hashes.
+				uint8_t h0[16][SHA1_DIGEST_SIZE];
+				// 16 H1 hashes, each of which covers the H0 table for a given 1 MB block.
+				// For every 16 MB of data, all 64 KB blocks have the same H1 hashes.
+				uint8_t h1[16][SHA1_DIGEST_SIZE];
+				// 16 H2 hashes, each of which covers the H1 table for a given 16 MB block.
+				// For every 256 MB of data, all 64 KB blocks have the same H2 hashes.
+				uint8_t h2[16][SHA1_DIGEST_SIZE];
+
+				// Unused
+				uint8_t unused[64];
+			} hashes;
+			uint8_t data[0xFC00];
+		};
+
+		// H0 == hash of a single block
+		// H1 == hash of 16 H0 hashes
+		// H2 == hash of 16 H1 hashes
+		// H3 == hash of all H2 hashes
+		// H4 == hash of the H3 hash, stored in the content entry
+
+		// Were any bad hashes found?
+		unsigned int bad_hash[4] = {0, 0, 0, 0};
+
+		#define ENC_BLOCK_SIZE 0x10000
+		#define DEC_BLOCK_SIZE 0xFC00
+
+		// Zero IV for hashes.
+		uint8_t zero_iv[16];
+		memset(zero_iv, 0, sizeof(zero_iv));
+
+		EncBlock *const block = reinterpret_cast<EncBlock*>(buf.get());
+		unsigned int block_number = 0;
+		for (; data_sz >= ENC_BLOCK_SIZE; data_sz -= ENC_BLOCK_SIZE, block_number++) {
+			sha1_ctx sha1;
+			uint8_t digest[SHA1_DIGEST_SIZE];
+
+			errno = 0;
+			size_t size = fread(block, 1, sizeof(*block), f_content);
+			if (size != sizeof(*block)) {
+				ret = errno;
+				if (ret == 0) {
+					ret = -EIO;
+				}
+				goto end;
+			}
+
+			// Decrypt the hashes. (zero IV)
+			aesw_set_iv(aesw, zero_iv, sizeof(zero_iv));
+			aesw_decrypt(aesw, reinterpret_cast<uint8_t*>(&block->hashes), sizeof(block->hashes));
+
+			// Decrypt the data.
+			// IV is one of the decrypted hashes.
+			const uint8_t *const pHashH0_expected = block->hashes.h0[block_number % 16];
+			aesw_set_iv(aesw, pHashH0_expected, 16);
+			aesw_decrypt(aesw, block->data, sizeof(block->data));
+			fwrite(block, 1, sizeof(*block), f_out);
+
+			// Verify the H0 hash.
+			sha1_init(&sha1);
+			sha1_update(&sha1, sizeof(block->data), block->data);
+			sha1_digest(&sha1, sizeof(digest), digest);
+			if (memcmp(digest, pHashH0_expected, sizeof(digest)) != 0) {
+				// TODO: Print an error here?
+				//fprintf(stderr, "- *** ERROR: H0 hash bad at block %u\n", block_number);
+				bad_hash[0]++;
+				ret = 1;
+			}
+
+			if (block_number % 16 == 0) {
+				// Verify the H1 hash. (New H0 table)
+				// TODO: Verify that the other identical H0 hash tables match.
+				sha1_init(&sha1);
+				sha1_update(&sha1, sizeof(block->hashes.h0), &block->hashes.h0[0][0]);
+				sha1_digest(&sha1, sizeof(digest), digest);
+
+				unsigned int h1_idx = (block_number / 16) % 16;
+				if (memcmp(digest, block->hashes.h1[h1_idx], sizeof(digest))) {
+					bad_hash[1]++;
+				}
+			}
+
+			if (block_number % (16*16) == 0) {
+				// Verify the H2 hash. (New H1 table)
+				// TODO: Verify that the other identical H1 hash tables match.
+				sha1_init(&sha1);
+				sha1_update(&sha1, sizeof(block->hashes.h1), &block->hashes.h1[0][0]);
+				sha1_digest(&sha1, sizeof(digest), digest);
+
+				unsigned int h2_idx = (block_number / (16*16)) % 16;
+				if (memcmp(digest, block->hashes.h2[h2_idx], sizeof(digest))) {
+					bad_hash[2]++;
+				}
+			}
+
+			if (block_number % (16*16*16) == 0) {
+				// Verify the H3 hash. (New H2 table)
+				// TODO: Verify that the other identical H2 hash tables match.
+				sha1_init(&sha1);
+				sha1_update(&sha1, sizeof(block->hashes.h2), &block->hashes.h2[0][0]);
+				sha1_digest(&sha1, sizeof(digest), digest);
+
+				unsigned int h3_byte_pos = (block_number / (16*16*16)) * SHA1_DIGEST_SIZE;
+				if (h3_byte_pos + SHA1_DIGEST_SIZE > hash_h3_len) {
+					// Out of bounds...
+					bad_hash[3]++;
+				} else {
+					if (memcmp(digest, &hash_h3[h3_byte_pos], sizeof(digest))) {
+						bad_hash[3]++;
+					}
+				}
+			}
+		}
+
+		bool showH4status = true;
+		for (unsigned int i = 0; i < 3; i++) {
+			if (bad_hash[i] != 0) {
+				printf("- ERROR: %u H%u hash(es) were incorrect.\n", bad_hash[i], i);
+				showH4status = false;
+				ret = 1;
+			}
+		}
+
+		// Verify the H4 SHA-1, which is stored in the content entry.
+		uint8_t digest[SHA1_DIGEST_SIZE];
+		sha1_ctx sha1_h4;
+		sha1_init(&sha1_h4);
+		sha1_update(&sha1_h4, hash_h3_len, hash_h3.get());
+		sha1_digest(&sha1_h4, sizeof(digest), digest);
+		fputs("- Expected SHA-1: ", stdout);
+		for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
+			printf("%02x", entry->sha1_hash[size]);
+		}
+		fputs(" (H4)\n", stdout);
+		printf("- Actual SHA-1:   ");
+		for (size_t size = 0; size < sizeof(digest); size++) {
+			printf("%02x", digest[size]);
+		}
+		if (showH4status) {
+			if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
+				fputs(" [OK] (H4)\n", stdout);
+			} else {
+				fputs(" [ERROR] (H4)\n", stdout);
+				ret = 1;
+			}
+		} else {
+			fputs(" (H4)\n", stdout);
+		}
 	}
+
+	fclose(f_out);
 
 end:
 	fclose(f_content);
