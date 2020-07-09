@@ -179,9 +179,6 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	int64_t data_sz = be64_to_cpu(entry->size);
 
 	int ret = 0;
-	tstring outfile = "/home/david/p/" + string(cidbuf) + ".bin";
-	FILE *f_out = fopen(outfile.c_str(), "wb");
-
 	if (!hasH3) {
 		// No H3 table. A single SHA-1 is used for the whole content.
 		struct sha1_ctx sha1;
@@ -313,7 +310,6 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			const uint8_t *const pHashH0_expected = block->hashes.h0[block_number % 16];
 			aesw_set_iv(aesw, pHashH0_expected, 16);
 			aesw_decrypt(aesw, block->data, sizeof(block->data));
-			fwrite(block, 1, sizeof(*block), f_out);
 
 			// Verify the H0 hash.
 			sha1_init(&sha1);
@@ -406,8 +402,6 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			fputs(" (H4)\n", stdout);
 		}
 	}
-
-	fclose(f_out);
 
 end:
 	fclose(f_content);
