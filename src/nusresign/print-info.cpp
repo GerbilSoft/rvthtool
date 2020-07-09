@@ -82,12 +82,12 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	// Construct the filenames.
 	// FIXME: Content ID or content index?
 	// Assuming content ID for filename, content index for IV.
-	char cidbuf[16];
-	snprintf(cidbuf, sizeof(cidbuf), "%08x", be32_to_cpu(entry->content_id));
+	TCHAR cidbuf[16];
+	_sntprintf(cidbuf, ARRAY_SIZE(cidbuf), _T("%08x"), be32_to_cpu(entry->content_id));
 	tstring sf_app = nus_dir;
 	sf_app += DIR_SEP_CHR;
 	sf_app += cidbuf;
-	sf_app += ".app";
+	sf_app += _T(".app");
 
 	const bool hasH3 = !!(entry->type & cpu_to_be16(0x0002));
 	tstring sf_h3;
@@ -97,7 +97,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		sf_h3 = nus_dir;
 		sf_h3 += DIR_SEP_CHR;
 		sf_h3 += cidbuf;
-		sf_h3 += ".h3";
+		sf_h3 += _T(".h3");
 	}
 
 	FILE *f_content = _tfopen(sf_app.c_str(), _T("rb"));
