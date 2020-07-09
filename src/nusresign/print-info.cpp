@@ -83,7 +83,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	// FIXME: Content ID or content index?
 	// Assuming content ID for filename, content index for IV.
 	char cidbuf[16];
-	snprintf(cidbuf, sizeof(cidbuf), "%08X", be32_to_cpu(entry->content_id));
+	snprintf(cidbuf, sizeof(cidbuf), "%08x", be32_to_cpu(entry->content_id));
 	tstring sf_app = nus_dir;
 	sf_app += DIR_SEP_CHR;
 	sf_app += cidbuf;
@@ -490,7 +490,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	// NOTE: Using TMD for most information.
 	_tprintf(_T("%s:\n"), nus_dir);
 	// FIXME: Get the actual Wii U application type.
-	//printf("Type: %08X\n", be32_to_cpu(pTmdHeader->rvl.title_type));
+	//printf("Type: %08x\n", be32_to_cpu(pTmdHeader->rvl.title_type));
 	printf("- Title ID:      %08X-%08X\n", be32_to_cpu(pTmdHeader->rvl.title_id.hi), be32_to_cpu(pTmdHeader->rvl.title_id.lo));
 
 	// TODO: Figure out where the game ID is stored.
