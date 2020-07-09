@@ -527,8 +527,10 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	printf("- Encryption:    %s\n", s_encKey);
 
 	// Check the ticket issuer and signature.
+	// NOTE: The ticket might have a certificate chain appended,
+	// so we'll only check the actual ticket data.
 	const char *const s_issuer_ticket = issuer_type(issuer_ticket);
-	RVL_SigStatus_e sig_status_ticket = sig_verify(tik_data.get(), tik_size);
+	RVL_SigStatus_e sig_status_ticket = sig_verify(tik_data.get(), sizeof(WUP_Ticket));
 	printf("- Ticket Signature: %s%s\n",
 		s_issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
