@@ -10,12 +10,13 @@
 #include "git.h"
 
 // C includes.
+#include <getopt.h>
 #include <locale.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
+#include <sys/stat.h>
 
 #include "libwiicrypto/sig_tools.h"
 
@@ -186,7 +187,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		}
 
 		ret = 0;
-		for (i = optind; i < argc; i++) {
+		for (i = optind+1; i < argc; i++) {
 			ret |= print_nus_info(argv[i], false);
 		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
@@ -209,28 +210,12 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		}
 		ret = resign_nus(argv[optind+1], recrypt_key);
 	} else {
-		// If the "command" contains a slash or dot (or backslash on Windows),
+		// If the "command" corresponds to a valid directory,
 		// assume it's a filename and handle it as 'info'.
-		// TODO: If two filenames are specified, handle it as 'resign'.
-		const TCHAR *p;
-		bool isFilename = false;
-		for (p = argv[optind]; *p != 0; p++) {
-			if (*p == _T('/') || *p == _T('.')) {
-				// Probably a filename.
-				isFilename = true;
-				break;
-			}
-#ifdef _WIN32
-			else if (*p == '\\') {
-				// Probably a filename on Windows.
-				isFilename = true;
-				break;
-			}
-#endif /* _WIN32 */
-		}
-
-		if (isFilename) {
-			// Probably a filename.
+		struct stat sb;
+		int sret = stat(argv[optind], &sb);
+		if (sret == 0 && (sb.st_mode & S_IFDIR)) {
+			// It's a directory.
 			int i;
 			ret = 0;
 			for (i = optind; i < argc; i++) {
