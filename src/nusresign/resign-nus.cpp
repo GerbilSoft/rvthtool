@@ -7,6 +7,7 @@
  ***************************************************************************/
 
 #include "resign-nus.hpp"
+#include "print-info.hpp"
 
 #include "libwiicrypto/common.h"
 #include "libwiicrypto/byteswap.h"
@@ -128,31 +129,13 @@ static void updateExtraCerts(uint8_t *data, size_t size, bool isTMD, RVL_PKI pki
  */
 int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 {
-	/*
-	FILE *f_tik;
-	FILE *f_tmd;
-	uint8_t *tik_data;
-	size_t tik_size;
-	uint8_t *tmd_data;
-	size_t tmd_size;
-
-	// Convenience pointers.
-	WUP_Ticket *pTicket;		// points at tik_data
-	WUP_TMD_Header *pTmdHeader;	// points at tmd_data
-
-	// Temporary values for ticket fixes.
-	uint32_t feedface = 0;
-	*/
-
 	// Print the NUS information.
 	// TODO: Should we verify the hashes?
-	// TODO: Implement this.
-	/*
 	int ret = print_nus_info(nus_dir, false);
 	if (ret != 0) {
 		// Error printing the NUS information.
 		return ret;
-	}*/
+	}
 
 	// Construct the filenames.
 	tstring sf_tik = nus_dir;
