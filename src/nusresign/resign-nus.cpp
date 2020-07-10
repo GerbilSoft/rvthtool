@@ -388,7 +388,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	tstring sf_cert = nus_dir;
 	sf_cert += DIR_SEP_CHR;
 	sf_cert += _T("title.cert");
-	FILE *f_cert = _tfopen(sf_cert.c_str(), "wb");
+	FILE *f_cert = _tfopen(sf_cert.c_str(), _T("wb"));
 	if (!f_cert) {
 		int err = errno;
 		if (err == 0) {
