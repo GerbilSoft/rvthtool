@@ -253,7 +253,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		struct EncBlock {
 			// One hash block covers a 1 MB superblock.
 			struct {
-				// 16 H0 hashes, each of which covers one 64 KB block.
+				// 16 H0 hashes, each of which covers the data area (63 KB) of one 64 KB block.
 				// For every megabyte of data, all 64 KB blocks have the same H0 hashes.
 				uint8_t h0[16][SHA1_DIGEST_SIZE];
 				// 16 H1 hashes, each of which covers the H0 table for a given 1 MB block.
