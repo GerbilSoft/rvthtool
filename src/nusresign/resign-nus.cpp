@@ -146,10 +146,6 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	sf_tmd += DIR_SEP_CHR;
 	sf_tmd += _T("title.tmd");
 
-	tstring sf_certs = nus_dir;
-	sf_certs += DIR_SEP_CHR;
-	sf_certs += _T("title.certs");
-
 	// Open the ticket and TMD.
 	FILE *f_tik = _tfopen(sf_tik.c_str(), _T("rb+"));
 	if (!f_tik) {
@@ -250,21 +246,26 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	}
 
 	// Determine the new issuers.
-	const char *issuer_xs, *issuer_cp;
+	RVL_Cert_Issuer issuer_ca, issuer_xs, issuer_cp, issuer_sp;
+	const char *s_issuer_xs, *s_issuer_cp;
 	const char *s_toKey;
 	RVL_AES_Keys_e toKey;
 	RVL_PKI toPki;
 	switch (recrypt_key) {
 		case RVL_CryptoType_Retail:
-			issuer_xs = RVL_Cert_Issuers[WUP_CERT_ISSUER_PPKI_TICKET];
-			issuer_cp = RVL_Cert_Issuers[WUP_CERT_ISSUER_PPKI_TMD];
+			issuer_ca = WUP_CERT_ISSUER_PPKI_CA;
+			issuer_xs = WUP_CERT_ISSUER_PPKI_TICKET;
+			issuer_cp = WUP_CERT_ISSUER_PPKI_TMD;
+			issuer_sp = RVL_CERT_ISSUER_UNKNOWN;
 			s_toKey = "retail";
 			toKey = WUP_KEY_RETAIL;
 			toPki = WUP_PKI_PPKI;
 			break;
 		case RVL_CryptoType_Debug:
-			issuer_xs = RVL_Cert_Issuers[WUP_CERT_ISSUER_DPKI_TICKET];
-			issuer_cp = RVL_Cert_Issuers[WUP_CERT_ISSUER_DPKI_TMD];
+			issuer_ca = WUP_CERT_ISSUER_DPKI_CA;
+			issuer_xs = WUP_CERT_ISSUER_DPKI_TICKET;
+			issuer_cp = WUP_CERT_ISSUER_DPKI_TMD;
+			issuer_sp = WUP_CERT_ISSUER_DPKI_SP;
 			s_toKey = "debug";
 			toKey = WUP_KEY_DEBUG;
 			toPki = WUP_PKI_DPKI;
@@ -274,6 +275,8 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 			assert(!"Invalid crypto type...");
 			return 3;
 	}
+	s_issuer_xs = RVL_Cert_Issuers[issuer_xs];
+	s_issuer_cp = RVL_Cert_Issuers[issuer_cp];
 
 	printf("Converting NUS from %s to %s...\n", s_fromKey, s_toKey);
 
@@ -340,8 +343,8 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	updateExtraCerts(tmd_data.get(), tmd_size, true, toPki);
 
 	// Set the new issuers.
-	strncpy(pTicket->issuer, issuer_xs, sizeof(pTicket->issuer));
-	strncpy(pTmdHeader->rvl.issuer, issuer_cp, sizeof(pTmdHeader->rvl.issuer));
+	strncpy(pTicket->issuer, s_issuer_xs, sizeof(pTicket->issuer));
+	strncpy(pTmdHeader->rvl.issuer, s_issuer_cp, sizeof(pTmdHeader->rvl.issuer));
 
 	// Re-sign the ticket and TMD.
 	// NOTE: TMD signature only covers the TMD header.
@@ -381,7 +384,40 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	fclose(f_tik);
 	fclose(f_tmd);
 
-	// TODO: Write the .certs file.
+	// Write title.cert.
+	tstring sf_cert = nus_dir;
+	sf_cert += DIR_SEP_CHR;
+	sf_cert += _T("title.cert");
+	FILE *f_cert = _tfopen(sf_cert.c_str(), "wb");
+	if (!f_cert) {
+		int err = errno;
+		if (err == 0) {
+			err = EIO;
+		}
+		fprintf(stderr, "*** ERROR: Unable to write title.cert: %s\n", strerror(err));
+		return -err;
+	}
+
+	// Certificate order: CA, CP, XS, SP (dev only)
+	const RVL_Cert *cert_data = cert_get(issuer_ca);
+	size_t cert_size = cert_get_size(issuer_ca);
+	fwrite(cert_data, 1, cert_size, f_cert);
+
+	cert_data = cert_get(issuer_cp);
+	cert_size = cert_get_size(issuer_cp);
+	fwrite(cert_data, 1, cert_size, f_cert);
+
+	cert_data = cert_get(issuer_xs);
+	cert_size = cert_get_size(issuer_xs);
+	fwrite(cert_data, 1, cert_size, f_cert);
+
+	if (issuer_sp != RVL_CERT_ISSUER_UNKNOWN) {
+		cert_data = cert_get(issuer_sp);
+		cert_size = cert_get_size(issuer_sp);
+		fwrite(cert_data, 1, cert_size, f_cert);
+	}
+
+	fclose(f_cert);
 
 	printf("NUS resigning complete.\n");
 	return 0;
