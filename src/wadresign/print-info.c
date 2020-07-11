@@ -469,8 +469,11 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 					encKey = RVL_KEY_DEBUG;
 					s_encKey = "Debug";
 					break;
+				case 1:
+					encKey = RVL_KEY_KOREAN_DEBUG;
+					s_encKey = "Korean (Debug)";
+					break;
 				case 2:
-					// TODO: Correct index for vWii debug?
 					encKey = vWii_KEY_DEBUG;
 					s_encKey = "vWii (Debug)";
 					break;

@@ -35,6 +35,7 @@
  */
 const char *RVL_CryptoType_toString(RVL_CryptoType_e cryptoType)
 {
+	// FIXME: Add RVL_CryptoType_Korean_Debug and RVL_CryptoType_vWii_Debug?
 	static const char *const crypto_type_tbl[] = {
 		// tr: RVL_CryptoType_Unknown
 		"Unknown",
@@ -213,12 +214,13 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
 		// Wii: Debug.
-		// TODO: Is there a debug Korean key?
-		// TODO: Is vWii debug index 1 or 2?
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
 				fromKey = RVL_KEY_DEBUG;
+				break;
+			case 1:
+				fromKey = RVL_KEY_KOREAN_DEBUG;
 				break;
 			case 2:
 				fromKey = vWii_KEY_DEBUG;
@@ -262,6 +264,7 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 			issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET];
 			break;
 		case RVL_KEY_DEBUG:
+		case RVL_KEY_KOREAN_DEBUG:
 		case vWii_KEY_DEBUG:
 			issuer = RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET];
 			break;

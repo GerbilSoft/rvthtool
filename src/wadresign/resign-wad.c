@@ -374,11 +374,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			s_toKey = "retail (fakesigned)";
 			break;
 		case RVL_CryptoType_Korean:
+			// TODO: Add RVL_CryptoType_Korean_Debug?
 			toKey = RVL_KEY_KOREAN;
 			s_toKey = "Korean (fakesigned)";
 			break;
 		case RVL_CryptoType_vWii:
-			// FIXME: Add RVL_CryptoType_vWii_Debug?
+			// TODO: Add RVL_CryptoType_vWii_Debug?
 			toKey = vWii_KEY_RETAIL;
 			s_toKey = "vWii (fakesigned)";
 			break;

@@ -412,10 +412,11 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			toKey = RVL_KEY_RETAIL;
 			break;
 		case RVL_CryptoType_Korean:
+			// TODO: RVL_CryptoType_Korean_Debug?
 			toKey = RVL_KEY_KOREAN;
 			break;
 		case RVL_CryptoType_vWii:
-			// TODO: RVL_CryptoType_vWii_debug?
+			// TODO: RVL_CryptoType_vWii_Debug?
 			toKey = vWii_KEY_RETAIL;
 			break;
 		default:
@@ -689,13 +690,6 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			entry->tmd.sig_type = RVL_SigType_Retail;
 			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
-		case RVL_KEY_DEBUG:
-			entry->crypto_type = RVL_CryptoType_Debug;
-			entry->ticket.sig_type = RVL_SigType_Debug;
-			entry->ticket.sig_status = RVL_SigStatus_OK;
-			entry->tmd.sig_type = RVL_SigType_Debug;
-			entry->tmd.sig_status = RVL_SigStatus_OK;
-			break;
 		case vWii_KEY_RETAIL:
 			entry->crypto_type = RVL_CryptoType_vWii;
 			entry->ticket.sig_type = RVL_SigType_Retail;
@@ -703,13 +697,29 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			entry->tmd.sig_type = RVL_SigType_Retail;
 			entry->tmd.sig_status = RVL_SigStatus_Fake;
 			break;
+
+		case RVL_KEY_DEBUG:
+			entry->crypto_type = RVL_CryptoType_Debug;
+			entry->ticket.sig_type = RVL_SigType_Debug;
+			entry->ticket.sig_status = RVL_SigStatus_OK;
+			entry->tmd.sig_type = RVL_SigType_Debug;
+			entry->tmd.sig_status = RVL_SigStatus_OK;
+			break;
+		case RVL_KEY_KOREAN_DEBUG:
+			// TODO: RVL_CryptoType_Korean_Debug?
+			entry->crypto_type = RVL_CryptoType_Korean;
+			entry->ticket.sig_type = RVL_SigType_Debug;
+			entry->ticket.sig_status = RVL_SigStatus_OK;
+			entry->tmd.sig_type = RVL_SigType_Debug;
+			entry->tmd.sig_status = RVL_SigStatus_OK;
+			break;
 		case vWii_KEY_DEBUG:
 			// TODO: RVL_CryptoType_vWii_Debug?
 			entry->crypto_type = RVL_CryptoType_vWii;
 			entry->ticket.sig_type = RVL_SigType_Debug;
-			entry->ticket.sig_status = RVL_SigStatus_Fake;
+			entry->ticket.sig_status = RVL_SigStatus_OK;
 			entry->tmd.sig_type = RVL_SigType_Debug;
-			entry->tmd.sig_status = RVL_SigStatus_Fake;
+			entry->tmd.sig_status = RVL_SigStatus_OK;
 			break;
 		default:
 			// Should not happen...

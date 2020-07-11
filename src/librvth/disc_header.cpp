@@ -349,13 +349,33 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
 	switch (cert_get_issuer_from_name(pthdr->ticket.issuer)) {
 		case RVL_CERT_ISSUER_PPKI_TICKET:
 			// Retail certificate.
-			common_key = ((pthdr->ticket.common_key_index == 1)
-					? RVL_AES_Keys[RVL_KEY_KOREAN]
-					: RVL_AES_Keys[RVL_KEY_RETAIL]);
+			switch (pthdr->ticket.common_key_index) {
+				case 0:
+				default:
+					common_key = RVL_AES_Keys[RVL_KEY_RETAIL];
+					break;
+				case 1:
+					common_key = RVL_AES_Keys[RVL_KEY_KOREAN];
+					break;
+				case 2:
+					common_key = RVL_AES_Keys[vWii_KEY_RETAIL];
+					break;
+			}
 			break;
 		case RVL_CERT_ISSUER_DPKI_TICKET:
 			// Debug certificate.
-			common_key = RVL_AES_Keys[RVL_KEY_DEBUG];
+			switch (pthdr->ticket.common_key_index) {
+				case 0:
+				default:
+					common_key = RVL_AES_Keys[RVL_KEY_DEBUG];
+					break;
+				case 1:
+					common_key = RVL_AES_Keys[RVL_KEY_KOREAN_DEBUG];
+					break;
+				case 2:
+					common_key = RVL_AES_Keys[vWii_KEY_DEBUG];
+					break;
+			}
 			break;
 		default:
 			// Unknown issuer, or not valid for ticket.

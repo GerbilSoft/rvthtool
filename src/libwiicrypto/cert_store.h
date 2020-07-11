@@ -34,15 +34,17 @@ extern "C" {
 
 // Encryption keys. (AES-128)
 typedef enum {
-	RVL_KEY_DEBUG	= 0,	// Debug common key
-	RVL_KEY_RETAIL	= 1,	// Retail common key
-	RVL_KEY_KOREAN	= 2,	// Korean common key
+	RVL_KEY_DEBUG		= 0,	// Debug common key
+	RVL_KEY_RETAIL		= 1,	// Retail common key
 
-	vWii_KEY_DEBUG	= 3,	// vWii dpki common key
-	vWii_KEY_RETAIL	= 4,	// vWii ppki common key
+	RVL_KEY_KOREAN		= 2,	// Korean common key
+	RVL_KEY_KOREAN_DEBUG	= 3,	// Korean common key (debug)
 
-	WUP_KEY_DEBUG	= 5,	// Wii U dpki common key
-	WUP_KEY_RETAIL	= 6,	// Wii U ppki common key
+	vWii_KEY_DEBUG		= 4,	// vWii dpki common key
+	vWii_KEY_RETAIL		= 5,	// vWii ppki common key
+
+	WUP_KEY_DEBUG		= 6,	// Wii U dpki common key
+	WUP_KEY_RETAIL		= 7,	// Wii U ppki common key
 
 	RVL_KEY_MAX
 } RVL_AES_Keys_e;

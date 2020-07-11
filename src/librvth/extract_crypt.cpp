@@ -279,16 +279,19 @@ static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_
 		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
 		// Debug.
-		// TODO: Is there a debug Korean key?
-		// TODO: Is vWii debug index 1 or 2?
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
 				commonKey = RVL_AES_Keys[RVL_KEY_DEBUG];
 				*crypto_type = RVL_CryptoType_Debug;
 				break;
+			case 1:
+				// TODO: RVL_CryptoType_Korean_Debug?
+				commonKey = RVL_AES_Keys[RVL_KEY_KOREAN_DEBUG];
+				*crypto_type = RVL_CryptoType_Korean;
+				break;
 			case 2:
-				// TODO: RVL_CryptoType_Debug_vWii?
+				// TODO: RVL_CryptoType_vWii_Debug?
 				commonKey = RVL_AES_Keys[vWii_KEY_DEBUG];
 				*crypto_type = RVL_CryptoType_Debug;
 				break;
