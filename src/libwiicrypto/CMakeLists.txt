@@ -100,6 +100,7 @@ SET(certs_FILES
 	certs/Root-CA00000004-SP0000000e.cert
 	)
 
+FILE(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/certs")
 UNSET(h_files)
 FOREACH(_cert ${certs_FILES})
 	STRING(REPLACE ".cert" ".h" _hfile ${_cert})
