@@ -4,7 +4,6 @@ mkdir "${TRAVIS_BUILD_DIR}/build"
 cd "${TRAVIS_BUILD_DIR}/build"
 cmake --version
 cmake .. \
-	-DCMAKE_VERBOSE_MAKEFILE=ON \
 	-DCMAKE_INSTALL_PREFIX=/usr \
 	-DCMAKE_BUILD_TYPE=Release \
 	-DENABLE_NLS=OFF \
