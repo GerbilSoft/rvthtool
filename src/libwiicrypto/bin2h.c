@@ -17,11 +17,12 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include <time.h>
+#include <errno.h>
+#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
+#include <time.h>
 
 int main(int argc, char **argv)
 {
@@ -51,6 +52,7 @@ int main(int argc, char **argv)
 	/* read in file */
 	f = fopen(src_bin, "rb");
 	if (f == NULL) {
+		fprintf(stderr, "*** ERROR reading source file: %s\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
 	fseek(f, 0, SEEK_END);
@@ -83,6 +85,10 @@ int main(int argc, char **argv)
 	loctime = localtime(&curtime);
 	/* create .h file */
 	f = fopen(dest_h, "w");
+	if (!f) {
+		fprintf(stderr, "*** ERROR creating destination file: %s\n", strerror(errno));
+		return EXIT_FAILURE;
+	}
 	fputs("/*\n",f);
 	fprintf(f,"\tFilename    : %s\n", strchr(dest_h, '/') != NULL ? strrchr(dest_h, '/')+1 : dest_h);
 	fprintf(f,"\tDate created: %s", asctime(loctime));
