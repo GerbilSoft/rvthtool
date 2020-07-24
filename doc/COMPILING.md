@@ -5,7 +5,7 @@
 On Debian/Ubuntu, you will need build-essential and the following development
 packages:
 * cmake pkg-config libgmp-dev nettle-dev libudev-dev
-* For the Qt GUI: qtbase5-dev qttools-dev-tools
+* For the Qt GUI: qtbase5-dev qttools5-dev qttools5-dev-tools
 
 On Red Hat/Fedora, you will need to install "C Development Tools and Libraries"
 and the following development packages:
