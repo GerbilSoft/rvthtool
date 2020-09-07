@@ -170,7 +170,6 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 #endif
 	putchar('\n');
 
-	// TODO: getopt().
 	// Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
 
@@ -214,13 +213,13 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				}
 				break;
 
-			case 'N':
+			case _T('N'):
 				// Prepend the SDK header.
 				// TODO: Show error if not using 'extract'?
 				flags |= RVTH_EXTRACT_PREPEND_SDK_HEADER;
 				break;
 
-			case 'I': {
+			case _T('I'): {
 				// Force an IOS version.
 				char *endptr;
 				int ios_force_tmp = strtol(optarg, &endptr, 0);
@@ -235,11 +234,11 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 				break;
 			}
 
-			case 'h':
+			case _T('h'):
 				print_help(argv[0]);
 				return EXIT_SUCCESS;
 
-			case '?':
+			case _T('?'):
 			default:
 				print_error(argv[0], NULL);
 				return EXIT_FAILURE;
@@ -257,7 +256,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	if (!_tcscmp(argv[optind], _T("help"))) {
 		// Display help.
 		print_help(argv[0]);
-		return EXIT_FAILURE;
+		return EXIT_SUCCESS;
 	} else if (!_tcscmp(argv[optind], _T("list")) || !_tcscmp(argv[optind], _T("list-banks"))) {
 		// List banks.
 		if (argc < optind+2) {
