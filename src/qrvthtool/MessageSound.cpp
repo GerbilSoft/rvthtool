@@ -31,25 +31,6 @@
 # include <pthread.h>
 #endif
 
-#if !defined(_WIN32) && defined(HAVE_KF5WIDGETSADDONS)
-static pthread_once_t kf5notify_once = PTHREAD_ONCE_INIT;
-static KMessageBoxNotifyInterface *s_notifyInterface = nullptr;
-
-/**
- * Initialize the KMessageBox notify interface.
- */
-static void init_kf5notify(void)
-{
-	// Reference: https://github.com/KDE/kwidgetsaddons/blob/master/src/kmessagebox_p.cpp
-	QPluginLoader lib(QStringLiteral("kf5/FrameworkIntegrationPlugin"));
-	QObject *rootObj = lib.instance();
-	if (rootObj) {
-		s_notifyInterface = rootObj->property(KMESSAGEBOXNOTIFY_PROPERTY)
-			.value<KMessageBoxNotifyInterface*>();
-	}
-}
-#endif /* !defined(_WIN32) && defined(HAVE_KF5WIDGETSADDONS) */
-
 /**
  * Play a message sound effect.
  * @param notificationType Notification type.
@@ -91,9 +72,19 @@ void MessageSound::play(QMessageBox::Icon notificationType, const QString &messa
 
 #ifdef HAVE_KF5WIDGETSADDONS
 	// If KDE is available, try FrameworkIntegrationPlugin.
-	pthread_once(&kf5notify_once, init_kf5notify);
-	if (s_notifyInterface) {
-		s_notifyInterface->sendNotification(notificationType, message, parent);
+	// NOTE: Not unloading the plugin here, so QPluginLoader's lookup
+	// should be fast, and we won't have to maintain the QPluginLoader
+	// instance. (Keeping the lib.instance() pointer in memory is likely
+	// to be undefined behavior.)
+	QPluginLoader lib(QStringLiteral("kf5/FrameworkIntegrationPlugin"));
+	QObject *rootObj = lib.instance();
+	if (rootObj) {
+		KMessageBoxNotifyInterface *s_notifyInterface =
+			rootObj->property(KMESSAGEBOXNOTIFY_PROPERTY)
+				.value<KMessageBoxNotifyInterface*>();
+		if (s_notifyInterface) {
+			s_notifyInterface->sendNotification(notificationType, message, parent);
+		}
 	}
 #endif /* HAVE_KF5WIDGETSADDONS */
 
