@@ -79,11 +79,11 @@ void MessageSound::play(QMessageBox::Icon notificationType, const QString &messa
 	QPluginLoader lib(QStringLiteral("kf5/FrameworkIntegrationPlugin"));
 	QObject *rootObj = lib.instance();
 	if (rootObj) {
-		KMessageBoxNotifyInterface *s_notifyInterface =
+		KMessageBoxNotifyInterface *iface =
 			rootObj->property(KMESSAGEBOXNOTIFY_PROPERTY)
 				.value<KMessageBoxNotifyInterface*>();
-		if (s_notifyInterface) {
-			s_notifyInterface->sendNotification(notificationType, message, parent);
+		if (iface) {
+			iface->sendNotification(notificationType, message, parent);
 		}
 	}
 #endif /* HAVE_KF5WIDGETSADDONS */
