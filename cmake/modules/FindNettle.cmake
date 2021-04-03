@@ -38,8 +38,8 @@ ELSE(NOT WIN32)
 	SET(NETTLE_WIN32_BASE_PATH "${CMAKE_SOURCE_DIR}/extlib/nettle.win32")
 	SET(NETTLE_INCLUDE_DIRS "${NETTLE_WIN32_BASE_PATH}/include")
 	IF(MSVC)
-		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle-7.lib")
-		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed-5.lib")
+		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle-8.lib")
+		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed-6.lib")
 	ELSE(MSVC)
 		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle.dll.a")
 		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed.dll.a")
@@ -47,8 +47,8 @@ ELSE(NOT WIN32)
 	SET(NETTLE_LIBRARIES ${NETTLE_LIBRARY} ${HOGWEED_LIBRARY})
 
 	# Copy and install the DLLs.
-	SET(NETTLE_NETTLE_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle-7.dll")
-	SET(NETTLE_HOGWEED_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed-5.dll")
+	SET(NETTLE_NETTLE_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle-8.dll")
+	SET(NETTLE_HOGWEED_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed-6.dll")
 
 	# Destination directory.
 	# If CMAKE_CFG_INTDIR is set, a Debug or Release subdirectory is being used.
@@ -64,13 +64,13 @@ ELSE(NOT WIN32)
 	ADD_CUSTOM_COMMAND(OUTPUT nettle_dll_command
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy_if_different
-			"${NETTLE_NETTLE_DLL}" "${DLL_DESTDIR}/libnettle-7.dll"
+			"${NETTLE_NETTLE_DLL}" "${DLL_DESTDIR}/libnettle-8.dll"
 		DEPENDS nettle_always_rebuild
 		)
 	ADD_CUSTOM_COMMAND(OUTPUT hogweed_dll_command
 		COMMAND ${CMAKE_COMMAND}
 		ARGS -E copy_if_different
-			"${NETTLE_HOGWEED_DLL}" "${DLL_DESTDIR}/libhogweed-5.dll"
+			"${NETTLE_HOGWEED_DLL}" "${DLL_DESTDIR}/libhogweed-6.dll"
 		DEPENDS nettle_always_rebuild
 		)
 	ADD_CUSTOM_COMMAND(OUTPUT nettle_always_rebuild
