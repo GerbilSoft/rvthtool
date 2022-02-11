@@ -106,14 +106,10 @@ Disc images on the RVT-H may or may not be encrypted:
 * GameCube: Not encrypted.
 * Wii: May be encrypted using the RVT-R debug key, or not encrypted.
 
-Wii disc images encrypted using the RVT-R debug key are playable on the
-[Dolphin emulator](https://dolphin-emu.org/) with no changes. They can also
-be used on retail consoles with a USB loader if the image is re-encrypted
+Debug-signed Wii disc images (with and without encryption) are playable on
+the [Dolphin emulator](https://dolphin-emu.org/) with no changes. They can
+also be used on retail consoles with a USB loader if the image is re-encrypted
 and fakesigned using the retail encryption key.
-
-Unencrypted Wii disc images are not currently usable on Dolphin or retail
-consoles. I have been working on adding unencrypted image support to Dolphin
-but have not been successful yet.
 
 ### Note about Debug IOS
 
@@ -131,6 +127,15 @@ be fakesigned.
 
 In addition, this tool supports reading early devkit WADs, which makes it
 possible to convert them to run on emulators and/or later devkits.
+
+**WARNING:** Use with caution if converting a system title for installation
+on real hardware, since this may result in an unrecoverable brick.
+
+## nusresign
+
+This is a command line tool to resign NUS/WUP packages for Wii U to and from
+any Wii U keyset. Conversion to Debug will be realsigned. Conversion to retail
+will be unsigned.
 
 **WARNING:** Use with caution if converting a system title for installation
 on real hardware, since this may result in an unrecoverable brick.
