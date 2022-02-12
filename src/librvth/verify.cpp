@@ -397,8 +397,10 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		const uint8_t *H3_entry = H3_tbl->h3[0];
 		uint32_t lba = pte->lba_start + BYTES_TO_LBA((uint64_t)be32_to_cpu(pt_hdr->data_offset) << 2);
 		for (unsigned int g = 0; g < group_count; g++, lba += LBAS_PER_GROUP) {
+			const bool is_last_group = (g == (group_count - 1));
+
 			unsigned int max_sector = 64;
-			if (last_group_sectors != 0 && g == (group_count - 1)) {
+			if (last_group_sectors != 0 && is_last_group) {
 				max_sector = last_group_sectors;
 			}
 
@@ -414,6 +416,13 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				// result in an assertion. I'm not sure how this
 				// would work on real hardware, but some SDK update
 				// images have incomplete groups.
+				if (!is_last_group) {
+					// Should not happen if this isn't the last group!
+					assert(!"Group is truncated, but it isn't the last group.");
+					aesw_free(aesw);
+					errno = EIO;
+					return -EIO;
+				}
 				const uint32_t lba_remain = pte->lba_len - lba;
 				lba_size = reader->read(gdata_enc.get(), lba, lba_remain);
 				if (lba_size != lba_remain) {
