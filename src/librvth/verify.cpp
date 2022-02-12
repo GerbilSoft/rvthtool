@@ -336,6 +336,12 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		H3_entry = H3_tbl->h3[0];
 		uint32_t lba = pte->lba_start + h3_tbl_lba + BYTES_TO_LBA(sizeof(Wii_Disc_H3_t));
 		for (unsigned int g = 0; g < group_count; g++, lba += LBAS_PER_GROUP) {
+			// Update the status.
+			if (callback) {
+				state.group_cur = g;
+				callback(&state, userdata);
+			}
+
 			if (unlikely(lba + LBAS_PER_GROUP > pte->lba_len)) {
 				// Incomplete group. Attempting to read it will
 				// result in an assertion. I'm not sure how this
