@@ -163,7 +163,7 @@ typedef struct _RvtH_Verify_Progress_State {
 	// If RVTH_VERIFY_ERROR_REPORT, what type of error?
 	uint8_t hash_level;	// 0, 1, 2, 3, 4
 	uint8_t sector;		// Sector 0-63 in the current group
-	uint8_t kb;		// Kilobyte 0-31 (H0 only)
+	uint8_t kb;		// Kilobyte 1-31 (H0 only) [KB 0 == hashes]
 	uint8_t err_type;	// Error type (see RvtH_Verify_Error_Type)
 	bool is_zero;		// If true, sector is zeroed. (scrubbed/truncated)
 } RvtH_Verify_Progress_State;

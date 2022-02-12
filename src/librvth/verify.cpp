@@ -567,7 +567,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 							state.type = RVTH_VERIFY_ERROR_REPORT;
 							state.hash_level = 0;
 							state.sector = sector;
-							state.kb = kb;
+							state.kb = kb+1;
 							state.err_type = RVTH_VERIFY_ERROR_BAD_HASH;
 							callback(&state, userdata);
 						}
