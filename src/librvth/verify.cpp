@@ -282,6 +282,18 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			return -err;
 		}
 		const uint64_t data_size = (uint64_t)be32_to_cpu(pt_hdr->data_size) << 2;
+		if (data_size > 9ULL*1024*1024*1024) {
+			// Cannot be more than 9 GiB!
+			// H3 table is limited to 9,830.4 MiB,
+			// but dual-layer discs are limited to ~8 GiB.
+			aesw_free(aesw);
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+				errno = EIO;
+			}
+			return -err;
+		}
 		group_count = (uint32_t)(data_size / GROUP_SIZE_ENC);
 		if (data_size % GROUP_SIZE_ENC != 0) {
 			group_count++;
