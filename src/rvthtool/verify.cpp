@@ -163,7 +163,7 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	print_bank(rvth, bank);
 	putchar('\n');
 
-	printf("Verifying Bank %u...", bank+1);
+	printf("Verifying Bank %u...\n", bank+1);
 	fflush(stdout);
 	ret = rvth->verifyWiiPartitions(bank, progress_callback);
 	if (ret == 0) {
