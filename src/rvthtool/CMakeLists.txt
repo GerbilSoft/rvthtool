@@ -19,6 +19,7 @@ SET(rvthtool_SRCS
 	list-banks.cpp
 	extract.cpp
 	undelete.cpp
+	verify.cpp
 	query.c
 	)
 # Headers.
@@ -26,6 +27,7 @@ SET(rvthtool_H
 	list-banks.hpp
 	extract.h
 	undelete.h
+	verify.h
 	query.h
 	)
 IF(WIN32)
