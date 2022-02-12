@@ -107,7 +107,11 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		if (err == 0) {
 			err = EIO;
 		}
-		printf("- *** ERROR opening %s.app: %s\n", cidbuf, strerror(err));
+		fputs("- *** ERROR opening ", stderr);
+		_fputts(cidbuf, stderr);
+		fputs(".app: ", stderr);
+		_fputts(_tcserror(err), stderr);
+		putchar('\n');
 		return -err;
 	}
 
@@ -124,7 +128,11 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			if (err == 0) {
 				err = EIO;
 			}
-			printf("- *** ERROR opening %s.h3: %s\n", cidbuf, strerror(err));
+			fputs("- *** ERROR opening ", stderr);
+			_fputts(cidbuf, stderr);
+			fputs(".h3: ", stderr);
+			_fputts(_tcserror(err), stderr);
+			putchar('\n');
 			return -err;
 		}
 
@@ -137,7 +145,9 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			// Invalid size.
 			fclose(f_h3);
 			fclose(f_content);
-			printf("- *** ERROR reading %s.h3: Size is incorrect\n", cidbuf);
+			fputs("- *** ERROR opening ", stderr);
+			_fputts(cidbuf, stderr);
+			fputs(".h3: Size is incorrect\n", stderr);
 			return -EIO;
 		}
 
@@ -152,7 +162,11 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 				err = EIO;
 			}
 			fclose(f_content);
-			printf("- *** ERROR reading %s.h3: %s\n", cidbuf, strerror(err));
+			fputs("- *** ERROR opening ", stderr);
+			_fputts(cidbuf, stderr);
+			fputs(".h3: ", stderr);
+			_fputts(_tcserror(err), stderr);
+			putchar('\n');
 			return -err;
 		}
 	}
