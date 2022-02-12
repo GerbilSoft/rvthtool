@@ -371,7 +371,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				callback(&state, userdata);
 			}
 
-			if (unlikely(lba + LBAS_PER_GROUP > pte->lba_len)) {
+			if (unlikely(lba + LBAS_PER_GROUP > pte->lba_start + pte->lba_len)) {
 				// Incomplete group. Attempting to read it will
 				// result in an assertion. I'm not sure how this
 				// would work on real hardware, but some SDK update
