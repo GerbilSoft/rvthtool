@@ -164,6 +164,7 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	putchar('\n');
 
 	printf("Verifying Bank %u...", bank+1);
+	fflush(stdout);
 	ret = rvth->verifyWiiPartitions(bank, progress_callback);
 	if (ret == 0) {
 		printf("Bank %u verified with (TODO) errors.\n", bank+1);
