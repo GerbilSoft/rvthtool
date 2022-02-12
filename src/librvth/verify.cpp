@@ -423,9 +423,10 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					return -EIO;
 				}
 
-				// Zero out the rest of the buffer.
-				memset((uint8_t*)gdata_enc.get() + LBA_TO_BYTES(lba_remain), 0,
-				       GROUP_SIZE_ENC - LBA_TO_BYTES(lba_remain));
+				const unsigned int tmp_max_sector = lba_remain / 64;
+				if (tmp_max_sector < max_sector) {
+					max_sector = tmp_max_sector;
+				}
 			} else {
 				// Read a full group;
 				lba_size = reader->read(gdata_enc.get(), lba, LBAS_PER_GROUP);
