@@ -221,8 +221,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 
 			case _T('I'): {
 				// Force an IOS version.
-				char *endptr;
-				int ios_force_tmp = strtol(optarg, &endptr, 0);
+				TCHAR *endptr;
+				int ios_force_tmp = _tcstol(optarg, &endptr, 0);
 				if (*endptr != '\0') {
 					print_error(argv[0], _T("unable to parse '%s' as an IOS version"), optarg);
 					return EXIT_FAILURE;
