@@ -28,10 +28,14 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 {
 	UNUSED(userdata);
 	static int prev_pt = -1;	// TODO: Userdata struct.
-	if (prev_pt != -1 && prev_pt != state->pt_current) {
+	int pt_current = state->pt_current;
+	if (pt_current < state->pt_total) {
+		pt_current++;
+	}
+	if (prev_pt != -1 && prev_pt != pt_current) {
 		putchar('\n');
 	}
-	prev_pt = state->pt_current;
+	prev_pt = pt_current;
 
 	const char *ps_pt_type = nullptr;
 	char s_pt_type[8];
@@ -62,10 +66,6 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 			break;
 
 		case RVTH_VERIFY_STATUS: {
-			unsigned int pt_current = state->pt_current;
-			if (pt_current < state->pt_total) {
-				pt_current++;
-			}
 			printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...",
 				pt_current, state->pt_total, ps_pt_type,
 				state->group_cur * 2, state->group_total * 2);
