@@ -1,4 +1,4 @@
-GNU Nettle 3.5.1, precompiled for Win32.
+GNU Nettle 3.7.2, precompiled for Win32.
 
 License: LGPLv3 or LGPLv2.1
 ASM optimizations are enabled in "fat binary" mode.
