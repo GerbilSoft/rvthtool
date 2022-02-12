@@ -16,8 +16,8 @@
 #include <cstring>
 
 // Qt includes.
-#include <QtCore/QLocale>
 #include <QtCore/QDateTime>
+#include <QtCore/QLocale>
 
 /** BankEntryViewPrivate **/
 
@@ -36,6 +36,7 @@ class BankEntryViewPrivate
 	public:
 		// UI
 		Ui::BankEntryView ui;
+		QLocale locale;
 
 		const RvtH_BankEntry *bankEntry;
 
@@ -65,6 +66,7 @@ class BankEntryViewPrivate
 
 BankEntryViewPrivate::BankEntryViewPrivate(BankEntryView *q)
 	: q_ptr(q)
+	, locale(QLocale())
 	, bankEntry(nullptr)
 { }
 
@@ -320,9 +322,8 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	if (bankEntry->timestamp >= 0) {
 		// NOTE: Qt::DefaultLocaleShortDate was removed in Qt6,
 		// so switching to QLocale for formatting.
-		// TODO: Cache QLocale()?
 		QDateTime ts = QDateTime::fromMSecsSinceEpoch((qint64)bankEntry->timestamp * 1000, Qt::UTC);
-		ui.lblTimestamp->setText(ts.toString(QLocale().dateTimeFormat(QLocale::ShortFormat)));
+		ui.lblTimestamp->setText(ts.toString(locale.dateTimeFormat(QLocale::ShortFormat)));
 	} else {
 		ui.lblTimestamp->setText(BankEntryView::tr("Unknown"));
 	}
@@ -561,11 +562,22 @@ void BankEntryView::update(void)
  */
 void BankEntryView::changeEvent(QEvent *event)
 {
-	if (event->type() == QEvent::LanguageChange) {
-		// Retranslate the UI.
-		Q_D(BankEntryView);
-		d->ui.retranslateUi(this);
-		d->updateWidgetDisplay();
+	Q_D(BankEntryView);
+
+	switch (event->type()) {
+		case QEvent::LanguageChange:
+			// Retranslate the UI.
+			d->ui.retranslateUi(this);
+			d->updateWidgetDisplay();
+			break;
+
+		case QEvent::LocaleChange:
+			// Cache the new locale.
+			d->locale = QLocale();
+			break;
+
+		default:
+			break;
 	}
 
 	// Pass the event to the base class.
