@@ -58,7 +58,7 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 
 		case RVTH_VERIFY_STATUS:
 			printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...        ",
-				state->pt_current, state->pt_total, ps_pt_type,
+				state->pt_current+1, state->pt_total, ps_pt_type,
 				state->group_cur * 2, state->group_total * 2);
 
 			if (state->pt_current == state->pt_total) {
