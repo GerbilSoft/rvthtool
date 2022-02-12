@@ -3,20 +3,8 @@
  * QItemView_text.hpp: QItemView subclasses that show a message if no      *
  * items are present.                                                      *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2013-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 // Reference: https://stackoverflow.com/questions/20765547/qlistview-show-text-when-list-is-empty
@@ -50,7 +38,10 @@ class QListView_Text : public QListView
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
+		// FIXME: Qt6's viewOptions() is final.
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 		QStyleOptionViewItem viewOptions(void) const final;
+#endif
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
@@ -79,7 +70,10 @@ class QListWidget_Text : public QListWidget
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
+		// FIXME: Qt6's viewOptions() is final.
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 		QStyleOptionViewItem viewOptions(void) const final;
+#endif
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
@@ -108,7 +102,10 @@ class QTreeView_Text : public QTreeView
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
+		// FIXME: Qt6's viewOptions() is final.
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 		QStyleOptionViewItem viewOptions(void) const final;
+#endif
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
@@ -137,7 +134,10 @@ class QTreeWidget_Text : public QTreeWidget
 
 	protected:
 		void paintEvent(QPaintEvent *e) final;
+		// FIXME: Qt6's viewOptions() is final.
+#if QT_VERSION < QT_VERSION_CHECK(6,0,0)
 		QStyleOptionViewItem viewOptions(void) const final;
+#endif
 
 	public:
 		inline QString noItemText(void) const { return m_noItemText; }
