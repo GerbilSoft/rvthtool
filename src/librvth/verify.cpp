@@ -76,6 +76,37 @@ typedef union _sbuf2_t {
 } sbuf2_t;
 
 /**
+ * Is a block of data all zero bytes?
+ * @param pData Data block
+ * @param size Size of data block, in bytes
+ * @return True if the data is all zero; false if not.
+ */
+static bool is_block_zero(const uint8_t *pData, size_t size)
+{
+	// Vectorize to uintptr_t.
+	// TODO: Handle unaligned architectures?
+	const uintptr_t *pData32 = reinterpret_cast<const uintptr_t*>(pData);
+	for (; size > sizeof(uintptr_t)-1; size -= sizeof(uintptr_t), pData32++) {
+		if (*pData32 != 0) {
+			// Not zero.
+			return false;
+		}
+	}
+	if (unlikely(size > 0)) {
+		pData = reinterpret_cast<const uint8_t*>(pData32);
+		for (; size > 0; size--, pData++) {
+			if (*pData != 0) {
+				// Not zero.
+				return false;
+			}
+		}
+	}
+
+	// It's all zero.
+	return true;
+}
+
+/**
  * Verify partitions in a Wii disc image.
  *
  * NOTE: This function only supports encrypted Wii disc images,
@@ -156,12 +187,21 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		state.pt_type = 0;	// will be updated later
 		state.pt_current = 0;
 		state.pt_total = entry->pt_count;
+
+		state.type = RVTH_VERIFY_STATUS;
+		state.hash_level = 0;
+		state.sector = 0;
+		state.kb = 0;
+		state.err_type = RVTH_VERIFY_ERROR_UNKNOWN;
+		state.is_zero = false;
 	}
 
 	struct sha1_ctx sha1;
 	uint8_t digest[SHA1_DIGEST_SIZE];
 	unique_ptr<RVL_PartitionHeader> pt_hdr(new RVL_PartitionHeader);
 	unique_ptr<Wii_Disc_H3_t> H3_tbl(new Wii_Disc_H3_t);
+	// NOTE: Retaining the encrypted version in order to do zero checks.
+	unique_ptr<Wii_Disc_Sector_t[]> gdata_enc(new Wii_Disc_Sector_t[64]);	// 2 MB, one group
 	unique_ptr<Wii_Disc_Sector_t[]> gdata(new Wii_Disc_Sector_t[64]);	// 2 MB, one group
 
 	// Initialize the AES context.
@@ -189,11 +229,11 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// NOTE: LBA length is in 512-byte (2^9) blocks. Groups are 2 MB (2^21).
 		// To convert from 512-byte blocks to 2 MB blocks, shift
 		// right by 12.
-		// NOTE 2: Last group might be incomplete. This won't be counted,
-		// since it's not an actual group.
-		// (FIXME: Maybe it needs to be counted?)
+		// NOTE 2: Last group might be incomplete if the image is truncated.
 		unsigned int group_count = pte->lba_len >> 12;
-		printf("\ninitial group count: %u\n", group_count);
+		if (pte->lba_len & 0xFFF) {
+			group_count++;
+		}
 
 		if (callback) {
 			// Starting the next partition.
@@ -206,13 +246,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			state.group_cur = 0;
 			state.group_total = group_count;
 
-			// Zero out the progress values.
-			state.h4_errs = 0;
-			state.h3_errs = 0;
-			state.h2_errs = 0;
-			state.h1_errs = 0;
-			state.h0_errs = 0;
-
+			state.type = RVTH_VERIFY_STATUS;
 			callback(&state, userdata);
 		}
 
@@ -299,36 +333,30 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 
 			// Found an H3 entry that starts with 0.
 			// Check the rest of the entry.
-			bool isAllZero = true;
-			for (unsigned int i = 1; i < ARRAY_SIZE(H3_tbl->h3[0]); i++) {
-				if (H3_entry[i] != 0) {
-					// Not all zero.
-					isAllZero = false;
-					break;
-				}
-			}
-
-			if (isAllZero) {
+			if (is_block_zero(H3_entry, sizeof(H3_tbl->h3[0]))) {
 				// Found an all-zero entry.
-				printf("ALL-ZERO FOUND; total groups is %u\n", group_count);
 				break;
 			}
 		}
-		state.group_total = group_count;
-		callback(&state, userdata);
+		if (callback) {
+			state.group_total = group_count;
+			callback(&state, userdata);
+		}
 
 		// Verify the H4 hash. (H3 table)
 		sha1_init(&sha1);
 		sha1_update(&sha1, sizeof(Wii_Disc_H3_t), reinterpret_cast<const uint8_t*>(H3_tbl.get()));
 		sha1_digest(&sha1, sizeof(digest), digest);
 		if (memcmp(pContentEntry->sha1_hash, digest, SHA1_DIGEST_SIZE) != 0) {
-			printf("\nH4 has FAIL!\n");
-			// TODO: Callback to print an error.
-			state.h4_errs++;
-		} else {
-			printf("\nH4 hash is OK\n");
+			state.is_zero = is_block_zero((const uint8_t*)H3_tbl.get(), 512);	// only check one LBA
+			if (callback) {
+				state.type = RVTH_VERIFY_ERROR_REPORT;
+				state.hash_level = 4;
+				state.sector = 0;	// irrelevant for H4
+				state.err_type = RVTH_VERIFY_ERROR_BAD_HASH;
+				callback(&state, userdata);
+			}
 		}
-		callback(&state, userdata);
 
 		// Process the 2 MB blocks.
 		// FIXME: Check for an incomplete final block.
@@ -339,6 +367,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			// Update the status.
 			if (callback) {
 				state.group_cur = g;
+				state.type = RVTH_VERIFY_STATUS;
 				callback(&state, userdata);
 			}
 
@@ -348,7 +377,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				// would work on real hardware, but some SDK update
 				// images have incomplete groups.
 				const uint32_t lba_remain = pte->lba_len - lba;
-				lba_size = reader->read(gdata.get(), lba, lba_remain);
+				lba_size = reader->read(gdata_enc.get(), lba, lba_remain);
 				if (lba_size != lba_remain) {
 					// Read error.
 					aesw_free(aesw);
@@ -357,11 +386,11 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				}
 
 				// Zero out the rest of the buffer.
-				memset((uint8_t*)gdata.get() + LBA_TO_BYTES(lba_remain), 0,
+				memset((uint8_t*)gdata_enc.get() + LBA_TO_BYTES(lba_remain), 0,
 				       GROUP_SIZE_ENC - LBA_TO_BYTES(lba_remain));
 			} else {
 				// Read a full group;
-				lba_size = reader->read(gdata.get(), lba, LBAS_PER_GROUP);
+				lba_size = reader->read(gdata_enc.get(), lba, LBAS_PER_GROUP);
 				if (lba_size != LBAS_PER_GROUP) {
 					// Read error.
 					aesw_free(aesw);
@@ -373,6 +402,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			// Decrypt the blocks.
 			// User data IV is stored within the encrypted H2 table,
 			// so decrypt the user data first, *then* the hashes.
+			memcpy(gdata.get(), gdata_enc.get(), GROUP_SIZE_ENC);
 			for (unsigned int i = 0; i < 64; i++) {
 				// Decrypt user data.
 				aesw_set_iv(aesw, &gdata[i].hashes.H2[7][4], 16);
@@ -388,11 +418,14 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			sha1_update(&sha1, sizeof(gdata[0].hashes.H2), gdata[0].hashes.H2[0]);
 			sha1_digest(&sha1, sizeof(digest), digest);
 			if (memcmp(H3_entry, digest, SHA1_DIGEST_SIZE) != 0) {
-				printf("\nGroup %u: H3 hash (of H2 table) FAIL!", g);
-				// TODO: Callback to print an error.
-				state.h3_errs++;
-			} else {
-				printf("\nGroup %u: H3 hash (of H2 table) is OK", g);
+				state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[0], sizeof(gdata_enc[0]));
+				if (callback) {
+					state.type = RVTH_VERIFY_ERROR_REPORT;
+					state.hash_level = 3;
+					state.sector = 0;
+					state.err_type = RVTH_VERIFY_ERROR_BAD_HASH;
+					callback(&state, userdata);
+				}
 			}
 			H3_entry += sizeof(digest);
 
@@ -402,8 +435,14 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					   gdata[sector].hashes.H2,
 				           sizeof(gdata[0].hashes.H2)) != 0)
 				{
-					// TODO: Error counter?
-					printf("\nGroup %u: Sector %u H2 table doesn't match sector 0!\n", g, sector);
+					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
+					if (callback) {
+						state.type = RVTH_VERIFY_ERROR_REPORT;
+						state.hash_level = 2;
+						state.sector = sector;
+						state.err_type = RVTH_VERIFY_ERROR_TABLE_COPY;
+						callback(&state, userdata);
+					}
 				}
 			}
 
@@ -414,11 +453,14 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				sha1_update(&sha1, sizeof(gdata[sector].hashes.H1), gdata[sector].hashes.H1[0]);
 				sha1_digest(&sha1, sizeof(digest), digest);
 				if (memcmp(gdata[0].hashes.H2[sg], digest, sizeof(digest)) != 0) {
-					printf("\nGroup %u, sub %u: H2 hash (of H1 table) FAIL!", g, sg);
-					// TODO: Callback to print an error.
-					state.h2_errs++;
-				} else {
-					printf("\nGroup %u, sub %u: H2 hash (of H1 table) is OK", g, sg);
+					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
+					if (callback) {
+						state.type = RVTH_VERIFY_ERROR_REPORT;
+						state.hash_level = 2;
+						state.sector = sector;
+						state.err_type = RVTH_VERIFY_ERROR_BAD_HASH;
+						callback(&state, userdata);
+					}
 				}
 			}
 
@@ -432,8 +474,14 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					           gdata[sector].hashes.H1,
 					           sizeof(gdata[0].hashes.H1)) != 0)
 					{
-						// TODO: Error counter?
-						printf("\nGroup %u, Subgroup %u: Sector %u H1 table doesn't match sector %u!\n", g, sg, sector, sector_start);
+						state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
+						if (callback) {
+							state.type = RVTH_VERIFY_ERROR_REPORT;
+							state.hash_level = 1;
+							state.sector = sector;
+							state.err_type = RVTH_VERIFY_ERROR_TABLE_COPY;
+							callback(&state, userdata);
+						}
 					}
 				}
 			}
@@ -444,11 +492,14 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				sha1_update(&sha1, sizeof(gdata[sector].hashes.H0), gdata[sector].hashes.H0[0]);
 				sha1_digest(&sha1, sizeof(digest), digest);
 				if (memcmp(gdata[sector].hashes.H1[sector % 8], digest, sizeof(digest)) != 0) {
-					printf("\nGroup %u, sub %u, sector %u: H1 hash (of H0 table) FAIL!", g, sector / 8, sector);
-					// TODO: Callback to print an error.
-					state.h1_errs++;
-				} else {
-					printf("\nGroup %u, sub %u, sector %u: H1 hash (of H0 table) is OK", g, sector / 8, sector);
+					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
+					if (callback) {
+						state.type = RVTH_VERIFY_ERROR_REPORT;
+						state.hash_level = 1;
+						state.sector = sector;
+						state.err_type = RVTH_VERIFY_ERROR_BAD_HASH;
+						callback(&state, userdata);
+					}
 				}
 			}
 
@@ -461,14 +512,25 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					sha1_update(&sha1, 1024, pData);
 					sha1_digest(&sha1, sizeof(digest), digest);
 					if (memcmp(gdata[sector].hashes.H0[kb], digest, sizeof(digest)) != 0) {
-						printf("\nGroup %u, sub %u, sector %u: H0 hash (of kilobyte %u) FAIL!", g, sector / 8, sector, kb);
-						// TODO: Callback to print an error.
-						state.h0_errs++;
-					} else {
-						printf("\nGroup %u, sub %u, sector %u: H0 hash (of kilobyte %u) is OK", g, sector / 8, sector, kb);
+						state.is_zero = is_block_zero(&gdata_enc[sector].data[kb * 1024], 1024);
+						if (callback) {
+							state.type = RVTH_VERIFY_ERROR_REPORT;
+							state.hash_level = 0;
+							state.sector = sector;
+							state.kb = kb;
+							state.err_type = RVTH_VERIFY_ERROR_BAD_HASH;
+							callback(&state, userdata);
+						}
 					}
 				}
 			}
+		}
+
+		// Update the status.
+		if (callback) {
+			state.group_cur = group_count;
+			state.type = RVTH_VERIFY_STATUS;
+			callback(&state, userdata);
 		}
 	}
 

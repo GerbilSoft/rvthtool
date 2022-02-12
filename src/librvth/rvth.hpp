@@ -127,6 +127,21 @@ typedef struct _RvtH_Progress_State {
  */
 typedef bool (*RvtH_Progress_Callback)(const RvtH_Progress_State *state, void *userdata);
 
+// Verify progress callback type.
+// NOTE: This indicates the message type, whereas the
+// regular progress type indicates the operation type.
+typedef enum {
+	RVTH_VERIFY_UNKNOWN = 0,
+	RVTH_VERIFY_STATUS,		// Current status
+	RVTH_VERIFY_ERROR_REPORT,	// Reporting an error
+} RvtH_Verify_Progress_Type;
+
+typedef enum {
+	RVTH_VERIFY_ERROR_UNKNOWN = 0,
+	RVTH_VERIFY_ERROR_BAD_HASH,	// SHA-1 hash is incorrect
+	RVTH_VERIFY_ERROR_TABLE_COPY,	// Sector's hash table copy doesn't match base sector.
+} RvtH_Verify_Error_Type;
+
 // Verification progress callback status.
 typedef struct _RvtH_Verify_Progress_State {
 	const RvtH *rvth;
@@ -142,12 +157,15 @@ typedef struct _RvtH_Verify_Progress_State {
 	unsigned int group_cur;		// Current 2 MB group index
 	unsigned int group_total;	// Total number of 2 MB groups
 
-	// TODO: More comprehensive error reporting.
-	unsigned int h4_errs;	// Number of H4 errors (when verifying H3 tables)
-	unsigned int h3_errs;	// Number of H3 errors (when verifying H2 tables)
-	unsigned int h2_errs;	// Number of H2 errors (when verifying H1 tables)
-	unsigned int h1_errs;	// Number of H1 errors (when verifying H0 tables)
-	unsigned int h0_errs;	// Number of H0 errors (when verifying data)
+	// Progress type.
+	RvtH_Verify_Progress_Type type;
+
+	// If RVTH_VERIFY_ERROR_REPORT, what type of error?
+	uint8_t hash_level;	// 0, 1, 2, 3, 4
+	uint8_t sector;		// Sector 0-63 in the current group
+	uint8_t kb;		// Kilobyte 0-31 (H0 only)
+	uint8_t err_type;	// Error type (see RvtH_Verify_Error_Type)
+	bool is_zero;		// If true, sector is zeroed. (scrubbed/truncated)
 } RvtH_Verify_Progress_State;
 
 /**

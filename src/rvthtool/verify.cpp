@@ -51,15 +51,53 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 			break;
 	}
 
-	// TODO: Current error reporting?
-	printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...        ",
-		state->pt_current, state->pt_total, ps_pt_type,
-		state->group_cur * 2, state->group_total * 2);
+	switch (state->type) {
+		default:
+			assert(!"Invalid verify progress state.");
+			break;
 
-	if (state->pt_current == state->pt_total) {
-		// Finished processing.
-		putchar('\n');
+		case RVTH_VERIFY_STATUS:
+			printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...        ",
+				state->pt_current, state->pt_total, ps_pt_type,
+				state->group_cur * 2, state->group_total * 2);
+
+			if (state->pt_current == state->pt_total) {
+				// Finished processing.
+				putchar('\n');
+			}
+			break;
+
+		case RVTH_VERIFY_ERROR_REPORT: {
+			// Error report!
+			char s_kb[16];
+			if (state->hash_level == 0) {
+				snprintf(s_kb, sizeof(s_kb), ",%u", state->kb);
+			} else {
+				s_kb[0] = '\0';
+			}
+
+			switch (state->err_type) {
+				default:
+					assert(!"Invalid error type.");
+					break;
+				case RVTH_VERIFY_ERROR_BAD_HASH:
+					printf("\n*** ERROR: [%u,%u,%u%s]: H%u hash is invalid.\n",
+						state->group_cur, state->sector / 8, state->sector,
+						s_kb, state->hash_level);
+					break;
+				case RVTH_VERIFY_ERROR_TABLE_COPY:
+					printf("\n*** ERROR: [%u,%u,%u%s]: H%u table copy doesn't match base sector.\n",
+						state->group_cur, state->sector / 8, state->sector,
+						s_kb, state->hash_level);
+					break;
+			}
+			if (state->is_zero) {
+				printf("*** (sector is zeroed; image may be scrubbed or truncated)\n");
+			}
+			break;
+		}
 	}
+
 	fflush(stdout);
 	return true;
 }
