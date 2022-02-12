@@ -221,8 +221,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 
 	// Verify partitions.
 	Reader *const reader = entry->reader;
-	for (unsigned int pt_idx = 0; pt_idx < entry->pt_count; pt_idx++)
-	{
+	for (unsigned int pt_idx = 0; pt_idx < entry->pt_count; pt_idx++) {
 		const pt_entry_t *const pte = &entry->ptbl[pt_idx];
 
 		// Initial group count will be calculated based on data size.
@@ -257,12 +256,12 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		size_t lba_size = reader->read(pt_hdr.get(), pte->lba_start, BYTES_TO_LBA(sizeof(RVL_PartitionHeader)));
 		if (lba_size != BYTES_TO_LBA(sizeof(RVL_PartitionHeader))) {
 			// Read error.
-			aesw_free(aesw);
 			int err = errno;
 			if (err == 0) {
 				err = EIO;
 				errno = EIO;
 			}
+			aesw_free(aesw);
 			return -err;
 		}
 
@@ -270,39 +269,26 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// the total number of groups and the last group sector count.
 		// This is usually accurate except for unencrypted partitions,
 		// in which case, this function won't work anyway!
-		if (pt_hdr->data_size == 0) {
-			// Invalid partition header.
-			// TODO: More specific error?
-			aesw_free(aesw);
-			int err = errno;
-			if (err == 0) {
-				err = EIO;
+		if (pt_hdr->data_size != 0) {
+			const uint64_t data_size = (uint64_t)be32_to_cpu(pt_hdr->data_size) << 2;
+			if (data_size > 9ULL*1024*1024*1024) {
+				// Cannot be more than 9 GiB!
+				// H3 table is limited to 9,830.4 MiB,
+				// but dual-layer discs are limited to ~8 GiB.
+				aesw_free(aesw);
 				errno = EIO;
+				return -EIO;
 			}
-			return -err;
-		}
-		const uint64_t data_size = (uint64_t)be32_to_cpu(pt_hdr->data_size) << 2;
-		if (data_size > 9ULL*1024*1024*1024) {
-			// Cannot be more than 9 GiB!
-			// H3 table is limited to 9,830.4 MiB,
-			// but dual-layer discs are limited to ~8 GiB.
-			aesw_free(aesw);
-			int err = errno;
-			if (err == 0) {
-				err = EIO;
-				errno = EIO;
+			group_count = (uint32_t)(data_size / GROUP_SIZE_ENC);
+			if (data_size % GROUP_SIZE_ENC != 0) {
+				group_count++;
+				last_group_sectors = (uint32_t)((data_size % GROUP_SIZE_ENC) / 32768);
 			}
-			return -err;
-		}
-		group_count = (uint32_t)(data_size / GROUP_SIZE_ENC);
-		if (data_size % GROUP_SIZE_ENC != 0) {
-			group_count++;
-			last_group_sectors = (uint32_t)((data_size % GROUP_SIZE_ENC) / 32768);
-		}
-		if (callback) {
-			state.group_total = group_count;
-			state.type = RVTH_VERIFY_STATUS;
-			callback(&state, userdata);
+			if (callback) {
+				state.group_total = group_count;
+				state.type = RVTH_VERIFY_STATUS;
+				callback(&state, userdata);
+			}
 		}
 
 		// TMD must be located within the partition header.
@@ -363,6 +349,31 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				errno = EIO;
 			}
 			return -err;
+		}
+
+		// Unlikely: Partition header's data size is 0.
+		// If so, fall back to checking the H3 table.
+		if (unlikely(pt_hdr->data_size != 0)) {
+			// Find the first 00 hash. This will indicate the group count.
+			// TODO: Partial final group?
+			const uint8_t *H3_entry = H3_tbl->h3[0];
+			for (group_count = 0; group_count < ARRAY_SIZE(H3_tbl->h3);
+				group_count++, H3_entry += ARRAY_SIZE(H3_tbl->h3[0]))
+			{
+				if (H3_entry[0] != 0)
+					continue;
+
+				// Found an H3 entry that starts with 0.
+				// Check the rest of the entry.
+				if (is_block_zero(H3_entry, sizeof(H3_tbl->h3[0]))) {
+					// Found an all-zero entry.
+					break;
+				}
+			}
+			if (callback) {
+				state.group_total = group_count;
+				callback(&state, userdata);
+			}
 		}
 
 		// Verify the H4 hash. (H3 table)
