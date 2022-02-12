@@ -56,9 +56,13 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 			assert(!"Invalid verify progress state.");
 			break;
 
-		case RVTH_VERIFY_STATUS:
+		case RVTH_VERIFY_STATUS: {
+			unsigned int pt_current = state->pt_current;
+			if (pt_current < state->pt_total) {
+				pt_current++;
+			}
 			printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...        ",
-				state->pt_current+1, state->pt_total, ps_pt_type,
+				pt_current, state->pt_total, ps_pt_type,
 				state->group_cur * 2, state->group_total * 2);
 
 			if (state->pt_current == state->pt_total) {
@@ -66,6 +70,7 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 				putchar('\n');
 			}
 			break;
+		}
 
 		case RVTH_VERIFY_ERROR_REPORT: {
 			// Error report!
