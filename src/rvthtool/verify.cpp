@@ -81,13 +81,15 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 					assert(!"Invalid error type.");
 					break;
 				case RVTH_VERIFY_ERROR_BAD_HASH:
-					printf("\n*** ERROR: [%u,%u,%u%s]: H%u hash is invalid.\n",
-						state->group_cur, state->sector / 8, state->sector,
+					printf("\n*** ERROR: Pt%u [%u,%u,%u%s]: H%u hash is invalid.\n",
+						state->pt_current, state->group_cur,
+						state->sector / 8, state->sector,
 						s_kb, state->hash_level);
 					break;
 				case RVTH_VERIFY_ERROR_TABLE_COPY:
-					printf("\n*** ERROR: [%u,%u,%u%s]: H%u table copy doesn't match base sector.\n",
-						state->group_cur, state->sector / 8, state->sector,
+					printf("\n*** ERROR: Pt%u [%u,%u,%u%s]: H%u table copy doesn't match base sector.\n",
+						state->pt_current, state->group_cur,
+						state->sector / 8, state->sector,
 						s_kb, state->hash_level);
 					break;
 			}

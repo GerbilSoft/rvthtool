@@ -238,7 +238,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		if (callback) {
 			// Starting the next partition.
 			state.pt_type = pte->type;
-			state.pt_current = 0;
+			state.pt_current = pt_idx;
 
 			// NOTE: Determining number of groups by searching for the first
 			// all-zero hash in the H3 table, not by using the data size.
