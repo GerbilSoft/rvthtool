@@ -27,6 +27,11 @@
 static bool progress_callback(const RvtH_Verify_Progress_State *state, void *userdata)
 {
 	UNUSED(userdata);
+	static int prev_pt = -1;	// TODO: Userdata struct.
+	if (prev_pt != -1 && prev_pt != state->pt_current) {
+		putchar('\n');
+	}
+	prev_pt = state->pt_current;
 
 	const char *ps_pt_type = nullptr;
 	char s_pt_type[8];
@@ -36,10 +41,10 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 			ps_pt_type = "game";
 			break;
 		case 1:
-			ps_pt_type = "update";
+			ps_pt_type = "updt";
 			break;
 		case 2:
-			ps_pt_type = "channel";
+			ps_pt_type = "chan";
 			break;
 		default:
 			s_pt_type[0] = ( pt_type        & 0xFF);
@@ -61,7 +66,7 @@ static bool progress_callback(const RvtH_Verify_Progress_State *state, void *use
 			if (pt_current < state->pt_total) {
 				pt_current++;
 			}
-			printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...        ",
+			printf("\rPartition %u/%u (%s): %4u MiB / %4u MiB checked...",
 				pt_current, state->pt_total, ps_pt_type,
 				state->group_cur * 2, state->group_total * 2);
 

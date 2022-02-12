@@ -229,10 +229,13 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// NOTE: LBA length is in 512-byte (2^9) blocks. Groups are 2 MB (2^21).
 		// To convert from 512-byte blocks to 2 MB blocks, shift
 		// right by 12.
-		// NOTE 2: Last group might be incomplete if the image is truncated.
+		// NOTE 2: Last group is usually incomplete, so we shouldn't check past
+		// the last sector.
 		unsigned int group_count = pte->lba_len >> 12;
+		unsigned int last_group_sectors = 0;
 		if (pte->lba_len & 0xFFF) {
 			group_count++;
+			last_group_sectors = (pte->lba_len & 0xFFF) / 64;
 		}
 
 		if (callback) {
@@ -261,6 +264,33 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				errno = EIO;
 			}
 			return -err;
+		}
+
+		// Use the data length in the partition header to determine
+		// the total number of groups and the last group sector count.
+		// This is usually accurate except for unencrypted partitions,
+		// in which case, this function won't work anyway!
+		if (pt_hdr->data_size == 0) {
+			// Invalid partition header.
+			// TODO: More specific error?
+			aesw_free(aesw);
+			int err = errno;
+			if (err == 0) {
+				err = EIO;
+				errno = EIO;
+			}
+			return -err;
+		}
+		const uint64_t data_size = (uint64_t)be32_to_cpu(pt_hdr->data_size) << 2;
+		group_count = (uint32_t)(data_size / GROUP_SIZE_ENC);
+		if (data_size % GROUP_SIZE_ENC != 0) {
+			group_count++;
+			last_group_sectors = (uint32_t)((data_size % GROUP_SIZE_ENC) / 32768);
+		}
+		if (callback) {
+			state.group_total = group_count;
+			state.type = RVTH_VERIFY_STATUS;
+			callback(&state, userdata);
 		}
 
 		// TMD must be located within the partition header.
@@ -323,26 +353,6 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			return -err;
 		}
 
-		// Find the first 00 hash. This will indicate the group count.
-		const uint8_t *H3_entry = H3_tbl->h3[0];
-		for (group_count = 0; group_count < ARRAY_SIZE(H3_tbl->h3);
-		     group_count++, H3_entry += ARRAY_SIZE(H3_tbl->h3[0]))
-		{
-			if (H3_entry[0] != 0)
-				continue;
-
-			// Found an H3 entry that starts with 0.
-			// Check the rest of the entry.
-			if (is_block_zero(H3_entry, sizeof(H3_tbl->h3[0]))) {
-				// Found an all-zero entry.
-				break;
-			}
-		}
-		if (callback) {
-			state.group_total = group_count;
-			callback(&state, userdata);
-		}
-
 		// Verify the H4 hash. (H3 table)
 		sha1_init(&sha1);
 		sha1_update(&sha1, sizeof(Wii_Disc_H3_t), reinterpret_cast<const uint8_t*>(H3_tbl.get()));
@@ -361,9 +371,14 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// Process the 2 MB blocks.
 		// FIXME: Check for an incomplete final block.
 #define LBAS_PER_GROUP BYTES_TO_LBA(GROUP_SIZE_ENC)
-		H3_entry = H3_tbl->h3[0];
-		uint32_t lba = pte->lba_start + h3_tbl_lba + BYTES_TO_LBA(sizeof(Wii_Disc_H3_t));
+		const uint8_t *H3_entry = H3_tbl->h3[0];
+		uint32_t lba = pte->lba_start + BYTES_TO_LBA((uint64_t)be32_to_cpu(pt_hdr->data_offset) << 2);
 		for (unsigned int g = 0; g < group_count; g++, lba += LBAS_PER_GROUP) {
+			unsigned int max_sector = 64;
+			if (last_group_sectors != 0 && g == (group_count - 1)) {
+				max_sector = last_group_sectors;
+			}
+
 			// Update the status.
 			if (callback) {
 				state.group_cur = g;
@@ -403,7 +418,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			// User data IV is stored within the encrypted H2 table,
 			// so decrypt the user data first, *then* the hashes.
 			memcpy(gdata.get(), gdata_enc.get(), GROUP_SIZE_ENC);
-			for (unsigned int i = 0; i < 64; i++) {
+			for (unsigned int i = 0; i < max_sector; i++) {
 				// Decrypt user data.
 				aesw_set_iv(aesw, &gdata[i].hashes.H2[7][4], 16);
 				aesw_decrypt(aesw, gdata[i].data, sizeof(gdata[i].data));
@@ -430,7 +445,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			H3_entry += sizeof(digest);
 
 			// Make sure sectors 1-63 have the same H2 table as sector 0.
-			for (unsigned int sector = 1; sector < 64; sector++) {
+			for (unsigned int sector = 1; sector < max_sector; sector++) {
 				if (memcmp(gdata[0].hashes.H2,
 					   gdata[sector].hashes.H2,
 				           sizeof(gdata[0].hashes.H2)) != 0)
@@ -447,8 +462,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			}
 
 			// Verify the H2 hashes. (hash of H1 tables in each subgroup of 8 sectors)
-			for (unsigned int sg = 0; sg < 8; sg++) {
-				const unsigned int sector = sg * 8;
+			for (unsigned int sector = 0; sector < max_sector; sector += 8) {
+				const unsigned int sg = sector / 8;
 				sha1_init(&sha1);
 				sha1_update(&sha1, sizeof(gdata[sector].hashes.H1), gdata[sector].hashes.H1[0]);
 				sha1_digest(&sha1, sizeof(digest), digest);
@@ -466,9 +481,11 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 
 			// Make sure sectors in each subgroup have the same H1 table as
 			// sectors 0, 8, 16, 24, 32, 40, 48, 56.
-			for (unsigned int sg = 0; sg < 8; sg++) {
-				const unsigned int sector_start = sg * 8;
-				const unsigned int sector_end = sector_start + 8;
+			for (unsigned int sector_start = 0; sector_start < max_sector; sector_start += 8) {
+				unsigned int sector_end = sector_start + 8;
+				if (sector_end > max_sector) {
+					sector_end = max_sector;
+				}
 				for (unsigned int sector = sector_start; sector < sector_end; sector++) {
 					if (memcmp(gdata[sector_start].hashes.H1,
 					           gdata[sector].hashes.H1,
@@ -487,7 +504,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			}
 
 			// Verify the H1 hashes. (hash of H0 tables in each block of 31 KB)
-			for (unsigned int sector = 0; sector < 64; sector++) {
+			for (unsigned int sector = 0; sector < max_sector; sector++) {
 				sha1_init(&sha1);
 				sha1_update(&sha1, sizeof(gdata[sector].hashes.H0), gdata[sector].hashes.H0[0]);
 				sha1_digest(&sha1, sizeof(digest), digest);
@@ -505,7 +522,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 
 			// H0 tables are unique per block.
 			// Verify the H0 hashes. (Now we're actually checking the data!)
-			for (unsigned int sector = 0; sector < 64; sector++) {
+			for (unsigned int sector = 0; sector < max_sector; sector++) {
 				const uint8_t *pData = gdata[sector].data;
 				for (unsigned int kb = 0; kb < 31; kb++, pData += 1024) {
 					sha1_init(&sha1);
