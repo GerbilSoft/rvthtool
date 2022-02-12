@@ -341,3 +341,25 @@ int64_t RefFile::size(void)
 	}
 	return ret;
 }
+
+/**
+ * Get the file's modification time.
+ * @return File modification time, or -1 on error.
+ */
+time_t RefFile::mtime(void)
+{
+	if (!m_file) {
+		// No file...
+		return -1;
+	}
+
+	// TODO: statx(); MSVC stat() versions for 64-bit and/or use Win32 directly.
+	struct stat sb;
+	int ret = fstat(fileno(m_file), &sb);
+	if (ret != 0) {
+		// fstat() failed.
+		return -1;
+	}
+
+	return sb.st_mtime;
+}

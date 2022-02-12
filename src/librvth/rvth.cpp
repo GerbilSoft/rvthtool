@@ -127,9 +127,17 @@ int RvtH::openGcm(RefFile *f_img)
 	entry->is_deleted = false;
 	entry->reader = reader;
 
-	// Timestamp.
-	// TODO: Get the timestamp from the file.
-	entry->timestamp = -1;
+	// Timestamp. (using file mtime)
+	// NOTE: RVT-H doesn't use timezones, so we need to
+	// remove the local timezone offset.
+	// TODO: _r() functions if available.
+	{
+		time_t mtime = f_img->mtime();
+		if (mtime != -1) {
+			mtime = timegm(localtime(&mtime));
+		}
+		entry->timestamp = mtime;
+	}
 
 	if (type != RVTH_BankType_Empty) {
 		// Copy the disc header.

@@ -117,6 +117,12 @@ class RefFile
 		 */
 		int64_t size(void);
 
+		/**
+		 * Get the file's modification time.
+		 * @return File modification time, or -1 on error.
+		 */
+		time_t mtime(void);
+
 	public:
 		/** Convenience wrappers for stdio functions. **/
 		// NOTE: These functions set errno, **NOT** m_lastError!
