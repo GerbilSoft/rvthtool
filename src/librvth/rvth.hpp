@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth.hpp: RVT-H image handler.                                          *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -97,7 +97,7 @@ typedef enum {
 	RVTH_PROGRESS_RECRYPT,		// Recrypt image
 } RvtH_Progress_Type;
 
-// Progress callback status.
+// General progress callback status.
 typedef struct _RvtH_Progress_State {
 	// RvtH objects.
 	const RvtH *rvth;	// Primary RvtH.
@@ -120,12 +120,61 @@ typedef struct _RvtH_Progress_State {
 } RvtH_Progress_State;
 
 /**
- * RVT-H progress callback.
+ * General progress callback.
  * @param state		[in] Current progress.
  * @param userdata	[in] User data specified when calling the RVT-H function.
  * @return True to continue; false to abort.
  */
 typedef bool (*RvtH_Progress_Callback)(const RvtH_Progress_State *state, void *userdata);
+
+// Verify progress callback type.
+// NOTE: This indicates the message type, whereas the
+// regular progress type indicates the operation type.
+typedef enum {
+	RVTH_VERIFY_UNKNOWN = 0,
+	RVTH_VERIFY_STATUS,		// Current status
+	RVTH_VERIFY_ERROR_REPORT,	// Reporting an error
+} RvtH_Verify_Progress_Type;
+
+typedef enum {
+	RVTH_VERIFY_ERROR_UNKNOWN = 0,
+	RVTH_VERIFY_ERROR_BAD_HASH,	// SHA-1 hash is incorrect
+	RVTH_VERIFY_ERROR_TABLE_COPY,	// Sector's hash table copy doesn't match base sector.
+} RvtH_Verify_Error_Type;
+
+// Verification progress callback status.
+typedef struct _RvtH_Verify_Progress_State {
+	const RvtH *rvth;
+	unsigned int bank;
+
+	// NOTE: Ignoring volume groups here.
+	// Using a total partition count.
+	uint32_t pt_type;	// Current partition type.
+	uint8_t pt_current;	// Current partition number being verified.
+	uint8_t pt_total;	// Total number of partitions.
+
+	// Current partition
+	unsigned int group_cur;		// Current 2 MB group index
+	unsigned int group_total;	// Total number of 2 MB groups
+
+	// Progress type.
+	RvtH_Verify_Progress_Type type;
+
+	// If RVTH_VERIFY_ERROR_REPORT, what type of error?
+	uint8_t hash_level;	// 0, 1, 2, 3, 4
+	uint8_t sector;		// Sector 0-63 in the current group
+	uint8_t kb;		// Kilobyte 1-31 (H0 only) [KB 0 == hashes]
+	uint8_t err_type;	// Error type (see RvtH_Verify_Error_Type)
+	bool is_zero;		// If true, sector is zeroed. (scrubbed/truncated)
+} RvtH_Verify_Progress_State;
+
+/**
+ * Verify progress callback.
+ * @param state		[in] Current progress.
+ * @param userdata	[in] User data specified when calling the RVT-H function.
+ * @return True to continue; false to abort.
+ */
+typedef bool (*RvtH_Verify_Progress_Callback)(const RvtH_Verify_Progress_State *state, void *userdata);
 
 #ifdef __cplusplus
 }
@@ -398,7 +447,35 @@ class RvtH {
 			RvtH_Progress_Callback callback = nullptr,
 			void *userdata = nullptr,
 			int ios_force = -1);
-		
+
+	public:
+		/** Verification functions (verify.cpp) **/
+
+		/**
+		 * Verify partitions in a Wii disc image.
+		 *
+		 * NOTE: This function only supports encrypted Wii disc images,
+		 * either retail or debug encryption.
+		 *
+		 * This will check all five levels of hashes:
+		 * - H4: Hash of H3 table (stored in the TMD)
+		 * - H3: Hash of all H2 tables (H2 table = 2 MB group)
+		 * - H2: Hash of all H1 tables (H1 table = 256 KB subgroup)
+		 * - H1: Hash of all H0 tables (H0 table = 32 KB block)
+		 * - H0: Hash of a single KB   (H0 = 1 KB)
+		 *
+		 * NOTE: Assuming the TMD signature is valid, which means
+		 * the H4 hash is correct.
+		 *
+		 * @param bank		[in] Bank number. (0-7)
+		 * @param callback	[in,opt] Progress callback.
+		 * @param userdata	[in,opt] User data for progress callback.
+		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+		 */
+		int verifyWiiPartitions(unsigned int bank,
+			RvtH_Verify_Progress_Callback callback = nullptr,
+			void *userdata = nullptr);
+
 	private:
 		// Reference-counted FILE*.
 		RefFile *m_file;

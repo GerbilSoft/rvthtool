@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * extract_crypt.cpp: Extract and encrypt an unencrypted image.            *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  *                                                                         *
  * This program is free software; you can redistribute it and/or modify it *
  * under the terms of the GNU General Public License as published by the   *
@@ -32,87 +32,20 @@
 // libwiicrypto
 #include "libwiicrypto/cert_store.h"
 #include "libwiicrypto/sig_tools.h"
+#include "libwiicrypto/wii_sector.h"
+#include "libwiicrypto/title_key.h"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 
-// Encryption.
+// Encryption
 #include "aesw.h"
 #include <nettle/sha1.h>
-
-// Sector: 32 KB [H0]
-// Subgroup: 8 sectors == 256 KB [H1]
-// Group: 8 subgroups == 2 MB [H2]
-
-#define SECTOR_SIZE_DEC		(31*1024)
-#define SECTOR_SIZE_ENC		(32*1024)
-#define SUBGROUP_SIZE_DEC	(8*SECTOR_SIZE_DEC)
-#define SUBGROUP_SIZE_ENC	(8*SECTOR_SIZE_ENC)
-#define GROUP_SIZE_DEC		(8*SUBGROUP_SIZE_DEC)
-#define GROUP_SIZE_ENC		(8*SUBGROUP_SIZE_ENC)
-
-// H3 table: SHA-1 hashes of each group's H2 tables.
-// Up to 4,915 groups can be hashed. (9,830 MB of encrypted data)
-// Unused hash entries are all zero.
-// The SHA-1 hash of the H3 table is stored in the TMD content table.
-typedef struct _Wii_Disc_H3_t {
-	uint8_t h3[4915][SHA1_DIGEST_SIZE];
-	uint8_t pad[4];
-} Wii_Disc_H3_t;
-ASSERT_STRUCT(Wii_Disc_H3_t, 0x18000);
-
-// Encrypted Wii disc sector: Hash data.
-// The hash data is encrypted using AES-128-CBC.
-// - Key: Decrypted title key.
-// - IV: All zero.
-typedef struct _Wii_Disc_Hashes_t {
-	// H0 hashes.
-	// One SHA-1 hash for each kilobyte of user data.
-	uint8_t H0[31][SHA1_DIGEST_SIZE];
-
-	// Padding. (0x00)
-	uint8_t pad_H0[20];
-
-	// H1 hashes.
-	// Each hash is over the H0 table for each sector
-	// in an 8-sector subgroup.
-	uint8_t H1[8][SHA1_DIGEST_SIZE];
-
-	// Padding. (0x00)
-	uint8_t pad_H1[32];
-
-	// H2 hashes.
-	// Each hash is over the H1 table for each subgroup
-	// in an 8-subgroup group.
-	// NOTE: The last 16 bytes of h2[7], when encrypted,
-	// is the user data CBC IV.
-	uint8_t H2[8][SHA1_DIGEST_SIZE];
-
-	// Padding. (0x00)
-	uint8_t pad_H2[32];
-} Wii_Disc_Hashes_t;
-ASSERT_STRUCT(Wii_Disc_Hashes_t, 1024);
-
-// Encrypted Wii disc sector.
-typedef struct _Wii_Disc_Sector_t {
-	// Hash table.
-	Wii_Disc_Hashes_t hashes;
-
-	// User data.
-	// This section is encrypted using AES-128-CBC:
-	// - Key: Decrypted title key.
-	// - IV: *Encrypted* bytes 0x3D0-0x3DF of the hash table,
-	//        aka the last 16 bytes of hashes.h2[7].
-	uint8_t data[31*1024];
-} Wii_Disc_Sector_t;
-ASSERT_STRUCT(Wii_Disc_Sector_t, 32*1024);
-
-// TODO: Static assertion that SHA1_DIGEST_SIZE == 20.
 
 /**
  * Encrypt a group of Wii sectors.
@@ -233,100 +166,6 @@ static int rvth_encrypt_group(AesCtx *aesw, const uint8_t *pInBuf,
 	}
 
 	// We're done here?
-	return 0;
-}
-
-/**
- * Decrypt the title key.
- * TODO: Pass in an aesw context for less overhead.
- *
- * @param ticket	[in] Ticket.
- * @param titleKey	[out] Output buffer for the title key. (Must be 16 bytes.)
- * @param crypto_type	[out] Encryption type. (See RVL_CryptoType_e.)
- * @return 0 on success; non-zero on error.
- */
-static int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_t *crypto_type)
-{
-	const uint8_t *commonKey;
-	uint8_t iv[16];	// based on Title ID
-
-	// TODO: Error checking.
-	// TODO: Pass in an aesw context for less overhead.
-	AesCtx *aesw;
-
-	// Check the 'from' key.
-	if (!strncmp(ticket->issuer,
-	    RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
-	{
-		// Retail.
-		switch (ticket->common_key_index) {
-			case 0:
-			default:
-				commonKey = RVL_AES_Keys[RVL_KEY_RETAIL];
-				*crypto_type = RVL_CryptoType_Retail;
-				break;
-			case 1:
-				commonKey = RVL_AES_Keys[RVL_KEY_KOREAN];
-				*crypto_type = RVL_CryptoType_Korean;
-				break;
-			case 2:
-				commonKey = RVL_AES_Keys[vWii_KEY_RETAIL];
-				*crypto_type = RVL_CryptoType_vWii;
-				break;
-		}
-	}
-	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
-	{
-		// Debug.
-		switch (ticket->common_key_index) {
-			case 0:
-			default:
-				commonKey = RVL_AES_Keys[RVL_KEY_DEBUG];
-				*crypto_type = RVL_CryptoType_Debug;
-				break;
-			case 1:
-				// TODO: RVL_CryptoType_Korean_Debug?
-				commonKey = RVL_AES_Keys[RVL_KEY_KOREAN_DEBUG];
-				*crypto_type = RVL_CryptoType_Korean;
-				break;
-			case 2:
-				// TODO: RVL_CryptoType_vWii_Debug?
-				commonKey = RVL_AES_Keys[vWii_KEY_DEBUG];
-				*crypto_type = RVL_CryptoType_Debug;
-				break;
-		}
-	}
-	else
-	{
-		// Unknown issuer.
-		errno = EIO;
-		return RVTH_ERROR_ISSUER_UNKNOWN;
-	}
-
-	// Initialize the AES context.
-	errno = 0;
-	aesw = aesw_new();
-	if (!aesw) {
-		int ret = -errno;
-		if (ret == 0) {
-			ret = -EIO;
-		}
-		return ret;
-	}
-
-	// IV is the 64-bit title ID, followed by zeroes.
-	memcpy(iv, &ticket->title_id, 8);
-	memset(&iv[8], 0, 8);
-
-	// Decrypt the key with the original common key.
-	memcpy(titleKey, ticket->enc_title_key, 16);
-	aesw_set_key(aesw, commonKey, 16);
-	aesw_set_iv(aesw, iv, sizeof(iv));
-	aesw_decrypt(aesw, titleKey, 16);
-
-	// We're done here
-	aesw_free(aesw);
 	return 0;
 }
 

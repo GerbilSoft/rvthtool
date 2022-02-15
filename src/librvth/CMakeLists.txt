@@ -46,6 +46,7 @@ SET(librvth_SRCS
 	extract_crypt.cpp
 	bank_init.cpp
 	rvth_error.c
+	verify.cpp
 
 	# Disc image readers
 	reader/Reader.cpp

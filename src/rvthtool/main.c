@@ -28,6 +28,7 @@
 #include "list-banks.hpp"
 #include "extract.h"
 #include "undelete.h"
+#include "verify.h"
 #include "query.h"
 
 #ifdef _MSC_VER
@@ -109,6 +110,9 @@ static void print_help(const TCHAR *argv0)
 		"undelete " DEVICE_NAME_EXAMPLE " bank#\n"
 		"- Undelete the specified bank number from the specified RVT-H device.\n"
 		"  [This command only works with RVT-H Readers, not disk images.]\n"
+		"\n"
+		"verify " DEVICE_NAME_EXAMPLE " bank#\n"
+		"- Verify all hashes on an encrypted Wii or RVT-R bank or disc image.\n"
 		"\n"
 		"query\n"
 		"- Query all available RVT-H Reader devices and list them.\n"
@@ -300,6 +304,21 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = undelete_bank(argv[optind+1], argv[optind+2]);
+	} else if (!_tcscmp(argv[optind], _T("verify"))) {
+		// Verify a bank.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("missing parameters for 'verify'"));
+			return EXIT_FAILURE;
+		} else if (argc == optind+2) {
+			// One parameter specified.
+			// Pass NULL as the bank number, which will be
+			// interpreted as bank 1 for single-disc images
+			// and an error for HDD images.
+			ret = verify(argv[optind+1], NULL);
+		} else {
+			// Two or more parameters specified.
+			ret = verify(argv[optind+1], argv[optind+2]);
+		}
 	} else if (!_tcscmp(argv[optind], _T("query"))) {
 		// Query RVT-H Reader devices.
 		// NOTE: Not checking HAVE_QUERY. If querying isn't available,
