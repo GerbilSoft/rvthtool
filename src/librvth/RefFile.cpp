@@ -24,7 +24,7 @@
 #  include <windows.h>
 #  include <io.h>
 #  include <winioctl.h>
-#  include "w32time.h"
+#  include "libwiicrypto/win32/w32time.h"
 #else /* !_WIN32 */
 #  include <sys/ioctl.h>
 #  include <sys/types.h>

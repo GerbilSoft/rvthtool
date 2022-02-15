@@ -66,7 +66,6 @@ SET(librvth_H
 	bank_init.h
 	rvth_error.h
 	rvth_enums.h
-	w32time.h
 
 	# Disc image readers
 	reader/Reader.hpp

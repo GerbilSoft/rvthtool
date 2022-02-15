@@ -1,19 +1,19 @@
 /***************************************************************************
- * RVT-H Tool (librvth)                                                    *
+ * RVT-H Tool (libwiicrypto)                                               *
  * w32time.h: Windows time conversion functions.                           *
  *                                                                         *
  * Copyright (c) 2016-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_WINTIME_H__
-#define __RVTHTOOL_LIBRVTH_WINTIME_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_W32TIME_H__
+#define __RVTHTOOL_LIBWIICRYPTO_WIN32_W32TIME_H__
 
 #ifndef _WIN32
 #  error w32time.h is Windows only
 #endif
 
-#include <windows.h>
+#include "Win32_sdk.h"
 
 // C includes.
 #include <stdint.h>
@@ -75,4 +75,4 @@ static inline int64_t SystemTimeToUnixTime(_In_ const SYSTEMTIME *pSystemTime)
 	return FileTimeToUnixTime(&fileTime);
 }
 
-#endif /* __RVTHTOOL_LIBRVTH_WINTIME_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_WIN32_W32TIME_H__ */

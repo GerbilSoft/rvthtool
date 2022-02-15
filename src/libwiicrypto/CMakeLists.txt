@@ -43,6 +43,7 @@ IF(WIN32)
 		win32/Win32_sdk.h
 		win32/secoptions.h
 		win32/secoptions_win8.h
+		win32/w32time.h
 		)
 ENDIF(WIN32)
 
