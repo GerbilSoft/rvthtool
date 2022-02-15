@@ -2,47 +2,37 @@
  * RVT-H Tool (librvth)                                                    *
  * RefFile.cpp: Reference-counted FILE*.                                   *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "config.librvth.h"
 
 #include "RefFile.hpp"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cctype>
 #include <cerrno>
 #include <cstring>
 
+// OS-specific includes
 #ifdef _WIN32
-# include <windows.h>
-# include <io.h>
-# include <winioctl.h>
+#  include <windows.h>
+#  include <io.h>
+#  include <winioctl.h>
+#  include "w32time.h"
 #else /* !_WIN32 */
-# include <sys/ioctl.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-# include <unistd.h>
-# ifdef __linux__
-#  include <linux/fs.h>
-# endif /* __linux__ */
+#  include <sys/ioctl.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <fcntl.h>
+#  include <unistd.h>
+#  ifdef __linux__
+#    include <linux/fs.h>
+#  endif /* __linux__ */
 #endif /* !_WIN32 */
 
 // NOTE: Some functions don't check for nullptr, since they should
@@ -353,13 +343,31 @@ time_t RefFile::mtime(void)
 		return -1;
 	}
 
-	// TODO: statx(); MSVC stat() versions for 64-bit and/or use Win32 directly.
+#ifdef _WIN32
+	HANDLE h_file = (HANDLE)_get_osfhandle(_fileno(m_file));
+	assert(h_file != nullptr);
+	assert(h_file != INVALID_HANDLE_VALUE);
+	if (!h_file || h_file == INVALID_HANDLE_VALUE) {
+		// Can't get the underlying HANDLE...
+		return -1;
+	}
+
+	FILETIME ft_mtime;
+	BOOL bRet = GetFileTime(h_file, nullptr, nullptr, &ft_mtime);
+	if (!bRet) {
+		// GetFileTime() failed.
+		return -1;
+	}
+
+	return FileTimeToUnixTime(&ft_mtime);
+#else /* !_WIN32 */
+	// TODO: statx() if supported.
 	struct stat sb;
 	int ret = fstat(fileno(m_file), &sb);
 	if (ret != 0) {
 		// fstat() failed.
 		return -1;
 	}
-
 	return sb.st_mtime;
+#endif
 }
