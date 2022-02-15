@@ -18,7 +18,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <time.h>
+#include "time_r.h"
 
 // Enums
 #include "rvth_enums.h"
