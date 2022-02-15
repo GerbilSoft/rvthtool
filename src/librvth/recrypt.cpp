@@ -27,10 +27,11 @@
 
 #include "byteswap.h"
 
-// C includes.
+// C includes
 #include <stdlib.h>
+#include "time_r.h"
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstddef>
