@@ -2,7 +2,7 @@
  * RVT-H Tool                                                              *
  * list-banks.cpp: List banks in an RVT-H disk image.                      *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -15,6 +15,8 @@
 
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/sig_tools.h"
+
+#include "time_r.h"
 
 // C includes. (C++ namespace)
 #include <cassert>
@@ -131,9 +133,9 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	}
 
 	// Print the timestamp.
-	// TODO: Reentrant gmtime() if available.
 	if (entry->timestamp != -1) {
-		struct tm timestamp = *gmtime(&entry->timestamp);
+		struct tm timestamp;
+		gmtime_r(&entry->timestamp, &timestamp);
 		printf("- Timestamp:   %04d/%02d/%02d %02d:%02d:%02d\n",
 			timestamp.tm_year + 1900, timestamp.tm_mon + 1, timestamp.tm_mday,
 			timestamp.tm_hour, timestamp.tm_min, timestamp.tm_sec);
