@@ -3,23 +3,11 @@
  * Win32_sdk.h: Windows SDK defines and includes.                          *
  *                                                                         *
  * Copyright (c) 2009-2018 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN32_SDK_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN32_SDK_H__
+#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SDK_H__
+#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SDK_H__
 
 // Show a warning if one of the macros isn't defined in CMake.
 #ifndef WINVER
@@ -127,4 +115,4 @@ static inline ULONG InterlockedDecrement(ULONG volatile *Addend)
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
 
-#endif /* __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN32_SDK_H__ */
+#endif /* __RVTHTOOL_LIBWIICRYPTO_WIN32_SDK_H__ */
