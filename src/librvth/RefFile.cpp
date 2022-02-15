@@ -7,6 +7,7 @@
  ***************************************************************************/
 
 #include "config.librvth.h"
+#include "config.libc.h"
 
 #include "RefFile.hpp"
 
@@ -161,7 +162,7 @@ bool RefFile::isDevice(void) const
 		return false;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	// Windows: Check the beginning of the filename.
 	if (m_filename.empty()) {
 		// No filename...
@@ -169,10 +170,20 @@ bool RefFile::isDevice(void) const
 	}
 
 	return !_tcsnicmp(m_filename.c_str(), _T("\\\\.\\PhysicalDrive"), 17);
-#else /* !_WIN32 */
-	// Other: Use fstat().
-	struct stat buf;
-	int ret = fstat(fileno(m_file), &buf);
+#elif defined(HAVE_STATX)
+	struct statx sbx;
+	int ret = statx(fileno(m_file), "", AT_EMPTY_PATH, STATX_TYPE, &sbx);
+	if (ret != 0 || !(sbx.stx_mask & STATX_TYPE)) {
+		// statx() failed and/or did not return the file type.
+		return -1;
+	}
+
+	// NOTE: FreeBSD dropped "block" devices, so we need to
+	// check for both block and character devices.
+	return !!(S_ISBLK(sbx.stx_mode) | S_ISCHR(sbx.stx_mode));
+#else
+	struct stat sb;
+	int ret = fstat(fileno(m_file), &sb);
 	if (ret != 0) {
 		// fstat() failed.
 		return false;
@@ -180,7 +191,7 @@ bool RefFile::isDevice(void) const
 
 	// NOTE: FreeBSD dropped "block" devices, so we need to
 	// check for both block and character devices.
-	return !!(S_ISBLK(buf.st_mode) | S_ISCHR(buf.st_mode));
+	return !!(S_ISBLK(sb.st_mode) | S_ISCHR(sb.st_mode));
 #endif
 }
 
@@ -343,7 +354,7 @@ time_t RefFile::mtime(void)
 		return -1;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	HANDLE h_file = (HANDLE)_get_osfhandle(_fileno(m_file));
 	assert(h_file != nullptr);
 	assert(h_file != INVALID_HANDLE_VALUE);
@@ -360,8 +371,15 @@ time_t RefFile::mtime(void)
 	}
 
 	return FileTimeToUnixTime(&ft_mtime);
-#else /* !_WIN32 */
-	// TODO: statx() if supported.
+#elif defined(HAVE_STATX)
+	struct statx sbx;
+	int ret = statx(fileno(m_file), "", AT_EMPTY_PATH, STATX_MTIME, &sbx);
+	if (ret != 0 || !(sbx.stx_mask & STATX_MTIME)) {
+		// statx() failed and/or did not return the mtime.
+		return -1;
+	}
+	return sbx.stx_mtime.tv_sec;
+#else
 	struct stat sb;
 	int ret = fstat(fileno(m_file), &sb);
 	if (ret != 0) {

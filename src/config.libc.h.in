@@ -35,4 +35,9 @@
 /* Define to 1 if you have the `_mkgmtime64' function. */
 #cmakedefine HAVE__MKGMTIME64 1
 
+/** Other functions **/
+
+/* Define to 1 if you have the `statx` function. */
+#cmakedefine HAVE_STATX 1
+
 #endif /* __RVTHTOOL_CONFIG_LIBC_H__ */
