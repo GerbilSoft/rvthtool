@@ -2,25 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * BankEntryView.cpp: Bank Entry view widget.                              *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "BankEntryView.hpp"
-
-#include "librvth/rvth.hpp"
 
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
@@ -30,8 +16,8 @@
 #include <cstring>
 
 // Qt includes.
-#include <QtCore/QLocale>
 #include <QtCore/QDateTime>
+#include <QtCore/QLocale>
 
 /** BankEntryViewPrivate **/
 
@@ -50,6 +36,7 @@ class BankEntryViewPrivate
 	public:
 		// UI
 		Ui::BankEntryView ui;
+		QLocale locale;
 
 		const RvtH_BankEntry *bankEntry;
 
@@ -79,6 +66,7 @@ class BankEntryViewPrivate
 
 BankEntryViewPrivate::BankEntryViewPrivate(BankEntryView *q)
 	: q_ptr(q)
+	, locale(QLocale())
 	, bankEntry(nullptr)
 { }
 
@@ -332,8 +320,10 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 
 	// Timestamp.
 	if (bankEntry->timestamp >= 0) {
+		// NOTE: Qt::DefaultLocaleShortDate was removed in Qt6,
+		// so switching to QLocale for formatting.
 		QDateTime ts = QDateTime::fromMSecsSinceEpoch((qint64)bankEntry->timestamp * 1000, Qt::UTC);
-		ui.lblTimestamp->setText(ts.toString(Qt::DefaultLocaleShortDate));
+		ui.lblTimestamp->setText(ts.toString(locale.dateTimeFormat(QLocale::ShortFormat)));
 	} else {
 		ui.lblTimestamp->setText(BankEntryView::tr("Unknown"));
 	}
@@ -572,11 +562,22 @@ void BankEntryView::update(void)
  */
 void BankEntryView::changeEvent(QEvent *event)
 {
-	if (event->type() == QEvent::LanguageChange) {
-		// Retranslate the UI.
-		Q_D(BankEntryView);
-		d->ui.retranslateUi(this);
-		d->updateWidgetDisplay();
+	Q_D(BankEntryView);
+
+	switch (event->type()) {
+		case QEvent::LanguageChange:
+			// Retranslate the UI.
+			d->ui.retranslateUi(this);
+			d->updateWidgetDisplay();
+			break;
+
+		case QEvent::LocaleChange:
+			// Cache the new locale.
+			d->locale = QLocale();
+			break;
+
+		default:
+			break;
 	}
 
 	// Pass the event to the base class.

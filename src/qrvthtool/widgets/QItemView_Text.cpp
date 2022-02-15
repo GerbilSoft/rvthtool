@@ -3,23 +3,24 @@
  * QItemView_text.cpp: QItemView subclasses that show a message if no      *
  * items are present.                                                      *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2013-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "QItemView_Text.hpp"
+
+// FIXME: Qt6's QListView::viewOptions() is final.
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+#  define IMPL_VIEWOPTIONS(klass)
+#else
+#  define IMPL_VIEWOPTIONS(klass) \
+QStyleOptionViewItem klass##_Text::viewOptions(void) const \
+{ \
+	QStyleOptionViewItem option = super::viewOptions(); \
+	option.decorationPosition = m_decorationPosition; \
+	return option; \
+}
+#endif
 
 #define QItemView_Text_Functions(klass) \
 void klass##_Text::paintEvent(QPaintEvent *e) \
@@ -34,12 +35,7 @@ void klass##_Text::paintEvent(QPaintEvent *e) \
 	} \
 } \
 \
-QStyleOptionViewItem klass##_Text::viewOptions(void) const \
-{ \
-	QStyleOptionViewItem option = super::viewOptions(); \
-	option.decorationPosition = m_decorationPosition; \
-	return option; \
-} \
+IMPL_VIEWOPTIONS(klass) \
 \
 void klass##_Text::setNoItemText(const QString &noItemText) \
 { \

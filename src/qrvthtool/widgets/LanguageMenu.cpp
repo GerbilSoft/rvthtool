@@ -2,20 +2,8 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * LanguageMenu.cpp: QMenu subclass for selecting a UI language.           *
  *                                                                         *
- * Copyright (c) 2012-2018 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2012-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               * *
  ***************************************************************************/
 
 #include "LanguageMenu.hpp"
@@ -31,6 +19,19 @@
 #include <QtGui/QIcon>
 #include <QAction>
 #include <QActionGroup>
+
+#if QT_VERSION < QT_VERSION_CHECK(5,14,0)
+// Qt 5.14 moved QString::SkipEmptyParts to Qt namespace.
+// Qt 6 removes it from QString.
+namespace Qt {
+	enum SplitBehaviorFlags {
+		KeepEmptyParts = 0,
+		SkipEmptyParts = 0x1,
+	};
+	Q_DECLARE_FLAGS(SplitBehavior, SplitBehaviorFlags)
+	Q_DECLARE_OPERATORS_FOR_FLAGS(SplitBehavior)
+}
+#endif
 
 /** LanguageMenuPrivate **/
 
@@ -112,7 +113,7 @@ QIcon LanguageMenuPrivate::iconForLocale(const QString &locale)
 {
 	// Check for an icon.
 	// Check region, then language.
-	QStringList locale_parts = locale.split(QChar(L'_'), QString::SkipEmptyParts);
+	QStringList locale_parts = locale.split(QChar(L'_'), Qt::SkipEmptyParts);
 	QIcon flagIcon;
 	for (int i = (locale_parts.size() - 1); i >= 0; i--) {
 		QString filename = QLatin1String(":/flags/") +

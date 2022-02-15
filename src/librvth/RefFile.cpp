@@ -2,47 +2,38 @@
  * RVT-H Tool (librvth)                                                    *
  * RefFile.cpp: Reference-counted FILE*.                                   *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "config.librvth.h"
+#include "config.libc.h"
 
 #include "RefFile.hpp"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cctype>
 #include <cerrno>
 #include <cstring>
 
+// OS-specific includes
 #ifdef _WIN32
-# include <windows.h>
-# include <io.h>
-# include <winioctl.h>
+#  include <windows.h>
+#  include <io.h>
+#  include <winioctl.h>
+#  include "w32time.h"
 #else /* !_WIN32 */
-# include <sys/ioctl.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-# include <unistd.h>
-# ifdef __linux__
-#  include <linux/fs.h>
-# endif /* __linux__ */
+#  include <sys/ioctl.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <fcntl.h>
+#  include <unistd.h>
+#  ifdef __linux__
+#    include <linux/fs.h>
+#  endif /* __linux__ */
 #endif /* !_WIN32 */
 
 // NOTE: Some functions don't check for nullptr, since they should
@@ -171,7 +162,7 @@ bool RefFile::isDevice(void) const
 		return false;
 	}
 
-#ifdef _WIN32
+#if defined(_WIN32)
 	// Windows: Check the beginning of the filename.
 	if (m_filename.empty()) {
 		// No filename...
@@ -179,10 +170,20 @@ bool RefFile::isDevice(void) const
 	}
 
 	return !_tcsnicmp(m_filename.c_str(), _T("\\\\.\\PhysicalDrive"), 17);
-#else /* !_WIN32 */
-	// Other: Use fstat().
-	struct stat buf;
-	int ret = fstat(fileno(m_file), &buf);
+#elif defined(HAVE_STATX)
+	struct statx sbx;
+	int ret = statx(fileno(m_file), "", AT_EMPTY_PATH, STATX_TYPE, &sbx);
+	if (ret != 0 || !(sbx.stx_mask & STATX_TYPE)) {
+		// statx() failed and/or did not return the file type.
+		return -1;
+	}
+
+	// NOTE: FreeBSD dropped "block" devices, so we need to
+	// check for both block and character devices.
+	return !!(S_ISBLK(sbx.stx_mode) | S_ISCHR(sbx.stx_mode));
+#else
+	struct stat sb;
+	int ret = fstat(fileno(m_file), &sb);
 	if (ret != 0) {
 		// fstat() failed.
 		return false;
@@ -190,7 +191,7 @@ bool RefFile::isDevice(void) const
 
 	// NOTE: FreeBSD dropped "block" devices, so we need to
 	// check for both block and character devices.
-	return !!(S_ISBLK(buf.st_mode) | S_ISCHR(buf.st_mode));
+	return !!(S_ISBLK(sb.st_mode) | S_ISCHR(sb.st_mode));
 #endif
 }
 
@@ -340,4 +341,51 @@ int64_t RefFile::size(void)
 		return -1;
 	}
 	return ret;
+}
+
+/**
+ * Get the file's modification time.
+ * @return File modification time, or -1 on error.
+ */
+time_t RefFile::mtime(void)
+{
+	if (!m_file) {
+		// No file...
+		return -1;
+	}
+
+#if defined(_WIN32)
+	HANDLE h_file = (HANDLE)_get_osfhandle(_fileno(m_file));
+	assert(h_file != nullptr);
+	assert(h_file != INVALID_HANDLE_VALUE);
+	if (!h_file || h_file == INVALID_HANDLE_VALUE) {
+		// Can't get the underlying HANDLE...
+		return -1;
+	}
+
+	FILETIME ft_mtime;
+	BOOL bRet = GetFileTime(h_file, nullptr, nullptr, &ft_mtime);
+	if (!bRet) {
+		// GetFileTime() failed.
+		return -1;
+	}
+
+	return FileTimeToUnixTime(&ft_mtime);
+#elif defined(HAVE_STATX)
+	struct statx sbx;
+	int ret = statx(fileno(m_file), "", AT_EMPTY_PATH, STATX_MTIME, &sbx);
+	if (ret != 0 || !(sbx.stx_mask & STATX_MTIME)) {
+		// statx() failed and/or did not return the mtime.
+		return -1;
+	}
+	return sbx.stx_mtime.tv_sec;
+#else
+	struct stat sb;
+	int ret = fstat(fileno(m_file), &sb);
+	if (ret != 0) {
+		// fstat() failed.
+		return -1;
+	}
+	return sb.st_mtime;
+#endif
 }

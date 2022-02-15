@@ -33,5 +33,9 @@ IF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 	SET(INSTALL_DEBUG OFF CACHE INTERNAL "Install the split debug files." FORCE)
 ENDIF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 
+# Qt version
+SET(QT_VERSION 5 CACHE STRING "Qt version to use. (default is 5)")
+SET_PROPERTY(CACHE QT_VERSION PROPERTY STRINGS 5 6)
+
 # Translations.
 OPTION(ENABLE_NLS "Enable NLS using Qt's built-in localization system." ON)

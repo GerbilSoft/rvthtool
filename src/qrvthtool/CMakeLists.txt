@@ -11,25 +11,74 @@ PROJECT(qrvthtool LANGUAGES CXX)
 # Main binary directory. Needed for git_version.h
 INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}")
 
-# Find Qt5.
-# FIXME: Figure out a minimum Qt5 version.
-# QtWin::fromHICON was added in Qt 5.2.
-SET(Qt5_NO_LINK_QTMAIN 1)
-FIND_PACKAGE(Qt5 5.2.0 COMPONENTS Core Gui Widgets)
-IF(Qt5_FOUND AND Qt5Core_FOUND AND Qt5Gui_FOUND AND Qt5Widgets_FOUND)
-	# Found Qt5.
-	SET(BUILD_QT5 ON)
-	IF(ENABLE_DBUS)
-		# QtDBus is used for DockManager.
-		FIND_PACKAGE(Qt5DBus)
-		SET(HAVE_Qt5DBus ${Qt5DBus_FOUND})
-	ENDIF(ENABLE_DBUS)
+IF(QT_VERSION EQUAL 5)
+	# Find Qt5.
+	# FIXME: Figure out a minimum Qt5 version.
+	# QtWin::fromHICON was added in Qt 5.2.
+	SET(Qt5_NO_LINK_QTMAIN 1)
+	FIND_PACKAGE(Qt5 5.2.0 COMPONENTS Core Gui Widgets)
+	IF(Qt5_FOUND AND Qt5Core_FOUND AND Qt5Gui_FOUND AND Qt5Widgets_FOUND)
+		# Found Qt5.
+		SET(BUILD_QT ON)
+		SET(QT_NS Qt5)
+		IF(ENABLE_DBUS)
+			# QtDBus is used for DockManager.
+			FIND_PACKAGE(Qt5DBus)
+			SET(HAVE_QtDBus ${Qt5DBus_FOUND})
+		ENDIF(ENABLE_DBUS)
+	ELSE()
+		# Did not find Qt5.
+		MESSAGE(WARNING "Qt5 not found. Not building qrvthtool.")
+	ENDIF()
+
+	# Qt 5.15/6 has qt_wrap_cpp.
+	# We can't depend on having Qt 5.15, though.
+	IF(NOT COMMAND QT_WRAP_CPP)
+		FUNCTION(QT_WRAP_CPP outfiles)
+			QT5_WRAP_CPP("${outfiles}" ${ARGN})
+			SET("${outfiles}" "${${outfiles}}" PARENT_SCOPE)
+		ENDFUNCTION(QT_WRAP_CPP)
+	ENDIF(NOT COMMAND QT_WRAP_CPP)
+	IF(NOT COMMAND QT_ADD_RESOURCES)
+		FUNCTION(QT_ADD_RESOURCES outfiles)
+			QT5_ADD_RESOURCES("${outfiles}" ${ARGN})
+			SET("${outfiles}" "${${outfiles}}" PARENT_SCOPE)
+		ENDFUNCTION(QT_ADD_RESOURCES)
+	ENDIF(NOT COMMAND QT_ADD_RESOURCES)
+	IF(NOT COMMAND QT_WRAP_UI)
+		FUNCTION(QT_WRAP_UI outfiles)
+			QT5_WRAP_UI("${outfiles}" ${ARGN})
+			SET("${outfiles}" "${${outfiles}}" PARENT_SCOPE)
+		ENDFUNCTION(QT_WRAP_UI)
+	ENDIF(NOT COMMAND QT_WRAP_UI)
+	IF(NOT COMMAND QT_ADD_DBUS_INTERFACES)
+		FUNCTION(QT_ADD_DBUS_INTERFACES sources)
+			QT5_ADD_DBUS_INTERFACE("${sources}" ${ARGN})
+			SET("${sources}" "${${sources}}" PARENT_SCOPE)
+		ENDFUNCTION(QT_ADD_DBUS_INTERFACES sources)
+	ENDIF(NOT COMMAND QT_ADD_DBUS_INTERFACES)
+ELSEIF(QT_VERSION EQUAL 6)
+	# Find Qt6.
+	SET(Qt6_NO_LINK_QTMAIN 1)
+	FIND_PACKAGE(Qt6 6.0.0 COMPONENTS Core Gui Widgets)
+	IF(Qt6_FOUND AND Qt6Core_FOUND AND Qt6Gui_FOUND AND Qt6Widgets_FOUND)
+		# Found Qt6.
+		SET(BUILD_QT ON)
+		SET(QT_NS Qt6)
+		IF(ENABLE_DBUS)
+			# QtDBus is used for DockManager.
+			FIND_PACKAGE(Qt6DBus)
+			SET(HAVE_QtDBus ${Qt6DBus_FOUND})
+		ENDIF(ENABLE_DBUS)
+	ELSE()
+		# Did not find Qt6.
+		MESSAGE(WARNING "Qt6 not found. Not building qrvthtool.")
+	ENDIF()
 ELSE()
-	# Did not find Qt5.
-	MESSAGE(WARNING "Qt5 not found. Not building qrvthtool.")
+	MESSAGE(FATAL_ERROR "Unsupported Qt version: ${QT_VERSION}")
 ENDIF()
 
-IF(BUILD_QT5)
+IF(BUILD_QT)
 
 # Create the Win32 manifest file.
 IF(WIN32)
@@ -47,7 +96,7 @@ ELSE()
 ENDIF()
 
 # KDE5: Check for KWidgetsAddons headers for notification sounds.
-IF(UNIX AND NOT APPLE)
+IF(UNIX AND NOT APPLE AND (QT_VERSION EQUAL 5))
 	# Reference: http://www.proli.net/2014/06/21/porting-your-project-to-qt5kf5/
 	# Find KDE5 Extra CMake Modules.
 	FIND_PACKAGE(ECM ${REQUIRE_KDE5} 0.0.11 NO_MODULE)
@@ -79,7 +128,7 @@ IF(UNIX AND NOT APPLE)
 			FIND_PACKAGE(Threads REQUIRED)
 		ENDIF(KF5WidgetsAddons_FOUND)
 	ENDIF()
-ENDIF(UNIX AND NOT APPLE)
+ENDIF(UNIX AND NOT APPLE AND (QT_VERSION EQUAL 5))
 
 
 # Write the config.h file.
@@ -125,7 +174,7 @@ SET(qrvthtool_MOC_H
 	windows/SelectDeviceDialog.hpp
 	windows/AboutDialog.hpp
 	)
-QT5_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
+QT_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
 
 # UI files.
 SET(qrvthtool_UIS
@@ -135,7 +184,7 @@ SET(qrvthtool_UIS
 	windows/SelectDeviceDialog.ui
 	windows/AboutDialog.ui
 	)
-QT5_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
+QT_WRAP_UI(qrvthtool_UIS_H ${qrvthtool_UIS})
 
 # TaskbarButtonManager
 SET(qrvthtool_TBM_SRCS
@@ -158,7 +207,7 @@ IF(WIN32)
 		TaskbarButtonManager/Win7TaskbarList.hpp
 		)
 ELSEIF(UNIX AND NOT APPLE)
-	IF(HAVE_Qt5DBus)
+	IF(HAVE_QtDBus)
 		# DockManager D-Bus API
 		SET(DBus_XML_SRCS
 			dbus/net.launchpad.DockItem.xml
@@ -171,7 +220,7 @@ ELSEIF(UNIX AND NOT APPLE)
 		# Enable DockManager / Unity API support.
 		# NOTE: The D-Bus interfaces are generated in ${CMAKE_CURRENT_BINARY_DIR},
 		# *not* ${CMAKE_CURRENT_BINARY_DIR}/dbus/.
-		QT5_ADD_DBUS_INTERFACES(
+		QT_ADD_DBUS_INTERFACES(
 			qrvthtool_DBUS_INTERFACE_SRCS
 			${DBus_XML_SRCS}
 			)
@@ -186,9 +235,9 @@ ELSEIF(UNIX AND NOT APPLE)
 			TaskbarButtonManager/DockManager.hpp
 			TaskbarButtonManager/UnityLauncher.hpp
 			)
-	ENDIF(HAVE_Qt5DBus)
+	ENDIF(HAVE_QtDBus)
 ENDIF()
-QT5_WRAP_CPP(qrvthtool_TBM_MOC_SRCS ${qrvthtool_TBM_MOC_H})
+QT_WRAP_CPP(qrvthtool_TBM_MOC_SRCS ${qrvthtool_TBM_MOC_H})
 
 ######################
 # Qt resource files. #
@@ -205,7 +254,7 @@ IF(WIN32 OR APPLE)
 		)
 ENDIF(WIN32 OR APPLE)
 
-QT5_ADD_RESOURCES(
+QT_ADD_RESOURCES(
 	qrvthtool_RCC_O ${qrvthtool_RCC_SRCS}
 	OPTIONS -no-compress
 	)
@@ -250,13 +299,14 @@ TARGET_LINK_LIBRARIES(qrvthtool PRIVATE rvth)
 
 # Qt libraries
 # NOTE: Libraries have to be linked in reverse order.
-TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core)
-IF(ENABLE_DBUS AND HAVE_Qt5DBus)
-	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::DBus)
-ENDIF(ENABLE_DBUS AND HAVE_Qt5DBus)
-IF(WIN32)
-	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE Qt5::WinMain)
-ENDIF(WIN32)
+TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${QT_NS}::Widgets ${QT_NS}::Gui ${QT_NS}::Core)
+IF(ENABLE_DBUS AND HAVE_QtDBus)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${QT_NS}::DBus)
+ENDIF(ENABLE_DBUS AND HAVE_QtDBus)
+# FIXME: Not available on Qt6; not needed on Qt5 either?
+IF(WIN32 AND QT_VERSION EQUAL 5)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${QT_NS}::WinMain)
+ENDIF(WIN32 AND QT_VERSION EQUAL 5)
 
 IF(CMAKE_THREAD_LIBS_INIT)
 	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${CMAKE_THREAD_LIBS_INIT})
@@ -336,4 +386,4 @@ IF(UNIX AND NOT APPLE)
                 )
 ENDIF(UNIX AND NOT APPLE)
 
-ENDIF(BUILD_QT5)
+ENDIF(BUILD_QT)

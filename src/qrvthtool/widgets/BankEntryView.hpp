@@ -2,20 +2,8 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * BankEntryView.hpp: Bank Entry view widget.                              *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
- *                                                                         *
- * This program is free software; you can redistribute it and/or modify it *
- * under the terms of the GNU General Public License as published by the   *
- * Free Software Foundation; either version 2 of the License, or (at your  *
- * option) any later version.                                              *
- *                                                                         *
- * This program is distributed in the hope that it will be useful, but     *
- * WITHOUT ANY WARRANTY; without even the implied warranty of              *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the           *
- * GNU General Public License for more details.                            *
- *                                                                         *
- * You should have received a copy of the GNU General Public License       *
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__
@@ -23,7 +11,8 @@
 
 #include <QWidget>
 
-struct _RvtH_BankEntry;
+// NOTE: Qt6's moc doesn't like incomplete types.
+#include "librvth/rvth.hpp"
 
 class BankEntryViewPrivate;
 class BankEntryView : public QWidget
@@ -31,7 +20,7 @@ class BankEntryView : public QWidget
 	Q_OBJECT
 	typedef QWidget super;
 
-	Q_PROPERTY(const struct _RvtH_BankEntry* bankEntry READ bankEntry WRITE setBankEntry)
+	Q_PROPERTY(const RvtH_BankEntry* bankEntry READ bankEntry WRITE setBankEntry)
 
 	public:
 		explicit BankEntryView(QWidget *parent = nullptr);
@@ -48,13 +37,13 @@ class BankEntryView : public QWidget
 		 * Get the RvtH_BankEntry being displayed.
 		 * @return RvtH_BankEntry.
 		 */
-		const struct _RvtH_BankEntry *bankEntry(void) const;
+		const RvtH_BankEntry *bankEntry(void) const;
 
 		/**
 		 * Set the RvtH_BankEntry being displayed.
 		 * @param bankEntry RvtH_BankEntry.
 		 */
-		void setBankEntry(const struct _RvtH_BankEntry *bankEntry);
+		void setBankEntry(const RvtH_BankEntry *bankEntry);
 
 		/**
 		 * Update the currently displayed RvtH_BankEntry.

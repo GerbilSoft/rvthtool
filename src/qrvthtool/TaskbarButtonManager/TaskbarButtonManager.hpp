@@ -22,7 +22,7 @@
 #define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_HPP__
 
 #include <QtCore/QObject>
-class QWidget;
+#include <QWidget>
 
 class TaskbarButtonManagerPrivate;
 class TaskbarButtonManager : public QObject
