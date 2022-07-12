@@ -52,7 +52,7 @@ class BankEntryView : public QWidget
 
 	protected:
 		// State change event. (Used for switching the UI language at runtime.)
-		void changeEvent(QEvent *event);
+		void changeEvent(QEvent *event) final;
 };
 
 #endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__ */

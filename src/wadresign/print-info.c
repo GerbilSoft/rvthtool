@@ -413,7 +413,9 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	// Title version
 	title_version = be16_to_cpu(tmdHeader->title_version);
 	printf("- Title version: %u.%u (v%u)\n",
-		title_version >> 8, title_version & 0xFF, title_version);
+		(unsigned int)(title_version >> 8),
+		(unsigned int)(title_version & 0xFF),
+		title_version);
 
 	// IOS version
 	// TODO: Error message if not an IOS?

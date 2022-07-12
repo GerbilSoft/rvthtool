@@ -225,8 +225,8 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
 				printf("Total size of text/data sections of the dol file are too big (%d(0x%08x) bytes).\n"
 					"APPLOADER ERROR >>> Currently the limit is set as %d(0x%08x) bytes.\n",
-					entry->aplerr_val[0], entry->aplerr_val[0],
-					entry->aplerr_val[1], entry->aplerr_val[1]);
+					static_cast<int>(entry->aplerr_val[0]), entry->aplerr_val[0],
+					static_cast<int>(entry->aplerr_val[1]), entry->aplerr_val[1]);
 				break;
 			case APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED:
 				printf("One of the sections in the dol file exceeded its boundary.\n"

@@ -143,7 +143,7 @@ QString BankEntryViewPrivate::formatFileSize(quint64 size)
 
 	if (size >= (2LL << 10)) {
 		// Fractional part.
-		unsigned int frac_digits = 2;
+		int frac_digits = 2;
 		if (whole_part >= 10) {
 			unsigned int round_adj = (frac_part % 10 > 5);
 			frac_part /= 10;

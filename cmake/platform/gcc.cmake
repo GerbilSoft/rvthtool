@@ -39,18 +39,29 @@ UNSET(RP_C11_CFLAG)
 UNSET(RP_CXX11_CXXFLAG)
 
 # Test for common CFLAGS and CXXFLAGS.
-FOREACH(FLAG_TEST "-Wall" "-Wextra" "-Wno-multichar" "-fstrict-aliasing" "-fno-common")
-	CHECK_C_COMPILER_FLAG("${FLAG_TEST}" CFLAG_${FLAG_TEST})
-	IF(CFLAG_${FLAG_TEST})
-		SET(RP_C_FLAGS_COMMON "${RP_C_FLAGS_COMMON} ${FLAG_TEST}")
-	ENDIF(CFLAG_${FLAG_TEST})
-	UNSET(CFLAG_${FLAG_TEST})
+# NOTE: Not adding -Werror=format-nonliteral because there are some
+# legitimate uses of non-literal format strings.
+SET(CFLAGS_WARNINGS -Wall -Wextra -Wno-multichar -Werror=return-type)
+SET(CFLAGS_WERROR_FORMAT -Werror=format -Werror=format-security -Werror=format-signedness -Werror=format-truncation -Werror=format-y2k)
+IF(MINGW)
+	# MinGW: Ignore warnings caused by casting from GetProcAddress().
+	SET(CFLAGS_WARNINGS ${CFLAGS_WARNINGS} -Wno-cast-function-type)
+ENDIF(MINGW)
+FOREACH(FLAG_TEST ${CFLAGS_WARNINGS} ${CFLAGS_WERROR_FORMAT} "-fstrict-aliasing" "-fno-common" "-fcf-protection")
+	# CMake doesn't like certain characters in variable names.
+	STRING(REGEX REPLACE "/|:|=" "_" FLAG_TEST_VARNAME "${FLAG_TEST}")
 
-	CHECK_CXX_COMPILER_FLAG("${FLAG_TEST}" CXXFLAG_${FLAG_TEST})
-	IF(CXXFLAG_${FLAG_TEST})
+	CHECK_C_COMPILER_FLAG("${FLAG_TEST}" CFLAG_${FLAG_TEST_VARNAME})
+	IF(CFLAG_${FLAG_TEST_VARNAME})
+		SET(RP_C_FLAGS_COMMON "${RP_C_FLAGS_COMMON} ${FLAG_TEST}")
+	ENDIF(CFLAG_${FLAG_TEST_VARNAME})
+	UNSET(CFLAG_${FLAG_TEST_VARNAME})
+
+	CHECK_CXX_COMPILER_FLAG("${FLAG_TEST}" CXXFLAG_${FLAG_TEST_VARNAME})
+	IF(CXXFLAG_${FLAG_TEST_VARNAME})
 		SET(RP_CXX_FLAGS_COMMON "${RP_CXX_FLAGS_COMMON} ${FLAG_TEST}")
-	ENDIF(CXXFLAG_${FLAG_TEST})
-	UNSET(CXXFLAG_${FLAG_TEST})
+	ENDIF(CXXFLAG_${FLAG_TEST_VARNAME})
+	UNSET(CXXFLAG_${FLAG_TEST_VARNAME})
 ENDFOREACH()
 
 # -Wimplicit-function-declaration should be an error. (C only)
@@ -59,6 +70,18 @@ IF(CFLAG_IMPLFUNC)
 	SET(RP_C_FLAGS_COMMON "${RP_C_FLAGS_COMMON} -Werror=implicit-function-declaration")
 ENDIF(CFLAG_IMPLFUNC)
 UNSET(CFLAG_IMPLFUNC)
+
+# Enable "suggest override" if available. (C++ only)
+# NOTE: If gcc, only enable on 9.2 and later, since earlier versions
+# will warn if a function is marked 'final' but not 'override'
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=78010
+IF(NOT CMAKE_COMPILER_IS_GNUCC OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.1))
+	CHECK_CXX_COMPILER_FLAG("-Wsuggest-override" CXXFLAG_SUGGEST_OVERRIDE)
+	IF(CXXFLAG_SUGGEST_OVERRIDE)
+		SET(RP_CXX_FLAGS_COMMON "${RP_CXX_FLAGS_COMMON} -Wsuggest-override -Wno-error=suggest-override")
+	ENDIF(CXXFLAG_SUGGEST_OVERRIDE)
+	UNSET(CXXFLAG_SUGGEST_OVERRIDE)
+ENDIF(NOT CMAKE_COMPILER_IS_GNUCC OR (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.1))
 
 # Code coverage checking.
 IF(ENABLE_COVERAGE)
@@ -113,7 +136,7 @@ EXECUTE_PROCESS(COMMAND ${CMAKE_LINKER} --help
 	OUTPUT_VARIABLE _ld_out
 	ERROR_QUIET)
 
-FOREACH(FLAG_TEST "--sort-common" "--as-needed" "--build-id")
+FOREACH(FLAG_TEST "--sort-common" "--as-needed" "--build-id" "-Bsymbolic-functions")
 	IF(NOT DEFINED LDFLAG_${FLAG_TEST})
 		MESSAGE(STATUS "Checking if ld supports ${FLAG_TEST}")
 		IF(_ld_out MATCHES "${FLAG_TEST}")

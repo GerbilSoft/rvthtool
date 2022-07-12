@@ -126,10 +126,10 @@ static int rvth_create_id(uint8_t *id, size_t size,
 	}
 	strftime(ts, sizeof(ts), "%Y/%m/%d %H:%M:%S", &tmbuf_local);
 	if (extra) {
-		snprintf((char*)&buf[sizeof(id_hdr)], 0x40-sizeof(id_hdr),
+		snprintf((char*)&buf[sizeof(id_hdr)], /*0x40*/ sizeof(buf)-sizeof(id_hdr),
 			 "%s, %s %s", extra, ts, tzval);
 	} else {
-		snprintf((char*)&buf[sizeof(id_hdr)], 0x40-sizeof(id_hdr),
+		snprintf((char*)&buf[sizeof(id_hdr)], /*0x40*/ sizeof(buf)-sizeof(id_hdr),
 			 "%s %s", ts, tzval);
 	}
 

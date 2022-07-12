@@ -102,7 +102,7 @@ int rvth_timestamp_create(char *buf, size_t size, time_t now)
 	// We can't snprintf() directly to nhcd_entry.timestamp because
 	// gcc will complain about buffer overflows, and will crash at
 	// runtime on Gentoo Hardened.
-	char tsbuf[16];
+	char tsbuf[32];
 
 	// Validate the parameters.
 	if (!buf || size == 0) {
