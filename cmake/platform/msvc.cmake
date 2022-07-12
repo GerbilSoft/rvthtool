@@ -70,12 +70,6 @@ ENDIF()
 SET(CMAKE_ASM_MASM_FLAGS "/W0 /safeseh" CACHE STRING
      "Flags used by the assembler during all build types.")
 
-# CPU architecture.
-STRING(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" arch)
-
-# CPU architecture.
-STRING(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" arch)
-
 # Check if CMAKE_SIZEOF_VOID_P is set correctly.
 IF(NOT CMAKE_SIZEOF_VOID_P)
 	# CMAKE_SIZEOF_VOID_P isn't set.
