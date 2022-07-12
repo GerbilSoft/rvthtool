@@ -27,6 +27,7 @@ IF(NOT WIN32)
 ELSE(NOT WIN32)
 	# Use the included Win32 build of Nettle.
 	INCLUDE(CPUInstructionSetFlags)
+	INCLUDE(DirInstallPaths)
 	IF(CPU_i386 OR CPU_amd64)
 		# Supported CPU
 	ELSE()
