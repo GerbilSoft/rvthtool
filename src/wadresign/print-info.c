@@ -550,11 +550,22 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			// TODO: Only decrypt the title key once?
 			// TODO: Return failure if any contents fail.
 			int vret = verify_content(f_wad, encKey, ticket, content, content_addr);
-			if (vret != 0) {
+			if (vret < 0) {
+				// Read error.
+				fprintf(stderr, "*** ERROR reading content #%d: ", content_index);
+				_fputts(_tcserror(-vret), stderr);
+				putchar('\n');
+				ret = 1;
+			} else if (vret > 0) {
 				if (ret == 0 && encKey == vWii_KEY_RETAIL) {
 					// Check if this might be valid with the retail common key.
 					vret = verify_content(f_wad, RVL_KEY_RETAIL, ticket, content, content_addr);
-					if (vret == 0) {
+					if (vret < 0) {
+						// Read error.
+						fprintf(stderr, "*** ERROR reading content #%d: ", content_index);
+						_fputts(_tcserror(-vret), stderr);
+						putchar('\n');
+					} else if (vret == 0) {
 						vWii_crypt_error = true;
 					}
 				}
