@@ -534,8 +534,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	for (; nbr_cont > 0; nbr_cont--, content++) {
 		// TODO: Show the actual table index, or just the
 		// index field in the entry?
-		uint16_t content_index = be16_to_cpu(content->index);
 		const uint32_t content_size = (uint32_t)be64_to_cpu(content->size);
+		uint16_t content_index = be16_to_cpu(content->index);
 		printf("#%d: ID=%08x, type=%04X, size=%u",
 			content_index,
 			be32_to_cpu(content->content_id),
