@@ -2,14 +2,14 @@
  * RVT-H Tool: WAD Resigner                                                *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "config.version.h"
 #include "git.h"
 
-// C includes.
+// C includes
 #include <getopt.h>
 #include <locale.h>
 #include <stdarg.h>
@@ -21,16 +21,17 @@
 #include "libwiicrypto/sig_tools.h"
 
 #ifdef _WIN32
-# include "libwiicrypto/win32/secoptions.h"
+#  include "libwiicrypto/win32/secoptions.h"
+#  include "libwiicrypto/win32/Win32_sdk.h"
 #endif /* _WIN32 */
 
 #include "resign-nus.hpp"
 #include "print-info.hpp"
 
 #ifdef __GNUC__
-# define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
+#  define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
 #else
-# define ATTR_PRINTF(fmt, args)
+#  define ATTR_PRINTF(fmt, args)
 #endif
 
 /**
@@ -88,6 +89,24 @@ static void print_help(const TCHAR *argv0)
 		"  -h, --help                Display this help and exit.\n"
 		"\n"
 		, stdout);
+}
+
+/**
+ * Is the specified filename a directory?
+ * @param filename Filename to check
+ * @return True if it's a directory; false if not.
+ */
+static bool is_directory(const TCHAR *filename)
+{
+#ifdef _WIN32
+	const DWORD dwAttrs = GetFileAttributes(filename);
+	return (dwAttrs != INVALID_FILE_ATTRIBUTES && (dwAttrs & FILE_ATTRIBUTE_DIRECTORY));
+#else /* !_WIN32 */
+	// TODO: statx() if available?
+	struct stat sb;
+	int sret = stat(filename, &sb);
+	return (sret == 0 && (sb.st_mode & S_IFDIR));
+#endif /* _WIN32 */
 }
 
 int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
@@ -212,9 +231,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	} else {
 		// If the "command" corresponds to a valid directory,
 		// assume it's a filename and handle it as 'info'.
-		struct stat sb;
-		int sret = stat(argv[optind], &sb);
-		if (sret == 0 && (sb.st_mode & S_IFDIR)) {
+		if (is_directory(argv[optind])) {
 			// It's a directory.
 			int i;
 			ret = 0;
