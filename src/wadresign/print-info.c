@@ -271,21 +271,21 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	// encrypted with the retail common key.
 	bool vWii_crypt_error = false;
 
-	// Certificate validation.
+	// Certificate validation
 	RVL_Cert_Issuer issuer_ticket;
 	const char *s_issuer_ticket, *s_issuer_tmd;
 	RVL_SigStatus_e sig_status_ticket, sig_status_tmd;
 
-	// Encryption key.
+	// Encryption key
 	RVL_AES_Keys_e encKey;
 	const char *s_encKey;
 	const char *s_invalidKey = NULL;
 
-	// Contents.
+	// Contents
 	unsigned int nbr_cont, nbr_cont_actual;
 	uint16_t boot_index;
 	const RVL_Content_Entry *content;
-	uint32_t content_addr;
+	uint32_t content_addr, data_size_actual;
 
 	// Read the WAD header.
 	rewind(f_wad);
@@ -528,18 +528,19 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		nbr_cont = nbr_cont_actual;
 	}
 
-	// TODO: Validate against data_size.
 	content_addr = wadInfo.data_address;
+	data_size_actual = 0;
 	ret = 0;
 	for (; nbr_cont > 0; nbr_cont--, content++) {
 		// TODO: Show the actual table index, or just the
 		// index field in the entry?
 		uint16_t content_index = be16_to_cpu(content->index);
+		const uint32_t content_size = (uint32_t)be64_to_cpu(content->size);
 		printf("#%d: ID=%08x, type=%04X, size=%u",
-			be16_to_cpu(content->index),
+			content_index,
 			be32_to_cpu(content->content_id),
 			be16_to_cpu(content->type),
-			(uint32_t)be64_to_cpu(content->size));
+			content_size);
 		if (content_index == boot_index) {
 			fputs(", bootable", stdout);
 		}
@@ -548,7 +549,6 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		if (verify) {
 			// Verify the content.
 			// TODO: Only decrypt the title key once?
-			// TODO: Return failure if any contents fail.
 			int vret = verify_content(f_wad, encKey, ticket, content, content_addr);
 			if (vret < 0) {
 				// Read error.
@@ -574,17 +574,48 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		}
 
 		// Next content.
-		content_addr += (uint32_t)be64_to_cpu(content->size);
+		// Contents are aligned to 64 bytes in WADs.
+		// If BWF, only align to 16 bytes (AES block size).
+		//
+		// NOTE: Data size for WADs is NOT aligned for the last content.
+		// If the value is not 16-byte aligned, it will still have extra
+		// bytes for the AES block.
+		// If the value is not 64-byte aligned, padding will be included
+		// only if it's followed by metadata.
+		content_addr += content_size;
+		data_size_actual += content_size;
 		if (likely(!isBWF)) {
 			content_addr = ALIGN_BYTES(64, content_addr);
+			if (nbr_cont != 1) {
+				data_size_actual = ALIGN_BYTES(64, data_size_actual);
+			}
+		} else {
+			content_addr = ALIGN_BYTES(16, content_addr);
+			if (nbr_cont != 1) {
+				data_size_actual = ALIGN_BYTES(16, data_size_actual);
+			}
 		}
 	}
-	putchar('\n');
 
 	if (vWii_crypt_error) {
+		putchar('\n');
 		printf("*** WARNING: This WAD file should be encrypted using the vWii common\n"
 		       "    key, but it's actually encrypted with the retail common key.\n");
 		// FIXME: Add a way to fix this and indicate how to fix it.
+	}
+
+	// Verify the data size in the header.
+	{
+		const int diff = (int)(data_size_actual - wadInfo.data_size);
+		if (diff != 0) {
+			putchar('\n');
+			printf("*** WARNING: The data size in the WAD header does not match the\n"
+			       "    actual content data size.\n"
+			       "    Expected: 0x%08X, actual: 0x%08X (difference: %c0x%0X)\n",
+			wadInfo.data_size, data_size_actual,
+			(diff < 0 ? '-' : '+'), (unsigned int)abs(diff));
+			// FIXME: Add a way to fix this and indicate how to fix it.
+		}
 	}
 
 end:
