@@ -73,13 +73,13 @@ static void print_help(const TCHAR *argv0)
 		"- Print information about the specified WAD file.\n"
 		"\n"
 		"resign source.wad dest.wad\n"
-		" - Resigns source.wad and creates dest.wad using the new key.\n"
-		"   Default converts Retail/Korean WADs to Debug, and\n"
-		"   Debug WADs to Retail. The format isn't changed unless\n"
-		"   the --format parameter is specified.\n"
+		"- Resigns source.wad and creates dest.wad using the new key.\n"
+		"  Default converts Retail/Korean WADs to Debug, and\n"
+		"  Debug WADs to Retail. The format isn't changed unless\n"
+		"  the --format parameter is specified.\n"
 		"\n"
 		"verify file.wad\n"
-		" - Verify the content hashes.\n"
+		"- Verify the content hashes.\n"
 		"\n"
 		"Options:\n"
 		"\n"
@@ -219,7 +219,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		}
 
 		ret = 0;
-		for (i = optind; i < argc; i++) {
+		for (i = optind+1; i < argc; i++) {
 			ret |= print_wad_info(argv[i], false);
 		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
