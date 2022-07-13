@@ -469,6 +469,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
 
 	cboRecryptionKey = new QComboBox(q);
+	cboRecryptionKey->setObjectName(QLatin1String("cboRecryptionKey"));
 	cboRecryptionKey->addItem(QString(), -1);			// None
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Retail);	// Retail (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Korean);	// Korean (fakesigned)
@@ -565,12 +566,14 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 
 	/** Progress bar widgets **/
 	d->lblMessage = new QLabel();
+	d->lblMessage->setObjectName(QLatin1String("lblMessage"));
 	d->lblMessage->setTextFormat(Qt::PlainText);
 	d->ui.statusBar->addWidget(d->lblMessage, 1);
 
 	// TODO: Handle "Escape" keypresses as cancel?
 	// Disabling focus to prevent it from being highlighted.
 	d->btnCancel = new QToolButton();
+	d->btnCancel->setObjectName(QLatin1String("btnCancel"));
 	d->btnCancel->setVisible(false);
 	d->btnCancel->setFocusPolicy(Qt::NoFocus);
 	d->btnCancel->setToolTip(tr("Cancel the current operation."));
@@ -586,6 +589,7 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->ui.statusBar->addPermanentWidget(d->btnCancel, 1);
 
 	d->progressBar = new QProgressBar();
+	d->progressBar->setObjectName(QLatin1String("progressBar"));
 	d->progressBar->setVisible(false);
 	d->ui.statusBar->addPermanentWidget(d->progressBar, 1);
 
@@ -926,10 +930,11 @@ void QRvtHToolWindow::on_actionOpenDiskImage_triggered(void)
 void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
 {
 	// Prompt the user to select a device.
-	SelectDeviceDialog *const dialog = new SelectDeviceDialog();
-	int ret = dialog->exec();
+	SelectDeviceDialog *const selectDeviceDialog = new SelectDeviceDialog();
+	selectDeviceDialog->setObjectName(QLatin1String("selectDeviceDialog"));
+	int ret = selectDeviceDialog->exec();
 	if (ret == QDialog::Accepted) {
-		QString deviceName = dialog->deviceName();
+		QString deviceName = selectDeviceDialog->deviceName();
 		if (!deviceName.isEmpty()) {
 			// Filename is selected.
 			// TODO: Show the serial number?
@@ -1031,7 +1036,9 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
+	d->workerThread->setObjectName(QLatin1String("workerThread"));
 	d->workerObject = new WorkerObject();
+	d->workerObject->setObjectName(QLatin1String("workerObject"));
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
 	d->workerObject->setBank(bank);
@@ -1107,7 +1114,9 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
+	d->workerThread->setObjectName(QLatin1String("workerThread"));
 	d->workerObject = new WorkerObject();
+	d->workerObject->setObjectName(QLatin1String("workerObject"));
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
 	d->workerObject->setBank(bank);

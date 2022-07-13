@@ -107,7 +107,8 @@ void AboutDialogPrivate::initAboutDialogText(void)
 		const QString css = QLatin1String(
 			"QScrollArea, QLabel { background-color: transparent; }");
 
-		QScrollArea *scrlCredits = new QScrollArea();
+		QScrollArea *const scrlCredits = new QScrollArea();
+		scrlCredits->setObjectName(QLatin1String("scrlCredits"));
 		scrlCredits->setFrameShape(QFrame::NoFrame);
 		scrlCredits->setFrameShadow(QFrame::Plain);
 		scrlCredits->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -117,7 +118,8 @@ void AboutDialogPrivate::initAboutDialogText(void)
 		scrlCredits->setWidgetResizable(true);
 		ui.vboxCredits->addWidget(scrlCredits);
 
-		QScrollArea *scrlLibraries = new QScrollArea();
+		QScrollArea *const scrlLibraries = new QScrollArea();
+		scrlLibraries->setObjectName(QLatin1String("scrlLibraries"));
 		scrlLibraries->setFrameShape(QFrame::NoFrame);
 		scrlLibraries->setFrameShadow(QFrame::Plain);
 		scrlLibraries->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -127,7 +129,8 @@ void AboutDialogPrivate::initAboutDialogText(void)
 		scrlLibraries->setWidgetResizable(true);
 		ui.vboxLibraries->addWidget(scrlLibraries);
 
-		QScrollArea *scrlSupport = new QScrollArea();
+		QScrollArea *const scrlSupport = new QScrollArea();
+		scrlSupport->setObjectName(QLatin1String("setObjectName"));
 		scrlSupport->setFrameShape(QFrame::NoFrame);
 		scrlSupport->setFrameShadow(QFrame::Plain);
 		scrlSupport->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
