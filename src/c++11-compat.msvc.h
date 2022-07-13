@@ -1,7 +1,7 @@
 /***************************************************************************
  * c++11-compat.msvc.h: C++ 2011 compatibility header. (MSVC)              *
  *                                                                         *
- * Copyright (c) 2011-2015 by David Korth.                                 *
+ * Copyright (c) 2011-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -16,13 +16,17 @@
 
 #ifdef __cplusplus
 
+#if (_MSC_VER < 1700)
+#  error Minimum supported MSVC version is MSVC 2012 (11.0)
+#endif
+
 /**
  * Enable compatibility for C++ 2011 features that aren't
  * present in older versions of MSVC.
  *
  * These are all automatically enabled when compiling C code.
  *
- * Reference: https://msdn.microsoft.com/en-us/library/hh567368.aspx
+ * Reference: https://docs.microsoft.com/en-us/previous-versions/hh567368(v=vs.140)
  */
 
 #if (_MSC_VER < 1900)
@@ -38,39 +42,18 @@
 #define CXX11_COMPAT_CONSTEXPR
 #endif
 
-#if (_MSC_VER < 1700)
-/**
- * MSVC 2010 (10.0) does support override, but not final.
- * However, it has a "sealed" keyword that works almost
- * the same way as final.
- *
- * 'sealed' is available starting with MSVC 2005 (8.0).
- * TODO: Verify MSVC 2002 and 2003.
- */
-#if (_MSC_VER >= 1400)
-#define final sealed
-#endif
-#endif
-
-#if (_MSC_VER < 1600)
-/**
- * MSVC 2008 (9.0) and older: No C++ 2011 support at all.
- * Probably won't compile at all due to lack of stdint.h.
- */
-#define CXX11_COMPAT_NULLPTR
-#define CXX11_COMPAT_OVERRIDE
-#define CXX11_COMPAT_STATIC_ASSERT
-#endif
-
 #endif /* __cplusplus */
 
 /**
  * MSVC doesn't have typeof(), but as of MSVC 2010,
  * it has decltype(), which is essentially the same thing.
+ * FIXME: Doesn't work in C mode.
  * TODO: Handle older versions.
  * Possible option for C++:
  * - http://www.nedproductions.biz/blog/implementing-typeof-in-microsofts-c-compiler
  */
-#define typeof(x) decltype(x)
+#if defined(_MSC_VER) && defined(__cplusplus)
+#  define __typeof__(x) decltype(x)
+#endif
 
 #endif /* __CXX11_COMPAT_MSVC_H__ */

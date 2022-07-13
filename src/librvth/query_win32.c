@@ -379,7 +379,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 			NULL, 0,			// no input buffer
 			(LPVOID)&io.gli, sizeof(io.gli),// output buffer
 			&cbBytesReturned,		// number of bytes returned
-			nullptr);			// OVERLAPPED structure
+			NULL);				// OVERLAPPED structure
 		if (bRet && cbBytesReturned == sizeof(io.gli)) {
 			// Size obtained successfully.
 			list_tail->size = io.gli.Length.QuadPart;
@@ -399,7 +399,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
  * Get the serial number for the specified RVT-H Reader device.
  * @param filename	[in] RVT-H Reader device filename.
  * @param pErr		[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
- * @return Allocated serial number string, or nullptr on error.
+ * @return Allocated serial number string, or NULL on error.
  */
 TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr)
 {
@@ -581,7 +581,7 @@ TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr)
  * Listen for new and/or removed devices.
  * @param callback Callback function
  * @param userdata User data
- * @return Listener object, or nullptr on error.
+ * @return Listener object, or NULL on error.
  */
 RvtH_ListenForDevices *rvth_listen_for_devices(RvtH_DeviceCallback callback, void *userdata)
 {

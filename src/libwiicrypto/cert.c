@@ -1,8 +1,8 @@
 /***************************************************************************
- * RVT-H Tool (libwiicrypto*
+ * RVT-H Tool (libwiicrypto)                                               *
  * cert.c: Certificate management.                                         *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -359,7 +359,7 @@ int cert_verify(const uint8_t *data, size_t size)
 	if (!strncmp(s_issuer, "Root", 5)) {
 		// Try dpki first.
 		const RVL_Cert *issuer_cert = cert_get(RVL_CERT_ISSUER_DPKI_ROOT);
-		assert(issuer_cert != nullptr);
+		assert(issuer_cert != NULL);
 		if (!issuer_cert) {
 			return -EIO;
 		}
@@ -370,7 +370,7 @@ int cert_verify(const uint8_t *data, size_t size)
 		if (ret != SIG_STATUS_OK) {
 			// Signature is not valid. Try ppki.
 			issuer_cert = cert_get(RVL_CERT_ISSUER_PPKI_ROOT);
-			assert(issuer_cert != nullptr);
+			assert(issuer_cert != NULL);
 			if (!issuer_cert) {
 				return -EIO;
 			}
@@ -386,7 +386,7 @@ int cert_verify(const uint8_t *data, size_t size)
 			return SIG_ERROR_UNKNOWN_ISSUER;
 		}
 		issuer_cert = cert_get(issuer);
-		assert(issuer_cert != nullptr);
+		assert(issuer_cert != NULL);
 		if (!issuer_cert) {
 			return -EIO;
 		}
