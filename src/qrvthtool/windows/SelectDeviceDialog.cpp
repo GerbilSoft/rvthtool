@@ -301,9 +301,9 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 	rvth_query_free(devs);
 #else /* !HAVE_QUERY */
 	// TODO: Better error message.
-	// TODO: Fall back to /dev/* scanning?
+	// TODO: Fall back to /dev/ scanning?
 	ui.lstDevices->setNoItemText(
-		SelectDeviceDialog::tr("ERROR: Device querying not supported in this build."));
+		SelectDeviceDialog::tr("ERROR: Device querying is not supported in this build."));
 #endif /* HAVE_QUERY */
 }
 
