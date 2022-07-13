@@ -68,6 +68,9 @@ class QRvtHToolWindowPrivate
 	public:
 		Ui::QRvtHToolWindow ui;
 
+		// About dialog
+		AboutDialog *aboutDialog;
+
 		// RVT-H Reader disk image
 		RvtH *rvth;
 		RvtHModel *model;
@@ -158,6 +161,7 @@ class QRvtHToolWindowPrivate
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	: q_ptr(q)
+	, aboutDialog(nullptr)
 	, rvth(nullptr)
 	, model(new RvtHModel(q))
 	, proxyModel(new RvtHSortFilterProxyModel(q))
@@ -479,7 +483,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	ui.toolBar->insertWidget(ui.actionAbout, cboRecryptionKey);
 
 	// Make sure the "About" button is right-aligned.
-	QWidget *spacer = new QWidget(q);
+	QWidget *const spacer = new QWidget(q);
 	spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	ui.toolBar->insertWidget(ui.actionAbout, spacer);
 
@@ -970,7 +974,19 @@ void QRvtHToolWindow::on_actionExit_triggered(void)
  */
 void QRvtHToolWindow::on_actionAbout_triggered(void)
 {
-	AboutDialog::ShowSingle(this);
+	Q_D(QRvtHToolWindow);
+	if (d->aboutDialog) {
+		// FIXME: This doesn't seem to work on KDE Plasma 5.25...
+		d->aboutDialog->raise();
+		d->aboutDialog->setFocus();
+		return;
+	}
+
+	d->aboutDialog = new AboutDialog(this);
+	d->aboutDialog->setObjectName(QLatin1String("aboutDialog"));
+	QObject::connect(d->aboutDialog, &QObject::destroyed,
+		[d](QObject *obj) { Q_UNUSED(obj); d->aboutDialog = nullptr; });
+	d->aboutDialog->show();
 }
 
 /** RVT-H disk image actions **/

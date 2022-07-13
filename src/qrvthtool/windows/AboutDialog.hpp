@@ -21,9 +21,6 @@ class AboutDialog : public QDialog
 	typedef QDialog super;
 	
 	public:
-		static void ShowSingle(QWidget *parent = nullptr);
-
-	protected:
 		explicit AboutDialog(QWidget *parent = nullptr);
 		virtual ~AboutDialog();
 

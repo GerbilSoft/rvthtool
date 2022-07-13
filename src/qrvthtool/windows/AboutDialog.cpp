@@ -35,7 +35,6 @@ class AboutDialogPrivate
 		Q_DISABLE_COPY(AboutDialogPrivate)
 
 	public:
-		static AboutDialog *ms_AboutDialog;
 		Ui::AboutDialog ui;
 
 		bool scrlAreaInit;
@@ -58,10 +57,6 @@ class AboutDialogPrivate
 		 */
 		void initSupportTab(void);
 };
-
-// Static member initialization.
-AboutDialog *AboutDialogPrivate::ms_AboutDialog = nullptr;
-
 
 AboutDialogPrivate::AboutDialogPrivate(AboutDialog* q)
 	: q_ptr(q)
@@ -383,26 +378,7 @@ AboutDialog::AboutDialog(QWidget *parent)
  */
 AboutDialog::~AboutDialog()
 {
-	AboutDialogPrivate::ms_AboutDialog = nullptr;
 	delete d_ptr;
-}
-
-/**
- * Show a single instance of the About Dialog.
- * @param parent Parent window.
- */
-void AboutDialog::ShowSingle(QWidget *parent)
-{
-	if (AboutDialogPrivate::ms_AboutDialog != nullptr) {
-		// About Dialog is already displayed.
-		// Activate the dialog.
-		AboutDialogPrivate::ms_AboutDialog->activateWindow();
-	} else {
-		// About Dialog is not displayed.
-		// Display it.
-		AboutDialogPrivate::ms_AboutDialog = new AboutDialog(parent);
-		AboutDialogPrivate::ms_AboutDialog->show();
-	}
 }
 
 /**
