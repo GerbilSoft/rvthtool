@@ -364,7 +364,7 @@ void QRvtHToolWindowPrivate::updateWindowTitle(void)
 	Q_Q(QRvtHToolWindow);
 	RvtHModel::IconID iconID;
 	if (rvth) {
-		// Set the file path. Qt automaticlaly takes the filename
+		// Set the file path. Qt automatically takes the filename
 		// portion and prepends it to the application title.
 		q->setWindowFilePath(filename);
 
