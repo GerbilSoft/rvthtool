@@ -46,14 +46,10 @@ class SelectDeviceDialogPrivate
 		QIcon rvthReaderIcon;
 
 		// Selected device
-		QString sel_deviceName;
-		QString sel_serialNumber;
-		int64_t sel_hddSize;
+		DeviceQueryData *sel_device;
 
-		// Device paths and serial numbers
-		QVector<QString> vecDeviceNames;
-		QVector<QString> vecSerialNumbers;
-		QVector<int64_t> vecHDDSizes;
+		// Device information
+		QList<DeviceQueryData> lstQueryData;
 
 		// Device listener
 		RvtH_ListenForDevices *listener;
@@ -67,6 +63,12 @@ class SelectDeviceDialogPrivate
 		* @return Formatted block device size.
 		*/
 		static QString format_size(int64_t size);
+
+		/**
+		 * Add a device to the list.
+		 * @param queryData DeviceQueryData
+		 */
+		void addDevice(DeviceQueryData &&queryData);
 
 	public:
 		// Refresh the device list.
@@ -93,6 +95,7 @@ class SelectDeviceDialogPrivate
 
 SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
 	: q_ptr(q)
+	, sel_device(nullptr)
 	, listener(nullptr)
 {
 	// Get the RVT-H Reader icon.
@@ -203,6 +206,27 @@ QString SelectDeviceDialogPrivate::format_size(int64_t size)
 }
 
 /**
+ * Add a device to the list.
+ * @param queryData DeviceQueryData
+ */
+void SelectDeviceDialogPrivate::addDevice(DeviceQueryData &&queryData)
+{
+	// Create the string.
+	QString text = queryData.device_name + QChar(L'\n') +
+		queryData.usb_serial + QChar(L'\n') +
+		format_size(queryData.size);
+
+	// Create the QListWidgetItem.
+	// TODO: Verify that QListWidget takes ownership.
+	// TODO: Switch to QListView and use a model.
+	QListWidgetItem *const item = new QListWidgetItem(rvthReaderIcon, text, ui.lstDevices);
+	item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+
+	// Save the device query data.
+	lstQueryData.append(queryData);
+}
+
+/**
  * Refresh the device list.
  */
 void SelectDeviceDialogPrivate::refreshDeviceList(void)
@@ -215,9 +239,7 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 	ui.buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
 
 	// TODO: Automatically update on device hotplug?
-	vecDeviceNames.clear();
-	vecSerialNumbers.clear();
-	vecHDDSizes.clear();
+	lstQueryData.clear();
 
 #ifdef HAVE_QUERY
 	int err = 0;
@@ -272,40 +294,8 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 			continue;
 		}
 
-		// Device name and serial number.
-#ifdef _WIN32
-		QString deviceName = QString::fromUtf16(
-			reinterpret_cast<const char16_t*>(p->device_name));
-		QString serialNumber;
-		if (p->usb_serial) {
-			serialNumber = QString::fromUtf16(
-			reinterpret_cast<const char16_t*>(p->usb_serial));
-		}
-#else /* !_WIN32 */
-		QString deviceName = QString::fromUtf8(p->device_name);
-		QString serialNumber;
-		if (p->usb_serial) {
-			serialNumber = QString::fromUtf8(p->usb_serial);
-		}
-#endif /* _WIN32 */
-		int64_t hddSize = p->size;
-
-		// Create the string.
-		QString text = deviceName + QChar(L'\n') +
-			serialNumber + QChar(L'\n') +
-			format_size(hddSize);
-
-		// Create the QListWidgetItem.
-		// TODO: Verify that QListWidget takes ownership.
-		// TODO: Switch to QListView and use a model.
-		QListWidgetItem *const item = new QListWidgetItem(rvthReaderIcon, text, ui.lstDevices);
-		item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-		item->setData(Qt::UserRole, deviceName);	// for dynamic updates
-
-		// Save the device information.
-		vecDeviceNames.append(deviceName);
-		vecSerialNumbers.append(serialNumber);
-		vecHDDSizes.append(hddSize);
+		// Add this device.
+		addDevice(DeviceQueryData(p));
 	}
 
 	rvth_query_free(devs);
@@ -430,7 +420,7 @@ void SelectDeviceDialog::changeEvent(QEvent *event)
 QString SelectDeviceDialog::deviceName(void) const
 {
 	Q_D(const SelectDeviceDialog);
-	return d->sel_deviceName;
+	return (d->sel_device ? d->sel_device->device_name : QString());
 }
 
 /**
@@ -440,7 +430,7 @@ QString SelectDeviceDialog::deviceName(void) const
 QString SelectDeviceDialog::serialNumber(void) const
 {
 	Q_D(const SelectDeviceDialog);
-	return d->sel_serialNumber;
+	return (d->sel_device ? d->sel_device->usb_serial : QString());
 }
 
 /**
@@ -450,7 +440,7 @@ QString SelectDeviceDialog::serialNumber(void) const
 int64_t SelectDeviceDialog::hddSize(void) const
 {
 	Q_D(const SelectDeviceDialog);
-	return d->sel_hddSize;
+	return (d->sel_device ? d->sel_device->size : 0);
 }
 
 /** UI widget slots **/
@@ -462,16 +452,12 @@ void SelectDeviceDialog::accept(void)
 	// Save the selected device information.
 	Q_D(SelectDeviceDialog);
 	int row = d->ui.lstDevices->currentRow();
-	if (row >= 0 && row < d->vecDeviceNames.size()) {
+	if (row >= 0 && row < d->lstQueryData.size()) {
 		// Item selected.
-		d->sel_deviceName = d->vecDeviceNames[row];
-		d->sel_serialNumber = d->vecSerialNumbers[row];
-		d->sel_hddSize = d->vecHDDSizes[row];
+		d->sel_device = &d->lstQueryData[row];
 	} else {
 		// No item selected, or out of range.
-		d->sel_deviceName.clear();
-		d->sel_serialNumber.clear();
-		d->sel_hddSize = 0;
+		d->sel_device = nullptr;
 	}
 
 	super::accept();
@@ -481,9 +467,7 @@ void SelectDeviceDialog::reject(void)
 {
 	// Cancelled.
 	Q_D(SelectDeviceDialog);
-	d->sel_deviceName.clear();
-	d->sel_serialNumber.clear();
-	d->sel_hddSize = 0;
+	d->sel_device = nullptr;
 	super::reject();
 }
 
@@ -494,20 +478,16 @@ void SelectDeviceDialog::done(int r)
 	if (r == QDialog::Accepted) {
 		// Save the selected device information.
 		int row = d->ui.lstDevices->currentRow();
-		if (row >= 0 && row < d->vecDeviceNames.size()) {
+		if (row >= 0 && row < d->lstQueryData.size()) {
 			// Item selected.
-			d->sel_deviceName = d->vecDeviceNames[row];
-			d->sel_serialNumber = d->vecSerialNumbers[row];
-			d->sel_hddSize = d->vecHDDSizes[row];
+			d->sel_device = &d->lstQueryData[row];
 			clear = false;
 		}
 	}
 
 	if (clear) {
 		// No item selected, or out of range.
-		d->sel_deviceName.clear();
-		d->sel_serialNumber.clear();
-		d->sel_hddSize = 0;
+		d->sel_device = nullptr;
 	}
 
 	super::done(r);
