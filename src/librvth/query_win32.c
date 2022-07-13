@@ -572,3 +572,29 @@ TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr)
 	SetupDiDestroyDeviceInfoList(hDevInfoSet);
 	return s_full_serial;
 }
+
+/** Listen for new devices **/
+
+// TODO: Implement this!
+
+/**
+ * Listen for new and/or removed devices.
+ * @param callback Callback function
+ * @param userdata User data
+ * @return Listener object, or nullptr on error.
+ */
+RvtH_ListenForDevices *rvth_listen_for_devices(RvtH_DeviceCallback callback, void *userdata)
+{
+	((void)callback);
+	((void)userdata);
+	return NULL;
+}
+
+/**
+ * Stop listening for new and/or removed devices.
+ * @param listener RvtH_ListenForDevices
+ */
+void rvth_listener_stop(RvtH_ListenForDevices *listener)
+{
+	((void)listener);
+}

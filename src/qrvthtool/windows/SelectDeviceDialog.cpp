@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * SelectDeviceDialog.hpp: Select an RVT-H Reader device.                  *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -22,6 +22,7 @@
 // Qt includes.
 #include <QtCore/QLocale>
 #include <QPushButton>
+#include <QMetaMethod>
 
 /** SelectDeviceDialogPrivate **/
 
@@ -30,6 +31,7 @@ class SelectDeviceDialogPrivate
 {
 	public:
 		explicit SelectDeviceDialogPrivate(SelectDeviceDialog *q);
+		~SelectDeviceDialogPrivate();
 
 	protected:
 		SelectDeviceDialog *const q_ptr;
@@ -43,15 +45,18 @@ class SelectDeviceDialogPrivate
 		// RVT-H Reader icon
 		QIcon rvthReaderIcon;
 
-		// Selected device.
+		// Selected device
 		QString sel_deviceName;
 		QString sel_serialNumber;
 		int64_t sel_hddSize;
 
-		// Device paths and serial numbers.
+		// Device paths and serial numbers
 		QVector<QString> vecDeviceNames;
 		QVector<QString> vecSerialNumbers;
 		QVector<int64_t> vecHDDSizes;
+
+		// Device listener
+		RvtH_ListenForDevices *listener;
 
 	private:
 		static inline int calc_frac_part(int64_t size, int64_t mask);
@@ -66,13 +71,39 @@ class SelectDeviceDialogPrivate
 	public:
 		// Refresh the device list.
 		void refreshDeviceList(void);
+
+		/**
+		 * RvtH device listener callback.
+		 * @param listener Listener
+		 * @param entry Device that was added/removed (if removed, only contains device name)
+		 * @param state Device state (see RvtH_Listen_State_e)
+		 * @param userdata User data specified on initialization
+		 *
+		 * NOTE: query's data is not guaranteed to remain valid once the
+		 * callback function returns. Copy everything out immediately!
+		 *
+		 * NOTE: On RVTH_LISTEN_DISCONNECTED, only query->device_name is set.
+		 * udev doesn't seem to let us get the correct USB parent device, so
+		 * the callback function will need to verify that query->device_name
+		 * is a previously-received RVT-H Reader device.
+		 */
+		static void rvth_listener_callback(RvtH_ListenForDevices *listener,
+			const RvtH_QueryEntry *entry, RvtH_Listen_State_e state, void *userdata);
 };
 
 SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
 	: q_ptr(q)
+	, listener(nullptr)
 {
 	// Get the RVT-H Reader icon.
 	rvthReaderIcon = RvtHModel::getIcon(RvtHModel::ICON_RVTH);
+}
+
+SelectDeviceDialogPrivate::~SelectDeviceDialogPrivate()
+{
+	if (listener) {
+		rvth_listener_stop(listener);
+	}
 }
 
 inline int SelectDeviceDialogPrivate::calc_frac_part(int64_t size, int64_t mask)
@@ -269,6 +300,7 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 		// TODO: Switch to QListView and use a model.
 		QListWidgetItem *const item = new QListWidgetItem(rvthReaderIcon, text, ui.lstDevices);
 		item->setTextAlignment(Qt::AlignLeft | Qt::AlignVCenter);
+		item->setData(Qt::UserRole, deviceName);	// for dynamic updates
 
 		// Save the device information.
 		vecDeviceNames.append(deviceName);
@@ -285,6 +317,28 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 #endif /* HAVE_QUERY */
 }
 
+void SelectDeviceDialogPrivate::rvth_listener_callback(
+	RvtH_ListenForDevices *listener,
+	const RvtH_QueryEntry *entry,
+	RvtH_Listen_State_e state,
+	void *userdata)
+{
+	Q_UNUSED(listener)
+
+	// NOTE: entry will be deleted once this callback returns.
+	// We'll need to copy the relevant data into a custom QObject.
+
+	// NOTE: This is running in a different thread.
+	// Need to use a QueuedConnection to trigger the Qt slot.
+	// NOTE: Due to Qt weirdness, the slot uses a const ref
+	// instead of a const pointer.
+	QMetaObject::invokeMethod(static_cast<SelectDeviceDialog*>(userdata),
+		"deviceStateChanged",
+		Qt::QueuedConnection,
+		Q_ARG(DeviceQueryData, DeviceQueryData(entry)),
+		Q_ARG(RvtH_Listen_State_e, state));
+}
+
 /** SelectDeviceDialog **/
 
 SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
@@ -296,6 +350,9 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 {
 	Q_D(SelectDeviceDialog);
 	d->ui.setupUi(this);
+
+	qRegisterMetaType<DeviceQueryData>();
+	qRegisterMetaType<RvtH_Listen_State_e>();
 
 	// Do NOT delete the window on close.
 	// The selected device needs to be accessible by the caller.
@@ -311,6 +368,7 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 
 	// Change the "Reset" button to "Refresh".
 	QPushButton *const btnRefresh = d->ui.buttonBox->button(QDialogButtonBox::Reset);
+	btnRefresh->setObjectName(QLatin1String("btnRefresh"));
 	btnRefresh->setText(tr("&Refresh"));
 	btnRefresh->setIcon(QIcon::fromTheme(QLatin1String("view-refresh")));
 	connect(btnRefresh, SIGNAL(clicked()), this, SLOT(refresh()));
@@ -321,6 +379,15 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 
 	// Refresh the device list.
 	d->refreshDeviceList();
+
+	// Attempt to create a device listener.
+	// TODO: Callbcak
+	d->listener = rvth_listen_for_devices(d->rvth_listener_callback, this);
+	if (d->listener) {
+		// Device listener was created.
+		// Hide the "Refresh" button.
+		btnRefresh->hide();
+	}
 
 	// Connect the lstDevices selection signal.
 	connect(d->ui.lstDevices->selectionModel(), &QItemSelectionModel::selectionChanged,
@@ -471,4 +538,14 @@ void SelectDeviceDialog::on_lstDevices_doubleClicked(const QModelIndex &index)
 
 	// Act like the "OK" button was clicked.
 	this->accept();
+}
+
+/**
+ * A device state has changed.
+ * @param queryData Device query data
+ * @param state Device state
+ */
+void SelectDeviceDialog::deviceStateChanged(const DeviceQueryData &queryData, RvtH_Listen_State_e state)
+{
+	printf("device state changed: %s -> %d\n", queryData.device_name.toUtf8().constData(), state);
 }

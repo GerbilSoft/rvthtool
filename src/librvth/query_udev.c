@@ -2,20 +2,30 @@
  * RVT-H Tool (librvth)                                                    *
  * query_udev.c: Query storage devices. (udev version)                     *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
+#include "config.librvth.h"
 #include "query.h"
 
 // TODO: stdboolx.h
 #include "../libwiicrypto/common.h"
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <libudev.h>
+
+#ifdef HAVE_PTHREADS
+#  include <pthread.h>
+#endif /* HAVE_PTHREADS */
+
+// HACK: TEMP
+#include <stdio.h>
 
 // strdup() wrapper that returns NULL if the input is NULL.
 static inline char *strdup_null(const char *s)
@@ -53,6 +63,99 @@ static bool is_vid_pid_correct(struct udev_device *usb_dev)
 }
 
 /**
+ * Get RvtH_QueryEntry data for the specified udev device.
+ * @param dev udev device node
+ * @return Allocated RvtH_QueryEntry if it's an RVT-H Reader; NULL if not.
+ */
+static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev)
+{
+	RvtH_QueryEntry *entry;
+
+	const char *s_devnode;
+	struct udev_device *usb_dev, *scsi_dev;
+
+	const char *s_blk_size, *s_usb_serial;
+	unsigned int hw_serial;
+
+	// udev_device_get_devnode() returns the path to the device node itself in /dev.
+	s_devnode = udev_device_get_devnode(dev);
+	if (!s_devnode) {
+		// No device node...
+		return NULL;
+	}
+
+	// The device pointed to by dev contains information about the
+	// block device. In order to get information about the USB device,
+	// get the parent device with the subsystem/devtype pair of
+	// "usb"/"usb_device". This will be several levels up the tree,
+	// but the function will find it.
+	// NOTE: This device is NOT referenced, and is cleaned up when
+	// dev is cleaned up.
+	scsi_dev = udev_device_get_parent_with_subsystem_devtype(dev, "scsi", "scsi_device");
+	usb_dev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
+	if (!scsi_dev || !usb_dev) {
+		// Parent SCSI and/or USB devices are missing.
+		// - No SCSI device: Not an HDD.
+		// - No USB device: Not an external HDD.
+		return NULL;
+	}
+	
+	// Check if the VID/PID matches Nintendo RVT-H Reader.
+	if (!is_vid_pid_correct(usb_dev)) {
+		return NULL;
+	}
+
+	// Get the serial number.
+	s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
+	if (!s_usb_serial) {
+		// No serial number...
+		return NULL;
+	}
+	hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
+
+	// Is the serial number valid?
+	// - Wired:    10xxxxxx
+	// - Wireless: 20xxxxxx
+	// FIXME: The above might not be accurate, but those are the usual ranges.
+	if (hw_serial < 10000000 || hw_serial > 29999999) {
+		// Not a valid serial number.
+		return NULL;
+	}
+
+	// Create an RvtHQueryEntry.
+	entry = malloc(sizeof(*entry));
+	if (!entry) {
+		return NULL;
+	}
+	entry->next = NULL;
+
+	// Block device size.
+	// NOTE: Returns number of LBAs.
+	// Assuming blocks are 512 bytes.
+	// TODO: Get the actual LBA size.
+	s_blk_size = udev_device_get_sysattr_value(dev, "size");
+
+	// Copy the strings.
+	entry->device_name = strdup(s_devnode);
+	entry->usb_vendor = strdup_null(udev_device_get_sysattr_value(usb_dev, "manufacturer"));
+	entry->usb_product = strdup_null(udev_device_get_sysattr_value(usb_dev, "product"));
+	entry->usb_serial = rvth_create_full_serial_number(hw_serial);
+	entry->hdd_vendor = strdup_null(udev_device_get_sysattr_value(scsi_dev, "vendor"));
+	entry->hdd_model = strdup_null(udev_device_get_sysattr_value(scsi_dev, "model"));
+	entry->hdd_fwver = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));
+#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
+	// TODO: SCSI device serial number?
+	entry->hdd_serial = strdup_null(udev_device_get_sysattr_value(scsi_dev, "serial"));
+#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
+	entry->size = (s_blk_size ? strtoull(s_blk_size, NULL, 10) * 512ULL : 0);
+
+	// NOTE: STORAGE_DEVICE_DESCRIPTOR has a serial number value
+	// for the HDD itself, but the RVT-H Reader USB bridge
+	// doesn't support this query.
+	return entry;
+}
+
+/**
  * Scan all USB devices for RVT-H Readers.
  * @param pErr	[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
  * @return List of matching devices, or NULL if none were found.
@@ -85,119 +188,34 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 
 	// Go over the list of devices and find matching USB devices.
 	udev_list_entry_foreach(dev_list_entry, devices) {
-		struct udev_device *usb_dev, *scsi_dev;
+		RvtH_QueryEntry *entry;
 		struct udev_device *dev;
-
 		const char *path;
-		const char *s_devnode;
-
-		const char *s_blk_size;
-		const char *s_usb_serial;
-		unsigned int hw_serial;
 
 		// Get the filename of the /sys entry for the device
 		// and create a udev_device object (dev) representing it.
 		path = udev_list_entry_get_name(dev_list_entry);
 		dev = udev_device_new_from_syspath(udev, path);
 
-		// udev_device_get_devnode() returns the path to the device node itself in /dev.
-		s_devnode = udev_device_get_devnode(dev);
-		if (!s_devnode) {
-			// No device node...
+		// Attempt to get an RvtH_QueryEntry from this device node.
+		entry = rvth_parse_udev_device(dev);
+		if (!entry) {
+			// Not an RVT-H Reader.
 			udev_device_unref(dev);
 			continue;
 		}
 
-		// The device pointed to by dev contains information about the
-		// block device. In order to get information about the USB device,
-		// get the parent device with the subsystem/devtype pair of
-		// "usb"/"usb_device". This will be several levels up the tree,
-		// but the function will find it.
-		// NOTE: This device is NOT referenced, and is cleaned up when
-		// dev is cleaned up.
-		scsi_dev = udev_device_get_parent_with_subsystem_devtype(dev, "scsi", "scsi_device");
-		usb_dev = udev_device_get_parent_with_subsystem_devtype(dev, "usb", "usb_device");
-		if (!scsi_dev || !usb_dev) {
-			// Parent SCSI and/or USB devices are missing.
-			// - No SCSI device: Not an HDD.
-			// - No USB device: Not an external HDD.
-			udev_device_unref(dev);
-			continue;
-		}
-	
-		// Check if the VID/PID matches Nintendo RVT-H Reader.
-		if (!is_vid_pid_correct(usb_dev)) {
-			udev_device_unref(dev);
-			continue;
-		}
-
-		// Get the serial number.
-		s_usb_serial = udev_device_get_sysattr_value(usb_dev, "serial");
-		if (!s_usb_serial) {
-			// No serial number...
-			udev_device_unref(dev);
-			continue;
-		}
-		hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
-
-		// Is the serial number valid?
-		// - Wired:    10xxxxxx
-		// - Wireless: 20xxxxxx
-		if (hw_serial < 10000000 || hw_serial > 29999999) {
-			// Not a valid serial number.
-			udev_device_unref(dev);
-			continue;
-		}
-
-		// Create a list entry.
+		// RvtH_QueryEntry obtained. Add it to the list.
 		if (!list_head) {
 			// New list head.
-			list_head = malloc(sizeof(*list_head));
-			if (!list_head) {
-				// malloc() failed.
-				udev_device_unref(dev);
-				break;
-			}
+			list_head = entry;
 			list_tail = list_head;
-			list_tail->next = NULL;
 		} else {
 			// Add an entry to the current list.
-			list_tail->next = malloc(sizeof(*list_tail));
-			if (!list_tail->next) {
-				// malloc() failed.
-				udev_device_unref(dev);
-				rvth_query_free(list_head);
-				list_head = NULL;
-				list_tail = NULL;
-				break;
-			}
-			list_tail->next = NULL;
+			list_tail->next = entry;
 		}
 
-		// Block device size.
-		// NOTE: Returns number of LBAs.
-		// Assuming blocks are 512 bytes.
-		// TODO: Get the actual LBA size.
-		s_blk_size = udev_device_get_sysattr_value(dev, "size");
-
-		// Copy the strings.
-		list_tail->device_name = strdup(s_devnode);
-		list_tail->usb_vendor = strdup_null(udev_device_get_sysattr_value(usb_dev, "manufacturer"));
-		list_tail->usb_product = strdup_null(udev_device_get_sysattr_value(usb_dev, "product"));
-		list_tail->usb_serial = rvth_create_full_serial_number(hw_serial);
-		list_tail->hdd_vendor = strdup_null(udev_device_get_sysattr_value(scsi_dev, "vendor"));
-		list_tail->hdd_model = strdup_null(udev_device_get_sysattr_value(scsi_dev, "model"));
-		list_tail->hdd_fwver = strdup_null(udev_device_get_sysattr_value(scsi_dev, "rev"));
-#ifdef RVTH_QUERY_ENABLE_HDD_SERIAL
-		// TODO: SCSI device serial number?
-		list_tail->hdd_serial = strdup_null(udev_device_get_sysattr_value(scsi_dev, "serial"));
-#endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
-		list_tail->size = (s_blk_size ? strtoull(s_blk_size, NULL, 10) * 512ULL : 0);
-
-		// NOTE: STORAGE_DEVICE_DESCRIPTOR has a serial number value
-		// for the HDD itself, but the RVT-H Reader USB bridge
-		// doesn't support this query.
-
+		// Next device.
 		udev_device_unref(dev);
 	}
 
@@ -328,3 +346,189 @@ TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr)
 	}
 	return s_full_serial;
 }
+
+/** Listen for new devices **/
+
+#ifdef HAVE_PTHREADS
+
+/** pthreads is available; we can listen for devices. */
+
+// NOTE: libudev uses an fd event model.
+// We'll use a separate thread that calls a callback function.
+// The callback function must handle GUI dispatch in a thread-safe manner.
+
+// Reference: https://github.com/robertalks/udev-examples/blob/master/udev_example3.c
+
+struct _RvtH_ListenForDevices {
+	RvtH_DeviceCallback callback;
+	void *userdata;
+
+	struct udev *udev;
+	struct udev_monitor *mon;
+	int fd;
+
+	pthread_t thread_id;
+	bool stop;
+};
+
+/**
+ * Main function for the udev thread.
+ * @param listener_arg RvtH_ListenForDevices
+ */
+static void *rvth_listener_thread(void *listener_arg)
+{
+	RvtH_ListenForDevices *const listener = (RvtH_ListenForDevices*)listener_arg;
+	const int fd = listener->fd;
+
+	while (true) {
+		fd_set fds;
+		struct timeval tv;
+		int ret;
+
+		FD_ZERO(&fds);
+		FD_SET(fd, &fds);
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;
+
+		ret = select(fd + 1, &fds, NULL, NULL, &tv);
+		if (ret > 0 && FD_ISSET(fd, &fds)) do {
+			const char *action;
+
+			struct udev_device *const dev = udev_monitor_receive_device(listener->mon);
+			if (!dev)
+				break;
+
+			// Check if this is "add" or "remove".
+			action = udev_device_get_action(dev);
+			if (!action)
+				break;
+
+			if (!strcmp(action, "add")) {
+				// Device added.
+				RvtH_QueryEntry *const entry = rvth_parse_udev_device(dev);
+				if (entry) {
+					listener->callback(listener, entry, RVTH_LISTEN_CONNECTED, listener->userdata);
+					rvth_query_free(entry);
+				}
+			} else if (!strcmp(action, "remove")) {
+				// Deivce removed.
+				// NOTE: Can't get the correct parent USB device for
+				// the block device on removal. The caller will have
+				// to verify if this device node is in its list.
+				// TODO: Monitor USB devices too?
+				RvtH_QueryEntry *const entry = calloc(1, sizeof(*entry));
+				if (entry) {
+					entry->device_name = udev_device_get_devnode(dev);
+					listener->callback(listener, entry, RVTH_LISTEN_DISCONNECTED, listener->userdata);
+					free(entry);
+				}
+			}
+		} while (0);
+
+		// Yield the thread and wait 500ms.
+		sched_yield();
+		usleep(500*1000);
+	}
+
+	// TODO
+	return NULL;
+}
+
+/**
+ * Listen for new and/or removed devices.
+ * @param callback Callback function
+ * @param userdata User data
+ * @return Listener object, or nullptr on error.
+ */
+RvtH_ListenForDevices *rvth_listen_for_devices(RvtH_DeviceCallback callback, void *userdata)
+{
+	int ret;
+
+	assert(callback != NULL);
+	if (!callback) {
+		// No point in listening with no callback.
+		return NULL;
+	}
+
+	RvtH_ListenForDevices *const listener = calloc(1, sizeof(RvtH_ListenForDevices));
+	if (!listener) {
+		return NULL;
+	}
+
+	listener->udev = udev_new();
+	if (!listener->udev) {
+		free(listener);
+		return NULL;
+	}
+
+	// udev monitor doesn't allow us to filter on specific USB IDs.
+	// We'll filter on block devices.
+	listener->mon = udev_monitor_new_from_netlink(listener->udev, "udev");
+	if (!listener->mon) {
+		udev_unref(listener->udev);
+		free(listener);
+		return NULL;
+	}
+
+	udev_monitor_filter_add_match_subsystem_devtype(listener->mon, "block", NULL);
+	udev_monitor_enable_receiving(listener->mon);
+	listener->fd = udev_monitor_get_fd(listener->mon);
+	if (listener->fd < 0) {
+		udev_monitor_unref(listener->mon);
+		udev_unref(listener->udev);
+		free(listener);
+		return NULL;
+	}
+
+	// udev is set up. Create the thread.
+	ret = pthread_create(&listener->thread_id, NULL, rvth_listener_thread, listener);
+	if (ret != 0) {
+		// Error creating the thread.
+		udev_monitor_unref(listener->mon);
+		udev_unref(listener->udev);
+		free(listener);
+		return NULL;
+	}
+
+	// Thread is listening.
+	listener->callback = callback;
+	listener->userdata = userdata;
+	return listener;
+}
+
+/**
+ * Stop listening for new and/or removed devices.
+ * @param listener RvtH_ListenForDevices
+ */
+void rvth_listener_stop(RvtH_ListenForDevices *listener)
+{
+	// TODO: Kill the thread?
+	listener->stop = true;
+}
+#else /* !HAVE_PTHREADS */
+
+/** pthreads is unavailable. No device listening. */
+
+/**
+ * Listen for new and/or removed devices.
+ * @param callback Callback function
+ * @param userdata User data
+ * @return Listener object, or nullptr on error.
+ */
+RvtH_ListenForDevices *rvth_listen_for_devices(RvtH_DeviceCallback callback, void *userdata)
+{
+	((void)callback);
+	((void)userdata);
+	return NULL;
+}
+
+/**
+ * Stop listening for new and/or removed devices.
+ * @param listener RvtH_ListenForDevices
+ */
+void rvth_listener_stop(RvtH_ListenForDevices *listener)
+{
+	((void)listener);
+}
+
+#endif /* HAVE_PTHREADS */

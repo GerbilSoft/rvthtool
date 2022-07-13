@@ -17,15 +17,19 @@ ENDIF(NOT WIN32)
 IF(WIN32)
 	# Win32 API has built-in device querying functionality.
 	SET(HAVE_QUERY 1)
-ELSEIF(ENABLE_UDEV)
-	# Find UDEV.
-	IF(UNIX AND NOT APPLE)
-		FIND_PACKAGE(UDev)
-		IF(UDEV_FOUND)
-			SET(HAVE_UDEV 1)
-			SET(HAVE_QUERY 1)
-		ENDIF(UDEV_FOUND)
-	ENDIF()
+ELSEIF((UNIX AND NOT APPLE) AND ENABLE_UDEV)
+	# Find udev.
+	FIND_PACKAGE(UDev)
+	IF(UDEV_FOUND)
+		SET(HAVE_UDEV 1)
+		SET(HAVE_QUERY 1)
+
+		# pthreads is needed for new device listening.
+		FIND_PACKAGE(Threads)
+		IF(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+			SET(HAVE_PTHREADS 1)
+		ENDIF(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+	ENDIF(UDEV_FOUND)
 ENDIF()
 
 # Write the config.h file.
@@ -112,6 +116,9 @@ ENDIF(TARGET git_version)
 
 # libwiicrypto
 TARGET_LINK_LIBRARIES(rvth PRIVATE wiicrypto)
+IF(HAVE_PTHREADS)
+	TARGET_LINK_LIBRARIES(rvth PRIVATE Threads::Threads)
+ENDIF(HAVE_PTHREADS)
 
 # GMP
 IF(HAVE_GMP)

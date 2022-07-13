@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * query.h: Query storage devices.                                         *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -82,6 +82,52 @@ TCHAR *rvth_get_device_serial_number(const TCHAR *filename, int *pErr);
  * Free a list of queried devices.
  */
 void rvth_query_free(RvtH_QueryEntry *devs);
+
+/** Listen for new devices **/
+
+struct _RvtH_ListenForDevices;
+typedef struct _RvtH_ListenForDevices RvtH_ListenForDevices;
+
+typedef enum {
+	RVTH_LISTEN_DISCONNECTED	= 0,
+	RVTH_LISTEN_CONNECTED		= 1,
+} RvtH_Listen_State_e;
+
+/**
+ * RvtH device listener callback.
+ * @param listener Listener
+ * @param entry Device that was added/removed (if removed, only contains device name)
+ * @param state Device state (see RvtH_Listen_State_e)
+ * @param userdata User data specified on initialization
+ *
+ * NOTE: query's data is not guaranteed to remain valid once the
+ * callback function returns. Copy everything out immediately!
+ *
+ * NOTE: On RVTH_LISTEN_DISCONNECTED, only query->device_name is set.
+ * udev doesn't seem to let us get the correct USB parent device, so
+ * the callback function will need to verify that query->device_name
+ * is a previously-received RVT-H Reader device.
+ */
+typedef void (*RvtH_DeviceCallback)(RvtH_ListenForDevices *listener,
+	const RvtH_QueryEntry *entry, RvtH_Listen_State_e state, void *userdata);
+
+/**
+ * Listen for new and/or removed devices.
+ *
+ * NOTE: The callback function may be called from a separate thread.
+ * It must handle GUI dispatch in a thread-safe manner.
+ *
+ * @param callback Callback function
+ * @param userdata User data
+ * @return Listener object, or nullptr on error.
+ */
+RvtH_ListenForDevices *rvth_listen_for_devices(RvtH_DeviceCallback callback, void *userdata);
+
+/**
+ * Stop listening for new and/or removed devices.
+ * @param listener RvtH_ListenForDevices
+ */
+void rvth_listener_stop(RvtH_ListenForDevices *listener);
 
 #ifdef __cplusplus
 }
