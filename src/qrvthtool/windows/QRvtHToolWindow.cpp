@@ -629,6 +629,9 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 		delete d->rvth;
 	}
 
+	// Processing...
+	markUiBusy();
+
 	// Open the specified RVT-H Reader disk image.
 	int err = 0;
 #ifdef _WIN32
@@ -643,6 +646,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 			.arg(QString::fromUtf8(rvth_error(err)));
 		d->ui.msgWidget->showMessage(errMsg, MessageWidget::ICON_CRITICAL);
 		delete d->rvth;
+		markUiNotBusy();
 		return;
 	}
 
@@ -707,6 +711,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	// FIXME: If a file is opened from the command line,
 	// QTreeView sort-of selects the first file.
 	// (Signal is emitted, but nothing is highlighted.)
+	markUiNotBusy();
 }
 
 /**
@@ -846,12 +851,14 @@ void QRvtHToolWindow::markUiBusy(void)
 	if (d->uiBusyCounter == 1) {
 		// UI is now busy.
 		// TODO: Prevent the window from being closed.
+		// TODO: Disable the close button?
 		this->setCursor(Qt::WaitCursor);
 		d->ui.menuBar->setEnabled(false);
 		d->ui.toolBar->setEnabled(false);
 		this->centralWidget()->setEnabled(false);
 
-		// TODO: Disable the close button?
+		// Make sure the cursor actually updates.
+		QCoreApplication::processEvents();
 	}
 }
 
@@ -876,6 +883,9 @@ void QRvtHToolWindow::markUiNotBusy(void)
 		d->ui.toolBar->setEnabled(true);
 		this->centralWidget()->setEnabled(true);
 		this->unsetCursor();
+
+		// Make sure the cursor actually updates.
+		QCoreApplication::processEvents();
 	}
 }
 
