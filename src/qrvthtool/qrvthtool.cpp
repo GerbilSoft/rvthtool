@@ -65,16 +65,19 @@ static void RegisterTaskbarButtonCreatedMessage(void)
  */
 int main(int argc, char *argv[])
 {
+	// Set high-DPI mode on Qt 5. (not needed on Qt 6)
+#if QT_VERSION >= QT_VERSION_CHECK(5,0,0) && QT_VERSION < QT_VERSION_CHECK(6,0,0)
 	// Enable High DPI.
 	QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps, true);
-#if QT_VERSION >= 0x050600
+#  if QT_VERSION >= 0x050600
 	// Enable High DPI pixmaps.
 	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling, true);
-#else
+#  else
 	// Hardcode the value in case the user upgrades to Qt 5.6 later.
 	// http://doc.qt.io/qt-5/qt.html#ApplicationAttribute-enum
 	QApplication::setAttribute((Qt::ApplicationAttribute)13, true);
-#endif /* QT_VERSION >= 0x050600 */
+#  endif /* QT_VERSION >= 0x050600 */
+#endif /* QT_VERSION >= QT_VERSION_CHECK(5,0,0) && QT_VERSION < QT_VERSION_CHECK(6,0,0) */
 
 	QApplication *app = new QApplication(argc, argv);
 	app->setApplicationName(QLatin1String("qrvthtool"));

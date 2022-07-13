@@ -35,8 +35,13 @@ bool RvtHSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelInd
 	const QVariant vLeft = left.data();
 	const QVariant vRight = right.data();
 
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+	if (vLeft.typeId() == QMetaType::QString &&
+	    vRight.typeId() == QMetaType::QString)
+#else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
 	if (vLeft.type() == QVariant::String &&
 	    vRight.type() == QVariant::String)
+#endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
 	{
 		// String. Do a case-insensitive comparison.
 		QString sLeft = vLeft.toString();

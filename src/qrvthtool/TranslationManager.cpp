@@ -140,8 +140,13 @@ void TranslationManager::setTranslation(const QString &locale)
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 	// Qt on Unix (but not Mac) is usually installed system-wide.
 	// Check the Qt library path first.
+#  if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+	isQtSysTranslator = d->qtTranslator->load(qtLocale,
+		QLibraryInfo::path(QLibraryInfo::TranslationsPath));
+#  else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
 	isQtSysTranslator = d->qtTranslator->load(qtLocale,
 		QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+#  endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
 #else
 	// Suppress warnings that isQtSysTranslator is used but not set.
 	Q_UNUSED(isQtSysTranslator)
