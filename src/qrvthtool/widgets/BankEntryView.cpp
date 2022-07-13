@@ -111,31 +111,11 @@ QString BankEntryViewPrivate::formatFileSize(quint64 size)
 		suffix = BankEntryView::tr("KiB");
 		whole_part = static_cast<unsigned int>(size >> 10);
 		frac_part = calc_frac_part(size, (1ULL << 10));
-	} else if (size < (2ULL << 30)) {
+	} else {
 		// tr: Megabytes
 		suffix = BankEntryView::tr("MiB");
 		whole_part = static_cast<unsigned int>(size >> 20);
 		frac_part = calc_frac_part(size, (1ULL << 20));
-	} else if (size < (2ULL << 40)) {
-		// tr: Gigabytes
-		suffix = BankEntryView::tr("GiB");
-		whole_part = static_cast<unsigned int>(size >> 30);
-		frac_part = calc_frac_part(size, (1ULL << 30));
-	} else if (size < (2ULL << 50)) {
-		// tr: Terabytes
-		suffix = BankEntryView::tr("TiB");
-		whole_part = static_cast<unsigned int>(size >> 40);
-		frac_part = calc_frac_part(size, (1ULL << 40));
-	} else if (size < (2ULL << 60)) {
-		// tr: Petabytes
-		suffix = BankEntryView::tr("PiB");
-		whole_part = static_cast<unsigned int>(size >> 50);
-		frac_part = calc_frac_part(size, (1ULL << 50));
-	} else /*if (size < (2ULL << 70))*/ {
-		// tr: Exabytes
-		suffix = BankEntryView::tr("EiB");
-		whole_part = static_cast<unsigned int>(size >> 60);
-		frac_part = calc_frac_part(size, (1LL << 60));
 	}
 
 	// Localize the whole part.
