@@ -68,7 +68,7 @@ class SelectDeviceDialogPrivate
 		 * Add a device to the list.
 		 * @param queryData DeviceQueryData
 		 */
-		void addDevice(DeviceQueryData &&queryData);
+		void addDevice(const DeviceQueryData &queryData);
 
 	public:
 		// Refresh the device list.
@@ -209,7 +209,7 @@ QString SelectDeviceDialogPrivate::format_size(int64_t size)
  * Add a device to the list.
  * @param queryData DeviceQueryData
  */
-void SelectDeviceDialogPrivate::addDevice(DeviceQueryData &&queryData)
+void SelectDeviceDialogPrivate::addDevice(const DeviceQueryData &queryData)
 {
 	// Create the string.
 	QString text = queryData.device_name + QChar(L'\n') +
@@ -527,5 +527,33 @@ void SelectDeviceDialog::on_lstDevices_doubleClicked(const QModelIndex &index)
  */
 void SelectDeviceDialog::deviceStateChanged(const DeviceQueryData &queryData, RvtH_Listen_State_e state)
 {
-	printf("device state changed: %s -> %d\n", queryData.device_name.toUtf8().constData(), state);
+	Q_D(SelectDeviceDialog);
+	switch (state) {
+		default:
+			assert(!"Unhandled device state change!");
+			break;
+
+		case RVTH_LISTEN_CONNECTED:
+			// New device connected.
+			// TODO: Verify that this device isn't already present.
+			d->addDevice(queryData);
+			break;
+
+		case RVTH_LISTEN_DISCONNECTED:
+			// Check if this device is in our list.
+			// NOTE: Need to use indexing in order to match the QListWidget indexes.
+			// NOTE: d->sel_device isn't set until the dialog is accepted,
+			// so we don't have to clear it if the selected device is removed.
+			const int list_count = d->lstQueryData.count();
+			for (int i = 0; i < list_count; i++) {
+				const DeviceQueryData &dev = d->lstQueryData[i];
+				if (dev.device_name == queryData.device_name) {
+					// Found the device.
+					delete d->ui.lstDevices->takeItem(i);
+					d->lstQueryData.removeAt(i);
+					break;
+				}
+			}
+			break;
+	}
 }
