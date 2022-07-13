@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * AboutDialog.cpp: About Dialog.                                          *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -156,7 +156,7 @@ void AboutDialogPrivate::initCreditsTab(void)
 
 	QString credits;
 	credits.reserve(4096);
-	credits += QLatin1String("Copyright (c) 2018-2019 by David Korth.");
+	credits += QLatin1String("Copyright (c) 2018-2022 by David Korth.");
 	credits += sLineBreak;
 	credits += QLatin1String("This program is <b>NOT</b> licensed or endorsed by Nintendo Co, Ltd.");
 
