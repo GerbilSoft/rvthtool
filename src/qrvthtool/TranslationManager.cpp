@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * TranslationManager.cpp: Qt translation manager.                         *
  *                                                                         *
- * Copyright (c) 2014-2018 by David Korth.                                 *
+ * Copyright (c) 2014-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -184,8 +184,8 @@ void TranslationManager::setTranslation(const QString &locale)
 
 /**
  * Enumerate available translations.
- * NOTE: This only checks MemCard Recover translations.
- * If a Qt translation exists but MemCard Recover doesn't have
+ * NOTE: This only checks rvthtool translations.
+ * If a Qt translation exists but rvthtool doesn't have
  * that translation, it won't show up.
  * @return Map of available translations. (Key == locale, Value == description)
  */
