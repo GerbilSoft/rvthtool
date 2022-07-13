@@ -24,9 +24,6 @@
 #  include <pthread.h>
 #endif /* HAVE_PTHREADS */
 
-// HACK: TEMP
-#include <stdio.h>
-
 // strdup() wrapper that returns NULL if the input is NULL.
 static inline char *strdup_null(const char *s)
 {
