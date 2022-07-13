@@ -18,9 +18,22 @@
     <number>12</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="hboxPrgTitle" stretch="1,2">
+    <layout class="QHBoxLayout" name="hboxPrgTitle">
      <item>
-      <widget class="QLabel" name="lblRvtHLogo">
+      <spacer name="hspcTitle1">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QLabel" name="lblLogo">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
          <horstretch>0</horstretch>
@@ -36,7 +49,10 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="lblPrgTitle">
+      <widget class="QLabel" name="lblTitle">
+       <property name="textFormat">
+        <enum>Qt::RichText</enum>
+       </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
@@ -44,6 +60,19 @@
         <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse|Qt::TextBrowserInteraction|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
        </property>
       </widget>
+     </item>
+     <item>
+      <spacer name="hspcTitle2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
      </item>
     </layout>
    </item>

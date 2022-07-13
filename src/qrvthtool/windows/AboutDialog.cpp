@@ -92,7 +92,7 @@ void AboutDialogPrivate::initAboutDialogText(void)
 #endif /* RP_GIT_DESCRIBE */
 
 	// Set the program title text.
-        ui.lblPrgTitle->setText(sPrgTitle);
+        ui.lblTitle->setText(sPrgTitle);
 
 	// Initialize the tabs.
 	initCreditsTab();
