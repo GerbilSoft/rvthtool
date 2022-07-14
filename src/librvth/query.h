@@ -49,6 +49,12 @@ typedef struct _RvtH_QueryEntry {
 #endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
 
 	uint64_t size;			// HDD size, in bytes.
+#ifndef _WIN32
+	// TODO: Implement a Win32 version.
+	bool is_readable;		// Is the device readable?
+	bool is_writable;		// Is the device writable?
+	int8_t not_readable_error;	// If non-zero, reason why it can't be read.
+#endif /* !_WIN32 */
 } RvtH_QueryEntry;
 
 /**

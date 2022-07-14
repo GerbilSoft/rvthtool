@@ -388,6 +388,13 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 			list_tail->size = 0;
 		}
 
+#ifndef _WIN32
+		// TODO: Implement a Win32 version.
+		list_tail->is_readable = true;
+		list_tail->is_writable = true;
+		list_tail->not_readable_error = 0;
+#endif /* !_WIN32 */
+
 		CloseHandle(hDevice);
 	}
 

@@ -192,6 +192,18 @@ int query(void)
 		// Format and print the HDD size.
 		format_size(hdd_size, sizeof(hdd_size), p->size);
 		printf("- HDD Size:          %s\n", hdd_size);
+
+#ifndef _WIN32
+		// Is the device accessible?
+		_fputts(_T("- Is accessible:     "), stdout);
+		if (!p->is_readable) {
+			_tprintf(_T("No (%s)\n"), _tcserror(p->not_readable_error));
+		} else {
+			_tprintf(_T("Yes (%s)\n"), p->is_writable
+				? _T("read-write")
+				: _T("read-only"));
+		}
+#endif /* !_WIN32 */
 	}
 
 	rvth_query_free(devs);

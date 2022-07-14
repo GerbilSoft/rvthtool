@@ -146,6 +146,19 @@ static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev)
 #endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
 	entry->size = (s_blk_size ? strtoull(s_blk_size, NULL, 10) * 512ULL : 0);
 
+	// Can we access the device?
+	entry->is_readable = !access(s_devnode, R_OK);
+	if (entry->is_readable) {
+		// Device is readable.
+		entry->not_readable_error = 0;
+		entry->is_writable = !access(s_devnode, W_OK);
+	} else {
+		// Not readable.
+		entry->is_readable = false;
+		entry->is_writable = false;
+		entry->not_readable_error = (int)errno;
+	}
+
 	// NOTE: STORAGE_DEVICE_DESCRIPTOR has a serial number value
 	// for the HDD itself, but the RVT-H Reader USB bridge
 	// doesn't support this query.
