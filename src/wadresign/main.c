@@ -9,7 +9,7 @@
 #include "config.version.h"
 #include "git.h"
 
-// C includes.
+// C includes
 #include <locale.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -20,16 +20,16 @@
 #include "libwiicrypto/sig_tools.h"
 
 #ifdef _WIN32
-# include "libwiicrypto/win32/secoptions.h"
+#  include "libwiicrypto/win32/secoptions.h"
 #endif /* _WIN32 */
 
 #include "print-info.h"
 #include "resign-wad.hpp"
 
 #ifdef __GNUC__
-# define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
+#  define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
 #else
-# define ATTR_PRINTF(fmt, args)
+#  define ATTR_PRINTF(fmt, args)
 #endif
 
 /**
@@ -59,38 +59,34 @@ static void ATTR_PRINTF(2, 3) print_error(const TCHAR *argv0, const TCHAR *fmt, 
  */
 static void print_help(const TCHAR *argv0)
 {
-	fputs("This program is licensed under the GNU GPL v2.\n"
-		"For more information, visit: http://www.gnu.org/licenses/\n"
-		"\n", stdout);
+	_fputts(_T("This program is licensed under the GNU GPL v2.\n")
+		_T("For more information, visit: http://www.gnu.org/licenses/\n")
+		_T("\n"), stdout);
 
-	fputs("Syntax: ", stdout);
-	_fputts(argv0, stdout);
-	fputs(" [options] [command]\n"
-		"\n"
-		"Supported commands:\n"
-		"\n"
-		"info file.wad\n"
-		"- Print information about the specified WAD file.\n"
-		"\n"
-		"resign source.wad dest.wad\n"
-		"- Resigns source.wad and creates dest.wad using the new key.\n"
-		"  Default converts Retail/Korean WADs to Debug, and\n"
-		"  Debug WADs to Retail. The format isn't changed unless\n"
-		"  the --format parameter is specified.\n"
-		"\n"
-		"verify file.wad\n"
-		"- Verify the content hashes.\n"
-		"\n"
-		"Options:\n"
-		"\n"
-		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
-		"                            default, retail, korean, vWii, debug\n"
-		"                            Recrypting to retail will use fakesigning.\n"
-		"  -f, --format=FMT          Use the specified format FMT:\n"
-		"                            default, wad, bwf\n"
-		"  -h, --help                Display this help and exit.\n"
-		"\n"
-		, stdout);
+	_tprintf(_T("Syntax: %s [options] [command]\n\n"), argv0);
+	_fputts(_T("Supported commands:\n")
+		_T("\n")
+		_T("info file.wad\n")
+		_T("- Print information about the specified WAD file.\n")
+		_T("\n")
+		_T("resign source.wad dest.wad\n")
+		_T("- Resigns source.wad and creates dest.wad using the new key.\n")
+		_T("  Default converts Retail/Korean WADs to Debug, and\n")
+		_T("  Debug WADs to Retail. The format isn't changed unless\n")
+		_T("  the --format parameter is specified.\n")
+		_T("\n")
+		_T("verify file.wad\n")
+		_T("- Verify the content hashes.\n")
+		_T("\n")
+		_T("Options:\n")
+		_T("\n")
+		_T("  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n")
+		_T("                            default, retail, korean, vWii, debug\n")
+		_T("                            Recrypting to retail will use fakesigning.\n")
+		_T("  -f, --format=FMT          Use the specified format FMT:\n")
+		_T("                            default, wad, bwf\n")
+		_T("  -h, --help                Display this help and exit.\n")
+		_T("\n"), stdout);
 }
 
 int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
@@ -118,15 +114,15 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Set the C locale.
 	setlocale(LC_ALL, "");
 
-	puts("WAD Resigner v" VERSION_STRING "\n"
-		"Copyright (c) 2018-2019 by David Korth.");
+	_fputts(_T("WAD Resigner v") _T(VERSION_STRING) _T("\n")
+		_T("Copyright (c) 2018-2022 by David Korth.\n")
 #ifdef RP_GIT_VERSION
-	puts(RP_GIT_VERSION);
-# ifdef RP_GIT_DESCRIBE
-	puts(RP_GIT_DESCRIBE);
-# endif
+		_T(RP_GIT_VERSION) _T("\n")
+#  ifdef RP_GIT_DESCRIBE
+		_T(RP_GIT_DESCRIBE) _T("\n")
+#  endif
 #endif
-	putchar('\n');
+		_T("\n"), stdout);
 
 	// Using Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso

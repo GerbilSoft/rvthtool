@@ -2,7 +2,7 @@
  * RVT-H Tool: NUS Resigner                                                *
  * resign-nus.cpp: Re-sign an NUS directory. (Wii U)                       *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -17,7 +17,7 @@
 #include "libwiicrypto/sig_tools.h"
 #include "libwiicrypto/wiiu_structs.h"
 
-// C includes.
+// C includes
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// C++ includes.
+// C++ includes
 #include <memory>
 #include <string>
 using std::tstring;
@@ -154,7 +154,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 		if (err == 0) {
 			err = EIO;
 		}
-		fprintf(stderr, "*** ERROR opening ticket file: %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR opening ticket file: %s\n"), _tcserror(err));
 		return -err;
 	}
 
@@ -166,7 +166,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 		if (err == 0) {
 			err = EIO;
 		}
-		fprintf(stderr, "*** ERROR opening TMD file: %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR opening TMD file: %s\n"), _tcserror(err));
 		return -err;
 	}
 
@@ -176,12 +176,12 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	if (tik_size < sizeof(WUP_Ticket)) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading ticket file: Too small.\n");
+		_fputts(_T("*** ERROR reading ticket file: Too small.\n"), stderr);
 		return -EIO;
 	} else if (tik_size > (64*1024)) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading ticket file: Too big.\n");
+		_fputts(_T("*** ERROR reading ticket file: Too big.\n"), stderr);
 		return -EIO;
 	}
 	fseeko(f_tmd, 0, SEEK_END);
@@ -189,12 +189,12 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	if (tmd_size < (sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable))) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading TMD file: Too small.\n");
+		_fputts(_T("*** ERROR reading TMD file: Too small.\n"), stderr);
 		return -EIO;
 	} else if (tmd_size > (128*1024)) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading TMD file: Too big.\n");
+		_fputts(_T("*** ERROR reading TMD file: Too big.\n"), stderr);
 		return -EIO;
 	}
 	rewind(f_tik);
@@ -214,21 +214,20 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	// NOTE: Not checking the TMD key. Assuming it's the same as Ticket.
 	// NOTE: Need to check for 3DS
 	RVL_CryptoType_e src_key;		// TODO: WUP constants?
-	const char *s_fromKey;
+	const TCHAR *s_fromKey;
 	switch (cert_get_issuer_from_name(pTicket->issuer)) {
 		case CTR_CERT_ISSUER_PPKI_TICKET:
 		case WUP_CERT_ISSUER_PPKI_TICKET:
 			src_key = RVL_CryptoType_Retail;
-			s_fromKey = "retail";
+			s_fromKey = _T("retail");
 			break;
 		case CTR_CERT_ISSUER_DPKI_TICKET:
 		case WUP_CERT_ISSUER_DPKI_TICKET:
 			src_key = RVL_CryptoType_Debug;
-			s_fromKey = "debug";
+			s_fromKey = _T("debug");
 			break;
 		default:
-			fputs("*** ERROR: NUS ticket has an unknown issuer.\n", stderr);
-			printf("issuer: %s == %d\n", pTicket->issuer, cert_get_issuer_from_name(pTicket->issuer));
+			_fputts(_T("*** ERROR: NUS ticket has an unknown issuer.\n"), stderr);
 			return 1;
 	}
 
@@ -241,7 +240,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	} else {
 		// If the specified key matches the current key, fail.
 		if (recrypt_key == src_key) {
-			fputs("*** ERROR: Cannot recrypt to the same key.\n", stderr);
+			_fputts(_T("*** ERROR: Cannot recrypt to the same key.\n"), stderr);
 			return 2;
 		}
 	}
@@ -249,7 +248,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	// Determine the new issuers.
 	RVL_Cert_Issuer issuer_ca, issuer_xs, issuer_cp, issuer_sp;
 	const char *s_issuer_xs, *s_issuer_cp;
-	const char *s_toKey;
+	const TCHAR *s_toKey;
 	RVL_AES_Keys_e toKey;
 	RVL_PKI toPki;
 	switch (recrypt_key) {
@@ -258,7 +257,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 			issuer_xs = WUP_CERT_ISSUER_PPKI_TICKET;
 			issuer_cp = WUP_CERT_ISSUER_PPKI_TMD;
 			issuer_sp = RVL_CERT_ISSUER_UNKNOWN;
-			s_toKey = "retail";
+			s_toKey = _T("retail");
 			toKey = WUP_KEY_RETAIL;
 			toPki = WUP_PKI_PPKI;
 			break;
@@ -267,7 +266,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 			issuer_xs = WUP_CERT_ISSUER_DPKI_TICKET;
 			issuer_cp = WUP_CERT_ISSUER_DPKI_TMD;
 			issuer_sp = WUP_CERT_ISSUER_DPKI_SP;
-			s_toKey = "debug";
+			s_toKey = _T("debug");
 			toKey = WUP_KEY_DEBUG;
 			toPki = WUP_PKI_DPKI;
 			break;
@@ -279,7 +278,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	s_issuer_xs = RVL_Cert_Issuers[issuer_xs];
 	s_issuer_cp = RVL_Cert_Issuers[issuer_cp];
 
-	printf("Converting NUS from %s to %s...\n", s_fromKey, s_toKey);
+	_tprintf(_T("Converting NUS from %s to %s...\n"), s_fromKey, s_toKey);
 
 	/** Ticket fixups **/
 
@@ -289,11 +288,11 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 		case 0x10004:
 			break;
 		case 0x30004:
-			fprintf(stderr, "*** Changing ticket signature type from Disc to Installable.\n");
+			_fputts(_T("*** Changing ticket signature type from Disc to Installable.\n"), stdout);
 			pTicket->signature_type = cpu_to_be32(0x10004);
 			break;
 		default:
-			fprintf(stderr, "*** ERROR: Ticket has unsupported signature type: 0x%08X\n",
+			_ftprintf(stderr, _T("*** ERROR: Ticket has unsupported signature type: 0x%08X\n"),
 				be32_to_cpu(pTicket->signature_type));
 			fclose(f_tik);
 			fclose(f_tmd);
@@ -303,11 +302,11 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 		case 0x10004:
 			break;
 		case 0x30004:
-			fprintf(stderr, "*** Changing TMD signature type from Disc to Installable.\n");
+			_fputts(_T("*** Changing TMD signature type from Disc to Installable.\n"), stdout);
 			pTmdHeader->rvl.signature_type = cpu_to_be32(0x10004);
 			break;
 		default:
-			fprintf(stderr, "*** ERROR: TMD has unsupported signature type: 0x%08X\n",
+			_ftprintf(stderr, _T("*** ERROR: TMD has unsupported signature type: 0x%08X\n"),
 				be32_to_cpu(pTmdHeader->rvl.signature_type));
 			fclose(f_tik);
 			fclose(f_tmd);
@@ -395,7 +394,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 		if (err == 0) {
 			err = EIO;
 		}
-		fprintf(stderr, "*** ERROR: Unable to write title.cert: %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR: Unable to write title.cert: %s\n"), _tcserror(err));
 		return -err;
 	}
 
@@ -420,6 +419,6 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 
 	fclose(f_cert);
 
-	printf("NUS resigning complete.\n");
+	_fputts(_T("NUS resigning complete.\n"), stdout);
 	return 0;
 }

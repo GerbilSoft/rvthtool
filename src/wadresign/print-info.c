@@ -2,7 +2,7 @@
  * RVT-H Tool: WAD Resigner                                                *
  * print-info.c: Print WAD information.                                    *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -22,7 +22,7 @@
 // Nettle SHA-1
 #include <nettle/sha1.h>
 
-// C includes.
+// C includes
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -74,9 +74,9 @@ static const char *issuer_type(RVL_Cert_Issuer issuer)
  * @param pIsBWF	[out] `bool` to store if the WAD file is a BroadOn WAD file or not.
  * @return WAD file type as a string, or NULL on error.
  */
-const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF)
+const TCHAR *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF)
 {
-	const char *s_wad_type = NULL;
+	const TCHAR *s_wad_type = NULL;
 	const WAD_Header *const header = (const WAD_Header*)buf;
 	if (buf_len < sizeof(Wii_WAD_Header)) {
 		// Not enough data...
@@ -94,17 +94,17 @@ const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF)
 
 	*pIsBWF = false;
 	if (header->wad.type == cpu_to_be32(WII_WAD_TYPE_Is)) {
-		s_wad_type = "Installable";
+		s_wad_type = _T("Installable");
 	} else if (header->wad.type == cpu_to_be32(WII_WAD_TYPE_ib)) {
-		s_wad_type = "Boot2";
+		s_wad_type = _T("Boot2");
 	} else if (header->wad.type == cpu_to_be32(WII_WAD_TYPE_Bk)) {
-		s_wad_type = "Backup";
+		s_wad_type = _T("Backup");
 	} else {
 		// This might be a BroadOn WAD.
 		if (header->bwf.ticket_size == cpu_to_be32(sizeof(RVL_Ticket))) {
 			// Ticket size is correct.
 			// This is probably a BroadOn WAD.
-			s_wad_type = "BroadOn WAD Format";
+			s_wad_type = _T("BroadOn WAD Format");
 			*pIsBWF = true;
 		}
 	}
@@ -225,19 +225,19 @@ static int verify_content(FILE *f_wad, RVL_AES_Keys_e encKey,
 
 	// Finalize the SHA-1 and compare it.
 	sha1_digest(&sha1, sizeof(digest), digest);
-	fputs("- Expected SHA-1: ", stdout);
+	_fputts(_T("- Expected SHA-1: "), stdout);
 	for (size = 0; size < sizeof(content->sha1_hash); size++) {
-		printf("%02x", content->sha1_hash[size]);
+		_tprintf(_T("%02x"), content->sha1_hash[size]);
 	}
-	putchar('\n');
-	printf("- Actual SHA-1:   ");
+	_fputtc(_T('\n'), stdout);
+	_fputts(_T("- Actual SHA-1:   "), stdout);
 	for (size = 0; size < sizeof(digest); size++) {
-		printf("%02x", digest[size]);
+		_tprintf(_T("%02x"), digest[size]);
 	}
 	if (!memcmp(digest, content->sha1_hash, SHA1_DIGEST_SIZE)) {
-		fputs(" [OK]\n", stdout);
+		_fputts(_T(" [OK]\n"), stdout);
 	} else {
-		fputs(" [ERROR]\n", stdout);
+		_fputts(_T(" [ERROR]\n"), stdout);
 		ret = 1;
 	}
 
@@ -258,7 +258,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 {
 	int ret;
 	size_t size;
-	const char *s_wad_type = NULL;
+	const TCHAR *s_wad_type = NULL;
 	bool isBWF = false;
 	WAD_Header header;
 	WAD_Info_t wadInfo;
@@ -281,8 +281,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	// Encryption key
 	RVL_AES_Keys_e encKey;
-	const char *s_encKey;
-	const char *s_invalidKey = NULL;
+	const TCHAR *s_encKey;
+	const TCHAR *s_invalidKey = NULL;
 
 	// Contents
 	unsigned int nbr_cont, nbr_cont_actual;
@@ -295,9 +295,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	size = fread(&header, 1, sizeof(header), f_wad);
 	if (size != sizeof(header)) {
 		int err = errno;
-		fputs("*** ERROR reading WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "': %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR reading WAD file '%s': %s\n"),
+			wad_filename, _tcserror(err));
 		ret = -err;
 		goto end;
 	}
@@ -307,9 +306,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	s_wad_type = identify_wad_type((const uint8_t*)&header, sizeof(header), &isBWF);
 	if (!s_wad_type) {
 		// Unrecognized WAD type.
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' is not valid.\n");
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' is not valid.\n"), wad_filename);
 		ret = 1;
 		goto end;
 	}
@@ -322,41 +319,31 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	}
 	if (ret != 0) {
 		// Unable to get WAD information.
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' is not valid.");
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' is not valid.\n"), wad_filename);
 		ret = 2;
 		goto end;
 	}
 
 	// Verify the ticket and TMD sizes.
 	if (wadInfo.ticket_size < sizeof(RVL_Ticket)) {
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' ticket size is too small. (%u; should be %u)\n",
-			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' ticket size is too small. (%u; should be %u)\n"),
+			wad_filename, wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 		ret = 3;
 		goto end;
 	} else if (wadInfo.ticket_size > WAD_TICKET_SIZE_MAX) {
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' ticket size is too big. (%u; should be %u)\n",
-			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' ticket size is too big. (%u; should be %u)\n"),
+			wad_filename, wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 		ret = 4;
 		goto end;
 	} else if (wadInfo.tmd_size < sizeof(RVL_TMD_Header)) {
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' TMD size is too small. (%u; should be at least %u)\n",
-			wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' TMD size is too small. (%u; should be at least %u)\n"),
+			wad_filename, wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
 		ret = 5;
 		goto end;
 	} else if (wadInfo.tmd_size > WAD_TMD_SIZE_MAX) {
 		// Too big.
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' TMD size is too big. (%u; should be less than 1 MB)\n",
-			wadInfo.tmd_size);
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' TMD size is too big. (%u; should be less than 1 MiB)\n"),
+			wad_filename, wadInfo.tmd_size);
 		ret = 6;
 		goto end;
 	}
@@ -364,7 +351,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	// Load the ticket and TMD.
 	ticket_u8 = malloc(wadInfo.ticket_size);
 	if (!ticket_u8) {
-		fprintf(stderr, "*** ERROR: Unable to allocate %u bytes for the ticket.\n", wadInfo.ticket_size);
+		_ftprintf(stderr, _T("*** ERROR: Unable to allocate %u bytes for the ticket.\n"),
+			wadInfo.ticket_size);
 		ret = 7;
 		goto end;
 	}
@@ -372,9 +360,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	size = fread(ticket_u8, 1, wadInfo.ticket_size, f_wad);
 	if (size != wadInfo.ticket_size) {
 		// Read error.
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fputs("': Unable to read the ticket.\n", stderr);
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s': Unable to read the ticket.\n"),
+			wad_filename);
 		ret = 8;
 		goto end;
 	}
@@ -382,7 +369,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	tmd_u8 = malloc(wadInfo.tmd_size);
 	if (!tmd_u8) {
-		fprintf(stderr, "*** ERROR: Unable to allocate %u bytes for the TMD.\n", wadInfo.tmd_size);
+		_ftprintf(stderr, _T("*** ERROR: Unable to allocate %u bytes for the TMD.\n"),
+			wadInfo.tmd_size);
 		ret = 9;
 		goto end;
 	}
@@ -390,9 +378,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	size = fread(tmd_u8, 1, wadInfo.tmd_size, f_wad);
 	if (size != wadInfo.tmd_size) {
 		// Read error.
-		fputs("*** ERROR: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fputs("': Unable to read the TMD.\n", stderr);
+		_ftprintf(stderr, _T("*** ERROR: WAD file '%s': Unable to read the TMD.\n"),
+			wad_filename);
 		ret = 10;
 		goto end;
 	}
@@ -400,8 +387,10 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 
 	// NOTE: Using TMD for most information.
 	_tprintf(_T("%s:\n"), wad_filename);
-	printf("Type: %s\n", s_wad_type);
-	printf("- Title ID:      %08X-%08X\n", be32_to_cpu(tmdHeader->title_id.hi), be32_to_cpu(tmdHeader->title_id.lo));
+	_tprintf(_T("Type: %s\n"), s_wad_type);
+	_tprintf(_T("- Title ID:      %08X-%08X\n"),
+		be32_to_cpu(tmdHeader->title_id.hi),
+		be32_to_cpu(tmdHeader->title_id.lo));
 
 	// Game ID, but only if all characters are alphanumeric.
 	if (ISALNUM(tmdHeader->title_id.u8[4]) &&
@@ -409,13 +398,14 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	    ISALNUM(tmdHeader->title_id.u8[6]) &&
 	    ISALNUM(tmdHeader->title_id.u8[7]))
 	{
+		// TODO: _tprintf()?
 		printf("- Game ID:       %.4s\n",
 			(const char*)&tmdHeader->title_id.u8[4]);
 	}
 
 	// Title version
 	title_version = be16_to_cpu(tmdHeader->title_version);
-	printf("- Title version: %u.%u (v%u)\n",
+	_tprintf(_T("- Title version: %u.%u (v%u)\n"),
 		(unsigned int)(title_version >> 8),
 		(unsigned int)(title_version & 0xFF),
 		title_version);
@@ -428,7 +418,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			ios_version = (uint8_t)ios_tid_lo;
 		}
 	}
-	printf("- IOS version:   %u\n", ios_version);
+	_tprintf(_T("- IOS version:   %u\n"), ios_version);
 
 	// Determine the encryption key in use.
 	issuer_ticket = cert_get_issuer_from_name(ticket->issuer);
@@ -439,26 +429,26 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			switch (ticket->common_key_index) {
 				case 0:
 					encKey = RVL_KEY_RETAIL;
-					s_encKey = "Retail";
+					s_encKey = _T("Retail");
 					break;
 				case 1:
 					encKey = RVL_KEY_KOREAN;
-					s_encKey = "Korean";
+					s_encKey = _T("Korean");
 					break;
 				case 2:
 					encKey = vWii_KEY_RETAIL;
-					s_encKey = "vWii";
+					s_encKey = _T("vWii");
 					break;
 				default: {
 					// NOTE: A good number of retail WADs have an
 					// incorrect common key index for some reason.
 					if (ticket->title_id.u8[7] == 'K') {
-						s_invalidKey = "Korean";
-						s_encKey = "Korean";
+						s_invalidKey = _T("Korean");
+						s_encKey = _T("Korean");
 						encKey = RVL_KEY_KOREAN;
 					} else {
-						s_invalidKey = "retail";
-						s_encKey = "Retail";
+						s_invalidKey = _T("retail");
+						s_encKey = _T("Retail");
 						encKey = RVL_KEY_RETAIL;
 					}
 					break;
@@ -472,50 +462,48 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 					// FIXME: How to handle invalid indexes?
 					// For now, assume it's the same as debug.
 					encKey = RVL_KEY_DEBUG;
-					s_encKey = "Debug";
+					s_encKey = _T("Debug");
 					break;
 				case 1:
 					encKey = RVL_KEY_KOREAN_DEBUG;
-					s_encKey = "Korean (Debug)";
+					s_encKey = _T("Korean (Debug)");
 					break;
 				case 2:
 					encKey = vWii_KEY_DEBUG;
-					s_encKey = "vWii (Debug)";
+					s_encKey = _T("vWii (Debug)");
 					break;
 			}
 			break;
 	}
-	printf("- Encryption:    %s\n", s_encKey);
+	_tprintf(_T("- Encryption:    %s\n"), s_encKey);
 
 	// Check the ticket issuer and signature.
+	// FIXME: TCHAR version.
 	s_issuer_ticket = issuer_type(issuer_ticket);
 	sig_status_ticket = sig_verify(ticket_u8, wadInfo.ticket_size);
 	printf("- Ticket Signature: %s%s\n",
 		s_issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
 	// Check the TMD issuer and signature.
+	// FIXME: TCHAR version.
 	s_issuer_tmd = issuer_type(cert_get_issuer_from_name(tmdHeader->issuer));
 	sig_status_tmd = sig_verify(tmd_u8, wadInfo.tmd_size);
 	printf("- TMD Signature:    %s%s\n",
 		s_issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
-	putchar('\n');
+	_fputtc(_T('\n'), stdout);
 
 	if (wadInfo.ticket_size > sizeof(RVL_Ticket)) {
-		fputs("*** WARNING: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "' ticket size is too big. (%u; should be %u)\n\n",
-			wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+		_ftprintf(stderr, _T("*** WARNING: WAD file '%s' ticket size is too big. (%u; should be %u)\n\n"),
+			wad_filename, wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
 	}
 	if (s_invalidKey) {
 		// Invalid common key index for retail.
 		// NOTE: A good number of retail WADs have an
 		// incorrect common key index for some reason.
-		fputs("*** WARNING: WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "': Invalid common key index %u.\n",
-			ticket->common_key_index);
-		fprintf(stderr, "*** Assuming %s common key based on game ID.\n\n", s_invalidKey);
+		_ftprintf(stderr, _T("*** WARNING: WAD file '%s': Invalid common key index %u.\n"),
+			wad_filename, ticket->common_key_index);
+		_ftprintf(stderr, _T("*** Assuming %s common key based on game ID.\n\n"), s_invalidKey);
 	}
 
 	// Print the contents.
@@ -539,15 +527,15 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 		// index field in the entry?
 		const uint32_t content_size = (uint32_t)be64_to_cpu(content->size);
 		uint16_t content_index = be16_to_cpu(content->index);
-		printf("#%d: ID=%08x, type=%04X, size=%u",
+		_tprintf(_T("#%d: ID=%08x, type=%04X, size=%u"),
 			content_index,
 			be32_to_cpu(content->content_id),
 			be16_to_cpu(content->type),
 			content_size);
 		if (content_index == boot_index) {
-			fputs(", bootable", stdout);
+			_fputts(_T(", bootable"), stdout);
 		}
-		putchar('\n');
+		_fputtc(_T('\n'), stdout);
 
 		if (verify) {
 			// Verify the content.
@@ -555,9 +543,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 			int vret = verify_content(f_wad, encKey, ticket, content, content_addr);
 			if (vret < 0) {
 				// Read error.
-				fprintf(stderr, "*** ERROR reading content #%d: ", content_index);
-				_fputts(_tcserror(-vret), stderr);
-				putchar('\n');
+				_ftprintf(stderr, _T("*** ERROR reading content #%d: %s\n"),
+					content_index, _tcserror(-vret));
 				ret = 1;
 			} else if (vret > 0) {
 				if (ret == 0 && encKey == vWii_KEY_RETAIL) {
@@ -565,9 +552,8 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 					vret = verify_content(f_wad, RVL_KEY_RETAIL, ticket, content, content_addr);
 					if (vret < 0) {
 						// Read error.
-						fprintf(stderr, "*** ERROR reading content #%d: ", content_index);
-						_fputts(_tcserror(-vret), stderr);
-						putchar('\n');
+						_ftprintf(stderr, _T("*** ERROR reading content #%d: %s\n"),
+							content_index, _tcserror(-vret));
 					} else if (vret == 0) {
 						vWii_crypt_error = true;
 					}
@@ -601,9 +587,10 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	}
 
 	if (vWii_crypt_error) {
-		putchar('\n');
-		printf("*** WARNING: This WAD file should be encrypted using the vWii common\n"
-		       "    key, but it's actually encrypted with the retail common key.\n");
+		_fputtc(_T('\n'), stdout);
+		_fputts(_T("*** WARNING: This WAD file should be encrypted using the vWii common\n")
+		        _T("    key, but it's actually encrypted with the retail common key.\n"),
+			stdout);
 		// FIXME: Add a way to fix this and indicate how to fix it.
 	}
 
@@ -611,12 +598,12 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	{
 		const int diff = (int)(data_size_actual - wadInfo.data_size);
 		if (diff != 0) {
-			putchar('\n');
-			printf("*** WARNING: The data size in the WAD header does not match the\n"
-			       "    actual content data size.\n"
-			       "    Expected: 0x%08X, actual: 0x%08X (difference: %c0x%0X)\n",
-			wadInfo.data_size, data_size_actual,
-			(diff < 0 ? '-' : '+'), (unsigned int)abs(diff));
+			_fputtc(_T('\n'), stdout);
+			_tprintf(_T("*** WARNING: The data size in the WAD header does not match the\n")
+				_T("    actual content data size.\n")
+			        _T("    Expected: 0x%08X, actual: 0x%08X (difference: %c0x%0X)\n"),
+				wadInfo.data_size, data_size_actual,
+				(diff < 0 ? '-' : '+'), (unsigned int)abs(diff));
 			// FIXME: Add a way to fix this and indicate how to fix it.
 		}
 	}
@@ -641,9 +628,8 @@ int print_wad_info(const TCHAR *wad_filename, bool verify)
 	FILE *f_wad = _tfopen(wad_filename, _T("rb"));
 	if (!f_wad) {
 		int err = errno;
-		fputs("*** ERROR opening WAD file '", stderr);
-		_fputts(wad_filename, stderr);
-		fprintf(stderr, "': %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR opening WAD file '%s': %s"),
+			wad_filename, _tcserror(err));
 		return -err;
 	}
 

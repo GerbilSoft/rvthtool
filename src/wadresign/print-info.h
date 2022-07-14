@@ -2,7 +2,7 @@
  * RVT-H Tool: WAD Resigner                                                *
  * print-info.h: Print WAD information.                                    *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -32,7 +32,7 @@ extern "C" {
  * @param pIsBWF 	[out] `bool` to store if the WAD file is a BroadOn WAD file or not.
  * @return WAD file type as a string, or NULL on error.
  */
-const char *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF);
+const TCHAR *identify_wad_type(const uint8_t *buf, size_t buf_len, bool *pIsBWF);
 
 /**
  * 'info' command. (internal function)

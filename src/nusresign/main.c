@@ -65,34 +65,30 @@ static void ATTR_PRINTF(2, 3) print_error(const TCHAR *argv0, const TCHAR *fmt, 
  */
 static void print_help(const TCHAR *argv0)
 {
-	fputs("This program is licensed under the GNU GPL v2.\n"
-		"For more information, visit: http://www.gnu.org/licenses/\n"
-		"\n", stdout);
+	_fputts(_T("This program is licensed under the GNU GPL v2.\n")
+		_T("For more information, visit: http://www.gnu.org/licenses/\n")
+		_T("\n"), stdout);
 
-	fputs("Syntax: ", stdout);
-	_fputts(argv0, stdout);
-	fputs(" [options] [command]\n"
-		"\n"
-		"Supported commands:\n"
-		"\n"
-		"info nusdir/\n"
-		"- Print information about the specified NUS directory.\n"
-		"\n"
-		"resign nusdir/\n"
-		" - Resigns the specified NUS directory in place.\n"
-		"   Default converts Retail NUS to Debug, and Debug NUS to retail.\n"
-		"\n"
-		"verify nusdir/\n"
-		" - Verify the content hashes.\n"
-		"\n"
-		"Options:\n"
-		"\n"
-		"  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n"
-		"                            default, retail, debug\n"
-		"                            Recrypting to retail will blank out the signatures.\n"
-		"  -h, --help                Display this help and exit.\n"
-		"\n"
-		, stdout);
+	_tprintf(_T("Syntax: %s [options] [command]\n\n"), argv0);
+	_fputts(_T("Supported commands:\n")
+		_T("\n")
+		_T("info nusdir/\n")
+		_T("- Print information about the specified NUS directory.\n")
+		_T("\n")
+		_T("resign nusdir/\n")
+		_T("- Resigns the specified NUS directory in place.\n")
+		_T("  Default converts Retail NUS to Debug, and Debug NUS to retail.\n")
+		_T("\n")
+		_T("verify nusdir/\n")
+		_T(" - Verify the content hashes.\n")
+		_T("\n")
+		_T("Options:\n")
+		_T("\n")
+		_T("  -k, --recrypt=KEY         Recrypt the WAD using the specified KEY:\n")
+		_T("                            default, retail, debug\n")
+		_T("                            Recrypting to retail will blank out the signatures.\n")
+		_T("  -h, --help                Display this help and exit.\n")
+		_T("\n"), stdout);
 }
 
 /**
@@ -133,15 +129,15 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Set the C locale.
 	setlocale(LC_ALL, "");
 
-	puts("NUS Resigner v" VERSION_STRING "\n"
-		"Copyright (c) 2018-2020 by David Korth.");
+	_fputts(_T("NUS Resigner v") _T(VERSION_STRING) _T("\n")
+		_T("Copyright (c) 2018-2022 by David Korth.\n")
 #ifdef RP_GIT_VERSION
-	puts(RP_GIT_VERSION);
-# ifdef RP_GIT_DESCRIBE
-	puts(RP_GIT_DESCRIBE);
-# endif
+		_T(RP_GIT_VERSION) _T("\n")
+#  ifdef RP_GIT_DESCRIBE
+		_T(RP_GIT_DESCRIBE) _T("\n")
+#  endif
 #endif
-	putchar('\n');
+		_T("\n"), stdout);
 
 	// Using Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso

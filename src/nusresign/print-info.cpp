@@ -2,7 +2,7 @@
  * RVT-H Tool: WAD Resigner                                                *
  * print-info.c: Print WAD information.                                    *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -19,14 +19,14 @@
 #include <nettle/sha1.h>
 #include <nettle/sha2.h>
 
-// C includes.
+// C includes
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-// C++ includes.
+// C++ includes
 #include <memory>
 #include <string>
 using std::tstring;
@@ -107,11 +107,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		if (err == 0) {
 			err = EIO;
 		}
-		fputs("- *** ERROR opening ", stderr);
-		_fputts(cidbuf, stderr);
-		fputs(".app: ", stderr);
-		_fputts(_tcserror(err), stderr);
-		putchar('\n');
+		_ftprintf(stderr, _T("- *** ERROR opening %s.app: %s\n"), cidbuf, _tcserror(err));
 		return -err;
 	}
 
@@ -128,11 +124,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			if (err == 0) {
 				err = EIO;
 			}
-			fputs("- *** ERROR opening ", stderr);
-			_fputts(cidbuf, stderr);
-			fputs(".h3: ", stderr);
-			_fputts(_tcserror(err), stderr);
-			putchar('\n');
+			_ftprintf(stderr, _T("- *** ERROR opening %s.h3: %s\n"), cidbuf, _tcserror(err));
 			return -err;
 		}
 
@@ -145,9 +137,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			// Invalid size.
 			fclose(f_h3);
 			fclose(f_content);
-			fputs("- *** ERROR opening ", stderr);
-			_fputts(cidbuf, stderr);
-			fputs(".h3: Size is incorrect\n", stderr);
+			_ftprintf(stderr, _T("- *** ERROR opening %s.h3: Size is incorrect\n"), cidbuf);
 			return -EIO;
 		}
 
@@ -162,11 +152,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 				err = EIO;
 			}
 			fclose(f_content);
-			fputs("- *** ERROR opening ", stderr);
-			_fputts(cidbuf, stderr);
-			fputs(".h3: ", stderr);
-			_fputts(_tcserror(err), stderr);
-			putchar('\n');
+			_ftprintf(stderr, _T("- *** ERROR opening %s.h3: %s\n"), cidbuf, _tcserror(err));
 			return -err;
 		}
 	}
@@ -244,19 +230,19 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		// Finalize the SHA-1 and compare it.
 		uint8_t digest[SHA1_DIGEST_SIZE];
 		sha1_digest(&sha1, sizeof(digest), digest);
-		fputs("- Expected SHA-1: ", stdout);
+		_fputts(_T("- Expected SHA-1: "), stdout);
 		for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
-			printf("%02x", entry->sha1_hash[size]);
+			_tprintf(_T("%02x"), entry->sha1_hash[size]);
 		}
-		putchar('\n');
-		printf("- Actual SHA-1:   ");
+		_fputtc(_T('\n'), stdout);
+		_fputts(_T("- Actual SHA-1:   "), stdout);
 		for (size_t size = 0; size < sizeof(digest); size++) {
-			printf("%02x", digest[size]);
+			_tprintf(_T("%02x"), digest[size]);
 		}
 		if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
-			fputs(" [OK]\n", stdout);
+			_fputts(_T(" [OK]\n"), stdout);
 		} else {
-			fputs(" [ERROR]\n", stdout);
+			_fputts(_T(" [ERROR]\n"), stdout);
 			ret = 1;
 		}
 	} else {
@@ -384,7 +370,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		bool showH4status = true;
 		for (unsigned int i = 0; i < 3; i++) {
 			if (bad_hash[i] != 0) {
-				printf("- ERROR: %u H%u hash(es) were incorrect.\n", bad_hash[i], i);
+				_tprintf(_T("- ERROR: %u H%u hash(es) were incorrect.\n"), bad_hash[i], i);
 				showH4status = false;
 				ret = 1;
 			}
@@ -396,24 +382,24 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		sha1_init(&sha1_h4);
 		sha1_update(&sha1_h4, hash_h3_len, hash_h3.get());
 		sha1_digest(&sha1_h4, sizeof(digest), digest);
-		fputs("- Expected SHA-1: ", stdout);
+		_fputts(_T("- Expected SHA-1: "), stdout);
 		for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
-			printf("%02x", entry->sha1_hash[size]);
+			_tprintf(_T("%02x"), entry->sha1_hash[size]);
 		}
-		fputs(" (H4)\n", stdout);
-		printf("- Actual SHA-1:   ");
+		_fputts(_T(" (H4)\n"), stdout);
+		_fputts(_T("- Actual SHA-1:   "), stdout);
 		for (size_t size = 0; size < sizeof(digest); size++) {
 			printf("%02x", digest[size]);
 		}
 		if (showH4status) {
 			if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
-				fputs(" [OK] (H4)\n", stdout);
+				_fputts(_T(" [OK] (H4)\n"), stdout);
 			} else {
-				fputs(" [ERROR] (H4)\n", stdout);
+				_fputts(_T(" [ERROR] (H4)\n"), stdout);
 				ret = 1;
 			}
 		} else {
-			fputs(" (H4)\n", stdout);
+			_fputts(_T(" (H4)\n"), stdout);
 		}
 	}
 
@@ -447,7 +433,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		if (err == 0) {
 			err = EIO;
 		}
-		fprintf(stderr, "*** ERROR opening ticket file: %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR opening ticket file: %s\n"), _tcserror(err));
 		return -err;
 	}
 
@@ -459,7 +445,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		if (err == 0) {
 			err = EIO;
 		}
-		fprintf(stderr, "*** ERROR opening TMD file: %s\n", strerror(err));
+		_ftprintf(stderr, _T("*** ERROR opening TMD file: %s\n"), _tcserror(err));
 		return -err;
 	}
 
@@ -469,12 +455,12 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	if (tik_size < sizeof(WUP_Ticket)) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading ticket file: Too small.\n");
+		_fputts(_T("*** ERROR reading ticket file: Too small.\n"), stderr);
 		return -EIO;
 	} else if (tik_size > (64*1024)) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading ticket file: Too big.\n");
+		_fputts(_T("*** ERROR reading ticket file: Too big.\n"), stderr);
 		return -EIO;
 	}
 	fseeko(f_tmd, 0, SEEK_END);
@@ -482,12 +468,12 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	if (tmd_size < (sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable))) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading TMD file: Too small.\n");
+		_fputts(_T("*** ERROR reading TMD file: Too small.\n"), stderr);
 		return -EIO;
 	} else if (tmd_size > (128*1024)) {
 		fclose(f_tik);
 		fclose(f_tmd);
-		fprintf(stderr, "*** ERROR reading TMD file: Too big.\n");
+		_fputts(_T("*** ERROR reading TMD file: Too big.\n"), stderr);
 		return -EIO;
 	}
 	rewind(f_tik);
@@ -509,13 +495,13 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	_tprintf(_T("%s:\n"), nus_dir);
 	// FIXME: Get the actual Wii U application type.
 	//printf("Type: %08x\n", be32_to_cpu(pTmdHeader->rvl.title_type));
-	printf("- Title ID:      %08X-%08X\n", be32_to_cpu(pTmdHeader->rvl.title_id.hi), be32_to_cpu(pTmdHeader->rvl.title_id.lo));
+	_tprintf(_T("- Title ID:      %08X-%08X\n"), be32_to_cpu(pTmdHeader->rvl.title_id.hi), be32_to_cpu(pTmdHeader->rvl.title_id.lo));
 
 	// TODO: Figure out where the game ID is stored.
 
 	// Title version (TODO: Wii U changes?)
 	uint16_t title_version = be16_to_cpu(pTmdHeader->rvl.title_version);
-	printf("- Title version: %u.%u (v%u)\n",
+	_tprintf(_T("- Title version: %u.%u (v%u)\n"),
 		title_version >> 8, title_version & 0xFF, title_version);
 
 	// OS version
@@ -528,29 +514,30 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 			os_version = (uint8_t)ios_tid_lo;
 		}
 	}
-	printf("- OS version:    OSv%u\n", os_version);
+	_tprintf(_T("- OS version:    OSv%u\n"), os_version);
 
 	// Determine the encryption key in use.
 	// NOTE: May use CTR since CTR and WUP have the same certificates.
 	RVL_Cert_Issuer issuer_ticket = cert_get_issuer_from_name(pTicket->issuer);
 	RVL_AES_Keys_e encKey;
-	const char *s_encKey;
+	const TCHAR *s_encKey;
 	switch (issuer_ticket) {
 		default:	// TODO: Show an error instead?
 		case CTR_CERT_ISSUER_PPKI_TICKET:
 		case WUP_CERT_ISSUER_PPKI_TICKET:
 			encKey = WUP_KEY_RETAIL;
-			s_encKey = "Retail";
+			s_encKey = _T("Retail");
 			break;
 		case CTR_CERT_ISSUER_DPKI_TICKET:
 		case WUP_CERT_ISSUER_DPKI_TICKET:
 			encKey = WUP_KEY_DEBUG;
-			s_encKey = "Debug";
+			s_encKey = _T("Debug");
 			break;
 	}
-	printf("- Encryption:    %s\n", s_encKey);
+	_tprintf(_T("- Encryption:    %s\n"), s_encKey);
 
 	// Check the ticket issuer and signature.
+	// FIXME: TCHAR version.
 	// NOTE: The ticket might have a certificate chain appended,
 	// so we'll only check the actual ticket data.
 	const char *const s_issuer_ticket = issuer_type(issuer_ticket);
@@ -559,6 +546,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		s_issuer_ticket, RVL_SigStatus_toString_stsAppend(sig_status_ticket));
 
 	// Check the TMD issuer and signature.
+	// FIXME: TCHAR version.
 	// NOTE: TMD signature only covers the TMD header.
 	// We'll need to check the content info hash afterwards.
 	const char *const s_issuer_tmd = issuer_type(cert_get_issuer_from_name(pTmdHeader->rvl.issuer));
@@ -617,7 +605,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	printf("- TMD Signature:    %s%s\n",
 		s_issuer_tmd, RVL_SigStatus_toString_stsAppend(sig_status_tmd));
 
-	putchar('\n');
+	_fputtc(_T('\n'), stdout);
 
 	// Decrypted title key for contents verification.
 	uint8_t title_key[16];
@@ -674,15 +662,15 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 			// TODO: Show the actual table index, or just the
 			// index field in the entry?
 			uint16_t content_index = be16_to_cpu(p->index);
-			printf("#%d: ID=%08x, type=%04X, size=%u",
+			_tprintf(_T("#%d: ID=%08x, type=%04X, size=%u"),
 				be16_to_cpu(p->index),
 				be32_to_cpu(p->content_id),
 				be16_to_cpu(p->type),
 				(uint32_t)be64_to_cpu(p->size));
 			if (content_index == boot_index) {
-				fputs(", bootable", stdout);
+				_fputts(_T(", bootable"), stdout);
 			}
-			putchar('\n');
+			_fputtc(_T('\n'), stdout);
 
 			if (verify) {
 				// Verify the content.
@@ -695,7 +683,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 			}
 		}
 	}
-	putchar('\n');
+	_fputtc(_T('\n'), stdout);
 
 	return ret;
 }
