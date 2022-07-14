@@ -89,6 +89,24 @@ class SelectDeviceDialog : public QDialog
 		// State change event. (Used for switching the UI language at runtime.)
 		void changeEvent(QEvent *event) final;
 
+#ifdef _WIN32
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+		typedef qintptr native_event_result_t;
+#else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
+		typedef long native_event_result_t;
+#endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
+
+		/**
+		 * Native event
+		 * @param eventType
+		 * @param message
+		 * @param result
+		 * @return
+		 */
+		bool nativeEvent(const QByteArray &eventType, void *message,
+			native_event_result_t *result) final;
+#endif /* _WIN32 */
+
 	public:
 		/** Properties **/
 

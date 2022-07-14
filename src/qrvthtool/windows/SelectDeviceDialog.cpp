@@ -16,8 +16,11 @@
 #include "../RvtHModel.hpp"
 
 #ifdef _WIN32
-# include <windows.h>
-#endif
+#  include "libwiicrypto/win32/Win32_sdk.h"
+#  include <dbt.h>
+#  include <winioctl.h>
+#  include <devguid.h>
+#endif /* _WIN32 */
 
 // Qt includes.
 #include <QtCore/QLocale>
@@ -53,6 +56,9 @@ class SelectDeviceDialogPrivate
 
 		// Device listener
 		RvtH_ListenForDevices *listener;
+#ifdef _WIN32
+		HDEVNOTIFY hDeviceNotify;
+#endif /* _WIN32 */
 
 	private:
 		static inline int calc_frac_part(int64_t size, int64_t mask);
@@ -97,6 +103,9 @@ SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
 	: q_ptr(q)
 	, sel_device(nullptr)
 	, listener(nullptr)
+#ifdef _WIN32
+	, hDeviceNotify(nullptr)
+#endif /* _WIN32 */
 {
 	// Get the RVT-H Reader icon.
 	rvthReaderIcon = RvtHModel::getIcon(RvtHModel::ICON_RVTH);
@@ -107,6 +116,11 @@ SelectDeviceDialogPrivate::~SelectDeviceDialogPrivate()
 	if (listener) {
 		rvth_listener_stop(listener);
 	}
+#ifdef _WIN32
+	if (hDeviceNotify) {
+		UnregisterDeviceNotification(hDeviceNotify);
+	}
+#endif /* _WIN32 */
 }
 
 inline int SelectDeviceDialogPrivate::calc_frac_part(int64_t size, int64_t mask)
@@ -377,6 +391,26 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 		// Device listener was created.
 		// Hide the "Refresh" button.
 		btnRefresh->hide();
+	} else {
+#ifdef _WIN32
+		// Windows: Register for device notifications.
+		// These aren't useful enough to get the low-level
+		// device info for the device that changed, so we'll
+		// force a full refresh whenever a device changes.
+		DEV_BROADCAST_DEVICEINTERFACE filter;
+		memset(&filter, 0, sizeof(filter));
+		filter.dbcc_size = sizeof(filter);
+		filter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+		filter.dbcc_classguid = GUID_DEVINTERFACE_DISK;
+		d->hDeviceNotify = RegisterDeviceNotification(
+			reinterpret_cast<HWND>(this->winId()),
+			&filter, DEVICE_NOTIFY_WINDOW_HANDLE);
+		if (d->hDeviceNotify) {
+			// Registered for device notifications.
+			// Hide the "Refresh" button.
+			btnRefresh->hide();
+		}
+#endif /* _WIN32 */
 	}
 
 	// Connect the lstDevices selection signal.
@@ -410,6 +444,43 @@ void SelectDeviceDialog::changeEvent(QEvent *event)
 	// Pass the event to the base class.
 	super::changeEvent(event);
 }
+
+#ifdef _WIN32
+/**
+ * Native event
+ * @param eventType
+ * @param message
+ * @param result
+ * @return
+ */
+bool SelectDeviceDialog::nativeEvent(const QByteArray &eventType, void *message,
+	native_event_result_t *result)
+{
+	// Assuming this is MSG.
+	Q_UNUSED(eventType);
+	const MSG *const msg = static_cast<const MSG*>(message);
+	if (msg->message != WM_DEVICECHANGE)
+		return false;
+
+	if (msg->wParam != DBT_DEVICEARRIVAL &&
+	    msg->wParam != DBT_DEVICEREMOVECOMPLETE)
+		return false;
+
+	const DEV_BROADCAST_HDR *const hdr = reinterpret_cast<const DEV_BROADCAST_HDR*>(msg->lParam);
+	if (hdr->dbch_devicetype != DBT_DEVTYP_DEVICEINTERFACE)
+		return false;
+
+	const DEV_BROADCAST_DEVICEINTERFACE *const di =
+		reinterpret_cast<const DEV_BROADCAST_DEVICEINTERFACE*>(hdr);
+	if (di->dbcc_classguid == GUID_DEVINTERFACE_DISK) {
+		// Disk device. Refresh devices.
+		Q_D(SelectDeviceDialog);
+		d->refreshDeviceList();
+	}
+
+	return false;
+}
+#endif /* _WIN32 */
 
 /** Properties **/
 
