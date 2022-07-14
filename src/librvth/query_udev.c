@@ -439,7 +439,7 @@ static void *rvth_listener_thread(void *listener_arg)
 
 			if (!strcmp(action, "add")) {
 				// Device added.
-				RvtH_QueryEntry *const entry = rvth_parse_udev_device(dev);
+				RvtH_QueryEntry *const entry = rvth_parse_udev_device(dev, NULL);
 				if (entry) {
 					listener->callback(listener, entry, RVTH_LISTEN_CONNECTED, listener->userdata);
 					rvth_query_free(entry);
