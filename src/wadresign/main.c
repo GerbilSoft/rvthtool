@@ -2,7 +2,7 @@
  * RVT-H Tool: WAD Resigner                                                *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -24,7 +24,7 @@
 #endif /* _WIN32 */
 
 #include "print-info.h"
-#include "resign-wad.h"
+#include "resign-wad.hpp"
 
 #ifdef __GNUC__
 # define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))

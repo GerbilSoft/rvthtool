@@ -2,11 +2,11 @@
  * RVT-H Tool: WAD Resigner                                                *
  * resign-wad.c: Re-sign a WAD file.                                       *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#include "resign-wad.h"
+#include "resign-wad.hpp"
 #include "print-info.h"
 #include "wad-fns.h"
 
@@ -255,7 +255,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	}
 
 	// Allocate the memory buffer.
-	buf = malloc(sizeof(*buf));
+	buf = static_cast<rdbuf_t*>(malloc(sizeof(*buf)));
 	if (!buf) {
 		fputs("*** ERROR: Unable to allocate memory buffer.\n", stderr);
 		ret = 12;
@@ -635,7 +635,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	}
 
 	// Load the TMD.
-	tmd_u8 = malloc(wadInfo.tmd_size);
+	tmd_u8 = static_cast<uint8_t*>(malloc(wadInfo.tmd_size));
 	if (!tmd_u8) {
 		fprintf(stderr, "*** ERROR: Unable to allocate %u bytes for the TMD.\n", wadInfo.tmd_size);
 		ret = -ENOMEM;

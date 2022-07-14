@@ -6,7 +6,7 @@ IF(POLICY CMP0063)
 	# target types, including static libraries and executables.
 	CMAKE_POLICY(SET CMP0063 NEW)
 ENDIF(POLICY CMP0063)
-PROJECT(wadresign LANGUAGES C)
+PROJECT(wadresign LANGUAGES CXX)
 
 # Create the Win32 manifest file.
 IF(WIN32)
@@ -18,13 +18,13 @@ SET(wadresign_SRCS
 	main.c
 	print-info.c
 	wad-fns.c
-	resign-wad.c
+	resign-wad.cpp
 	)
 # Headers.
 SET(wadresign_H
 	print-info.h
 	wad-fns.h
-	resign-wad.h
+	resign-wad.hpp
 	)
 IF(WIN32)
 	SET(wadresign_RC resource.rc)
