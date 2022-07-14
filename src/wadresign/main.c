@@ -115,7 +115,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	setlocale(LC_ALL, "");
 
 	_fputts(_T("WAD Resigner v") _T(VERSION_STRING) _T("\n")
-		_T("Copyright (c) 2018-2022 by David Korth.\n")
+		_T("Copyright (c) 2018-2022 by David Korth.\n"), stdout);
+	fputs(
 #ifdef RP_GIT_VERSION
 		_T(RP_GIT_VERSION) _T("\n")
 #  ifdef RP_GIT_DESCRIBE
