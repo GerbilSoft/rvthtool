@@ -789,7 +789,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 				if (err == 0) {
 					err = EIO;
 				}
-				fputs(stderr, "*** ERROR writing destination WAD data: ");
+				fputs("*** ERROR writing destination WAD data: ", stderr);
 				_fputts(_tcserror(err), stderr);
 				fputc('\n', stderr);
 				ret = -err;
@@ -811,7 +811,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			if (err == 0) {
 				err = EIO;
 			}
-			fputs(stderr, "*** ERROR reading source WAD metadata: ");
+			fputs("*** ERROR reading source WAD metadata: ", stderr);
 			_fputts(_tcserror(err), stderr);
 			fputc('\n', stderr);
 			ret = -err;
@@ -830,7 +830,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			if (err == 0) {
 				err = EIO;
 			}
-			fputs(stderr, "*** ERROR writing destination WAD metadata: ");
+			fputs("*** ERROR writing destination WAD metadata: ", stderr);
 			_fputts(_tcserror(err), stderr);
 			fputc('\n', stderr);
 			ret = -err;
@@ -858,7 +858,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 				if (err == 0) {
 					err = EIO;
 				}
-				fputs(stderr, "*** ERROR writing destination WAD padding: ");
+				fputs("*** ERROR writing destination WAD padding: ", stderr);
 				_fputts(_tcserror(err), stderr);
 				fputc('\n', stderr);
 				ret = -err;
