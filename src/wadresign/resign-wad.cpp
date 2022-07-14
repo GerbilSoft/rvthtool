@@ -18,13 +18,17 @@
 #include "libwiicrypto/sig_tools.h"
 #include "libwiicrypto/wii_wad.h"
 
-// C includes.
+// C includes
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// C++ includes
+#include <memory>
+using std::unique_ptr;
 
 #define ISALNUM(c) isalnum((unsigned char)c)
 
@@ -79,8 +83,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	WAD_Header srcHeader, outHeader;
 	WAD_Info_t wadInfo;
 
-	uint8_t *tmd_u8 = NULL;
-	RVL_TMD_Header *tmdHeader = NULL;
+	// TMD
+	unique_ptr<uint8_t[]> tmd_buf;
+	RVL_TMD_Header *tmdHeader;
 
 	// Key names
 	const char *s_fromKey, *s_toKey;
@@ -101,7 +106,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	uint32_t data_size_actual;
 
 	// Read buffer
-	rdbuf_t *buf = NULL;
+	unique_ptr<rdbuf_t> buf(new rdbuf_t);
 
 	// Open the source WAD file.
 	errno = 0;
@@ -113,7 +118,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		}
 		fputs("*** ERROR opening source WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "': %s\n", strerror(err));
+		fputs("': ", stderr);
+		_fputts(_tcserror(err), stderr);
+		fputc('\n', stderr);
 		return -err;
 	}
 
@@ -149,7 +156,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		// Unrecognized WAD type.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "' is not valid.\n");
+		fputs("' is not valid.\n", stderr);
 		ret = 1;
 		goto end;
 	}
@@ -164,7 +171,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		// Unable to get WAD information.
 		fputs("*** ERROR: WAD file '", stderr);
 		_fputts(src_wad, stderr);
-		fprintf(stderr, "' is not valid.");
+		fputs("' is not valid.", stderr);
 		ret = 2;
 		goto end;
 	}
@@ -254,17 +261,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		goto end;
 	}
 
-	// Allocate the memory buffer.
-	buf = static_cast<rdbuf_t*>(malloc(sizeof(*buf)));
-	if (!buf) {
-		fputs("*** ERROR: Unable to allocate memory buffer.\n", stderr);
-		ret = 12;
-		goto end;
-	}
-
 	// Load the ticket.
 	fseeko(f_src_wad, wadInfo.ticket_address, SEEK_SET);
-	size = fread(buf, 1, wadInfo.ticket_size, f_src_wad);
+	size = fread(buf->u8, 1, wadInfo.ticket_size, f_src_wad);
 	if (size != wadInfo.ticket_size) {
 		// Read error.
 		fputs("*** ERROR: WAD file '", stderr);
@@ -359,7 +358,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		isDestBwf = false;
 	}
 
-	if ((RVL_CryptoType_e)recrypt_key == src_key) {
+	if (static_cast<RVL_CryptoType_e>(recrypt_key) == src_key) {
 		// Allow the same key only if converting to a different format.
 		if (isSrcBwf == isDestBwf) {
 			// No point in recrypting to the same key and format...
@@ -635,15 +634,10 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	}
 
 	// Load the TMD.
-	tmd_u8 = static_cast<uint8_t*>(malloc(wadInfo.tmd_size));
-	if (!tmd_u8) {
-		fprintf(stderr, "*** ERROR: Unable to allocate %u bytes for the TMD.\n", wadInfo.tmd_size);
-		ret = -ENOMEM;
-		goto end;
-	}
+	tmd_buf.reset(new uint8_t[wadInfo.tmd_size]);
 	fseeko(f_src_wad, wadInfo.tmd_address, SEEK_SET);
 	errno = 0;
-	size = fread(tmd_u8, 1, wadInfo.tmd_size, f_src_wad);
+	size = fread(tmd_buf.get(), 1, wadInfo.tmd_size, f_src_wad);
 	if (size != wadInfo.tmd_size) {
 		int err = errno;
 		if (err == 0) {
@@ -653,12 +647,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		ret = -err;
 		goto end;
 	}
-	tmdHeader = (RVL_TMD_Header*)tmd_u8;
+	tmdHeader = reinterpret_cast<RVL_TMD_Header*>(tmd_buf.get());
 	nbr_cont = be16_to_cpu(tmdHeader->nbr_cont);
 
 	// Make sure the TMD is big enough.
 	// TODO: Show an error if it's not?
-	content = (const RVL_Content_Entry*)(&tmd_u8[sizeof(*tmdHeader)]);
+	content = (const RVL_Content_Entry*)(&tmd_buf[sizeof(*tmdHeader)]);
 	nbr_cont_actual = (wadInfo.tmd_size - sizeof(*tmdHeader)) / sizeof(*content);
 	if (nbr_cont > nbr_cont_actual) {
 		nbr_cont = nbr_cont_actual;
@@ -675,16 +669,16 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	if (likely(toKey != RVL_KEY_DEBUG)) {
 		// Retail: Fakesign the TMD.
 		// Dolphin and cIOSes ignore the signature anyway.
-		cert_fakesign_tmd(tmd_u8, wadInfo.tmd_size);
+		cert_fakesign_tmd(tmd_buf.get(), wadInfo.tmd_size);
 	} else {
 		// Debug: Use the real signing keys.
 		// Debug IOS requires a valid signature.
-		cert_realsign_ticketOrTMD(tmd_u8, wadInfo.tmd_size, &rvth_privkey_RVL_dpki_tmd);
+		cert_realsign_ticketOrTMD(tmd_buf.get(), wadInfo.tmd_size, &rvth_privkey_RVL_dpki_tmd);
 	}
 
 	// Write the TMD.
 	errno = 0;
-	size = fwrite(tmd_u8, 1, wadInfo.tmd_size, f_dest_wad);
+	size = fwrite(tmd_buf.get(), 1, wadInfo.tmd_size, f_dest_wad);
 	if (size != wadInfo.tmd_size) {
 		int err = errno;
 		if (err == 0) {
@@ -795,7 +789,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 				if (err == 0) {
 					err = EIO;
 				}
-				fprintf(stderr, "*** ERROR writing destination WAD data: %s\n", strerror(err));
+				fputs(stderr, "*** ERROR writing destination WAD data: ");
+				_fputts(_tcserror(err), stderr);
+				fputc('\n', stderr);
 				ret = -err;
 				goto end;
 			}
@@ -815,7 +811,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			if (err == 0) {
 				err = EIO;
 			}
-			fprintf(stderr, "*** ERROR reading source WAD metadata: %s\n", strerror(err));
+			fputs(stderr, "*** ERROR reading source WAD metadata: ");
+			_fputts(_tcserror(err), stderr);
+			fputc('\n', stderr);
 			ret = -err;
 			goto end;
 		}
@@ -832,7 +830,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			if (err == 0) {
 				err = EIO;
 			}
-			fprintf(stderr, "*** ERROR writing destination WAD metadata: %s\n", strerror(err));
+			fputs(stderr, "*** ERROR writing destination WAD metadata: ");
+			_fputts(_tcserror(err), stderr);
+			fputc('\n', stderr);
 			ret = -err;
 			goto end;
 		}
@@ -858,7 +858,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 				if (err == 0) {
 					err = EIO;
 				}
-				fprintf(stderr, "*** ERROR writing destination WAD padding: %s\n", strerror(err));
+				fputs(stderr, "*** ERROR writing destination WAD padding: ");
+				_fputts(_tcserror(err), stderr);
+				fputc('\n', stderr);
 				ret = -err;
 				goto end;
 			}
@@ -882,7 +884,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		if (err == 0) {
 			err = EIO;
 		}
-		fprintf(stderr, "*** ERROR writing destination WAD header: ");
+		fputs("*** ERROR writing destination WAD header: ", stderr);
 		_fputts(_tcserror(err), stderr);
 		fputc('\n', stderr);
 		ret = -err;
@@ -893,8 +895,6 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	ret = 0;
 
 end:
-	free(tmd_u8);
-	free(buf);
 	if (f_dest_wad) {
 		// TODO: Delete if an error occurred?
 		fclose(f_dest_wad);
