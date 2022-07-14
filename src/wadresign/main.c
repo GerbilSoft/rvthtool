@@ -118,9 +118,9 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		_T("Copyright (c) 2018-2022 by David Korth.\n"), stdout);
 	fputs(
 #ifdef RP_GIT_VERSION
-		RP_GIT_VERSION) "\n"
+		RP_GIT_VERSION "\n"
 #  ifdef RP_GIT_DESCRIBE
-		RP_GIT_DESCRIBE) "\n"
+		RP_GIT_DESCRIBE "\n"
 #  endif
 #endif
 		"\n", stdout);
