@@ -48,7 +48,7 @@ typedef struct _RvtH_QueryEntry {
 	const TCHAR *hdd_serial;	// HDD serial number, in ASCII.
 #endif /* RVTH_QUERY_ENABLE_HDD_SERIAL */
 
-	uint64_t size;			// HDD size, in bytes.
+	off64_t size;			// HDD size, in bytes.
 #ifndef _WIN32
 	// TODO: Implement a Win32 version.
 	bool is_readable;		// Is the device readable?

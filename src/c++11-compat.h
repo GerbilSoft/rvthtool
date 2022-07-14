@@ -8,6 +8,12 @@
 #ifndef __CXX11_COMPAT_H__
 #define __CXX11_COMPAT_H__
 
+// config.libc.h must be included externally for
+// off_t/off64_t checks.
+#ifndef __RVTHTOOL_CONFIG_LIBC_H__
+#  error config.libc.h was not included.
+#endif /* __RVTHTOOL_CONFIG_LIBC_H__ */
+
 #ifndef __cplusplus
 /**
  * We're compiling C code.
@@ -100,6 +106,23 @@ namespace std {
 #    define __func__ "<unknown>"
 #  endif
 #endif
+
+#if !defined(SIZEOF_OFF64_T)
+// off64_t isn't available.
+#  if defined(SIZEOF_OFF_T) && SIZEOF_OFF_T >= 8
+// off_t is at least 64-bit. Use it as off64_t.
+#    include <unistd.h>
+typedef off_t off64_t;
+#  else /* !(defined(SIZEOF_OFF_T) && SIZEOF_OFF_T >= 8) */
+// off_t either doesn't exist or is not at least 64-bit.
+#    ifdef _MSC_VER
+typedef __int64 off64_t;
+#    else /* !_MSC_VER */
+#      include <stdint.h>
+typedef int64_t off64_t;
+#    endif /* _MSC_VER */
+#  endif /* defined(SIZEOF_OFF_T) && SIZEOF_OFF_T >= 8 */
+#endif /* !defined(SIZEOF_OFF64_t) */
 
 /**
  * MSVCRT prior to MSVC 2015 has a non-compliant _snprintf().

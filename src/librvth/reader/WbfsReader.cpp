@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * WbfsReader.cpp: WBFS disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -303,7 +303,7 @@ static void closeWbfsDisc(wbfs_disc_t *disc)
  * @param disc		[in] wbfs_disc_t*
  * @return Non-sparse size, in bytes.
  */
-static int64_t getWbfsDiscSize(const be16_t *wlba_table, const wbfs_disc_t *disc)
+static off64_t getWbfsDiscSize(const be16_t *wlba_table, const wbfs_disc_t *disc)
 {
 	// Find the last block that's used on the disc.
 	// NOTE: This is in WBFS blocks, not Wii blocks.
@@ -315,7 +315,7 @@ static int64_t getWbfsDiscSize(const be16_t *wlba_table, const wbfs_disc_t *disc
 	}
 
 	// lastBlock+1 * WBFS block size == filesize.
-	return (int64_t)(lastBlock + 1) * (int64_t)(p->wbfs_sec_sz);
+	return (off64_t)(lastBlock + 1) * (off64_t)(p->wbfs_sec_sz);
 }
 
 /**
@@ -346,7 +346,7 @@ WbfsReader::WbfsReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
-		int64_t offset = file->size();
+		off64_t offset = file->size();
 		if (offset <= 0) {
 			// Empty file and/or seek error.
 			err = errno;

@@ -9,6 +9,12 @@
 #ifndef __RVTHTOOL_CONFIG_LIBC_H__
 #define __RVTHTOOL_CONFIG_LIBC_H__
 
+/* Define to the size of `off_t` if it's available. */
+#cmakedefine SIZEOF_OFF_T @OFF_T@
+
+/* Define to the size of `off64_t` if it's available. */
+#cmakedefine SIZEOF_OFF64_T @OFF64_T@
+
 /** Time functions **/
 
 /* Define to 1 if you have the `gmtime_r` function. */

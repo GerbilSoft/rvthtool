@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * RefFile.hpp: Reference-counted FILE*.                                   *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -109,13 +109,13 @@ class RefFile
 		 * @param size If not zero, try to set the file to this size.
 		 * @return 0 on success; negative POSIX error code on error.
 		 */
-		int makeSparse(int64_t size = 0);
+		int makeSparse(off64_t size = 0);
 
 		/**
 		 * Get the size of the file.
 		 * @return Size of file, or -1 on error.
 		 */
-		int64_t size(void);
+		off64_t size(void);
 
 		/**
 		 * Get the file's modification time.
@@ -137,17 +137,17 @@ class RefFile
 			return ::fwrite(ptr, size, nmemb, m_file);
 		}
 
-		inline int seeko(int64_t offset, int whence)
+		inline int seeko(off64_t offset, int whence)
 		{
 			return ::fseeko(m_file, offset, whence);
 		}
 
-		inline int64_t tello(void)
+		inline off64_t tello(void)
 		{
 			return ::ftello(m_file);
 		}
 
-		inline int64_t flush(void)
+		inline off64_t flush(void)
 		{
 			return ::fflush(m_file);
 		}
@@ -159,7 +159,7 @@ class RefFile
 
 		/** Convenience wrappers. **/
 
-		inline size_t seekoAndRead(int64_t offset, int whence, void *ptr, size_t size, size_t nmemb)
+		inline size_t seekoAndRead(off64_t offset, int whence, void *ptr, size_t size, size_t nmemb)
 		{
 			int ret = this->seeko(offset, whence);
 			if (ret != 0) {

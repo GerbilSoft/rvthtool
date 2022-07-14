@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * bank_init.cpp: RvtH_BankEntry initialization functions.                 *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -337,7 +337,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 #pragma pack()
 
 	// main.dol
-	int64_t dolOffset;
+	off64_t dolOffset;
 	DOL_Header dol;
 
 	assert(entry->reader != NULL);
@@ -466,7 +466,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	}
 
 	// Load the DOL header.
-	dolOffset = (int64_t)be32_to_cpu(boot.bb2.bootFilePosition) << shift;
+	dolOffset = (off64_t)be32_to_cpu(boot.bb2.bootFilePosition) << shift;
 	lba_size = entry->reader->read(sector_buf, lba_start + BYTES_TO_LBA(dolOffset), 2);
 	if (lba_size != 2) {
 		// Error reading the DOL header.

@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * nhcd_structs.h: RVT-H data structures.                                  *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -149,7 +149,7 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 #define LBA_SIZE 512
 
 // Convert LBA values to bytes.
-#define LBA_TO_BYTES(x) ((int64_t)(x) * LBA_SIZE)
+#define LBA_TO_BYTES(x) ((off64_t)(x) * LBA_SIZE)
 // Convert bytes to an LBA value.
 // NOTE: Partial LBAs will be truncated!
 #define BYTES_TO_LBA(x) ((uint32_t)((x) / LBA_SIZE))

@@ -1,6 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(src)
 
+# Check for Large File Support.
+# NOTE: This should have been done in platform.cmake, but we're
+# including it here because the off_t/off64_t sizes are written
+# to config.libc.h.
+INCLUDE(CheckLargeFileSupport)
+CHECK_LARGE_FILE_SUPPORT()
+
 # Check for reentrant time functions.
 # NOTE: May be _gmtime32_s() or _gmtime64_s() on MSVC 2005+.
 # The "inline" part will detect that.
@@ -49,15 +56,15 @@ CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/stdboolx.h.in" "${CMAKE_CURRENT_BINA
 # C++11 compatibility header.
 # NOTE: This must be included regardless of C++11 support in the compiler.
 # gcc-4.6 supports some C++11, but is missing explicit virtual overrides.
+SET(RP_CONFIG_LIBC_H "${CMAKE_CURRENT_BINARY_DIR}/config.libc.h")
+SET(RP_CXX11_COMPAT_H "${CMAKE_CURRENT_SOURCE_DIR}/c++11-compat.h")
 IF(MSVC)
-	SET(CXX11_COMPAT_HEADER "-FI${CMAKE_CURRENT_SOURCE_DIR}/c++11-compat.h")
+	SET(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS} -FI${RP_CONFIG_LIBC_H} -FI${RP_CXX11_COMPAT_H}")
+	SET(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -FI${RP_CONFIG_LIBC_H} -FI${RP_CXX11_COMPAT_H}")
 ELSE(MSVC)
-	SET(CXX11_COMPAT_HEADER "-include ${CMAKE_CURRENT_SOURCE_DIR}/c++11-compat.h")
+	SET(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS} -include ${RP_CONFIG_LIBC_H} -include ${RP_CXX11_COMPAT_H}")
+	SET(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} -include ${RP_CONFIG_LIBC_H} -include ${RP_CXX11_COMPAT_H}")
 ENDIF(MSVC)
-
-# Add the C++11 compatibility header to CFLAGS/CXXFLAGS.
-SET(CMAKE_C_FLAGS	"${CMAKE_C_FLAGS} ${CXX11_COMPAT_HEADER}")
-SET(CMAKE_CXX_FLAGS	"${CMAKE_CXX_FLAGS} ${CXX11_COMPAT_HEADER}")
 
 # Check for hidden visibility flags.
 INCLUDE(CheckHiddenVisibility)

@@ -49,7 +49,7 @@ typedef union _rdbuf_t {
  */
 static inline void fpAlign(FILE *fp)
 {
-	int64_t offset = ftello(fp);
+	off64_t offset = ftello(fp);
 	if ((offset % 64) != 0) {
 		offset = ALIGN_BYTES(64, offset);
 		fseeko(fp, offset, SEEK_SET);
@@ -92,7 +92,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 	// Files
 	FILE *f_src_wad = NULL, *f_dest_wad = NULL;
-	int64_t src_file_size, offset;
+	off64_t src_file_size, offset;
 
 	// Certificates
 	const RVL_Cert_RSA4096_RSA2048 *cert_CA;
@@ -203,6 +203,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 	// Verify the data size.
 	fseeko(f_src_wad, 0, SEEK_END);
+	// FIXME: Why cast to uint32_t?
 	src_file_size = (uint32_t)ftello(f_src_wad);
 	if (isSrcBwf) {
 		// Data size is the rest of the file.

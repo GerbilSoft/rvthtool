@@ -3,7 +3,7 @@
  * PlainReader.cpp: Plain disc image reader class.                         *
  * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -40,7 +40,7 @@ PlainReader::PlainReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 
 	// Get the file size.
 	errno = 0;
-	int64_t filesize = m_file->size();
+	off64_t filesize = m_file->size();
 	if (filesize < 0) {
 		// Seek error.
 		// NOTE: Not failing on empty file, since that happens

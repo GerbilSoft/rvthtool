@@ -108,7 +108,7 @@ int RefFile::makeWritable(void)
 	}
 
 	// Get the current position.
-	int64_t pos = ftello(m_file);
+	off64_t pos = ftello(m_file);
 	bool device = isDevice();
 
 	// Close and reopen the file as writable.
@@ -200,7 +200,7 @@ bool RefFile::isDevice(void) const
  * @param size If not zero, try to set the file to this size.
  * @return 0 on success; negative POSIX error code on error.
  */
-int RefFile::makeSparse(int64_t size)
+int RefFile::makeSparse(off64_t size)
 {
 #ifdef _WIN32
 	wchar_t root_dir[4];		// Root directory.
@@ -280,7 +280,7 @@ int RefFile::makeSparse(int64_t size)
  * Get the size of the file.
  * @return Size of file, or -1 on error.
  */
-int64_t RefFile::size(void)
+off64_t RefFile::size(void)
 {
 	if (!m_file) {
 		// No file...
@@ -314,7 +314,7 @@ int64_t RefFile::size(void)
 #elif defined(__linux__)
 		// Linux version.
 		// Reference: http://www.microhowto.info/howto/get_the_size_of_a_linux_block_special_device_in_c.html
-		int64_t ret = -1;
+		off64_t ret = -1;
 		if (ioctl(fileno(m_file), BLKGETSIZE64, &ret) == 0) {
 			// Size obtained successfully.
 			return ret;
@@ -324,7 +324,7 @@ int64_t RefFile::size(void)
 
 	// Not a device, or the OS-specific device size function failed.
 	// Use this->seeko() / this->tello().
-	int64_t orig_pos = this->tello();
+	off64_t orig_pos = this->tello();
 	if (orig_pos < 0) {
 		// Error.
 		return -1;
@@ -334,7 +334,7 @@ int64_t RefFile::size(void)
 		// Error.
 		return -1;
 	}
-	int64_t ret = this->tello();
+	off64_t ret = this->tello();
 	err = this->seeko(orig_pos, SEEK_SET);
 	if (err != 0) {
 		// Error.

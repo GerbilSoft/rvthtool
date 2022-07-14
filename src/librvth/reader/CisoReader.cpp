@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * CisoReader.cpp: CISO disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -111,7 +111,7 @@ CisoReader::CisoReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Set the LBAs.
 	if (lba_start == 0 && lba_len == 0) {
 		// Determine the maximum LBA.
-		int64_t offset = m_file->size();
+		off64_t offset = m_file->size();
 		if (offset <= 0) {
 			// Empty file and/or seek error.
 			err = errno;

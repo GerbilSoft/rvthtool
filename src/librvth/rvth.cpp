@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth.cpp: RVT-H image handler.                                          *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -40,7 +40,7 @@ int RvtH::openGcm(RefFile *f_img)
 	int err = 0;	// errno setting
 
 	Reader *reader = nullptr;
-	int64_t len;
+	off64_t len;
 	uint8_t type;
 
 	// Disc header.
@@ -267,7 +267,7 @@ int RvtH::openHDD(RefFile *f_img)
 	int err = 0;	// errno setting
 
 	unsigned int i;
-	int64_t addr;
+	off64_t addr;
 	size_t size;
 
 	// Check the bank table header.
@@ -371,6 +371,7 @@ int RvtH::openHDD(RefFile *f_img)
 
 	m_file = f_img->ref();
 	rvth_entry = m_entries;
+	// FIXME: Why cast to uint32_t?
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
 	for (i = 0; i < m_bankCount; i++, rvth_entry++, addr += 512) {
 		NHCD_BankEntry nhcd_entry;
