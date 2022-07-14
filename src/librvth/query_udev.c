@@ -61,10 +61,11 @@ static bool is_vid_pid_correct(struct udev_device *usb_dev)
 
 /**
  * Get RvtH_QueryEntry data for the specified udev device.
- * @param dev udev device node
+ * @param dev	[in] udev device node
+ * @param pErr	[out,opt] Pointer to store positive POSIX error code in on error. (0 on success)
  * @return Allocated RvtH_QueryEntry if it's an RVT-H Reader; NULL if not.
  */
-static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev)
+static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev, int *pErr)
 {
 	RvtH_QueryEntry *entry;
 
@@ -73,6 +74,11 @@ static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev)
 
 	const char *s_blk_size, *s_usb_serial;
 	unsigned int hw_serial;
+
+	if (pErr) {
+		// No error initially.
+		*pErr = 0;
+	}
 
 	// udev_device_get_devnode() returns the path to the device node itself in /dev.
 	s_devnode = udev_device_get_devnode(dev);
@@ -122,6 +128,12 @@ static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev)
 	// Create an RvtHQueryEntry.
 	entry = malloc(sizeof(*entry));
 	if (!entry) {
+		if (pErr) {
+			*pErr = errno;
+			if (*pErr == 0) {
+				*pErr = ENOMEM;
+			}
+		}
 		return NULL;
 	}
 	entry->next = NULL;
@@ -180,6 +192,11 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 	struct udev_enumerate *enumerate;
 	struct udev_list_entry *devices, *dev_list_entry;
 
+	if (pErr) {
+		// No error initially.
+		*pErr = 0;
+	}
+
 	// Create the udev object.
 	udev = udev_new();
 	if (!udev) {
@@ -201,6 +218,7 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		RvtH_QueryEntry *entry;
 		struct udev_device *dev;
 		const char *path;
+		int err;
 
 		// Get the filename of the /sys entry for the device
 		// and create a udev_device object (dev) representing it.
@@ -208,11 +226,21 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 		dev = udev_device_new_from_syspath(udev, path);
 
 		// Attempt to get an RvtH_QueryEntry from this device node.
-		entry = rvth_parse_udev_device(dev);
+		entry = rvth_parse_udev_device(dev, &err);
 		if (!entry) {
 			// Not an RVT-H Reader.
 			udev_device_unref(dev);
-			continue;
+			if (err == 0)
+				continue;
+
+			// An error occurred.
+			if (pErr) {
+				*pErr = err;
+			}
+			rvth_query_free(list_head);
+			list_head = NULL;
+			list_tail = NULL;
+			break;
 		}
 
 		// RvtH_QueryEntry obtained. Add it to the list.
@@ -232,10 +260,6 @@ RvtH_QueryEntry *rvth_query_devices(int *pErr)
 	// Free the enumerator object.
 	udev_enumerate_unref(enumerate);
 	udev_unref(udev);
-
-	if (pErr) {
-		*pErr = 0;
-	}
 	return list_head;
 }
 
