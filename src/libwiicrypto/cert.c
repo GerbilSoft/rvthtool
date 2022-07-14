@@ -11,6 +11,7 @@
 
 #include "common.h"
 #include "byteswap.h"
+#include "stdboolx.h"
 
 #include <assert.h>
 #include <errno.h>

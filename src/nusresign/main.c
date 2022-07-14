@@ -18,7 +18,11 @@
 #include <string.h>
 #include <sys/stat.h>
 
+// libwiicrypto
 #include "libwiicrypto/sig_tools.h"
+
+// stdboolx
+#include "stdboolx.h"
 
 #ifdef _WIN32
 #  include "libwiicrypto/win32/secoptions.h"

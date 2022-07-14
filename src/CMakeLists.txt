@@ -36,8 +36,15 @@ IF(NOT WIN32)
 	UNSET(OLD_CMAKE_REQUIRED_DEFINITIONS)
 ENDIF(NOT WIN32)
 
+# Check for stdbool.h.
+INCLUDE(CheckIncludeFile)
+CHECK_INCLUDE_FILE("stdbool.h" HAVE_STDBOOL_H)
+
 # Write the libc configuration file.
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.libc.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.libc.h")
+
+# Write stdboolx.h.
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/stdboolx.h.in" "${CMAKE_CURRENT_BINARY_DIR}/stdboolx.h")
 
 # C++11 compatibility header.
 # NOTE: This must be included regardless of C++11 support in the compiler.

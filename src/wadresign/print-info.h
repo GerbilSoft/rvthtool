@@ -12,11 +12,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "stdboolx.h"
 #include "tcharx.h"
 
-// TODO: Custom stdbool.x instead of libwiicrypto/common.h.
 #include "libwiicrypto/cert_store.h"
-#include "libwiicrypto/common.h"
 
 #ifdef __cplusplus
 extern "C" {

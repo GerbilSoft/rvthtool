@@ -14,6 +14,7 @@
 #include "libwiicrypto/wii_structs.h"
 #include "libwiicrypto/sig_tools.h"
 
+#include "stdboolx.h"
 #include "tcharx.h"
 
 #include <stdint.h>

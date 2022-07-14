@@ -22,7 +22,7 @@
 #include "libwiicrypto/sig_tools.h"
 
 #ifdef _WIN32
-# include "libwiicrypto/win32/secoptions.h"
+#  include "libwiicrypto/win32/secoptions.h"
 #endif /* _WIN32 */
 
 #include "list-banks.hpp"

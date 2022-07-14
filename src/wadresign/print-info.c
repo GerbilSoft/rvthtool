@@ -16,6 +16,9 @@
 #include "libwiicrypto/sig_tools.h"
 #include "libwiicrypto/wii_wad.h"
 
+// stdboolx
+#include "stdboolx.h"
+
 // Nettle SHA-1
 #include <nettle/sha1.h>
 

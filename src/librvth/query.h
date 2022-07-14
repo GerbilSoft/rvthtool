@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include "tcharx.h"
+#include "stdboolx.h"
 
 #ifdef __cplusplus
 extern "C" {

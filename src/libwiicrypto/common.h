@@ -129,18 +129,6 @@
  */
 #define ASSERT_ALIGNMENT(a, ptr)	assert(reinterpret_cast<uintptr_t>(ptr) % 16 == 0);
 
-// TODO: Move to our own stdboolx.h file.
-// TODO: Move to another file.
-#ifndef __cplusplus
-# if defined(_MSC_VER) && _MSC_VER >= 1800
-#  include <stdbool.h>
-# else
-typedef unsigned char bool;
-#  define true 1
-#  define false 0
-# endif
-#endif /* __cplusplus */
-
 #ifdef _MSC_VER
 # define RVTH_CDECL __cdecl
 #else
