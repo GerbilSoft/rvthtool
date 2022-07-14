@@ -133,12 +133,12 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		_T("Copyright (c) 2018-2022 by David Korth.\n"), stdout);
 	fputs(
 #ifdef RP_GIT_VERSION
-		_T(RP_GIT_VERSION) _T("\n")
+		RP_GIT_VERSION) "\n"
 #  ifdef RP_GIT_DESCRIBE
-		_T(RP_GIT_DESCRIBE) _T("\n")
+		RP_GIT_DESCRIBE) "\n"
 #  endif
 #endif
-		_T("\n"), stdout);
+		"\n", stdout);
 
 	// Using Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso
