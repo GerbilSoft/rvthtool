@@ -36,7 +36,6 @@ class BankEntryViewPrivate
 	public:
 		// UI
 		Ui::BankEntryView ui;
-		QLocale locale;
 
 		const RvtH_BankEntry *bankEntry;
 
@@ -66,7 +65,6 @@ class BankEntryViewPrivate
 
 BankEntryViewPrivate::BankEntryViewPrivate(BankEntryView *q)
 	: q_ptr(q)
-	, locale(QLocale())
 	, bankEntry(nullptr)
 { }
 
@@ -91,8 +89,7 @@ inline int BankEntryViewPrivate::calc_frac_part(quint64 size, quint64 mask)
  */
 QString BankEntryViewPrivate::formatFileSize(quint64 size)
 {
-	// System locale.
-	QLocale locale = QLocale::system();
+	QLocale locale(QLocale::system());
 
 	// Localized suffix.
 	QString suffix;
@@ -209,46 +206,6 @@ QString BankEntryViewPrivate::sigStatusString(
  */
 void BankEntryViewPrivate::updateWidgetDisplay(void)
 {
-	if (bankEntry) {
-		// Type.
-		QString s_type;
-		switch (bankEntry->type) {
-			case RVTH_BankType_Unknown:
-			default:
-				s_type = BankEntryView::tr("Unknown");
-				break;
-			case RVTH_BankType_Empty:
-				s_type = BankEntryView::tr("Empty");
-				break;
-			case RVTH_BankType_GCN:
-				s_type = BankEntryView::tr("GameCube");
-				break;
-			case RVTH_BankType_Wii_SL:
-				s_type = BankEntryView::tr("Wii (Single-Layer)");
-				break;
-			case RVTH_BankType_Wii_DL:
-				s_type = BankEntryView::tr("Wii (Dual-Layer)");
-				break;
-			case RVTH_BankType_Wii_DL_Bank2:
-				s_type = BankEntryView::tr("Wii (DL Bank 2)");
-				break;
-		}
-		ui.lblType->setText(s_type);
-		ui.lblType->show();
-		ui.lblTypeTitle->show();
-
-		// Size.
-		ui.lblSize->setText(formatFileSize(LBA_TO_BYTES(bankEntry->lba_len)));
-		ui.lblSize->show();
-		ui.lblSizeTitle->show();
-	} else {
-		// No bank entry.
-		ui.lblType->hide();
-		ui.lblTypeTitle->hide();
-		ui.lblSize->hide();
-		ui.lblSizeTitle->hide();
-	}
-
 	if (!bankEntry || bankEntry->type <= RVTH_BankType_Unknown ||
 	    bankEntry->type == RVTH_BankType_Wii_DL_Bank2 ||
 	    bankEntry->type >= RVTH_BankType_MAX)
@@ -256,32 +213,49 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		// No bank entry is loaded, or the selected bank
 		// cannot be displayed. Hide all widgets.
 		// NOTE: Type and size are handled above.
-		ui.lblGameTitle->hide();
-		ui.lblTimestampTitle->hide();
-		ui.lblTimestamp->hide();
-		ui.lblGameIDTitle->hide();
-		ui.lblGameID->hide();
-		ui.lblDiscNumTitle->hide();
-		ui.lblDiscNum->hide();
-		ui.lblRevisionTitle->hide();
-		ui.lblRevision->hide();
-		ui.lblRegionTitle->hide();
-		ui.lblRegion->hide();
-		ui.lblIOSVersionTitle->hide();
-		ui.lblIOSVersion->hide();
-		ui.lblEncryptionTitle->hide();
-		ui.lblEncryption->hide();
-		ui.lblTicketSigTitle->hide();
-		ui.lblTicketSig->hide();
-		ui.lblTMDSigTitle->hide();
-		ui.lblTMDSig->hide();
-		ui.lblAppLoader->hide();
+		Q_Q(BankEntryView);
+		for (QObject *obj : q->children()) {
+			QWidget *const widget = qobject_cast<QWidget*>(obj);
+			if (widget) {
+				widget->hide();
+			}
+		}
 		return;
 	}
 
-	// Set the widget display.
+	// Type
+	QString s_type;
+	switch (bankEntry->type) {
+		case RVTH_BankType_Unknown:
+		default:
+			s_type = BankEntryView::tr("Unknown");
+			break;
+		case RVTH_BankType_Empty:
+			s_type = BankEntryView::tr("Empty");
+			break;
+		case RVTH_BankType_GCN:
+			s_type = BankEntryView::tr("GameCube");
+			break;
+		case RVTH_BankType_Wii_SL:
+			s_type = BankEntryView::tr("Wii (Single-Layer)");
+			break;
+		case RVTH_BankType_Wii_DL:
+			s_type = BankEntryView::tr("Wii (Dual-Layer)");
+			break;
+		case RVTH_BankType_Wii_DL_Bank2:
+			s_type = BankEntryView::tr("Wii (DL Bank 2)");
+			break;
+	}
+	ui.lblType->setText(s_type);
+	ui.lblType->show();
+	ui.lblTypeTitle->show();
 
-	// Game title.
+	// Size
+	ui.lblSize->setText(formatFileSize(LBA_TO_BYTES(bankEntry->lba_len)));
+	ui.lblSize->show();
+	ui.lblSizeTitle->show();
+
+	// Game title
 	// Remove trailing NULL bytes.
 	size_t len = strnlen(bankEntry->discHeader.game_title, sizeof(bankEntry->discHeader.game_title));
 	// TODO: Convert from Japanese if necessary.
@@ -298,26 +272,29 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	ui.lblGameTitle->setText(s_title);
 	ui.lblGameTitle->show();
 
-	// Timestamp.
+	// Timestamp
 	if (bankEntry->timestamp >= 0) {
 		// NOTE: Qt::DefaultLocaleShortDate was removed in Qt6,
 		// so switching to QLocale for formatting.
-		QDateTime ts = QDateTime::fromMSecsSinceEpoch((qint64)bankEntry->timestamp * 1000, Qt::UTC);
-		ui.lblTimestamp->setText(ts.toString(locale.dateTimeFormat(QLocale::ShortFormat)));
+		QLocale locale(QLocale::system());
+		QDateTime ts = QDateTime::fromMSecsSinceEpoch(
+			(qint64)bankEntry->timestamp * 1000, Qt::UTC);
+		ui.lblTimestamp->setText(ts.toString(
+			locale.dateTimeFormat(QLocale::ShortFormat)));
 	} else {
 		ui.lblTimestamp->setText(BankEntryView::tr("Unknown"));
 	}
 	ui.lblTimestamp->show();
 	ui.lblTimestampTitle->show();
 
-	// Game ID.
+	// Game ID
 	ui.lblGameID->setText(QLatin1String(
 		bankEntry->discHeader.id6,
 		sizeof(bankEntry->discHeader.id6)));
 	ui.lblGameID->show();
 	ui.lblGameIDTitle->show();
 
-	// Disc number.
+	// Disc number
 	ui.lblDiscNum->setText(QString::number(bankEntry->discHeader.disc_number));
 	ui.lblDiscNum->show();
 	ui.lblDiscNumTitle->show();
@@ -327,7 +304,7 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	ui.lblRevision->show();
 	ui.lblRevisionTitle->show();
 
-	// Region. (TODO: Icon?)
+	// Region (TODO: Icon?)
 	QString s_region;
 	static const char region_code_tbl[7][4] = {
 		"JPN", "USA", "EUR", "ALL", "KOR", "CHN", "TWN"
@@ -546,14 +523,10 @@ void BankEntryView::changeEvent(QEvent *event)
 
 	switch (event->type()) {
 		case QEvent::LanguageChange:
+		case QEvent::LocaleChange:
 			// Retranslate the UI.
 			d->ui.retranslateUi(this);
 			d->updateWidgetDisplay();
-			break;
-
-		case QEvent::LocaleChange:
-			// Cache the new locale.
-			d->locale = QLocale();
 			break;
 
 		default:
