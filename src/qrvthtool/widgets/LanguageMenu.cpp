@@ -74,19 +74,50 @@ class LanguageMenuPrivate
 		 * Retranslate the "System Default" language action.
 		 */
 		void retranslateSystemDefault(void);
-
-		/**
-		 * Initialize the Language menu.
-		 */
-		void init(void);
 };
 
 LanguageMenuPrivate::LanguageMenuPrivate(LanguageMenu *q)
 	: q_ptr(q)
-	, actLanguageSysDefault(nullptr)
-	, actgrp(nullptr)
+	, actLanguageSysDefault(new QAction(q))
+	, actgrp(new QActionGroup(q))
 {
-	init();
+	// Set up the "System Default" translation action.
+	actLanguageSysDefault->setCheckable(true);
+	QObject::connect(actLanguageSysDefault, &QAction::triggered,
+		[q]() { q->setLanguage(QString()); });	// Add the system default translation.
+	retranslateSystemDefault();
+	actgrp->addAction(actLanguageSysDefault);
+	q->addAction(actLanguageSysDefault);
+
+	// Add all other translations.
+	q->addSeparator();
+	QMap<QString, QString> tsMap = TranslationManager::instance()->enumerate();
+	hashActions.reserve(tsMap.size());
+	foreach (const QString &locale, tsMap.keys()) {
+		const QString &language = tsMap.value(locale);
+		if (hashActions.contains(language)) {
+			// FIXME: Duplicate language?
+			continue;
+		}
+
+		QAction *const action = new QAction(language, q);
+		action->setCheckable(true);
+
+		// Check for an icon.
+		QIcon flagIcon = iconForLocale(locale);
+		if (!flagIcon.isNull()) {
+			action->setIcon(flagIcon);
+		}
+
+		hashActions.insert(locale, action);
+		actgrp->addAction(action);
+		QObject::connect(action, &QAction::triggered,
+			[q, locale]() { q->setLanguage(locale); });
+		q->addAction(action);
+	}
+
+	// Only show the QMenu if more than one language is available.
+	q->menuAction()->setVisible(hashActions.size() > 1);
 }
 
 /**
@@ -134,15 +165,14 @@ QIcon LanguageMenuPrivate::iconForLocale(const QString &locale)
  */
 void LanguageMenuPrivate::retranslateSystemDefault(void)
 {
+	// actLanguageSysDefault should have been created in init().
+	assert(actLanguageSysDefault != nullptr);
 	if (!actLanguageSysDefault) {
-		Q_Q(LanguageMenu);
-		actLanguageSysDefault = new QAction(q);
-		actLanguageSysDefault->setCheckable(true);
-		QObject::connect(actLanguageSysDefault, &QAction::triggered,
-			[q]() { q->setLanguage(QString()); });
+		return;
 	}
 
-	QString localeSys = QLocale::system().name();
+	// Get the system locale name.
+	const QString localeSys = QLocale::system().name();
 
 	//: Translation: System Default (retrieved from system settings)
 	actLanguageSysDefault->setText(LanguageMenu::tr("System Default (%1)", "ts-language").arg(localeSys));
@@ -151,51 +181,6 @@ void LanguageMenuPrivate::retranslateSystemDefault(void)
 	QIcon flagIcon = iconForLocale(localeSys);
 	if (!flagIcon.isNull()) {
 		actLanguageSysDefault->setIcon(flagIcon);
-	}
-}
-
-/**
- * Initialize the Language menu.
- */
-void LanguageMenuPrivate::init(void)
-{
-	// Clear the Language menu first.
-	this->clear();
-
-	// Initialize the QActionGroup.
-	Q_Q(LanguageMenu);
-	actgrp = new QActionGroup(q);
-
-	// Add the system default translation.
-	retranslateSystemDefault();
-	actgrp->addAction(actLanguageSysDefault);
-	q->addAction(actLanguageSysDefault);
-
-	// Add all other translations.
-	q->addSeparator();
-	QMap<QString, QString> tsMap = TranslationManager::instance()->enumerate();
-	hashActions.reserve(tsMap.size());
-	foreach (const QString &locale, tsMap.keys()) {
-		const QString &language = tsMap.value(locale);
-		if (hashActions.contains(language)) {
-			// FIXME: Duplicate language?
-			continue;
-		}
-
-		QAction *action = new QAction(language, q);
-		action->setCheckable(true);
-
-		// Check for an icon.
-		QIcon flagIcon = iconForLocale(locale);
-		if (!flagIcon.isNull()) {
-			action->setIcon(flagIcon);
-		}
-
-		hashActions.insert(locale, action);
-		actgrp->addAction(action);
-		QObject::connect(action, &QAction::triggered,
-			[q, locale]() { q->setLanguage(locale); });
-		q->addAction(action);
 	}
 }
 
@@ -251,13 +236,17 @@ bool LanguageMenu::setLanguage(const QString &locale)
 		action = d->hashActions.value(locale);
 		ret = (action != nullptr);
 	}
-	d->locale = (action ? locale : QString());
+	if (action) {
+		d->locale == locale;
+	} else {
+		d->locale.clear();
+	}
 
 	// Set the UI language.
 	TranslationManager::instance()->setTranslation(
-		(action != nullptr
+		(action != nullptr)
 			? locale
-			: QLocale::system().name()));
+			: QLocale::system().name());
 
 	// Mark the language as selected.
 	if (action) {
@@ -287,7 +276,7 @@ void LanguageMenu::changeEvent(QEvent *event)
 
 		case QEvent::LocaleChange: {
 			// Locale change usually requires a UI retranslation.
-			QAction *action = d->actgrp->checkedAction();
+			QAction *const action = d->actgrp->checkedAction();
 			if (action) {
 				action->trigger();
 			}
