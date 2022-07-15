@@ -54,10 +54,15 @@ int main(int argc, char **argv)
 		fprintf(stderr, "*** ERROR reading source file: %s\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
-	fseek(f, 0, SEEK_END);
-	fsize = ftell(f);
+	fseeko(f, 0, SEEK_END);
+	fsize = (size_t)ftello(f);
 	rewind(f);
 	bin = (unsigned char*)malloc(fsize);
+	if (!bin) {
+		fprintf(stderr, "*** malloc() failed: %s\n", strerror(errno));
+		fclose(f);
+		return EXIT_FAILURE;
+	}
 	fread(bin, 1, fsize, f);
 	fclose(f);
 

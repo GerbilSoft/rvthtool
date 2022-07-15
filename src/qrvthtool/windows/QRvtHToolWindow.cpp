@@ -171,6 +171,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, lblRecryptionKey(nullptr)
 	, cboRecryptionKey(nullptr)
 	, lblMessage(nullptr)
+	, btnCancel(nullptr)
 	, progressBar(nullptr)
 	, workerThread(nullptr)
 	, workerObject(nullptr)
@@ -200,9 +201,7 @@ QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 
 	// NOTE: Delete the RvtHModel first to prevent issues later.
 	delete model;
-	if (rvth) {
-		delete rvth;
-	}
+	delete rvth;
 }
 
 /**
@@ -216,7 +215,6 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 	} else {
 		// Show the filename and device type.
 		const QString displayFilename = getDisplayFilename(filename);
-		QString title = displayFilename;
 		QString imageType;
 		switch (rvth->imageType()) {
 			// HDDs (multiple banks)
@@ -627,6 +625,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	if (d->rvth) {
 		d->model->setRvtH(nullptr);
 		delete d->rvth;
+		d->rvth = nullptr;
 	}
 
 	// Processing...
@@ -645,7 +644,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 			.arg(d->getDisplayFilename(filename))
 			.arg(QString::fromUtf8(rvth_error(err)));
 		d->ui.msgWidget->showMessage(errMsg, MessageWidget::ICON_CRITICAL);
-		delete d->rvth;
+		delete rvth_tmp;
 		markUiNotBusy();
 		return;
 	}
@@ -955,6 +954,8 @@ void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
 			openRvtH(deviceName);
 		}
 	}
+
+	delete selectDeviceDialog;
 }
 
 /**
@@ -1268,7 +1269,7 @@ void QRvtHToolWindow::on_actionUndelete_triggered(void)
 void QRvtHToolWindow::rvthModel_layoutChanged(void)
 {
 	// Update the QTreeView columns, etc.
-	// FIXME: This doesn't work the first time a file is added...
+	// FIXME: This doesn't work the first time a bank is added...
 	// (possibly needs a dataChanged() signal)
 	Q_D(QRvtHToolWindow);
 	d->updateLstBankList();
@@ -1276,9 +1277,9 @@ void QRvtHToolWindow::rvthModel_layoutChanged(void)
 
 void QRvtHToolWindow::rvthModel_rowsInserted(void)
 {
-	// A new file entry was added to the GcnCard.
+	// A new bank entry was added to the RVT-H Reader.
 	// Update the QTreeView columns.
-	// FIXME: This doesn't work the first time a file is added...
+	// FIXME: This doesn't work the first time a bank is added...
 	Q_D(QRvtHToolWindow);
 	d->updateLstBankList();
 }

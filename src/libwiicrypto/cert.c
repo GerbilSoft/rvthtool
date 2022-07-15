@@ -440,7 +440,7 @@ int cert_fakesign_ticket(uint8_t *ticket_u8, size_t size)
 	do {
 		// Calculate the SHA-1 of the ticket.
 		// If the first byte is 0, we're done.
-		static const unsigned int signing_offset = offsetof(RVL_Ticket, issuer);
+		static const size_t signing_offset = offsetof(RVL_Ticket, issuer);
 		sha1_update(&sha1, size - signing_offset, (const uint8_t*)(&ticket_u8[signing_offset]));
 		sha1_digest(&sha1, sizeof(digest), digest);
 	} while (digest[0] != 0 && ++(*fake) != 0);

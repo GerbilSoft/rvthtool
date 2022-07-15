@@ -673,7 +673,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 	if (data_offset > 0) {
 		// Seek to the data offset.
-		int fsret = fseek(f_dest_wad, data_offset, SEEK_SET);
+		int fsret = fseeko(f_dest_wad, data_offset, SEEK_SET);
 		if (fsret != 0) {
 			int err = errno;
 			if (err == 0) {

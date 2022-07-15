@@ -50,34 +50,41 @@ class MessageWidgetPrivate
 		};
 		Ui_MessageWidget ui;
 
-		// Icon being displayed.
-		MessageWidget::MsgIcon icon;
-		static const int iconSz = 22;
+		/**
+		 * Set the icon.
+		 * @param icon Icon to set
+		 */
 		void setIcon(MessageWidget::MsgIcon icon);
 
-		// Message timeout.
-		QTimer *tmrTimeout;
-		bool timeout;	// True if message was dismissed via timeout.
+		/*
+		 * Calculate the best height for the widget.
+		 * @return Best height
+		 */
+		int calcBestHeight(void) const;
 
-		// Colors.
+	public:
+		// Colors
 		// TODO: Use system colors on KDE?
 		static const QRgb colorCritical = 0xEE4444;
 		static const QRgb colorQuestion = 0x66EE66;
 		static const QRgb colorWarning = 0xEECC66;
 		static const QRgb colorInformation = 0x66CCEE;
 
-		// Animation.
-		QTimeLine *timeLine;
-		int calcBestHeight(void) const;
-		bool animateOnShow;
+public:
+		QTimer* tmrTimeout;				// Message timeout
+		QTimeLine* timeLine;			// Animation timeline
+		MessageWidget::MsgIcon icon;	// Icon
+		static const int iconSz = 22;	// Icon size
+		bool timeout;					// True if message was dismissed via timeout.
+		bool animateOnShow;				// Animate the widget on show?
 };
 
 MessageWidgetPrivate::MessageWidgetPrivate(MessageWidget *q)
 	: q_ptr(q)
-	, icon(MessageWidget::ICON_NONE)
 	, tmrTimeout(new QTimer(q))
-	, timeout(false)
 	, timeLine(new QTimeLine(500, q))
+	, icon(MessageWidget::ICON_NONE)
+	, timeout(false)
 	, animateOnShow(false)
 { }
 
@@ -154,7 +161,7 @@ void MessageWidgetPrivate::Ui_MessageWidget::setupUi(QWidget *MessageWidget)
 
 /**
  * Set the icon.
- * @param icon Icon to set.
+ * @param icon Icon to set
  */
 void MessageWidgetPrivate::setIcon(MessageWidget::MsgIcon icon)
 {
@@ -205,7 +212,7 @@ void MessageWidgetPrivate::setIcon(MessageWidget::MsgIcon icon)
 
 /**
  * Calculate the best height for the widget.
- * @return Best height.
+ * @return Best height
  */
 int MessageWidgetPrivate::calcBestHeight(void) const
 {
@@ -255,8 +262,6 @@ void MessageWidget::paintEvent(QPaintEvent *event)
 	// Call the superclass paintEvent first.
 	super::paintEvent(event);
 
-	QPainter painter(this);
-
 	// Drawing rectangle should be this->rect(),
 	// minus one pixel width and height.
 	QRect drawRect(this->rect());
@@ -286,6 +291,7 @@ void MessageWidget::paintEvent(QPaintEvent *event)
 	}
 
 	if (bgColor != QColor(Qt::white)) {
+		QPainter painter(this);
 		painter.setPen(QColor(Qt::black));
 		painter.setBrush(bgColor);
 		painter.drawRoundedRect(drawRect, 5.0, 5.0);

@@ -160,9 +160,7 @@ int RvtH::openGcm(RefFile *f_img)
 
 fail:
 	// Failed to open the disc image.
-	if (reader) {
-		delete reader;
-	}
+	delete reader;
 	if (m_file) {
 		m_file->unref();
 		m_file = nullptr;
@@ -526,9 +524,7 @@ RvtH::~RvtH()
 	// Close all bank entry files.
 	// RefFile has a reference count, so we have to clear the count.
 	for (unsigned int i = 0; i < m_bankCount; i++) {
-		if (m_entries[i].reader) {
-			delete m_entries[i].reader;
-		}
+		delete m_entries[i].reader;
 		free(m_entries[i].ptbl);
 	}
 

@@ -51,7 +51,7 @@ class DeviceQueryData {
 		uint64_t size;		// HDD size, in bytes.
 
 	public:
-		DeviceQueryData() { }
+		DeviceQueryData() : size(0) { }
 
 		DeviceQueryData(const RvtH_QueryEntry *entry)
 			: device_name(qsFromTCHAR(entry->device_name))

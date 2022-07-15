@@ -27,8 +27,8 @@ class WorkerObjectPrivate
 			: q_ptr(q)
 			, rvth(nullptr)
 			, bank(~0U)
-			, recryption_key(-1)
 			, flags(0U)
+			, recryption_key(-1)
 			, cancel(false) { }
 
 	protected:
@@ -39,12 +39,12 @@ class WorkerObjectPrivate
 
 	public:
 		RvtH *rvth;
-		unsigned int bank;
-		int recryption_key;
-		unsigned int flags;
-
 		QString gcmFilename;
 		QString gcmFilenameOnly;
+
+		unsigned int bank;
+		unsigned int flags;
+		int recryption_key;
 
 		// Cancel the current process.
 		// TODO: Mutex?

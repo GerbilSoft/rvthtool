@@ -330,7 +330,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 				sha1_digest(&sha1, sizeof(digest), digest);
 
 				unsigned int h1_idx = (block_number / 16) % 16;
-				if (memcmp(digest, block->hashes.h1[h1_idx], sizeof(digest))) {
+				if (memcmp(digest, block->hashes.h1[h1_idx], sizeof(digest)) != 0) {
 					bad_hash[1]++;
 				}
 			}
@@ -343,7 +343,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 				sha1_digest(&sha1, sizeof(digest), digest);
 
 				unsigned int h2_idx = (block_number / (16*16)) % 16;
-				if (memcmp(digest, block->hashes.h2[h2_idx], sizeof(digest))) {
+				if (memcmp(digest, block->hashes.h2[h2_idx], sizeof(digest)) != 0) {
 					bad_hash[2]++;
 				}
 			}
@@ -360,7 +360,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 					// Out of bounds...
 					bad_hash[3]++;
 				} else {
-					if (memcmp(digest, &hash_h3[h3_byte_pos], sizeof(digest))) {
+					if (memcmp(digest, &hash_h3[h3_byte_pos], sizeof(digest)) != 0) {
 						bad_hash[3]++;
 					}
 				}

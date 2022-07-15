@@ -65,7 +65,8 @@ void QTreeViewOpt::showColumnContextMenu(const QPoint &point)
 	QMenu *menu = new QMenu();
 	QAction *action;
 
-	int index = this->header()->logicalIndexAt(point);
+	QHeaderView* const header = this->header();
+	int index = header->logicalIndexAt(point);
 	if (index >= 0) {
 		// Column is selected. Add an option to hide it.
 		action = new QAction(menu);
@@ -81,10 +82,10 @@ void QTreeViewOpt::showColumnContextMenu(const QPoint &point)
 	}
 
 	// Add options to show hidden columns.
-	if (this->header()->sectionsHidden()) {
+	if (header->sectionsHidden()) {
 		int num_sections = this->model()->columnCount();
 		for (int i = 0; i < num_sections; i++) {
-			if (this->header()->isSectionHidden(i)) {
+			if (header->isSectionHidden(i)) {
 				action = new QAction(menu);
 				action->setText(tr("Show Column '%1'")
 					.arg(this->model()->headerData(i, Qt::Horizontal, Qt::DisplayRole).toString()));
@@ -97,7 +98,7 @@ void QTreeViewOpt::showColumnContextMenu(const QPoint &point)
 	}
 
 	// Show the menu and wait for the user to select an option.
-	QAction *result = menu->exec(this->header()->mapToGlobal(point));
+	QAction *result = menu->exec(header->mapToGlobal(point));
 	if (!result) {
 		// Menu was cancelled.
 		menu->deleteLater();
