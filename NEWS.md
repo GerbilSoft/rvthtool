@@ -1,6 +1,6 @@
 # Changes
 
-## v2.0 - GUI Release (released 2019/??/??)
+## v2.0 - GUI Release (released 2022/??/??)
 
 New features:
 * GUI frontend written using the Qt Toolkit.
@@ -11,6 +11,12 @@ New features:
     encrypting for retail or Korean, or realsigned if encrypting for debug.
   * Both standard and BroadOn WAD format are supported for both input and
     output.
+  * **WARNING:** Use with caution if converting system titles for use
+    on real hardware.
+* nusresign: Command line tool to recrypt and resign NUS/WUP packages.
+  * Can decrypt and encrypt from and to retail and debug.
+  * The resulting NUS package will be fakesigned if encrypting for retail,
+    or realsigned if encrypting for debug.
   * **WARNING:** Use with caution if converting system titles for use
     on real hardware.
 
