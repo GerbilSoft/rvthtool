@@ -519,8 +519,8 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	this->setAttribute(Qt::WA_DeleteOnClose, true);
 
 #ifdef Q_OS_MAC
-	// Remove the window icon. (Mac "proxy icon")
-	// TODO: Use the memory card file?
+	// Mac OS: Remove the window icon initially.
+	// It will be set when a filename is selected.
 	this->setWindowIcon(QIcon());
 #endif /* Q_OS_MAC */
 

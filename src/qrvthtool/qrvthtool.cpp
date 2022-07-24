@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
 	app->setOrganizationDomain(QLatin1String("gerbilsoft.com"));
 	app->setOrganizationName(QLatin1String("GerbilSoft"));
 	app->setApplicationVersion(QLatin1String(VERSION_STRING));
+	app->setDesktopFileName(QLatin1String("qrvthtool.desktop"));
 
 	// Initialize the TranslationManager.
 	TranslationManager *const tsm = TranslationManager::instance();
