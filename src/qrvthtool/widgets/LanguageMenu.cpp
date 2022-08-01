@@ -3,15 +3,18 @@
  * LanguageMenu.cpp: QMenu subclass for selecting a UI language.           *
  *                                                                         *
  * Copyright (c) 2012-2022 by David Korth.                                 *
- * SPDX-License-Identifier: GPL-2.0-or-later                               * *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "LanguageMenu.hpp"
 
-// Translation Manager.
+// Translation Manager
 #include "TranslationManager.hpp"
 
-// Qt includes.
+// C includes (C++ namespace)
+#include <cassert>
+
+// Qt includes
 #include <QtCore/QEvent>
 #include <QtCore/QFile>
 #include <QtCore/QHash>
@@ -142,9 +145,15 @@ void LanguageMenuPrivate::clear(void)
  */
 QIcon LanguageMenuPrivate::iconForLocale(const QString &locale)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5,14,0)
+#  define QT_SKIPEMPTYPARTS Qt::SkipEmptyParts
+#else /* QT_VERSION <= QT_VERSION_CHECK(5,14,0) */
+#  define QT_SKIPEMPTYPARTS QString::SkipEmptyParts
+#endif /* QT_VERSION >= QT_VERSION_CHECK(5,14,0) */
+
 	// Check for an icon.
 	// Check region, then language.
-	QStringList locale_parts = locale.split(QChar(L'_'), Qt::SkipEmptyParts);
+	QStringList locale_parts = locale.split(QChar(L'_'), QT_SKIPEMPTYPARTS);
 	QIcon flagIcon;
 	for (int i = (locale_parts.size() - 1); i >= 0; i--) {
 		QString filename = QLatin1String(":/flags/") +
