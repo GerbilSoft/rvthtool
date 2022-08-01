@@ -47,7 +47,7 @@ IF(QT_VERSION EQUAL 5)
 			SET("${outfiles}" "${${outfiles}}" PARENT_SCOPE)
 		ENDFUNCTION(QT_WRAP_UI)
 		FUNCTION(QT_ADD_DBUS_INTERFACES sources)
-			QT5_ADD_DBUS_INTERFACE("${sources}" ${ARGN})
+			QT5_ADD_DBUS_INTERFACES("${sources}" ${ARGN})
 			SET("${sources}" "${${sources}}" PARENT_SCOPE)
 		ENDFUNCTION(QT_ADD_DBUS_INTERFACES sources)
 	ENDIF(Qt5_VERSION VERSION_LESS 5.15.0)
@@ -214,10 +214,7 @@ ELSEIF(UNIX AND NOT APPLE)
 		# Enable DockManager / Unity API support.
 		# NOTE: The D-Bus interfaces are generated in ${CMAKE_CURRENT_BINARY_DIR},
 		# *not* ${CMAKE_CURRENT_BINARY_DIR}/dbus/.
-		QT_ADD_DBUS_INTERFACES(
-			qrvthtool_DBUS_INTERFACE_SRCS
-			${DBus_XML_SRCS}
-			)
+		QT_ADD_DBUS_INTERFACES(qrvthtool_DBUS_INTERFACE_SRCS ${DBus_XML_SRCS})
 		SET(qrvthtool_TBM_SRCS
 			${qrvthtool_TBM_SRCS}
 			${qrvthtool_DBUS_INTERFACE_SRCS}
