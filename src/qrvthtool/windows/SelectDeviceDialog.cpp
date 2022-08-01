@@ -22,7 +22,10 @@
 #  include <devguid.h>
 #endif /* _WIN32 */
 
-// Qt includes.
+// C includes (C++ namespace)
+#include <cassert>
+
+// Qt includes
 #include <QtCore/QLocale>
 #include <QPushButton>
 #include <QMetaMethod>
