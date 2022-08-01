@@ -562,9 +562,10 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	//d->ui.lstBankList->sortByColumn(RvtHModel::COL_BANKNUM, Qt::AscendingOrder);
 
 	// Initialize the UI.
-	d->updateLstBankList();
 	d->initToolbar();
+	d->updateLstBankList();
 	d->updateWindowTitle();
+	d->updateActionEnableStatus();
 
 	/** Progress bar widgets **/
 	d->lblMessage = new QLabel();
@@ -706,6 +707,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	// Update the UI.
 	d->updateLstBankList();
 	d->updateWindowTitle();
+	d->updateActionEnableStatus();
 
 	// FIXME: If a file is opened from the command line,
 	// QTreeView sort-of selects the first file.
@@ -735,6 +737,7 @@ void QRvtHToolWindow::closeRvtH(void)
 	// Update the UI.
 	d->updateLstBankList();
 	d->updateWindowTitle();
+	d->updateActionEnableStatus();
 }
 
 /**
