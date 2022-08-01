@@ -81,11 +81,14 @@ int main(int argc, char *argv[])
 
 	QApplication *app = new QApplication(argc, argv);
 	app->setApplicationName(QLatin1String("qrvthtool"));
-	app->setApplicationDisplayName(QLatin1String("RVT-H Tool"));
 	app->setOrganizationDomain(QLatin1String("gerbilsoft.com"));
 	app->setOrganizationName(QLatin1String("GerbilSoft"));
 	app->setApplicationVersion(QLatin1String(VERSION_STRING));
+
+	app->setApplicationDisplayName(QLatin1String("RVT-H Tool"));
+#if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 	app->setDesktopFileName(QLatin1String("qrvthtool.desktop"));
+#endif /* QT_VERSION >= QT_VERSION_CHECK(5,7,0) */
 
 	// Initialize the TranslationManager.
 	TranslationManager *const tsm = TranslationManager::instance();
