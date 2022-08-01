@@ -119,12 +119,14 @@ void RvtHModelPrivate::style_t::init(void)
 	bgColor_lostFile.getHsv(&h, &s, &v, nullptr);
 	h = 60;
 	s = (255 - s);
+	if (v < 128) v += 48;	// for dark themes
 	bgColor_lostFile.setHsv(h, s, v);
 
 	// "Lost" file. (Alternate)
 	bgColor_lostFile_alt.getHsv(&h, &s, &v, nullptr);
 	h = 60;
 	s = (255 - s);
+	if (v < 128) v += 48;	// for dark themes
 	bgColor_lostFile_alt.setHsv(h, s, v);
 
 	// Save the background colors in QBrush objects.
