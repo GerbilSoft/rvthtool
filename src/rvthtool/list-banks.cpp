@@ -18,7 +18,10 @@
 
 #include "time_r.h"
 
-// C includes. (C++ namespace)
+// C includes
+#include <stdlib.h>
+
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
@@ -313,6 +316,7 @@ int list_banks(const TCHAR *rvth_filename)
 				fputs(" [", stdout);
 				_fputts(s_full_serial, stdout);
 				putchar(']');
+				free(s_full_serial);
 			}
 #endif /* HAVE_QUERY */
 			putchar('\n');
