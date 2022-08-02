@@ -119,8 +119,8 @@ int RefFile::makeWritable(void)
 	// TODO: Use O_DIRECT equivalent on Windows?
 #ifndef _WIN32
 	if (device) {
-		// Open using O_SYNC.
-		int fd = open(m_filename.c_str(), O_RDWR | O_SYNC);
+		// FIXME: O_SYNC breaks recryption somehow...
+		int fd = open(m_filename.c_str(), O_RDWR);
 		if (fd >= 0) {
 			m_file = fdopen(fd, "rb+");
 			if (!m_file) {
