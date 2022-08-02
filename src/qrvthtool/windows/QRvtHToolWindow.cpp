@@ -157,6 +157,19 @@ class QRvtHToolWindowPrivate
 		// Update status.
 		bool updateStatus_didInitialUpdate;
 		int updateStatus_bank;
+
+	public:
+		/**
+		 * Get the selected bank number.
+		 * @return Bank number, or -1 if no banks are selected.
+		 */
+		int selectedBankNumber(void) const;
+
+		/**
+		 * Get the selected bank entry.
+		 * @return Bank entry, or nullptr if no banks are selected.
+		 */
+		const RvtH_BankEntry *selectedBankEntry(void) const;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -504,6 +517,34 @@ void QRvtHToolWindowPrivate::retranslateToolbar(void)
 	cboRecryptionKey->setItemText(2, QRvtHToolWindow::tr("Korean (fakesigned)"));
 	cboRecryptionKey->setItemText(3, QRvtHToolWindow::tr("Debug (realsigned)"));
 	cboRecryptionKey->setCurrentIndex(0);
+}
+
+/**
+ * Get the selected bank number.
+ * @return Bank number, or -1 if no banks are selected.
+ */
+int QRvtHToolWindowPrivate::selectedBankNumber(void) const
+{
+	// Only one bank can be selected.
+	QItemSelectionModel *const selectionModel = ui.lstBankList->selectionModel();
+	if (!selectionModel->hasSelection())
+		return -1;
+
+	QModelIndex index = ui.lstBankList->selectionModel()->currentIndex();
+	if (!index.isValid())
+		return -1;
+
+	return proxyModel->mapToSource(index).row();
+}
+
+/**
+ * Get the selected bank entry.
+ * @return Bank entry, or nullptr if no banks are selected.
+ */
+const RvtH_BankEntry *QRvtHToolWindowPrivate::selectedBankEntry(void) const
+{
+	const int bank = selectedBankNumber();
+	return (bank >= 0) ? rvth->bankEntry(static_cast<unsigned int>(bank)) : nullptr;
 }
 
 /** QRvtHToolWindow **/
@@ -1026,7 +1067,6 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 	if (!index.isValid())
 		return;
 
-	// TODO: Sort proxy model like in mcrecover.
 	const unsigned int bank = d->proxyModel->mapToSource(index).row();
 
 	// Prompt the user for a save location.
@@ -1403,6 +1443,11 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	// NOTE: Need to use deleteLater() to prevent race conditions.
 	d->workerObject->deleteLater();
 	d->workerObject = nullptr;
+
+	// Update BankEntryView.
+	// TODO: Only if importing?
+	const RvtH_BankEntry *const entry = d->selectedBankEntry();
+	d->ui.bevBankEntryView->setBankEntry(entry);
 
 	// Enable the main UI widgets.
 	markUiNotBusy();
