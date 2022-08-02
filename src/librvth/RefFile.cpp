@@ -109,29 +109,16 @@ int RefFile::makeWritable(void)
 
 	// Get the current position.
 	off64_t pos = ftello(m_file);
-	bool device = isDevice();
 
 	// Close and reopen the file as writable.
 	// TODO: Potential race condition...
 	int ret = 0;
 	fclose(m_file);
 	m_file = nullptr;
-	// TODO: Use O_DIRECT equivalent on Windows?
-#ifndef _WIN32
-	if (device) {
-		// FIXME: O_SYNC breaks recryption somehow...
-		int fd = open(m_filename.c_str(), O_RDWR);
-		if (fd >= 0) {
-			m_file = fdopen(fd, "rb+");
-			if (!m_file) {
-				close(fd);
-			}
-		}
-	} else
-#endif /* !_WIN32 */
-	{
-		m_file = _tfopen(m_filename.c_str(), _T("rb+"));
-	}
+
+	// NOTE: O_SYNC breaks recryption somehow. (EREMOTEIO, error 121)
+	// We'll just call flush() every so often instead.
+	m_file = _tfopen(m_filename.c_str(), _T("rb+"));
 
 	if (m_file) {
 		// File reopened as writable.

@@ -14,16 +14,20 @@
 #include "libwiicrypto/common.h"
 #include "tcharx.h"
 
-// C includes.
+// C includes
 #include <stdint.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstdio>
 
-// C++ includes.
+// C++ includes
 #include <string>
+
+#ifndef _WIN32
+#  include <unistd.h>
+#endif /* !_WIN32 */
 
 class RefFile
 {
@@ -147,9 +151,15 @@ class RefFile
 			return ::ftello(m_file);
 		}
 
-		inline off64_t flush(void)
+		inline int flush(void)
 		{
-			return ::fflush(m_file);
+			int ret = ::fflush(m_file);
+			if (ret != 0) return ret;
+#ifdef _WIN32
+			return !FlushFileBuffers((HANDLE)_get_osfhandle(_fileno(m_file)));
+#else /* !_WIN32 */
+			return ::fsync(fileno(m_file));
+#endif /* _WIN32 */
 		}
 
 		inline void rewind(void)

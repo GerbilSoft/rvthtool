@@ -36,10 +36,14 @@ using std::wstring;
 
 // for disk free space
 #ifdef _WIN32
-# include <windows.h>
+#  include <windows.h>
 #else /* !_WIN32 */
-# include <sys/statvfs.h>
+#  include <sys/statvfs.h>
 #endif /* _WIN32 */
+
+// Buffer size
+#define BUF_SIZE	( 1U*1024U*1024U)
+#define LBA_COUNT_BUF	BYTES_TO_LBA(BUF_SIZE)
 
 /**
  * Get the free disk space on the volume containing `filename`.
@@ -187,9 +191,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 			return RVTH_ERROR_BANK_DL_2;
 	}
 
-	// Process 1 MB at a time.
-	#define BUF_SIZE 1048576
-	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
+	// Allocate the memory buffer.
 	uint8_t *const buf = (uint8_t*)malloc(BUF_SIZE);
 	if (!buf) {
 		// Error allocating memory.
@@ -290,6 +292,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 				// 4 KB block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
 				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 8);
+				entry_dest->reader->flush();
 				lba_nonsparse += 7;
 			}
 		}
@@ -319,6 +322,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 				// 512-byte block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
 				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 1);
+				entry_dest->reader->flush();
 			}
 		}
 	}
@@ -343,9 +347,10 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		// TODO: Check for errors.
 		memset(buf, 0, 512);
 		entry_dest->reader->write(buf, lba_copy_len-1, 1);
+		entry_dest->reader->flush();
 	}
 
-	// Finished extracting the disc image.
+	// Flush the destination device.
 	entry_dest->reader->flush();
 
 end:
@@ -502,6 +507,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 		}
 
 		size = reader->write(sdk_header, 0, SDK_HEADER_SIZE_LBA);
+		reader->flush();
 		if (size != SDK_HEADER_SIZE_LBA) {
 			// Write error.
 			ret = -errno;
@@ -737,9 +743,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		// It has to be updated in memory for qrvthtool, though.
 	}
 
-	// Process 1 MB at a time.
-	#define BUF_SIZE 1048576
-	#define LBA_COUNT_BUF BYTES_TO_LBA(BUF_SIZE)
+	// Allocate the memory buffer.
 	buf = (uint8_t*)malloc(BUF_SIZE);
 	if (!buf) {
 		// Error allocating memory.
@@ -809,6 +813,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		// TODO: Error handling.
 		entry_src->reader->read(buf, lba_count, LBA_COUNT_BUF);
 		entry_dest->reader->write(buf, lba_count, LBA_COUNT_BUF);
+		entry_dest->reader->flush();
 	}
 
 	// Process any remaining LBAs.
@@ -816,6 +821,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		const unsigned int lba_left = lba_copy_len - lba_count;
 		entry_src->reader->read(buf, lba_count, lba_left);
 		entry_dest->reader->write(buf, lba_count, lba_left);
+		entry_dest->reader->flush();
 	}
 
 	if (callback) {
@@ -830,7 +836,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		}
 	}
 
-	// Flush the buffers.
+	// Flush the destination device.
 	entry_dest->reader->flush();
 
 	// Update the bank table.
