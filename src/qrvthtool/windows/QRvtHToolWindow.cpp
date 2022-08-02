@@ -1450,6 +1450,7 @@ void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 	d->ui.bevBankEntryView->setBankEntry(entry);
 
 	// Enable the main UI widgets.
+	d->updateActionEnableStatus();
 	markUiNotBusy();
 }
 
