@@ -292,7 +292,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 				// 4 KB block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
 				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 8);
-				entry_dest->reader->flush();
+				//entry_dest->reader->flush();
 				lba_nonsparse += 7;
 			}
 		}
@@ -322,7 +322,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 				// 512-byte block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
 				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 1);
-				entry_dest->reader->flush();
+				//entry_dest->reader->flush();
 			}
 		}
 	}
@@ -347,7 +347,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		// TODO: Check for errors.
 		memset(buf, 0, 512);
 		entry_dest->reader->write(buf, lba_copy_len-1, 1);
-		entry_dest->reader->flush();
+		//entry_dest->reader->flush();
 	}
 
 	// Flush the destination device.
