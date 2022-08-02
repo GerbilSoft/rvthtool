@@ -25,10 +25,6 @@
 // C++ includes
 #include <string>
 
-#ifndef _WIN32
-#  include <unistd.h>
-#endif /* !_WIN32 */
-
 class RefFile
 {
 	public:
@@ -151,23 +147,14 @@ class RefFile
 			return ::ftello(m_file);
 		}
 
-		inline int flush(void)
-		{
-			int ret = ::fflush(m_file);
-			if (ret != 0) return ret;
-#ifdef _WIN32
-			return !FlushFileBuffers((HANDLE)_get_osfhandle(_fileno(m_file)));
-#else /* !_WIN32 */
-			return ::fsync(fileno(m_file));
-#endif /* _WIN32 */
-		}
+		int flush(void);
 
 		inline void rewind(void)
 		{
 			::rewind(m_file);
 		}
 
-		/** Convenience wrappers. **/
+		/** Convenience wrappers **/
 
 		inline size_t seekoAndRead(off64_t offset, int whence, void *ptr, size_t size, size_t nmemb)
 		{

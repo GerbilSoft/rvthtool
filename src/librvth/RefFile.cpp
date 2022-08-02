@@ -376,3 +376,14 @@ time_t RefFile::mtime(void)
 	return sb.st_mtime;
 #endif
 }
+
+int RefFile::flush(void)
+{
+	int ret = ::fflush(m_file);
+	if (ret != 0) return ret;
+#ifdef _WIN32
+	return !FlushFileBuffers((HANDLE)_get_osfhandle(_fileno(m_file)));
+#else /* !_WIN32 */
+	return ::fsync(fileno(m_file));
+#endif /* _WIN32 */
+}
