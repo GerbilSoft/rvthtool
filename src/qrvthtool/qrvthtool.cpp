@@ -116,7 +116,14 @@ int main(int argc, char *argv[])
 	// If a filename was specified, open it.
 	QStringList args = app->arguments();
 	if (args.size() >= 2) {
-		window->openRvtH(QDir::fromNativeSeparators(args.at(1)));
+		// TODO: Better device file check.
+		const QString &filename = args.at(1);
+#ifdef _WIN32
+		bool isDevice = filename.startsWith(QLatin1String("/dev/"));
+#else /* !_WIN32 */
+		bool isDevice = filename.startsWith(QLatin1String("\\\\.\\PhysicalDrive", Qt::CaseInsensitive));
+#endif /* _WIN32 */
+		window->openRvtH(QDir::fromNativeSeparators(filename), isDevice);
 	}
 
 	// Show the window.

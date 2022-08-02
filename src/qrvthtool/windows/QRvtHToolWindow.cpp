@@ -658,9 +658,10 @@ QRvtHToolWindow::~QRvtHToolWindow()
 
 /**
  * Open an RVT-H Reader disk image.
- * @param filename Filename.
+ * @param filename Filename
+ * @param isDevice True if opened using SelectDeviceDialog
  */
-void QRvtHToolWindow::openRvtH(const QString &filename)
+void QRvtHToolWindow::openRvtH(const QString &filename, bool isDevice)
 {
 	Q_D(QRvtHToolWindow);
 
@@ -671,14 +672,24 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	}
 
 	// Processing...
+	QString text;
+	if (isDevice) {
+		text = tr("Opening RVT-H Reader device '%1'...").arg(filename);
+	} else {
+		text = tr("Opening disc image file '%1'...").arg(filename);
+	}
+	d->lblMessage->setText(text);
 	markUiBusy();
 
 	// Open the specified RVT-H Reader disk image.
+	// NOTE: RvtH expects native separators.
+
 	int err = 0;
+	const QString filenameNativeSeparators = QDir::toNativeSeparators(filename);
 #ifdef _WIN32
-	RvtH *const rvth_tmp = new RvtH(reinterpret_cast<const wchar_t*>(filename.utf16()), &err);
+	RvtH *const rvth_tmp = new RvtH(reinterpret_cast<const wchar_t*>(filenameNativeSeparators.utf16()), &err);
 #else /* !_WIN32 */
-	RvtH *const rvth_tmp = new RvtH(filename.toUtf8().constData(), &err);
+	RvtH *const rvth_tmp = new RvtH(filenameNativeSeparators.toUtf8().constData(), &err);
 #endif
 	if (!rvth_tmp->isOpen() || err != 0) {
 		// Unable to open the RVT-H Reader disk image.
@@ -687,6 +698,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 			.arg(QString::fromUtf8(rvth_error(err)));
 		d->ui.msgWidget->showMessage(errMsg, MessageWidget::ICON_CRITICAL);
 		delete rvth_tmp;
+		d->lblMessage->setText(QString());
 		markUiNotBusy();
 		return;
 	}
@@ -753,6 +765,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename)
 	// FIXME: If a file is opened from the command line,
 	// QTreeView sort-of selects the first file.
 	// (Signal is emitted, but nothing is highlighted.)
+	d->lblMessage->setText(QString());
 	markUiNotBusy();
 }
 
@@ -977,12 +990,12 @@ void QRvtHToolWindow::on_actionOpenDiskImage_triggered(void)
 		d->lastPath = QFileInfo(filename).absolutePath();
 
 		// Open the RVT-H Reader disk image.
-		openRvtH(filename);
+		openRvtH(filename, false);
 	}
 }
 
 /**
- * Open an RVT-H Reader disk image or standalone GCM disc image.
+ * Open an RVT-H Reader device.
  */
 void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
 {
@@ -993,9 +1006,8 @@ void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
 	if (ret == QDialog::Accepted) {
 		QString deviceName = selectDeviceDialog->deviceName();
 		if (!deviceName.isEmpty()) {
-			// Filename is selected.
-			// TODO: Show the serial number?
-			openRvtH(deviceName);
+			// RVT-H Reader device is selected.
+			openRvtH(deviceName, true);
 		}
 	}
 

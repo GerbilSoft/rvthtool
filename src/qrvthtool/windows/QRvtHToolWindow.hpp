@@ -31,9 +31,10 @@ class QRvtHToolWindow : public QMainWindow
 	public:
 		/**
 		 * Open an RVT-H Reader disk image.
-		 * @param filename Filename.
+		 * @param filename Filename (using NATIVE separators)
+		 * @param isDevice True if opened using SelectDeviceDialog
 		 */
-		void openRvtH(const QString &filename);
+		void openRvtH(const QString &filename, bool isDevice);
 
 		/**
 		 * Close the currently-opened RVT-H Reader disk image.
