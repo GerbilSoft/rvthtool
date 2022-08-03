@@ -359,22 +359,22 @@ IF(INSTALL_DEBUG)
 	ENDIF()
 ENDIF(INSTALL_DEBUG)
 
-# FreeDesktop.org specifications.
-IF(UNIX AND NOT APPLE)
-	# Icons.
+# FreeDesktop.org specifications
+IF(DIR_INSTALL_XDG_ICONS)
 	FOREACH(ICON_SIZE 16x16 22x22 24x24 32x32 48x48 64x64 128x128 256x256)
 		INSTALL(FILES resources/hw/${ICON_SIZE}/rvth.png
-			DESTINATION share/icons/hicolor/${ICON_SIZE}/apps
+			DESTINATION "${DIR_INSTALL_XDG_ICONS}/hicolor/${ICON_SIZE}/apps"
 			RENAME qrvthtool.png
-			COMPONENT "desktop-icon"
+			COMPONENT "xdg"
 			)
 	ENDFOREACH()
+ENDIF(DIR_INSTALL_XDG_ICONS)
 
-        # Desktop file.
+IF(DIR_INSTALL_XDG_DESKTOP)
         INSTALL(FILES resources/xdg/qrvthtool.desktop
-                DESTINATION share/applications
-                COMPONENT "desktop-icon"
+                DESTINATION "${DIR_INSTALL_XDG_DESKTOP}/com.gerbilsoft.qrvthtool.desktop"
+                COMPONENT "xdg"
                 )
-ENDIF(UNIX AND NOT APPLE)
+ENDIF(DIR_INSTALL_XDG_DESKTOP)
 
 ENDIF(BUILD_QT)
