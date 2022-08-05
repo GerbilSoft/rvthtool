@@ -223,6 +223,7 @@ int RvtH::recryptID(unsigned int bank)
 			errno = err;
 			return ret;
 		}
+		reader->flush();
 
 		// Only if this area is empty!
 		if (isBlockEmpty(&sbuf.u8[0x80], 256)) {
@@ -237,6 +238,7 @@ int RvtH::recryptID(unsigned int bank)
 				errno = err;
 				return ret;
 			}
+			reader->flush();
 		}
 	} else {
 		// Wii. Write at the end of the partition header.
@@ -292,6 +294,7 @@ int RvtH::recryptID(unsigned int bank)
 				}
 				return -err;
 			}
+			reader->flush();
 		}
 	}
 
