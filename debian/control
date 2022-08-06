@@ -27,3 +27,15 @@ Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: RVT-H Tool (GUI)
  This is an open-source tool for managing RVT-H Reader consoles. (GUI)
+
+Package: wadresign
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: WAD Resign
+ WAD Resign is a command-line tool to re-sign Nintendo Wii WAD files.
+
+Package: nusresign
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: NUS Resign
+ NUS Resign is a command-line tool to re-sign Nintendo Wii U NUS packages.

@@ -1,1 +1,4 @@
 /usr/bin/qrvthtool
+/usr/share/applications/com.gerbilsoft.qrvthtool.desktop
+/usr/share/icons/hicolor/*/apps/qrvthtool.png
+/usr/share/metainfo/com.gerbilsoft.qrvthtool.metainfo.xml
