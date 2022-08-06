@@ -91,6 +91,7 @@ int main(int argc, char **argv)
 	f = fopen(dest_h, "w");
 	if (!f) {
 		fprintf(stderr, "*** ERROR creating destination file: %s\n", strerror(errno));
+		free(basename);
 		return EXIT_FAILURE;
 	}
 	fputs("/*\n",f);
