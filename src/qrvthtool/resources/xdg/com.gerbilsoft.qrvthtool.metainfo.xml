@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2018-2022 David Korth <gerbilsoft@gerbilsoft.com> -->
+
+<component type="desktop-application">
+	<id>com.gerbilsoft.qrvthtool</id>
+	<metadata_license>FSFAP</metadata_license>
+	<project_license>GPL-2.0+</project_license>
+	<name>RVT-H Tool</name>
+	<summary>Utility for managing Nintendo RVT-H Reader consoles</summary>
+	<description>
+		<p>
+		RVT-H Tool provides an interface for undeleting, extracting and importing
+		Wii disc images to and from an RVT-H Reader development console.
+		</p>
+	</description>
+	<url type="homepage">https://gerbilsoft.com/</url>
+	<url type="bugtracker">https://github.com/GerbilSoft/rvthtool/issues</url>
+	<url type="vcs-browser">https://github.com/GerbilSoft/rvthtool</url>
+	<provides>
+		<binary>qrvthtool</binary>
+		<binary>rvthtool</binary>
+		<binary>wadresign</binary>
+		<binary>nusresign</binary>
+	</provides>
+	<launchable type="desktop-id">com.gerbilsoft.rom-properties.qrvthtool.desktop</launchable>
+	<categories>
+		<category>Utility</category>
+	</categories>
+	<developer_name>David Korth</developer_name>
+	<update_contact>gerbilsoft@gerbilsoft.com</update_contact>
+	<icon type="local" width="256" height="256">/usr/share/icons/hicolor/256x256/apps/qrvthtool.png</icon>
+	<icon type="local" width="128" height="128">/usr/share/icons/hicolor/128x128/apps/qrvthtool.png</icon>
+	<icon type="local" width="64" height="64">/usr/share/icons/hicolor/64x64/apps/qrvthtool.png</icon>
+	<icon type="local" width="48" height="48">/usr/share/icons/hicolor/48x48/apps/qrvthtool.png</icon>
+	<icon type="local" width="32" height="32">/usr/share/icons/hicolor/32x32/apps/qrvthtool.png</icon>
+	<icon type="local" width="24" height="24">/usr/share/icons/hicolor/24x24/apps/qrvthtool.png</icon>
+	<icon type="local" width="22" height="22">/usr/share/icons/hicolor/22x22/apps/qrvthtool.png</icon>
+	<icon type="local" width="16" height="16">/usr/share/icons/hicolor/16x16/apps/qrvthtool.png</icon>
+	<content_rating type="oars-1.1"/>
+	<releases>
+		<release version="1.1.1" date="2018-09-17"/>
+		<release version="1.1" date="2018-09-17"/>
+		<release version="1.0" date="2018-06-07"/>
+		<release version="0.9" date="2018-04-26"/>
+	</releases>
+</component>
