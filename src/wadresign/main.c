@@ -118,9 +118,9 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		_T("Copyright (c) 2018-2022 by David Korth.\n")
 		_T("This program is NOT licensed or endorsed by Nintendo Co., Ltd.\n"), stdout);
 #ifdef RP_GIT_VERSION
-	_fputts(_T(RP_GIT_VERSION) _T("\n")
+	fputs(RP_GIT_VERSION "\n"
 #  ifdef RP_GIT_DESCRIBE
-		_T(RP_GIT_DESCRIBE) _T("\n")
+		RP_GIT_DESCRIBE "\n"
 #  endif /* RP_GIT_DESCRIBE */
 		, stdout);
 #endif /* RP_GIT_VERSION */
