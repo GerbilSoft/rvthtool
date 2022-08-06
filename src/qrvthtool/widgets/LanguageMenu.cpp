@@ -246,7 +246,7 @@ bool LanguageMenu::setLanguage(const QString &locale)
 		ret = (action != nullptr);
 	}
 	if (action) {
-		d->locale == locale;
+		d->locale = locale;
 	} else {
 		d->locale.clear();
 	}
