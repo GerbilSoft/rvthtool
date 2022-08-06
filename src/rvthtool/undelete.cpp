@@ -27,7 +27,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
 		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
-		_fputts(rvth_error(ret), stderr);
+		fputs(rvth_error(ret), stderr);
 		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
@@ -73,7 +73,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
 		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
-		_fputts(rvth_error(ret), stderr);
+		fputs(rvth_error(ret), stderr);
 		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
