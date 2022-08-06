@@ -507,7 +507,7 @@ int print_wad_info_FILE(FILE *f_wad, const TCHAR *wad_filename, bool verify)
 	}
 
 	// Print the contents.
-	fputs("Contents:\n", stderr);
+	_fputts(_T("Contents:\n"), stderr);
 	nbr_cont = be16_to_cpu(tmdHeader->nbr_cont);
 	boot_index = be16_to_cpu(tmdHeader->boot_index);
 

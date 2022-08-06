@@ -53,7 +53,7 @@ static void ATTR_PRINTF(2, 3) print_error(const TCHAR *argv0, const TCHAR *fmt, 
 		_vftprintf(stderr, fmt, ap);
 		va_end(ap);
 
-		fputc('\n', stderr);
+		_fputtc(_T('\n'), stderr);
 	}
 
 	_ftprintf(stderr, _T("Try `%s` --help` for more information.\n"), argv0);
@@ -129,16 +129,17 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Set the C locale.
 	setlocale(LC_ALL, "");
 
-	_fputts(_T("NUS Resigner v") _T(VERSION_STRING) _T("\n")
-		_T("Copyright (c) 2018-2022 by David Korth.\n"), stdout);
-	fputs(
+	_fputts(_T("Wii U NUS Resigner v") _T(VERSION_STRING) _T("\n")
+		_T("Copyright (c) 2018-2022 by David Korth.\n")
+		_T("This program is NOT licensed or endorsed by Nintendo Co., Ltd.\n"), stdout);
 #ifdef RP_GIT_VERSION
-		RP_GIT_VERSION "\n"
+	_fputts(_T(RP_GIT_VERSION) _T("\n")
 #  ifdef RP_GIT_DESCRIBE
-		RP_GIT_DESCRIBE "\n"
-#  endif
-#endif
-		"\n", stdout);
+		_T(RP_GIT_DESCRIBE) _T("\n")
+#  endif /* RP_GIT_DESCRIBE */
+		, stdout);
+#endif /* RP_GIT_VERSION */
+	_fputtc(_T('\n'), stdout);
 
 	// Using Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso

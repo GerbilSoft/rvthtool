@@ -26,9 +26,9 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	int ret;
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
-		fputs("*** ERROR opening RVT-H device '", stderr);
-		_fputts(rvth_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
+		_fputts(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
 	}
@@ -37,9 +37,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	TCHAR *endptr;
 	unsigned int bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
 	if (*endptr != 0 || bank > rvth->bankCount()) {
-		fputs("*** ERROR: Invalid bank number '", stderr);
-		_fputts(s_bank, stderr);
-		fputs("'.\n", stderr);
+		_ftprintf(stderr, _T("*** ERROR: Invalid bank number '%s'.\n"), s_bank);
 		delete rvth;
 		return -EINVAL;
 	}
@@ -52,7 +50,7 @@ int delete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	// Delete the bank.
 	ret = rvth->deleteBank(bank);
 	if (ret == 0) {
-		printf("Bank %u deleted.\n", bank+1);
+		_tprintf(_T("Bank %u deleted.\n"), bank+1);
 	} else {
 		// TODO: Delete the gcm file?
 		fprintf(stderr, "*** ERROR: rvth_delete() failed: %s\n", rvth_error(ret));
@@ -74,9 +72,9 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	int ret;
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
-		fputs("*** ERROR opening RVT-H device '", stderr);
-		_fputts(rvth_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
+		_fputts(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
 	}
@@ -85,9 +83,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	TCHAR *endptr;
 	unsigned int bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
 	if (*endptr != 0 || bank > rvth->bankCount()) {
-		fputs("*** ERROR: Invalid bank number '", stderr);
-		_fputts(s_bank, stderr);
-		fputs("'.\n", stderr);
+		_ftprintf(stderr, _T("*** ERROR: Invalid bank number '%s'.\n"), s_bank);
 		delete rvth;
 		return -EINVAL;
 	}
@@ -100,7 +96,7 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	// Undelete the bank.
 	ret = rvth->undeleteBank(bank);
 	if (ret == 0) {
-		printf("Bank %u undeleted.\n", bank+1);
+		_tprintf(_T("Bank %u undeleted.\n"), bank+1);
 	} else {
 		// TODO: Delete the gcm file?
 		fprintf(stderr, "*** ERROR: rvth_undelete() failed: %s\n", rvth_error(ret));

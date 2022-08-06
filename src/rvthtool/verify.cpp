@@ -126,9 +126,9 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	int ret;
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
-		fputs("*** ERROR opening RVT-H device '", stderr);
-		_fputts(rvth_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
+		_fputts(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
 	}
@@ -139,9 +139,7 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		TCHAR *endptr;
 		bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
 		if (*endptr != 0 || bank > rvth->bankCount()) {
-			fputs("*** ERROR: Invalid bank number '", stderr);
-			_fputts(s_bank, stderr);
-			fputs("'.\n", stderr);
+			_ftprintf(stderr, _T("*** ERROR: Invalid bank number '%s'.\n"), s_bank);
 			delete rvth;
 			return -EINVAL;
 		}
@@ -150,8 +148,8 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 		// Assume 1 bank if this is a standalone disc image.
 		// For HDD images or RVT-H Readers, this is an error.
 		if (rvth->bankCount() != 1) {
-			fprintf(stderr, "*** ERROR: Must specify a bank number for this RVT-H Reader%s.\n",
-				rvth->isHDD() ? "" : " disk image");
+			_ftprintf(stderr, _T("*** ERROR: Must specify a bank number for this RVT-H Reader%s.\n"),
+				rvth->isHDD() ? _T("") : _T(" disk image"));
 			delete rvth;
 			return -EINVAL;
 		}
@@ -163,11 +161,11 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	print_bank(rvth, bank);
 	putchar('\n');
 
-	printf("Verifying Bank %u...\n", bank+1);
+	_tprintf(_T("Verifying Bank %u...\n"), bank+1);
 	fflush(stdout);
 	ret = rvth->verifyWiiPartitions(bank, progress_callback);
 	if (ret == 0) {
-		printf("Bank %u verified with (TODO) errors.\n", bank+1);
+		_tprintf(_T("Bank %u verified with (TODO) errors.\n"), bank+1);
 	} else {
 		fprintf(stderr, "*** ERROR: rvth->verify() failed: %s\n", rvth_error(ret));
 	}

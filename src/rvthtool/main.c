@@ -2,7 +2,7 @@
  * RVT-H Tool                                                              *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -32,23 +32,23 @@
 #include "query.h"
 
 #ifdef _MSC_VER
-# define RVTH_CDECL __cdecl
+#  define RVTH_CDECL __cdecl
 #else
-# define RVTH_CDECL
+#  define RVTH_CDECL
 #endif
 
 #ifdef _WIN32
-# define DEVICE_NAME_EXAMPLE "\\\\.\\PhysicalDriveN"
+#  define DEVICE_NAME_EXAMPLE "\\\\.\\PhysicalDriveN"
 #else
 // TODO: Non-Linux systems.
-# define DEVICE_NAME_EXAMPLE "/dev/sdX"
+#  define DEVICE_NAME_EXAMPLE "/dev/sdX"
 #endif
 
 // FIXME: gcc doesn't support printf attributes for wide strings.
 #if defined(__GNUC__) && !defined(_WIN32)
-# define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
+#  define ATTR_PRINTF(fmt, args) __attribute__ ((format (printf, (fmt), (args))))
 #else
-# define ATTR_PRINTF(fmt, args)
+#  define ATTR_PRINTF(fmt, args)
 #endif
 
 // Uncomment this to display hidden options in the help message.
@@ -69,7 +69,7 @@ static void ATTR_PRINTF(2, 3) print_error(const TCHAR *argv0, const TCHAR *fmt, 
 		_vftprintf(stderr, fmt, ap);
 		va_end(ap);
 
-		fputc('\n', stderr);
+		_fputtc(_T('\n'), stderr);
 	}
 
 	_ftprintf(stderr, _T("Try `%s` --help` for more information.\n"), argv0);
@@ -81,62 +81,59 @@ static void ATTR_PRINTF(2, 3) print_error(const TCHAR *argv0, const TCHAR *fmt, 
  */
 static void print_help(const TCHAR *argv0)
 {
-	fputs("This program is licensed under the GNU GPL v2.\n"
-		"For more information, visit: http://www.gnu.org/licenses/\n"
-		"\n", stdout);
+	_fputts(_T("This program is licensed under the GNU GPL v2.\n")
+		_T("For more information, visit: http://www.gnu.org/licenses/\n")
+		_T("\n"), stdout);
 
-	fputs("Syntax: ", stdout);
-	_fputts(argv0, stdout);
-	fputs(" [options] [command]\n"
-		"\n"
-		"Supported commands:\n"
-		"\n"
-		"list rvth.img\n"
-		"- List banks in the specified RVT-H device or disk image.\n"
-		"\n"
-		"extract " DEVICE_NAME_EXAMPLE " bank# disc.gcm\n"
-		"- Extract the specified bank number from rvth.img to disc.gcm.\n"
-		"\n"
-		"import " DEVICE_NAME_EXAMPLE " bank# disc.gcm\n"
-		"- Import disc.gcm into rvth.img at the specified bank number.\n"
-		"  The destination bank must be either empty or deleted.\n"
-		"  [This command only works with RVT-H Readers, not disk images.]\n"
-		"\n"
-		"delete " DEVICE_NAME_EXAMPLE " bank#\n"
-		"- Delete the specified bank number from the specified RVT-H device.\n"
-		"  This does NOT wipe the disc image.\n"
-		"  [This command only works with RVT-H Readers, not disk images.]\n"
-		"\n"
-		"undelete " DEVICE_NAME_EXAMPLE " bank#\n"
-		"- Undelete the specified bank number from the specified RVT-H device.\n"
-		"  [This command only works with RVT-H Readers, not disk images.]\n"
-		"\n"
-		"verify " DEVICE_NAME_EXAMPLE " bank#\n"
-		"- Verify all hashes on an encrypted Wii or RVT-R bank or disc image.\n"
-		"\n"
-		"query\n"
-		"- Query all available RVT-H Reader devices and list them.\n"
+	_tprintf(_T("Syntax: %s [options] [command]\n\n"), argv0);
+	_fputts(_T("Supported commands:\n")
+		_T("\n")
+		_T("list rvth.img\n")
+		_T("- List banks in the specified RVT-H device or disk image.\n")
+		_T("\n")
+		_T("extract " _T(DEVICE_NAME_EXAMPLE) " bank# disc.gcm\n")
+		_T("- Extract the specified bank number from rvth.img to disc.gcm.\n")
+		_T("\n")
+		_T("import " _T(DEVICE_NAME_EXAMPLE) " bank# disc.gcm\n")
+		_T("- Import disc.gcm into rvth.img at the specified bank number.\n")
+		_T("  The destination bank must be either empty or deleted.\n")
+		_T("  [This command only works with RVT-H Readers, not disk images.]\n")
+		_T("\n")
+		_T("delete " _T(DEVICE_NAME_EXAMPLE) " bank#\n")
+		_T("- Delete the specified bank number from the specified RVT-H device.\n")
+		_T("  This does NOT wipe the disc image.\n")
+		_T("  [This command only works with RVT-H Readers, not disk images.]\n")
+		_T("\n")
+		_T("undelete " _T(DEVICE_NAME_EXAMPLE) " bank#\n")
+		_T("- Undelete the specified bank number from the specified RVT-H device.\n")
+		_T("  [This command only works with RVT-H Readers, not disk images.]\n")
+		_T("\n")
+		_T("verify " _T(DEVICE_NAME_EXAMPLE) " bank#\n")
+		_T("- Verify all hashes on an encrypted Wii or RVT-R bank or disc image.\n")
+		_T("\n")
+		_T("query\n")
+		_T("- Query all available RVT-H Reader devices and list them.\n")
 #ifndef HAVE_QUERY
-		"  [NOTE: Not available on this system.]\n"
+		_T("  [NOTE: Not available on this system.]\n")
 #endif /* HAVE_QUERY */
-		"\n"
-		"help\n"
-		"- Display this help and exit.\n"
-		"\n"
-		"Options:\n"
-		"\n"
-		"  -k, --recrypt=KEY         Recrypt the image using the specified KEY:\n"
-		"                            default, retail, korean, debug\n"
-		"                            Recrypting to retail will use fakesigning.\n"
-		"                            Importing to RVT-H will always use debug keys.\n"
-		"  -N, --ndev                Prepend extracted images with a 32 KB header\n"
-		"                            required by official SDK tools.\n"
+		_T("\n")
+		_T("help\n")
+		_T("- Display this help and exit.\n")
+		_T("\n")
+		_T("Options:\n")
+		_T("\n")
+		_T("  -k, --recrypt=KEY         Recrypt the image using the specified KEY:\n")
+		_T("                            default, retail, korean, debug\n")
+		_T("                            Recrypting to retail will use fakesigning.\n")
+		_T("                            Importing to RVT-H will always use debug keys.\n")
+		_T("  -N, --ndev                Prepend extracted images with a 32 KB header\n")
+		_T("                            required by official SDK tools.\n")
 #ifdef SHOW_HIDDEN_OPTIONS
-		"  -I, --ios=xx              Force IOSxx when importing a disc image to\n"
-		"                            an RVT-H Reader."
+		_T("  -I, --ios=xx              Force IOSxx when importing a disc image to\n")
+		_T("                            an RVT-H Reader.")
 #endif /* SHOW_HIDDEN_OPTIONS */
-		"  -h, --help                Display this help and exit.\n"
-		"\n"
+		_T("  -h, --help                Display this help and exit.\n")
+		_T("\n")
 		, stdout);
 }
 
@@ -162,17 +159,17 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	// Set the C locale.
 	setlocale(LC_ALL, "");
 
-	puts("RVT-H Tool v" VERSION_STRING "\n"
-		"Copyright (c) 2018-2019 by David Korth.\n"
-		"This program is NOT licensed or endorsed by Nintendo Co, Ltd."
-	);
+	_fputts(_T("RVT-H Tool v") _T(VERSION_STRING) _T("\n")
+		_T("Copyright (c) 2018-2022 by David Korth.\n")
+		_T("This program is NOT licensed or endorsed by Nintendo Co., Ltd.\n"), stdout);
 #ifdef RP_GIT_VERSION
-	puts(RP_GIT_VERSION);
-# ifdef RP_GIT_DESCRIBE
-	puts(RP_GIT_DESCRIBE);
-# endif
-#endif
-	putchar('\n');
+	_fputts(_T(RP_GIT_VERSION) _T("\n")
+#  ifdef RP_GIT_DESCRIBE
+		_T(RP_GIT_DESCRIBE) _T("\n")
+#  endif /* RP_GIT_DESCRIBE */
+		, stdout);
+#endif /* RP_GIT_VERSION */
+	_fputtc(_T('\n'), stdout);
 
 	// Unicode getopt() for Windows:
 	// - https://www.codeproject.com/Articles/157001/Full-getopt-Port-for-Unicode-and-Multibyte-Microso

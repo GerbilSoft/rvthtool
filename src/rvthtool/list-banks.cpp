@@ -50,8 +50,9 @@ static void trim_title(char *title, int size)
 int print_bank(const RvtH *rvth, unsigned int bank)
 {
 	// Region codes.
-	static const char region_code_tbl[7][4] = {
-		"JPN", "USA", "EUR", "ALL", "KOR", "CHN", "TWN"
+	static const TCHAR region_code_tbl[7][4] = {
+		_T("JPN"), _T("USA"), _T("EUR"), _T("ALL"),
+		_T("KOR"), _T("CHN"), _T("TWN")
 	};
 
 	const unsigned int bank_count = rvth->bankCount();
@@ -73,14 +74,14 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 			return ret;
 		}
 		if (is_hdd) {
-			printf("Bank %u: ", bank+1);
+			_tprintf(_T("Bank %u: "), bank+1);
 		} else {
-			fputs("Disc image: ", stdout);
+			_fputts(_T("Disc image: "), stdout);
 		}
 		if (ret == RVTH_ERROR_BANK_EMPTY) {
-			fputs("Empty\n\n", stdout);
+			_fputts(_T("Empty\n\n"), stdout);
 		} else {
-			fputs("Unknown\n\n", stdout);
+			_fputts(_T("Unknown\n\n"), stdout);
 		}
 		return 0;
 	} else if (entry->type == RVTH_BankType_Wii_DL_Bank2) {
@@ -89,44 +90,44 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 		return 0;
 	}
 
-	const char *s_type;
+	const TCHAR *s_type;
 	switch (entry->type) {
 		case RVTH_BankType_Empty:
-			s_type = "Empty";
+			s_type = _T("Empty");
 			break;
 		case RVTH_BankType_Unknown:
 			// TODO: Print the bank type magic?
-			s_type = "Unknown";
+			s_type = _T("Unknown");
 			break;
 		case RVTH_BankType_GCN:
-			s_type = "GameCube";
+			s_type = _T("GameCube");
 			break;
 		case RVTH_BankType_Wii_SL:
-			s_type = "Wii (Single-Layer)";
+			s_type = _T("Wii (Single-Layer)");
 			break;
 		case RVTH_BankType_Wii_DL:
 			// TODO: Invalid for Bank 8; need to skip the next bank.
-			s_type = "Wii (Dual-Layer)";
+			s_type = _T("Wii (Dual-Layer)");
 			break;
 		case RVTH_BankType_Wii_DL_Bank2:
 			// NOTE: Should not happen...
-			s_type = "Wii (Dual-Layer) (Bank 2)";
+			s_type = _T("Wii (Dual-Layer) (Bank 2)");
 			break;
 		default:
-			s_type = "Unknown";
+			s_type = _T("Unknown");
 			break;
 	}
 
 	if (is_hdd) {
-		printf("Bank %u: ", bank+1);
+		_tprintf(_T("Bank %u: "), bank+1);
 	} else {
-		fputs("Disc image: ", stdout);
+		_fputts(_T("Disc image: "), stdout);
 	}
-	printf("%s%s\n", s_type, (entry->is_deleted ? " [DELETED]" : ""));
+	_tprintf(_T("%s%s\n"), s_type, (entry->is_deleted ? _T(" [DELETED]") : _T("")));
 
-	// LBAs.
-	printf("- LBA start:   0x%08X\n", entry->lba_start);
-	printf("- LBA length:  0x%08X\n", entry->lba_len);
+	// LBAs
+	_tprintf(_T("- LBA start:   0x%08X\n"), entry->lba_start);
+	_tprintf(_T("- LBA length:  0x%08X\n"), entry->lba_len);
 
 	if (entry->type <= RVTH_BankType_Unknown ||
 	    entry->type >= RVTH_BankType_MAX)
@@ -139,17 +140,17 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	if (entry->timestamp != -1) {
 		struct tm timestamp;
 		gmtime_r(&entry->timestamp, &timestamp);
-		printf("- Timestamp:   %04d/%02d/%02d %02d:%02d:%02d\n",
+		_tprintf(_T("- Timestamp:   %04d/%02d/%02d %02d:%02d:%02d\n"),
 			timestamp.tm_year + 1900, timestamp.tm_mon + 1, timestamp.tm_mday,
 			timestamp.tm_hour, timestamp.tm_min, timestamp.tm_sec);
 	} else {
-		printf("- Timestamp:   Unknown\n");
+		_fputts(_T("- Timestamp:   Unknown\n"), stdout);
 	}
 
-	// Game ID.
+	// Game ID
 	printf("- Game ID:     %.6s\n", entry->discHeader.id6);
 
-	// Game title.
+	// Game title
 	char game_title[65];
 	memcpy(game_title, entry->discHeader.game_title, 64);
 	game_title[64] = 0;
@@ -158,14 +159,14 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	printf("- Disc #:      %u\n", entry->discHeader.disc_number);
 	printf("- Revision:    %u\n", entry->discHeader.revision);
 
-	// Region code.
-	fputs("- Region code: ", stdout);
+	// Region code
+	_fputts(_T("- Region code: "), stdout);
 	if (entry->region_code < ARRAY_SIZE(region_code_tbl)) {
-		fputs(region_code_tbl[entry->region_code], stdout);
+		_fputts(region_code_tbl[entry->region_code], stdout);
 	} else {
-		printf("0x%02X", entry->region_code);
+		_tprintf(_T("0x%02X"), entry->region_code);
 	}
-	putchar('\n');
+	_fputtc(_T('\n'), stdout);
 
 	// Wii encryption status.
 	if (entry->type == RVTH_BankType_Wii_SL ||
@@ -192,62 +193,63 @@ int print_bank(const RvtH *rvth, unsigned int bank)
 	// Check the AppLoader status.
 	// TODO: Move strings to librvth?
 	if (entry->aplerr > APLERR_OK) {
-		printf("\nAPPLOADER ERROR >>> ");
+		_fputts(_T("\nAPPLOADER ERROR >>> "), stdout);
 		switch (entry->aplerr) {
 			default:
-				printf("Unknown (%u)\n", entry->aplerr);
+				_tprintf(_T("Unknown (%u)\n"), entry->aplerr);
 				break;
 
 			// TODO: Get values for these errors.
 			case APLERR_FSTLENGTH:
-				printf("FSTLength(%u) in BB2 is greater than FSTMaxLength(%u).\n",
+				_tprintf(_T("FSTLength(%u) in BB2 is greater than FSTMaxLength(%u).\n"),
 					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 			case APLERR_DEBUGMONSIZE_UNALIGNED:
-				printf("Debug monitor size (%u) should be a multiple of 32.\n",
+				_tprintf(_T("Debug monitor size (%u) should be a multiple of 32.\n"),
 					entry->aplerr_val[0]);
 				break;
 			case APLERR_SIMMEMSIZE_UNALIGNED:
-				printf("Simulated memory size (%u) should be a multiple of 32.\n",
+				_tprintf(_T("Simulated memory size (%u) should be a multiple of 32.\n"),
 				       entry->aplerr_val[0]);
 				break;
 			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
-				printf("[Physical memory size(0x%x)] - [Console simulated memory size(0x%x)]\n"
-					"APPLOADER ERROR >>> must be greater than debug monitor size(0x%x).\n",
+				_tprintf(_T("[Physical memory size(0x%x)] - [Console simulated memory size(0x%x)]\n")
+					_T("APPLOADER ERROR >>> must be greater than debug monitor size(0x%x).\n"),
 					entry->aplerr_val[0], entry->aplerr_val[1], entry->aplerr_val[2]);
 				break;
 			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
-				printf("Physical memory size is 0x%x bytes.\n"
-					"APPLOADER ERROR >>> Console simulated memory size (0x%x) must be smaller than or equal to the Physical memory size.\n",
+				_tprintf(_T("Physical memory size is 0x%x bytes.\n")
+					_T("APPLOADER ERROR >>> Console simulated memory size (0x%x) must be ")
+					_T("smaller than or equal to the Physical memory size.\n"),
 					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 			case APLERR_ILLEGAL_FST_ADDRESS:
-				printf("Illegal FST destination address! (0x%x)\n",
+				_tprintf(_T("Illegal FST destination address! (0x%x)\n"),
 					entry->aplerr_val[0]);
 				break;
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
-				printf("Total size of text/data sections of the dol file are too big (%d(0x%08x) bytes).\n"
-					"APPLOADER ERROR >>> Currently the limit is set as %d(0x%08x) bytes.\n",
+				_tprintf(_T("Total size of text/data sections of the dol file are too big (%d(0x%08x) bytes).\n")
+					_T("APPLOADER ERROR >>> Currently the limit is set as %d(0x%08x) bytes.\n"),
 					static_cast<int>(entry->aplerr_val[0]), entry->aplerr_val[0],
 					static_cast<int>(entry->aplerr_val[1]), entry->aplerr_val[1]);
 				break;
 			case APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED:
-				printf("One of the sections in the dol file exceeded its boundary.\n"
-					"APPLOADER ERROR >>> All the sections should not exceed 0x%08x (production mode).\n"
-					"APPLOADER WARNING >>> NOTE: This disc will still boot on devkits.\n",
+				_tprintf(_T("One of the sections in the dol file exceeded its boundary.\n")
+					_T("APPLOADER ERROR >>> All the sections should not exceed 0x%08x (production mode).\n")
+					_T("APPLOADER WARNING >>> NOTE: This disc will still boot on devkits.\n"),
 					entry->aplerr_val[0]);
 				break;
 			case APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED:
-				printf("One of the sections in the dol file exceeded its boundary.\n"
-					"APPLOADER ERROR >>> All the sections should not exceed 0x%08x (development mode).\n",
+				_tprintf(_T("One of the sections in the dol file exceeded its boundary.\n")
+					_T("APPLOADER ERROR >>> All the sections should not exceed 0x%08x (development mode).\n"),
 					entry->aplerr_val[0]);
 				break;
 			case APLERR_DOL_TEXTSEG2BIG:
-				printf("Too big text segment! (0x%x - 0x%x)\n",
+				_tprintf(_T("Too big text segment! (0x%x - 0x%x)\n"),
 					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 			case APLERR_DOL_DATASEG2BIG:
-				printf("Too big data segment! (0x%x - 0x%x)\n",
+				_tprintf(_T("Too big data segment! (0x%x - 0x%x)\n"),
 					entry->aplerr_val[0], entry->aplerr_val[1]);
 				break;
 		}
@@ -292,47 +294,43 @@ int list_banks(const TCHAR *rvth_filename)
 	int ret;
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
-		fputs("*** ERROR opening RVT-H device '", stderr);
-		_fputts(rvth_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
+		fputs(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
 	}
 
-	fputs("File: ", stdout);
-	_fputts(rvth_filename, stdout);
-	putchar('\n');
+	_tprintf(_T("File: %s\n"), rvth_filename);
 
 	// Check if this is an HDD image.
 	bool checkNHCD = false;
 	switch (rvth->imageType()) {
 		case RVTH_ImageType_HDD_Reader: {
 			checkNHCD = true;
-			fputs("Type: RVT-H Reader System", stdout);
+			_fputts(_T("Type: RVT-H Reader System"), stdout);
 #ifdef HAVE_QUERY
 			// Get the serial number.
 			TCHAR *const s_full_serial = rvth_get_device_serial_number(rvth_filename, nullptr);
 			if (s_full_serial) {
-				fputs(" [", stdout);
-				_fputts(s_full_serial, stdout);
-				putchar(']');
+				_tprintf(_T(" [%s]"), s_full_serial);
 				free(s_full_serial);
 			}
 #endif /* HAVE_QUERY */
-			putchar('\n');
+			_fputtc(_T('\n'), stdout);
 			break;
 		}
 
 		case RVTH_ImageType_HDD_Image:
 			checkNHCD = true;
-			fputs("Type: RVT-H Reader Disk Image\n", stdout);
+			_fputts(_T("Type: RVT-H Reader Disk Image\n"), stdout);
 			break;
 		case RVTH_ImageType_GCM:
 			// TODO: CISO/WBFS.
-			fputs("Type: GCM Disc Image\n", stdout);
+			_fputts(_T("Type: GCM Disc Image\n"), stdout);
 			break;
 		case RVTH_ImageType_GCM_SDK:
-			fputs("Type: GCM Disc Image (with SDK headers)\n", stdout);
+			_fputts(_T("Type: GCM Disc Image (with SDK headers)\n"), stdout);
 			break;
 		default:
 			// Should not get here...
@@ -351,22 +349,22 @@ int list_banks(const TCHAR *rvth_filename)
 			case NHCD_STATUS_UNKNOWN:
 			case NHCD_STATUS_MISSING:
 				isDefaultNHCD = true;
-				fputs("*** WARNING: NHCD table is missing.\n", stdout);
+				_fputts(_T("*** WARNING: NHCD table is missing.\n"), stdout);
 				break;
 
 			case NHCD_STATUS_HAS_MBR:
 				isDefaultNHCD = true;
-				fputs("*** WARNING: This appears to be a PC MBR-partitioned HDD.\n", stdout);
+				_fputts(_T("*** WARNING: This appears to be a PC MBR-partitioned HDD.\n"), stdout);
 				break;
 
 			case NHCD_STATUS_HAS_GPT:
 				isDefaultNHCD = true;
-				fputs("*** WARNING: This appears to be a PC GPT-partitioned HDD.\n", stdout);
+				_fputts(_T("*** WARNING: This appears to be a PC GPT-partitioned HDD.\n"), stdout);
 				break;
 		}
 
 		if (isDefaultNHCD) {
-			fputs("*** Using defaults. Writing will be disabled.\n", stdout);
+			_fputts(_T("*** Using defaults. Writing will be disabled.\n"), stdout);
 		}
 	}
 
@@ -376,16 +374,18 @@ int list_banks(const TCHAR *rvth_filename)
 	if (rvth->isHDD()) {
 		// HDD image and/or device.
 		const unsigned int bank_count = rvth->bankCount();
-		fputs("RVT-H Bank Table: [", stdout);
+
+		// Check for extended or shrunken bank tables.
+		const TCHAR *extshr = _T("");
 		if (bank_count > RVTH_BANK_COUNT) {
 			// Bank table is larger than standard.
-			fputs("EXTENDED: ", stdout);
+			extshr = _T("EXTENDED: ");
 		} else if (bank_count < RVTH_BANK_COUNT) {
 			// Bank table is smaller than standard.
-			fputs("SHRUNKEN: ", stdout);
+			extshr = _T("SHRUNKEN: ");
 		}
-		printf("%u bank%s]\n", bank_count, (bank_count != 1 ? "s" : ""));
-		putchar('\n');
+		_tprintf(_T("RVT-H Bank Table: [%s%u bank%s]\n\n"),
+			extshr, bank_count, (bank_count != 1 ? "s" : ""));
 	}
 
 	print_bank_table(rvth);

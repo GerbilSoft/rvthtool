@@ -82,9 +82,9 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	int ret;
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
-		fputs("*** ERROR opening RVT-H device '", stderr);
-		_fputts(rvth_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
+		fputs(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
 	}
@@ -95,9 +95,7 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		TCHAR *endptr;
 		bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
 		if (*endptr != 0 || bank > rvth->bankCount()) {
-			fputs("*** ERROR: Invalid bank number '", stderr);
-			_fputts(s_bank, stderr);
-			fputs("'.\n", stderr);
+			_ftprintf(stderr, _T("*** ERROR: Invalid bank number '%s'.\n"), s_bank);
 			delete rvth;
 			return -EINVAL;
 		}
@@ -106,8 +104,8 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 		// Assume 1 bank if this is a standalone disc image.
 		// For HDD images or RVT-H Readers, this is an error.
 		if (rvth->bankCount() != 1) {
-			fprintf(stderr, "*** ERROR: Must specify a bank number for this RVT-H Reader%s.\n",
-				rvth->isHDD() ? "" : " disk image");
+			_ftprintf(stderr, _T("*** ERROR: Must specify a bank number for this RVT-H Reader%s.\n"),
+				rvth->isHDD() ? _T("") : _T(" disk image"));
 			delete rvth;
 			return -EINVAL;
 		}
@@ -119,14 +117,10 @@ int extract(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fi
 	print_bank(rvth, bank);
 	putchar('\n');
 
-	printf("Extracting Bank %u into '", bank+1);
-	_fputts(gcm_filename, stdout);
-	fputs("'...\n", stdout);
+	_tprintf(_T("Extracting Bank %u into '%s'...\n"), bank+1, gcm_filename);
 	ret = rvth->extract(bank, gcm_filename, recrypt_key, flags, progress_callback);
 	if (ret == 0) {
-		printf("Bank %u extracted to '", bank+1);
-		_fputts(gcm_filename, stdout);
-		fputs("' successfully.\n\n", stdout);
+		_tprintf(_T("Bank %u extracted to '%s' successfully.\n\n"), bank+1, gcm_filename);
 	} else {
 		// TODO: Delete the gcm file?
 		fprintf(stderr, "*** ERROR: rvth_extract() failed: %s\n", rvth_error(ret));
@@ -152,9 +146,9 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	int ret;
 	RvtH *const rvth = new RvtH(rvth_filename, &ret);
 	if (ret != 0 || !rvth->isOpen()) {
-		fputs("*** ERROR opening RVT-H device '", stderr);
-		_fputts(rvth_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening RVT-H device '%s': "), rvth_filename);
+		fputs(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth;
 		return ret;
 	}
@@ -163,9 +157,7 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	TCHAR *endptr;
 	unsigned int bank = (unsigned int)_tcstoul(s_bank, &endptr, 10) - 1;
 	if (*endptr != 0 || bank > rvth->bankCount()) {
-		fputs("*** ERROR: Invalid bank number '", stderr);
-		_fputts(s_bank, stderr);
-		fputs("'.\n", stderr);
+		_ftprintf(stderr, _T("*** ERROR: Invalid bank number '%s'.\n"), s_bank);
 		delete rvth;
 		return -EINVAL;
 	}
@@ -179,14 +171,14 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 	// This requires temporarily opening the source disc here.
 	RvtH *const rvth_src_tmp = new RvtH(gcm_filename, &ret);
 	if (ret != 0 || !rvth_src_tmp->isOpen()) {
-		fputs("*** ERROR opening disc image '", stderr);
-		_fputts(gcm_filename, stderr);
-		fprintf(stderr, "': %s\n", rvth_error(ret));
+		_ftprintf(stderr, _T("*** ERROR opening disc image '%s': "), gcm_filename);
+		fputs(rvth_error(ret), stderr);
+		_fputtc(_T('\n'), stderr);
 		delete rvth_src_tmp;
 		delete rvth;
 		return ret;
 	}
-	fputs("Source disc image:\n", stdout);
+	_fputts(_T("Source disc image:\n"), stdout);
 	print_bank(rvth_src_tmp, 0);
 	putchar('\n');
 
@@ -199,21 +191,17 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 			 entry->type == RVTH_BankType_Wii_DL))
 		{
 			if (entry->ios_version != ios_force) {
-				fprintf(stdout, "*** IOS version will be changed from %u to %d.\n\n",
+				_tprintf(_T("*** IOS version will be changed from %u to %d.\n\n"),
 					entry->ios_version, ios_force);
 			}
 		}
 	}
 	delete rvth_src_tmp;
 
-	fputs("Importing '", stdout);
-	_fputts(gcm_filename, stdout);
-	printf("' into Bank %u...\n", bank+1);
+	_tprintf(_T("Importing '%s' into Bank %u...\n"), gcm_filename, bank+1);
 	ret = rvth->import(bank, gcm_filename, progress_callback, nullptr, ios_force);
 	if (ret == 0) {
-		fputc('\'', stdout);
-		_fputts(gcm_filename, stdout);
-		printf("' imported to Bank %u successfully.\n", bank+1);
+		_tprintf(_T("'%s' imported to Bank %u successfully.\n"), gcm_filename, bank+1);
 	} else {
 		// TODO: Delete the gcm file?
 		fprintf(stderr, "*** ERROR: rvth_import() failed: %s\n", rvth_error(ret));

@@ -116,11 +116,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		if (err == 0) {
 			err = EIO;
 		}
-		fputs("*** ERROR opening source WAD file '", stderr);
-		_fputts(src_wad, stderr);
-		fputs("': ", stderr);
-		_fputts(_tcserror(err), stderr);
-		fputc('\n', stderr);
+		_ftprintf(stderr, _T("*** ERROR opening source WAD file '%s': %s\n"), src_wad, _tcserror(err));
 		return -err;
 	}
 

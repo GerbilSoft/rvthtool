@@ -172,7 +172,7 @@ int query(void)
 		}
 
 		if (did_one) {
-			fputs("\n", stdout);
+			_fputtc(_T('\n'), stdout);
 		} else {
 			did_one = true;
 		}
@@ -221,7 +221,7 @@ int query(void)
  */
 int query(void)
 {
-	fputs("*** ERROR: Querying devices is not available on this system.\n", stderr);
+	_fputts(_T("*** ERROR: Querying devices is not available on this system.\n"), stderr);
 	return -ENOSYS;
 }
 
