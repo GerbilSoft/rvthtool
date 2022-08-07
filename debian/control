@@ -25,8 +25,14 @@ Description: RVT-H Tool
 Package: qrvthtool
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: rvthtool-lang
 Description: RVT-H Tool (GUI)
  This is an open-source tool for managing RVT-H Reader consoles. (GUI)
+
+Package: rvthtool-lang
+Architecture: all
+Description: RVT-H Tool (localization)
+ RVT-H Tool localization files. (Qt only for now)
 
 Package: wadresign
 Architecture: any
