@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>488</width>
-    <height>420</height>
+    <width>512</width>
+    <height>448</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -159,6 +159,9 @@
           </property>
           <item>
            <widget class="QLabel" name="lblLibraries">
+            <property name="textFormat">
+             <enum>Qt::RichText</enum>
+            </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
             </property>
