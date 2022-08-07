@@ -14,7 +14,7 @@ ENDIF(NOT CMAKE_PROJECT_VERSION OR NOT CMAKE_PROJECT_VERSION_MAJOR)
 
 LIST(APPEND CMAKE_MODULE_PATH
 	"${CMAKE_SOURCE_DIR}/cmake/macros"
-	"${CMAKE_SOURCE_DIR}/cmake/modules"
+	"${CMAKE_SOURCE_DIR}/cmake/libs"
 	)
 
 # If no build type is set, default to "Debug".
