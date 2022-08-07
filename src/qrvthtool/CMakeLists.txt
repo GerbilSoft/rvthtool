@@ -388,4 +388,22 @@ IF(DIR_INSTALL_XDG_APPSTREAM)
 		COMPONENT "xdg")
 ENDIF(DIR_INSTALL_XDG_APPSTREAM)
 
+# Install Qt DLLs when running `cpack` on Windows builds.
+# References:
+# - https://stackoverflow.com/questions/41193584/deploy-all-qt-dependencies-when-building
+# - https://stackoverflow.com/a/41199492
+INCLUDE(qt_windeploy.cmake)
+IF(TARGET ${QT_NS}::windeployqt)
+	# execute windeployqt in a tmp directory after build
+	ADD_CUSTOM_COMMAND(TARGET qrvthtool POST_BUILD
+		COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
+		COMMAND set PATH=%PATH%$<SEMICOLON>${qt_install_prefix}/bin
+		COMMAND ${QT_NS}::windeployqt --dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt" "$<TARGET_FILE_DIR:qrvthtool>/$<TARGET_FILE_NAME:qrvthtool>"
+	)
+
+	# copy deployment directory during installation
+	INSTALL(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/windeployqt/"
+		DESTINATION "${DIR_INSTALL_EXE}")
+ENDIF()
+
 ENDIF(BUILD_QT)
