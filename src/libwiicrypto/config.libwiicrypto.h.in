@@ -1,0 +1,21 @@
+/***************************************************************************
+ * RVT-H Tool (libwiicrypto)                                               *
+ * config.libwiicrypto.h.in: libwiicrypto configuration. (source file)     *
+ *                                                                         *
+ * Copyright (c) 2013-2022 by David Korth.                                 *
+ * SPDX-License-Identifier: GPL-2.0-or-later                               *
+ ***************************************************************************/
+
+#ifndef __RVTHTOOL_LIBWIICRYPTO_CONFIG_LIBWIICRYPTO_H__
+#define __RVTHTOOL_LIBWIICRYPTO_CONFIG_LIBWIICRYPTO_H__
+
+/* Define to 1 if we're using nettle and it is v3.0 or later. */
+#cmakedefine HAVE_NETTLE_3 1
+
+/* Define to 1 if "nettle/version.h" is present. */
+#cmakedefine HAVE_NETTLE_VERSION_H
+
+/* Define to 1 if nettle version functions are present. */
+#cmakedefine HAVE_NETTLE_VERSION_FUNCTIONS
+
+#endif /* __RVTHTOOL_LIBWIICRYPTO_CONFIG_LIBWIICRYPTO_H__ */

@@ -7,18 +7,24 @@
  ***************************************************************************/
 
 #include "config.qrvthtool.h"
+#include "libwiicrypto/config.libwiicrypto.h"
+
 #include "AboutDialog.hpp"
 #include "git.h"
 
-// C includes.
+// C includes
 #include <string.h>
 
-// Qt includes.
+// Qt includes
 #include <QtCore/QString>
 #include <QtCore/QStringList>
 #include <QtCore/QDir>
 #include <QtCore/QCoreApplication>
 #include <QScrollArea>
+
+#ifdef HAVE_NETTLE_VERSION_H
+#  include <nettle/version.h>
+#endif /* HAVE_NETTLE_VERSION_H */
 
 /** AboutDialogPrivate **/
 
@@ -231,8 +237,8 @@ void AboutDialogPrivate::initCreditsTab(void)
  */
 void AboutDialogPrivate::initLibrariesTab(void)
 {
-	// Double linebreak.
-	const QLatin1String sDLineBreak("\n\n");
+#define BR QChar(L'\n')
+#define BRBR QLatin1String("\n\n")
 
 	// NOTE: These strings can NOT be static.
 	// Otherwise, they won't be retranslated if the UI language
@@ -262,20 +268,69 @@ void AboutDialogPrivate::initLibrariesTab(void)
 	// TODO: Don't show compiled-with version if the same as in-use version?
 
 	/** Qt **/
-	sLibraries += sDLineBreak;
+	sLibraries += BRBR;
 	QString qtVersion = QLatin1String("Qt ") + QLatin1String(qVersion());
 #ifdef QT_IS_STATIC
 	sLibraries += sIntCopyOf.arg(qtVersion);
 #else
 	QString qtVersionCompiled = QLatin1String("Qt " QT_VERSION_STR);
-	sLibraries += sCompiledWith.arg(qtVersionCompiled) + QChar(L'\n');
+	sLibraries += sCompiledWith.arg(qtVersionCompiled) + BR;
 	sLibraries += sUsingDll.arg(qtVersion);
 #endif /* QT_IS_STATIC */
-	sLibraries += QChar(L'\n') +
+	sLibraries += BR +
 		QLatin1String("Copyright (C) 1995-2019 The Qt Company Ltd. and/or its subsidiaries.");
-	sLibraries += QChar(L'\n') + sLicenses.arg(QLatin1String("GNU LGPL v2.1+, GNU GPL v2+"));
+	sLibraries += BR + sLicenses.arg(QLatin1String("GNU LGPL v2.1+, GNU GPL v2+"));
 
-	/** nettle (TODO) **/
+	/** nettle **/
+	sLibraries += BRBR;
+	int nettle_major, nettle_minor;
+#if defined(HAVE_NETTLE_VERSION_H)
+	nettle_major = NETTLE_VERSION_MAJOR;
+	nettle_minor = NETTLE_VERSION_MINOR;
+#elif defined(HAVE_NETTLE_3)
+	nettle_major = 3;
+	nettle_minor = 0;
+#else
+	nettle_major = 2;
+	nettle_minor = 0;	// NOTE: handle as "2.x"
+#endif
+
+	const QString nettleVersion(QLatin1String("GNU Nettle %1.%2"));
+	QString nettleVersionCompiled = nettleVersion.arg(nettle_major);
+#ifdef HAVE_NETTLE_3
+	nettleVersionCompiled = nettleVersionCompiled.arg(nettle_minor);
+#else /* !HAVE_NETTLE_3 */
+	nettleVersionCompiled = nettleVersionCompiled.arg(QChar(L'x'));
+#endif /* HAVE_NETTLE_3 */
+
+	sLibraries += sCompiledWith.arg(nettleVersionCompiled);
+	sLibraries += BR;
+
+#if defined(HAVE_NETTLE_VERSION_H) && defined(HAVE_NETTLE_VERSION_FUNCTIONS)
+	QString nettleVersionUsing = nettleVersion
+		.arg(nettle_version_major())
+		.arg(nettle_version_minor());
+	sLibraries += sUsingDll.arg(nettleVersionUsing);
+	sLibraries += BR;
+#endif /* HAVE_NETTLE_VERSION_H && HAVE_NETTLE_VERSION_FUNCTIONS */
+
+#ifdef HAVE_NETTLE_3
+	if (nettle_minor >= 1) {
+		sLibraries += QString::fromUtf8("Copyright (C) 2001-2022 Niels Möller.\n"
+			"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>\n");
+	} else {
+		sLibraries += QString::fromUtf8("Copyright (C) 2001-2014 Niels Möller.\n"
+			"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>\n");
+	}
+	sLibraries += sLicenses.arg(QLatin1String("GNU LGPL v3+, GNU GPL v2+"));
+#else /* !HAVE_NETTLE_3 */
+	sLibraries += sCompiledWith.arg(QLatin1String("GNU Nettle 2.x"));
+	sLibraries += QString::fromUtf8("\n"
+		"Copyright (C) 2001-2013 Niels Möller.\n"
+		"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>\n";
+	sLibraries += sLicense.arg(QLatin1String("GNU LGPL v2.1+"));
+#endif /* HAVE_NETTLE_3 */
+
 	/** getopt_msvc (TODO) **/
 
 	// We're done building the string.

@@ -48,11 +48,17 @@ IF(WIN32)
 ENDIF(WIN32)
 
 IF(HAVE_NETTLE)
+	INCLUDE(CheckNettle2or3)
+	CHECK_NETTLE_2_OR_3()
+
 	SET(libwiicrypto_RSA_SRCS rsaw_nettle.c)
 	SET(libwiicrypto_AES_SRCS aesw_nettle.c)
 ELSE()
 	MESSAGE(FATAL_ERROR "No crypto wrappers are available for this platform.")
 ENDIF()
+
+# Write the config.h file.
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.libwiicrypto.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.libwiicrypto.h")
 
 #########
 # bin2h #
