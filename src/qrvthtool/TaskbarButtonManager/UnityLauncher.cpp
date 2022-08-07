@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * UnityLauncher.cpp: Unity Launcher implementation.                       *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2022 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -19,7 +19,7 @@
 #include <QtDBus/QDBusConnection>
 #include <QtDBus/QDBusConnectionInterface>
 
-#define DESKTOP_FILENAME "qrvthtool.desktop"
+#define DESKTOP_FILENAME "com.gerbilsoft.qrvthtool.desktop"
 
 /** UnityLauncherPrivate **/
 
