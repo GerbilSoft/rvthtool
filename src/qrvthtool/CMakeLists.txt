@@ -128,7 +128,7 @@ ENDIF(UNIX AND NOT APPLE AND (QT_VERSION EQUAL 5))
 # Write the config.h file.
 CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/config.qrvthtool.h.in" "${CMAKE_CURRENT_BINARY_DIR}/config.qrvthtool.h")
 
-# Sources.
+# Sources
 SET(qrvthtool_SRCS
 	qrvthtool.cpp
 	RvtHModel.cpp
@@ -149,13 +149,17 @@ SET(qrvthtool_SRCS
 	windows/AboutDialog.cpp
 	)
 
-# Headers with Qt objects.
+# Headers without Qt objects
+SET(qrvthtool_H
+	MessageSound.hpp
+	)
+
+# Headers with Qt objects
 SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 	RvtHSortFilterProxyModel.hpp
 	TranslationManager.hpp
 	WorkerObject.hpp
-	MessageSound.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp
@@ -170,7 +174,7 @@ SET(qrvthtool_MOC_H
 	)
 QT_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
 
-# UI files.
+# UI files
 SET(qrvthtool_UIS
 	widgets/BankEntryView.ui
 
@@ -265,7 +269,7 @@ ENDIF(WIN32)
 # TODO: Set Win32 when compiling release build
 # to disable the command prompt window.
 ADD_EXECUTABLE(qrvthtool WIN32 MACOSX_BUNDLE
-	${qrvthtool_SRCS}
+	${qrvthtool_SRCS} ${qrvthtool_H}
 	${qrvthtool_UIS_H}
 	${qrvthtool_MOC_SRCS}
 	${qrvthtool_RCC_O}
