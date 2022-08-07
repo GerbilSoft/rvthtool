@@ -19,7 +19,7 @@ IF(NOT WIN32)
 	# handle the QUIETLY and REQUIRED arguments and set NETTLE_FOUND to TRUE if
 	# all listed variables are TRUE
 	include(FindPackageHandleStandardArgs)
-	find_package_handle_standard_args(Nettle DEFAULT_MSG NETTLE_LIBRARY NETTLE_INCLUDE_DIRS)
+	find_package_handle_standard_args(NETTLE DEFAULT_MSG NETTLE_LIBRARY NETTLE_INCLUDE_DIRS)
 
 	if(NETTLE_FOUND)
 		set(NETTLE_LIBRARIES ${HOGWEED_LIBRARY} ${NETTLE_LIBRARY})
