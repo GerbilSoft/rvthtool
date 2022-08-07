@@ -148,6 +148,7 @@
    </attribute>
    <addaction name="actionOpenDiskImage"/>
    <addaction name="actionOpenDevice"/>
+   <addaction name="actionClose"/>
    <addaction name="separator"/>
    <addaction name="actionExtract"/>
    <addaction name="actionImport"/>
