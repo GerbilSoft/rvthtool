@@ -385,7 +385,7 @@ int list_banks(const TCHAR *rvth_filename)
 			extshr = _T("SHRUNKEN: ");
 		}
 		_tprintf(_T("RVT-H Bank Table: [%s%u bank%s]\n\n"),
-			extshr, bank_count, (bank_count != 1 ? "s" : ""));
+			extshr, bank_count, (bank_count != 1 ? _T("s") : _T("")));
 	}
 
 	print_bank_table(rvth);
