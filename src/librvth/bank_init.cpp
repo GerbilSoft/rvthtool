@@ -407,6 +407,13 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 		lba_start += BYTES_TO_LBA(data_offset);
 	}
 
+	// Sanity check: If the disc image is invalid,
+	// data offset might be out of range.
+	if (lba_start + 2 >= entry->lba_len) {
+		// Out of range.
+		return -EIO;
+	}
+
 	// Read the boot block and boot info.
 	// Start address: 0x420 (LBA 2)
 	lba_size = entry->reader->read(sector_buf, lba_start + 2, 1);
