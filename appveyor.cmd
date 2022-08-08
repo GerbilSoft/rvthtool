@@ -16,6 +16,7 @@ if "%platform%" == "x64" set RVTH_Qt5_DIR=C:\Qt\5.15.2\msvc2019_64\lib\cmake\Qt5
 mkdir build
 cd build
 set
+dir /s C:\Qt\*.cmake
 cmake .. -G "%CMAKE_GENERATOR%" -DCMAKE_GENERATOR_TOOLSET=%CMAKE_GENERATOR_TOOLSET% -DBUILD_TESTING=ON -DCMAKE_PREFIX_PATH=%RVTH_Qt5_DIR%
 exit /b %ERRORLEVEL%
 
