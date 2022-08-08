@@ -404,7 +404,7 @@ IF(TARGET ${QT_NS}::windeployqt)
 	ADD_CUSTOM_COMMAND(TARGET qrvthtool POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
 		COMMAND set PATH=%PATH%$<SEMICOLON>${qt_install_prefix}/bin
-		COMMAND ${QT_NS}::windeployqt --dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt" "$<TARGET_FILE_DIR:qrvthtool>/$<TARGET_FILE_NAME:qrvthtool>"
+		COMMAND ${QT_NS}::windeployqt --no-svg --dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt" "$<TARGET_FILE_DIR:qrvthtool>/$<TARGET_FILE_NAME:qrvthtool>"
 	)
 
 	# copy deployment directory during installation
