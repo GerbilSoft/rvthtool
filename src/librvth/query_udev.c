@@ -414,7 +414,7 @@ static void *rvth_listener_thread(void *listener_arg)
 	RvtH_ListenForDevices *const listener = (RvtH_ListenForDevices*)listener_arg;
 	const int fd = listener->fd;
 
-	while (true) {
+	while (!listener->stop) {
 		fd_set fds;
 		struct timeval tv;
 		int ret;
