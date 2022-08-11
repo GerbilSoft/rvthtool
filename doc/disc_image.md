@@ -158,9 +158,9 @@ Values in bold are different from encrypted discs.
 |   0x1BC |   0x03 | `00 00 00`                   | N/A            | Padding                       |
 |   0x1BF |   0x10 | Encrypted title key          | See hexdump    | Encrypted title key           |
 |   0x1CF |   0x01 | `00`                         | 0x00           | Unknown                       |
-|   0x1D0 |   0x08 | `00 01 e5 89 b2 45 95 eb     | See hexdump    | Ticket ID                     |
+|   0x1D0 |   0x08 | `00 01 e5 89 b2 45 95 eb`    | See hexdump    | Ticket ID                     |
 |   0x1D8 |   0x04 | `00 00 00 00`                | 0x00000000     | Console ID                    |
-|   0x1DC |   0x08 | `00 01 00 00 53 4c 53 50     | 00010000-SLSP  | Title ID / AES-CBC IV         |
+|   0x1DC |   0x08 | `00 01 00 00 53 4c 53 50`    | 00010000-SLSP  | Title ID / AES-CBC IV         |
 |   0x1E4 |   0x02 | `ff ff`                      | 0xFFFF         | Unknown                       |
 |   0x1E6 |   0x02 | `00 00`                      | 0x0000         | Ticket version                |
 |   0x1E8 |   0x04 | `00 00 00 00`                | 0x00000000     | Permitted titles mask         |
