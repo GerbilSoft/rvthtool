@@ -10,6 +10,7 @@
 
 // FIXME: Better way to detect if querying is available.
 #include "librvth/config.librvth.h"
+#include "tcharx.h"
 
 #ifdef HAVE_QUERY
 
