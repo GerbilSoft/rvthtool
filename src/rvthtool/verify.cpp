@@ -164,14 +164,23 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	print_bank(rvth, bank);
 	putchar('\n');
 
+	const bool isHDD = rvth->isHDD();
 	unsigned int error_count[5] = {0, 0, 0, 0, 0};
-	_tprintf(_T("Verifying Bank %u...\n"), bank+1);
+	if (isHDD) {
+		_tprintf(_T("Verifying Bank %u...\n"), bank+1);
+	} else {
+		_fputts(_T("Verifying disc image...\n"), stdout);
+	}
 	fflush(stdout);
 	ret = rvth->verifyWiiPartitions(bank, error_count, progress_callback);
 	if (ret == 0) {
 		// Add up the errors.
 		unsigned int total_errs = std::accumulate(error_count, error_count + ARRAY_SIZE(error_count), 0);
-		_tprintf(_T("Bank %u verified with %u error%s.\n"), bank+1, total_errs, (total_errs != 1) ? "s" : "");
+		if (isHDD) {
+			_tprintf(_T("Bank %u verified with %u error%s.\n"), bank+1, total_errs, (total_errs != 1) ? "s" : "");
+		} else {
+			_tprintf(_T("Disc image verified with %u error%s.\n"), total_errs, (total_errs != 1) ? "s" : "");
+		}
 	} else {
 		fprintf(stderr, "*** ERROR: rvth->verifyWiiPartitions() failed: %s\n", rvth_error(ret));
 	}
