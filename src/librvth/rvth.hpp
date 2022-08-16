@@ -468,12 +468,14 @@ class RvtH {
 		 * NOTE: Assuming the TMD signature is valid, which means
 		 * the H4 hash is correct.
 		 *
-		 * @param bank		[in] Bank number. (0-7)
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
+		 * @param bank		[in] Bank number (0-7)
+		 * @param errors	[out] Error counts for all 5 hash tables
+		 * @param callback	[in,opt] Progress callback
+		 * @param userdata	[in,opt] User data for progress callback
 		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 		 */
 		int verifyWiiPartitions(unsigned int bank,
+			unsigned int error_count[5] = nullptr,
 			RvtH_Verify_Progress_Callback callback = nullptr,
 			void *userdata = nullptr);
 

@@ -13,10 +13,13 @@
 #include "librvth/rvth_error.h"
 #include "librvth/nhcd_structs.h"
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstdlib>
+
+// C++ includes
+#include <numeric>
 
 /**
  * RVT-H verify progress callback.
@@ -161,13 +164,16 @@ int verify(const TCHAR *rvth_filename, const TCHAR *s_bank)
 	print_bank(rvth, bank);
 	putchar('\n');
 
+	unsigned int error_count[5] = {0, 0, 0, 0, 0};
 	_tprintf(_T("Verifying Bank %u...\n"), bank+1);
 	fflush(stdout);
-	ret = rvth->verifyWiiPartitions(bank, progress_callback);
+	ret = rvth->verifyWiiPartitions(bank, error_count, progress_callback);
 	if (ret == 0) {
-		_tprintf(_T("Bank %u verified with (TODO) errors.\n"), bank+1);
+		// Add up the errors.
+		unsigned int total_errs = std::accumulate(error_count, error_count + ARRAY_SIZE(error_count), 0);
+		_tprintf(_T("Bank %u verified with %u error%s.\n"), bank+1, total_errs, (total_errs != 1) ? "s" : "");
 	} else {
-		fprintf(stderr, "*** ERROR: rvth->verify() failed: %s\n", rvth_error(ret));
+		fprintf(stderr, "*** ERROR: rvth->verifyWiiPartitions() failed: %s\n", rvth_error(ret));
 	}
 
 	delete rvth;
