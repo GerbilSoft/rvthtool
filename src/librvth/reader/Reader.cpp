@@ -113,11 +113,13 @@ Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// TODO: Verify GC1L, NN2L. (These are all NN1L images.)
 	// TODO: Checksum at 0x0830.
 	static const uint8_t sdk_0x0000[4] = {0xFF,0xFF,0x00,0x00};
+	// TODO: Some RVMs have extended headers at 0x0800, but not the 0x082C value.
+	static const uint8_t sdk_0x0820[4] = {0x00,0x02,0xF0,0x00};
 	static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
 	if (lba_len > BYTES_TO_LBA(32768) &&
 	    !memcmp(&sbuf[0x0000], sdk_0x0000, sizeof(sdk_0x0000)) &&
-	    !memcmp(&sbuf[0x082C], sdk_0x082C, sizeof(sdk_0x082C)) &&
-	    sbuf[0x0844] == 0x01)
+	    (!memcmp(&sbuf[0x082C], sdk_0x082C, sizeof(sdk_0x082C)) ||
+	     !memcmp(&sbuf[0x0820], sdk_0x0820, sizeof(sdk_0x0820))))
 	{
 		// This image has an SDK header.
 		// Adjust the LBA values to skip it.
