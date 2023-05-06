@@ -17,19 +17,19 @@
 #include "libwiicrypto/byteswap.h"
 
 static void print_table(NHCD_BankTable_Header* header) {
-	_ftprintf(stdout, _T("- Table Magic (Expected Value: %d): %d\n"), be32_to_cpu(NHCD_BANKTABLE_MAGIC), header->magic);
-	_ftprintf(stdout, _T("- x004 (expected: 0x00000001): %d\n"), header->x004);
-	_ftprintf(stdout, _T("- bank_count (expected: 0x00000008): %d\n"), header->bank_count);
-	_ftprintf(stdout, _T("- x00C (expected: 0x00000000): %d\n"), header->x00C);
-	_ftprintf(stdout, _T("- x010 (expected: 0x002FF000): %d\n"), header->x010);
+	_ftprintf(stdout, _T("- Table Magic (Expected Value: 0x%#08x): 0x%#08x\n"), be32_to_cpu(NHCD_BANKTABLE_MAGIC), header->magic);
+	_ftprintf(stdout, _T("- x004 (expected: 0x00000001): 0x%#08x\n"), header->x004);
+	_ftprintf(stdout, _T("- bank_count (expected: 0x00000008): 0x%#08x\n"), header->bank_count);
+	_ftprintf(stdout, _T("- x00C (expected: 0x00000000): 0x%#08x\n"), header->x00C);
+	_ftprintf(stdout, _T("- x010 (expected: 0x002FF000): 0x%#08x\n"), header->x010);
 
 	_fputts(_T("- unk table:\n"), stdout);
-	for (uint8_t row = 0; row < 12; ++row) {
-		uint16_t idx = row * 41;
-		_ftprintf(stdout, _T("  %d"), header->unk[idx]);
+	for (uint8_t row = 0; row < 41; ++row) {
+		uint16_t idx = row * 12;
+		_ftprintf(stdout, _T("  %#02x"), header->unk[idx]);
 		idx += 1;
-		for (; idx < (row + 1) * 41; ++idx) {
-			_ftprintf(stdout, _T(" %d"), header->unk[idx]);
+		for (; idx < (row + 1) * 12; ++idx) {
+			_ftprintf(stdout, _T(" %#02x"), header->unk[idx]);
 		}
 		_fputtc(_T('\n'), stdout);
 	}
