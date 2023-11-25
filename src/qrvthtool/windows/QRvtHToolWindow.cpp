@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * QRvtHToolWindow.cpp: Main window.                                       *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -435,8 +435,8 @@ QString QRvtHToolWindowPrivate::getDisplayFilename(const QString &filename)
 #ifdef _WIN32
 	// Does the path start with "\\\\.\\PhysicalDriveN"?
 	// FIXME: How does Qt's native slashes interact with this?
-	if (rfn.startsWith(QLatin1String("\\\\.\\PhysicalDrive")) ||
-	    rfn.startsWith(QLatin1String("//./PhysicalDrive")))
+	if (rfn.startsWith(QLatin1String("\\\\.\\PhysicalDrive"), Qt::CaseInsensitive) ||
+	    rfn.startsWith(QLatin1String("//./PhysicalDrive"), Qt::CaseInsensitive))
 	{
 		// Physical drive.
 		// TODO: Make sure it's all backslashes.
