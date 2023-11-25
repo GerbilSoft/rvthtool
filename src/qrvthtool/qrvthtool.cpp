@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 
 	app->setApplicationDisplayName(QLatin1String("RVT-H Tool"));
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-	app->setDesktopFileName(QLatin1String("com.gerbilsoft.qrvthtool.desktop"));
+	app->setDesktopFileName(QLatin1String("com.gerbilsoft.qrvthtool"));
 #endif /* QT_VERSION >= QT_VERSION_CHECK(5,7,0) */
 
 	// Initialize the TranslationManager.
