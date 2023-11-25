@@ -49,8 +49,9 @@ MessageWidgetStackPrivate::MessageWidgetStackPrivate(MessageWidgetStack *q)
 
 MessageWidgetStackPrivate::~MessageWidgetStackPrivate()
 {
-	// NOTE: The MessageWidgets are owned by MessageWidgetStack,
-	// so we don't need to delete them manually.
+	// Delete the MessageWidgets manually in order to prevent
+	// deletion signals from triggering messageWidget_destroyed_slot().
+	qDeleteAll(messageWidgets);
 	messageWidgets.clear();
 }
 
@@ -130,4 +131,3 @@ void MessageWidgetStack::messageWidget_destroyed_slot(QObject *obj)
 	Q_D(MessageWidgetStack);
 	d->messageWidgets.erase(qobject_cast<MessageWidget*>(obj));
 }
-
