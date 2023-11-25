@@ -88,9 +88,9 @@ void AboutDialogPrivate::initAboutDialogText(void)
 	sPrgTitle += AboutDialog::tr("Version %1")
 		.arg(QApplication::applicationVersion());
 #ifdef RP_GIT_VERSION
-	sPrgTitle += QStringLiteral("<br/>") + QStringLiteral(RP_GIT_VERSION);
+	sPrgTitle += QStringLiteral("<br/>") + QLatin1String(RP_GIT_VERSION);
 #ifdef RP_GIT_DESCRIBE
-	sPrgTitle += QStringLiteral("<br/>") + QStringLiteral(RP_GIT_DESCRIBE);
+	sPrgTitle += QStringLiteral("<br/>") + QLatin1String(RP_GIT_DESCRIBE);
 #endif /* RP_GIT_DESCRIBE */
 #endif /* RP_GIT_DESCRIBE */
 
