@@ -8,12 +8,14 @@
 
 #include "MessageWidgetStack.hpp"
 
-// Qt includes.
-#include <QtCore/QSet>
+// Qt includes
 #include <QtWidgets/QVBoxLayout>
 
-// Qt animation includes.
+// Qt animation includes
 #include <QtCore/QTimeLine>
+
+// C++ STL classes
+#include <set>
 
 /** MessageWidgetStackPrivate **/
 
@@ -38,7 +40,7 @@ class MessageWidgetStackPrivate
 		Ui_MessageWidgetStack ui;
 
 		// All active MessageWidgets.
-		QSet<MessageWidget*> messageWidgets;
+		std::set<MessageWidget*> messageWidgets;
 };
 
 MessageWidgetStackPrivate::MessageWidgetStackPrivate(MessageWidgetStack *q)
@@ -103,8 +105,9 @@ void MessageWidgetStack::showMessage(const QString &msg, MessageWidget::MsgIcon 
 	QObject::connect(messageWidget, &MessageWidget::dismissed,
 		[d, messageWidget]() {
 			// Remove and delete the widget.
-			if (d->messageWidgets.contains(qobject_cast<MessageWidget*>(messageWidget))) {
-				d->messageWidgets.remove(qobject_cast<MessageWidget*>(messageWidget));
+			auto iter = d->messageWidgets.find(qobject_cast<MessageWidget*>(messageWidget));
+			if (iter != d->messageWidgets.end()) {
+				d->messageWidgets.erase(iter);
 				delete messageWidget;
 			}
 		});
@@ -125,6 +128,6 @@ void MessageWidgetStack::messageWidget_destroyed_slot(QObject *obj)
 {
 	// Remove the widget.
 	Q_D(MessageWidgetStack);
-	d->messageWidgets.remove(qobject_cast<MessageWidget*>(obj));
+	d->messageWidgets.erase(qobject_cast<MessageWidget*>(obj));
 }
 
