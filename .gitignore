@@ -18,5 +18,5 @@ CMakeFiles/
 cmake_install.cmake
 git_version.h
 
-# Allow *.a files in the win32/ directory.
-!/win32/*/lib/*.a
+# Allow *.a files for GNU Nettle.
+!/extlib/nettle.win32/lib.*/*.a
