@@ -32,6 +32,8 @@
 #define ql1BR QStringLiteral(BR)
 #define ql1BRBR QStringLiteral(BRBR)
 
+static const QChar chrBullet(0x2022);  // U+2022: BULLET
+
 /** AboutDialogPrivate **/
 
 #include "ui_AboutDialog.h"
@@ -157,7 +159,6 @@ void AboutDialogPrivate::initAboutDialogText(void)
 void AboutDialogPrivate::initCreditsTab(void)
 {
 	const QString sIndent(QStringLiteral("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"));
-	static const QChar chrBullet(0x2022);  // U+2022: BULLET
 
 	QString credits;
 	credits.reserve(4096);
@@ -307,7 +308,7 @@ void AboutDialogPrivate::initLibrariesTab(void)
 
 #ifdef HAVE_NETTLE_3
 	if (nettle_minor >= 1) {
-		sLibraries += QStringLiteral("Copyright (C) 2001-2022 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
+		sLibraries += QStringLiteral("Copyright (C) 2001-2023 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
 	} else {
 		sLibraries += QStringLiteral("Copyright (C) 2001-2014 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
 	}
@@ -329,8 +330,6 @@ void AboutDialogPrivate::initLibrariesTab(void)
  */
 void AboutDialogPrivate::initSupportTab(void)
 {
-	static const QChar chrBullet(0x2022);  // U+2022: BULLET
-
 	QString sSupport;
 	sSupport.reserve(4096);
 	sSupport = AboutDialog::tr("For technical support, you can visit the following websites:");
