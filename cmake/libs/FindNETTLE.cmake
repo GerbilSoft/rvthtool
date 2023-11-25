@@ -37,17 +37,17 @@ ELSE(NOT WIN32)
 	SET(NETTLE_WIN32_BASE_PATH "${CMAKE_SOURCE_DIR}/extlib/nettle.win32")
 	SET(NETTLE_INCLUDE_DIRS "${NETTLE_WIN32_BASE_PATH}/include")
 	IF(MSVC)
-		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle-8.lib")
-		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed-6.lib")
+		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${TARGET_CPU_ARCH}/libnettle-8.lib")
+		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${TARGET_CPU_ARCH}/libhogweed-6.lib")
 	ELSE(MSVC)
-		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle.dll.a")
-		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed.dll.a")
+		SET(NETTLE_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${TARGET_CPU_ARCH}/libnettle.dll.a")
+		SET(HOGWEED_LIBRARY "${NETTLE_WIN32_BASE_PATH}/lib.${TARGET_CPU_ARCH}/libhogweed.dll.a")
 	ENDIF(MSVC)
 	SET(NETTLE_LIBRARIES ${NETTLE_LIBRARY} ${HOGWEED_LIBRARY})
 
 	# Copy and install the DLLs.
-	SET(NETTLE_NETTLE_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libnettle-8.dll")
-	SET(NETTLE_HOGWEED_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${arch}/libhogweed-6.dll")
+	SET(NETTLE_NETTLE_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${TARGET_CPU_ARCH}/libnettle-8.dll")
+	SET(NETTLE_HOGWEED_DLL "${NETTLE_WIN32_BASE_PATH}/lib.${TARGET_CPU_ARCH}/libhogweed-6.dll")
 
 	# Destination directory.
 	# If CMAKE_CFG_INTDIR is set, a Debug or Release subdirectory is being used.

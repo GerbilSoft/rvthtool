@@ -20,6 +20,10 @@ ENDIF()
 INCLUDE(CheckCCompilerFlag)
 INCLUDE(CheckCXXCompilerFlag)
 
+SET(RP_C_FLAGS_COMMON "")
+SET(RP_CXX_FLAGS_COMMON "")
+SET(RP_EXE_LINKER_FLAGS_COMMON "")
+
 # _GNU_SOURCE is needed for memmem() and statx().
 ADD_DEFINITIONS(-D_GNU_SOURCE=1)
 
@@ -88,15 +92,7 @@ IF(ENABLE_COVERAGE)
 	SET(RP_C_FLAGS_COMMON "${RP_C_FLAGS_COMMON} ${RP_C_FLAGS_COVERAGE}")
 	SET(RP_CXX_FLAGS_COMMON "${RP_CXX_FLAGS_COMMON} ${RP_C_FLAGS_COVERAGE}")
 
-	# Link gcov to all targets.
-	SET(GCOV_LIBRARY "gcov")
-	FOREACH(VAR "" C_ CXX_)
-		IF(CMAKE_${VAR}STANDARD_LIBRARIES)
-			SET(CMAKE_${VAR}STANDARD_LIBRARIES "${CMAKE_${VAR}STANDARD_LIBRARIES} ${GCOV_LIBRARY}")
-		ELSE(CMAKE_${VAR}STANDARD_LIBRARIES)
-			SET(CMAKE_${VAR}STANDARD_LIBRARIES "${GCOV_LIBRARY}")
-		ENDIF(CMAKE_${VAR}STANDARD_LIBRARIES)
-	ENDFOREACH(VAR)
+	SET(RP_EXE_LINKER_FLAGS_COMMON "${RP_CXX_FLAGS_COMMON} ${RP_C_FLAGS_COVERAGE}")
 
 	# Create a code coverage target.
 	FOREACH(_program gcov lcov genhtml)
@@ -121,7 +117,7 @@ EXECUTE_PROCESS(COMMAND ${CMAKE_LINKER} --help
 	OUTPUT_VARIABLE _ld_out
 	ERROR_QUIET)
 
-FOREACH(FLAG_TEST "--sort-common" "--as-needed" "--build-id" "-Bsymbolic-functions")
+FOREACH(FLAG_TEST "--sort-common" "--as-needed" "--build-id" "-Bsymbolic-functions" "--no-undefined" "--no-allow-shlib-undefined")
 	IF(NOT DEFINED LDFLAG_${FLAG_TEST})
 		MESSAGE(STATUS "Checking if ld supports ${FLAG_TEST}")
 		IF(_ld_out MATCHES "${FLAG_TEST}")
@@ -237,7 +233,18 @@ ENDIF(UNIX AND NOT APPLE)
 SET(RP_SHARED_LINKER_FLAGS_COMMON "${RP_EXE_LINKER_FLAGS_COMMON}")
 SET(RP_MODULE_LINKER_FLAGS_COMMON "${RP_EXE_LINKER_FLAGS_COMMON}")
 
-# Check for -Og.
+# Special case: On non-Linux systems, remove "--no-undefined" and
+# "--no-allow-shlib-undefined" from SHARED and MODULE linker flags.
+# On FreeBSD 13.2, `environ` and `__progname` are intentionally undefined,
+# so this *always* fails when building a shared library.
+IF(NOT CMAKE_SYSTEM MATCHES "Linux")
+	FOREACH(FLAG_REMOVE "--no-undefined" "--no-allow-shlib-undefined")
+		STRING(REPLACE "-Wl,${FLAG_REMOVE}" "" RP_SHARED_LINKER_FLAGS_COMMON "${RP_SHARED_LINKER_FLAGS_COMMON}")
+		STRING(REPLACE "-Wl,${FLAG_REMOVE}" "" RP_MODULE_LINKER_FLAGS_COMMON "${RP_MODULE_LINKER_FLAGS_COMMON}")
+	ENDFOREACH(FLAG_REMOVE)
+ENDIF(NOT CMAKE_SYSTEM MATCHES "Linux")
+
+# Debug builds: Check for -Og.
 # This flag was added in gcc-4.8, and enables optimizations that
 # don't interfere with debugging.
 CHECK_C_COMPILER_FLAG("-Og" CFLAG_OPTIMIZE_DEBUG)
@@ -247,11 +254,27 @@ ELSE(CFLAG_OPTIMIZE_DEBUG)
 	SET(CFLAG_OPTIMIZE_DEBUG "-O0")
 ENDIF(CFLAG_OPTIMIZE_DEBUG)
 
+# Release builds: Check for -ftree-vectorize.
+# On i386, also add -mstackrealign to ensure proper stack alignment.
+CHECK_C_COMPILER_FLAG("-ftree-vectorize" CFLAG_OPTIMIZE_FTREE_VECTORIZE)
+IF(CFLAG_OPTIMIZE_FTREE_VECTORIZE)
+	IF(arch MATCHES "^(i.|x)86$" AND NOT CMAKE_CL_64 AND ("${CMAKE_SIZEOF_VOID_P}" EQUAL 4))
+		# i386: "-mstackrealign" is required.
+		CHECK_C_COMPILER_FLAG("-mstackrealign" CFLAG_OPTIMIZE_MSTACKREALIGN)
+		IF(CFLAG_OPTIMIZE_MSTACK_REALIGN)
+			SET(CFLAGS_VECTORIZE "-ftree-vectorize -mstackrealign")
+		ENDIF(CFLAG_OPTIMIZE_MSTACKREALIGN)
+	ELSE()
+		# Not i386. Add "-ftree-vectorize" without "-mstackrealign".
+		SET(CFLAGS_VECTORIZE "-ftree-vectorize")
+	ENDIF()
+ENDIF(CFLAG_OPTIMIZE_FTREE_VECTORIZE)
+
 # Debug/release flags.
 SET(RP_C_FLAGS_DEBUG		"${CFLAG_OPTIMIZE_DEBUG} -ggdb -DDEBUG -D_DEBUG")
 SET(RP_CXX_FLAGS_DEBUG		"${CFLAG_OPTIMIZE_DEBUG} -ggdb -DDEBUG -D_DEBUG")
-SET(RP_C_FLAGS_RELEASE		"-O2 -ggdb -DNDEBUG")
-SET(RP_CXX_FLAGS_RELEASE	"-O2 -ggdb -DNDEBUG")
+SET(RP_C_FLAGS_RELEASE		"-O2 -ggdb -DNDEBUG ${CFLAGS_VECTORIZE}")
+SET(RP_CXX_FLAGS_RELEASE	"-O2 -ggdb -DNDEBUG ${CFLAGS_VECTORIZE}")
 
 # Unset temporary variables.
 UNSET(CFLAG_OPTIMIZE_DEBUG)

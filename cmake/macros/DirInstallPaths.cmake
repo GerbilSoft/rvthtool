@@ -7,6 +7,8 @@
 # be in the root of the Windows ZIP file. On other platforms,
 # it's the same as DIR_INSTALL_DOC.
 
+# TARGET_CPU_ARCH is set to indicate the target CPU architecture.
+
 IF(NOT PACKAGE_NAME)
 	MESSAGE(FATAL_ERROR "PACKAGE_NAME is not set.")
 ENDIF(NOT PACKAGE_NAME)
@@ -21,15 +23,24 @@ ELSEIF(CPU_ia64)
 	SET(arch "ia64")
 ELSEIF(CPU_arm)
 	SET(arch "arm")
+ELSEIF(CPU_arm64ec)
+	SET(arch "arm64ec")
 ELSEIF(CPU_arm64)
 	SET(arch "arm64")
 ELSEIF(CPU_ppc)
 	SET(arch "ppc")
 ELSEIF(CPU_ppc64)
 	SET(arch "ppc64")
+ELSEIF(CPU_ppc64le)
+	SET(arch "ppc64le")
+ELSEIF(CPU_riscv32)
+	SET(arch "riscv32")
+ELSEIF(CPU_riscv64)
+	SET(arch "riscv64")
 ELSE()
 	MESSAGE(FATAL_ERROR "Unsupported CPU architecture, please fix!")
 ENDIF()
+SET(TARGET_CPU_ARCH "${arch}")
 
 INCLUDE(GNUInstallDirs)
 IF(UNIX AND NOT APPLE)
@@ -87,3 +98,4 @@ ELSEIF(WIN32)
 ELSE()
 	MESSAGE(WARNING "Installation paths have not been set up for this system.")
 ENDIF()
+UNSET(arch)
