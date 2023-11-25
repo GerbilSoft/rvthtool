@@ -284,11 +284,11 @@ void QRvtHToolWindowPrivate::updateLstBankList(void)
 			if (!nhcd_status.isEmpty()) {
 				ui.grpBankList->setTitle(
 					QRvtHToolWindow::tr("%1 [%2] [%3]")
-					.arg(displayFilename).arg(imageType).arg(nhcd_status));
+					.arg(displayFilename, imageType, nhcd_status));
 			} else {
 				ui.grpBankList->setTitle(
 					QRvtHToolWindow::tr("%1 [%2]")
-					.arg(displayFilename).arg(imageType));
+					.arg(displayFilename, imageType));
 			}
 		} else {
 			ui.grpBankList->setTitle(displayFilename);
@@ -694,8 +694,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename, bool isDevice)
 	if (!rvth_tmp->isOpen() || err != 0) {
 		// Unable to open the RVT-H Reader disk image.
 		const QString errMsg = tr("An error occurred while opening '%1': %2")
-			.arg(d->getDisplayFilename(filename))
-			.arg(QString::fromUtf8(rvth_error(err)));
+			.arg(d->getDisplayFilename(filename), QString::fromUtf8(rvth_error(err)));
 		d->ui.msgWidget->showMessage(errMsg, MessageWidget::ICON_CRITICAL);
 		delete rvth_tmp;
 		d->lblMessage->setText(QString());

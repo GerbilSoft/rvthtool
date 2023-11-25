@@ -139,7 +139,7 @@ QString BankEntryViewPrivate::formatFileSize(quint64 size)
 
 	if (!suffix.isEmpty()) {
 		//: %1 == localized value, %2 == suffix (e.g. MiB)
-		return BankEntryView::tr("%1 %2").arg(s_value).arg(suffix);
+		return BankEntryView::tr("%1 %2").arg(s_value, suffix);
 	} else {
 		return s_value;
 	}
