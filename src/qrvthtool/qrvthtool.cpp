@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * qrvthtool.cpp: Main program.                                            *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -80,14 +80,14 @@ int main(int argc, char *argv[])
 #endif /* QT_VERSION >= QT_VERSION_CHECK(5,0,0) && QT_VERSION < QT_VERSION_CHECK(6,0,0) */
 
 	QApplication *app = new QApplication(argc, argv);
-	app->setApplicationName(QLatin1String("qrvthtool"));
-	app->setOrganizationDomain(QLatin1String("gerbilsoft.com"));
-	app->setOrganizationName(QLatin1String("GerbilSoft"));
-	app->setApplicationVersion(QLatin1String(VERSION_STRING));
+	app->setApplicationName(QStringLiteral("qrvthtool"));
+	app->setOrganizationDomain(QStringLiteral("gerbilsoft.com"));
+	app->setOrganizationName(QStringLiteral("GerbilSoft"));
+	app->setApplicationVersion(QStringLiteral(VERSION_STRING));
 
-	app->setApplicationDisplayName(QLatin1String("RVT-H Tool"));
+	app->setApplicationDisplayName(QStringLiteral("RVT-H Tool"));
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
-	app->setDesktopFileName(QLatin1String("com.gerbilsoft.qrvthtool"));
+	app->setDesktopFileName(QStringLiteral("com.gerbilsoft.qrvthtool"));
 #endif /* QT_VERSION >= QT_VERSION_CHECK(5,7,0) */
 
 	// Initialize the TranslationManager.
@@ -102,11 +102,11 @@ int main(int argc, char *argv[])
 
 #if defined(_WIN32) || defined(__APPLE__)
 	// Check if an icon theme is available.
-	if (!QIcon::hasThemeIcon(QLatin1String("application-exit"))) {
+	if (!QIcon::hasThemeIcon(QStringLiteral("application-exit"))) {
 		// Icon theme is not available.
 		// Use the built-in Oxygen icon theme.
 		// Reference: http://tkrotoff.blogspot.com/2010/02/qiconfromtheme-under-windows.html
-		QIcon::setThemeName(QLatin1String("oxygen"));
+		QIcon::setThemeName(QStringLiteral("oxygen"));
 	}
 #endif /* _WIN32 || __APPLE__ */
 
@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
 		// TODO: Better device file check.
 		const QString &filename = args.at(1);
 #ifdef _WIN32
-		bool isDevice = filename.startsWith(QLatin1String("\\\\.\\PhysicalDrive"), Qt::CaseInsensitive);
+		bool isDevice = filename.startsWith(QStringLiteral("\\\\.\\PhysicalDrive"), Qt::CaseInsensitive);
 #else /* !_WIN32 */
-		bool isDevice = filename.startsWith(QLatin1String("/dev/"));
+		bool isDevice = filename.startsWith(QStringLiteral("/dev/"));
 #endif /* _WIN32 */
 		window->openRvtH(QDir::fromNativeSeparators(filename), isDevice);
 	}

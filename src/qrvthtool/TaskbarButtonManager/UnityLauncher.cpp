@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * UnityLauncher.cpp: Unity Launcher implementation.                       *
  *                                                                         *
- * Copyright (c) 2013-2022 by David Korth.                                 *
+ * Copyright (c) 2013-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -39,11 +39,11 @@ class UnityLauncherPrivate : public TaskbarButtonManagerPrivate
 		static inline void sendMessage(const QVariantMap &map)
 		{
 			QDBusMessage message = QDBusMessage::createSignal(
-				QLatin1String("/qrvthtool"),
-				QLatin1String("com.canonical.Unity.LauncherEntry"),
-				QLatin1String("Update"));
+				QStringLiteral("/qrvthtool"),
+				QStringLiteral("com.canonical.Unity.LauncherEntry"),
+				QStringLiteral("Update"));
 			QVariantList args;
-			args << QLatin1String("application://" DESKTOP_FILENAME) << map;
+			args << QStringLiteral("application://" DESKTOP_FILENAME) << map;
 			message.setArguments(args);
 			if (!QDBusConnection::sessionBus().send(message))
 				qWarning("Unable to send message");
@@ -72,7 +72,7 @@ bool UnityLauncher::IsUsable(void)
 {
 	QDBusConnection connection = QDBusConnection::sessionBus();
 	QStringList services = connection.interface()->registeredServiceNames().value();
-	return services.contains(QLatin1String("com.canonical.Unity"));
+	return services.contains(QStringLiteral("com.canonical.Unity"));
 }
 
 /**
@@ -108,8 +108,8 @@ void UnityLauncher::update(void)
 		// Progress bar is visible.
 		const double value = (double)d->progressBarValue / (double)d->progressBarMax;
 		QVariantMap map;
-		map.insert(QLatin1String("progress"), value);
-		map.insert(QLatin1String("progress-visible"), true);
+		map.insert(QStringLiteral("progress"), value);
+		map.insert(QStringLiteral("progress-visible"), true);
 		d->sendMessage(map);
 	}
 }

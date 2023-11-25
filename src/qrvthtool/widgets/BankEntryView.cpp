@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * BankEntryView.cpp: Bank Entry view widget.                              *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -146,7 +146,7 @@ QString BankEntryViewPrivate::formatFileSize(quint64 size)
 
 	// Should not get here...
 	assert(!"Invalid code path.");
-	return QLatin1String("QUACK");
+	return QStringLiteral("QUACK");
 }
 
 /**
@@ -179,21 +179,20 @@ QString BankEntryViewPrivate::sigStatusString(
 		switch (sig_status) {
 			default:
 			case RVL_SigStatus_Unknown:
-				status += QLatin1String(" (") +
-					QString::number(sig_status) +
-					QChar(L')');
+				status += QStringLiteral(" (%1)")
+					.arg(static_cast<int>(sig_status));
 				break;
 			case RVL_SigStatus_OK:
-				status += QLatin1String(" (") +
-					BankEntryView::tr("realsigned") + QChar(L')');
+				status += QStringLiteral(" (%1)")
+					.arg(BankEntryView::tr("realsigned"));
 				break;
 			case RVL_SigStatus_Invalid:
-				status += QLatin1String(" (") +
-					BankEntryView::tr("INVALID") + QChar(L')');
+				status += QStringLiteral(" (%1)")
+					.arg(BankEntryView::tr("INVALID"));
 				break;
 			case RVL_SigStatus_Fake:
-				status += QLatin1String(" (") +
-					BankEntryView::tr("fakesigned") + QChar(L')');
+				status += QStringLiteral(" (%1)")
+					.arg(BankEntryView::tr("fakesigned"));
 				break;
 		}
 	}
@@ -265,9 +264,8 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		.trimmed().toHtmlEscaped();
 	if (bankEntry->is_deleted) {
 		// Indicate that this bank is deleted.
-		s_title += QLatin1String("<br/><b>");
-		s_title += BankEntryView::tr("[DELETED]");
-		s_title += QLatin1String("</b>");
+		s_title += QStringLiteral("<br/><b>%1</b>")
+			.arg(BankEntryView::tr("[DELETED]"));
 	}
 	ui.lblGameTitle->setText(s_title);
 	ui.lblGameTitle->show();
@@ -388,29 +386,29 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		// NOTE: Not translatable. These strings are based on
 		// the strings from the original AppLoader.
 		// NOTE: lblAppLoader uses RichText.
-		QString aplerr = QLatin1String("<b>APPLOADER ERROR >>></b><br>\n");
+		QString aplerr = QStringLiteral("<b>APPLOADER ERROR >>></b><br>\n");
 		switch (bankEntry->aplerr) {
 			default:
-				aplerr += QString::fromLatin1("Unknown (%1)")
+				aplerr += QStringLiteral("Unknown (%1)")
 					.arg(bankEntry->aplerr);
 				break;
 
 			// TODO: Get values for these errors.
 			case APLERR_FSTLENGTH:
-				aplerr += QString::fromLatin1("FSTLength(%1) in BB2 is greater than FSTMaxLength(%2).")
+				aplerr += QStringLiteral("FSTLength(%1) in BB2 is greater than FSTMaxLength(%2).")
 					.arg(bankEntry->aplerr_val[0])
 					.arg(bankEntry->aplerr_val[1]);
 				break;
 			case APLERR_DEBUGMONSIZE_UNALIGNED:
-				aplerr += QString::fromLatin1("Debug monitor size (%1) should be a multiple of 32.")
+				aplerr += QStringLiteral("Debug monitor size (%1) should be a multiple of 32.")
 					.arg(bankEntry->aplerr_val[0]);
 				break;
 			case APLERR_SIMMEMSIZE_UNALIGNED:
-				aplerr += QString::fromLatin1("Simulated memory size (%1) should be a multiple of 32.")
+				aplerr += QStringLiteral("Simulated memory size (%1) should be a multiple of 32.")
 					.arg(bankEntry->aplerr_val[0]);
 				break;
 			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
-				aplerr += QString::fromLatin1("[Physical memory size(0x%1)] - "
+				aplerr += QStringLiteral("[Physical memory size(0x%1)] - "
 					"[Console simulated memory size(0x%2)] "
 					"must be greater than debug monitor size(0x%3).")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
@@ -418,18 +416,18 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 					.arg(bankEntry->aplerr_val[2], 0, 16);
 				break;
 			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
-				aplerr += QString::fromLatin1("Physical memory size is 0x%1 bytes."
+				aplerr += QStringLiteral("Physical memory size is 0x%1 bytes."
 					"Console simulated memory size (0x%2) must be smaller than "
 					"or equal to the Physical memory size.")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
 					.arg(bankEntry->aplerr_val[1], 0, 16);
 				break;
 			case APLERR_ILLEGAL_FST_ADDRESS:
-				aplerr += QString::fromLatin1("Illegal FST destination address! (0x%1)")
+				aplerr += QStringLiteral("Illegal FST destination address! (0x%1)")
 					.arg(bankEntry->aplerr_val[0], 0, 16);
 				break;
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
-				aplerr += QString::fromLatin1("Total size of text/data sections of the dol file are too big (%1(0x%2) bytes). "
+				aplerr += QStringLiteral("Total size of text/data sections of the dol file are too big (%1(0x%2) bytes). "
 					"Currently the limit is set as %3(0x%4) bytes.")
 					.arg(bankEntry->aplerr_val[0])
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'))
@@ -437,23 +435,23 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 					.arg(bankEntry->aplerr_val[1], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED:
-				aplerr += QString::fromLatin1("One of the sections in the dol file exceeded its boundary. "
+				aplerr += QStringLiteral("One of the sections in the dol file exceeded its boundary. "
 					"All the sections should not exceed 0x%1 (production mode).<br>\n"
 					"<i>*** NOTE: This disc will still boot on devkits.</i>")
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED:
-				aplerr += QString::fromLatin1("One of the sections in the dol file exceeded its boundary. "
+				aplerr += QStringLiteral("One of the sections in the dol file exceeded its boundary. "
 					"All the sections should not exceed 0x%1 (development mode).")
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_TEXTSEG2BIG:
-				aplerr += QString::fromLatin1("Too big text segment! (0x%1 - 0x%2)")
+				aplerr += QStringLiteral("Too big text segment! (0x%1 - 0x%2)")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
 					.arg(bankEntry->aplerr_val[1], 0, 16);
 				break;
 			case APLERR_DOL_DATASEG2BIG:
-				aplerr += QString::fromLatin1("Too big data segment! (0x%1 - 0x%2)")
+				aplerr += QStringLiteral("Too big data segment! (0x%1 - 0x%2)")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
 					.arg(bankEntry->aplerr_val[1], 0, 16);
 				break;

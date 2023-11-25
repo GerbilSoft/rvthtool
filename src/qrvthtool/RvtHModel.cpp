@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -134,7 +134,7 @@ void RvtHModelPrivate::style_t::init(void)
 	brush_lostFile_alt = QBrush(bgColor_lostFile_alt);
 
 	// Monospaced font.
-	fntMonospace = QFont(QLatin1String("Monospace"));
+	fntMonospace = QFont(QStringLiteral("Monospace"));
 	fntMonospace.setStyleHint(QFont::TypeWriter);
 }
 
@@ -156,7 +156,7 @@ QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
 			"gcn", "nr", "wii", "rvtr", "rvth"
 		};
 		static_assert(ARRAY_SIZE(names) == RvtHModel::ICON_MAX, "names[] needs to be updated!");
-		ms_icons[id] = loadIcon(QLatin1String("hw"), QLatin1String(names[id]));
+		ms_icons[id] = loadIcon(QStringLiteral("hw"), QLatin1String(names[id]));
 		assert(!ms_icons[id].isNull());
 	}
 
@@ -176,10 +176,7 @@ QIcon RvtHModelPrivate::loadIcon(const QString &dir, const QString &name)
 	QIcon icon;
 	for (const uint8_t *p = icoSz; *p != 0; p++) {
 		const QString s_sz = QString::number(*p);
-		QString full_path = QLatin1String(":/") +
-			dir + QChar(L'/') +
-			s_sz + QChar(L'x') + s_sz + QChar(L'/') +
-			name + QLatin1String(".png");;
+		const QString full_path = QStringLiteral(":/%1/%2x%2/%3.png").arg(dir, s_sz, name);
 		QPixmap pxm(full_path);
 		if (!pxm.isNull()) {
 			icon.addPixmap(pxm);

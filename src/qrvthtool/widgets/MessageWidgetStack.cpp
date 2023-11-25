@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * MessageWidgetStack.hpp: Message widget stack.                           *
  *                                                                         *
- * Copyright (c) 2014-2022 by David Korth.                                 *
+ * Copyright (c) 2014-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -62,10 +62,10 @@ MessageWidgetStackPrivate::~MessageWidgetStackPrivate()
 void MessageWidgetStackPrivate::Ui_MessageWidgetStack::setupUi(QWidget *MessageWidgetStack)
 {
 	if (MessageWidgetStack->objectName().isEmpty())
-		MessageWidgetStack->setObjectName(QLatin1String("MessageWidgetStack"));
+		MessageWidgetStack->setObjectName(QStringLiteral("MessageWidgetStack"));
 
 	vboxMain = new QVBoxLayout(MessageWidgetStack);
-	vboxMain->setObjectName(QLatin1String("vboxMain"));
+	vboxMain->setObjectName(QStringLiteral("vboxMain"));
 	vboxMain->setContentsMargins(0, 0, 0, 0);
 
 	QMetaObject::connectSlotsByName(MessageWidgetStack);

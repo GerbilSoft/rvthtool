@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * LanguageMenu.cpp: QMenu subclass for selecting a UI language.           *
  *                                                                         *
- * Copyright (c) 2012-2022 by David Korth.                                 *
+ * Copyright (c) 2012-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -156,9 +156,8 @@ QIcon LanguageMenuPrivate::iconForLocale(const QString &locale)
 	QStringList locale_parts = locale.split(QChar(L'_'), QT_SKIPEMPTYPARTS);
 	QIcon flagIcon;
 	for (int i = (locale_parts.size() - 1); i >= 0; i--) {
-		QString filename = QLatin1String(":/flags/") +
-				   locale_parts.at(i).toLower() +
-				   QLatin1String(".png");
+		QString filename = QStringLiteral(":/flags/%1.png")
+			.arg(locale_parts.at(i).toLower());
 		// TODO: Optimize by getting rid of QFile::exists()?
 		if (QFile::exists(filename)) {
 			flagIcon = QIcon(filename);

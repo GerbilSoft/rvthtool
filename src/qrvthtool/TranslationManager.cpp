@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * TranslationManager.cpp: Qt translation manager.                         *
  *                                                                         *
- * Copyright (c) 2014-2022 by David Korth.                                 *
+ * Copyright (c) 2014-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -60,7 +60,7 @@ TranslationManagerPrivate::TranslationManagerPrivate(TranslationManager *q)
 
 #ifdef Q_OS_WIN
 	// Win32: Search the program's /translations/ and main directories.
-	pathList.append(QCoreApplication::applicationDirPath() + QLatin1String("/translations"));
+	pathList.append(QCoreApplication::applicationDirPath() + QStringLiteral("/translations"));
 	pathList.append(QCoreApplication::applicationDirPath());
 #else /* !Q_OS_WIN */
 	// Check if the program's directory is within the user's home directory.
@@ -82,12 +82,12 @@ TranslationManagerPrivate::TranslationManagerPrivate(TranslationManager *q)
 		// This usually means they're working on it themselves.
 
 		// Search the program's /translations/ and main directories.
-		pathList.append(QCoreApplication::applicationDirPath() + QLatin1String("/translations"));
+		pathList.append(QCoreApplication::applicationDirPath() + QStringLiteral("/translations"));
 		pathList.append(QCoreApplication::applicationDirPath());
 	}
 
 	// Search the installed translations directory.
-	pathList.append(QString::fromUtf8(QRVTHTOOL_TRANSLATIONS_DIRECTORY));
+	pathList.append(QStringLiteral(QRVTHTOOL_TRANSLATIONS_DIRECTORY));
 #endif /* Q_OS_WIN */
 
 	// Search the user's configuration directory.
@@ -95,7 +95,7 @@ TranslationManagerPrivate::TranslationManagerPrivate(TranslationManager *q)
 #if 0
 	QDir configDir(ConfigStore::ConfigPath());
 	if (configDir != QDir(QCoreApplication::applicationDirPath())) {
-		pathList.append(configDir.absoluteFilePath(QLatin1String("translations")));
+		pathList.append(configDir.absoluteFilePath(QStringLiteral("translations")));
 		pathList.append(configDir.absolutePath());
 	}
 #endif
@@ -135,7 +135,7 @@ void TranslationManager::setTranslation(const QString &locale)
 	Q_D(TranslationManager);
 
 	// Initialize the Qt translation system.
-	QString qtLocale = QLatin1String("qt_") + locale;
+	QString qtLocale = QStringLiteral("qt_") + locale;
 	bool isQtSysTranslator = false;
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 	// Qt on Unix (but not Mac) is usually installed system-wide.
@@ -162,7 +162,7 @@ void TranslationManager::setTranslation(const QString &locale)
 	}
 
 	// Initialize the application translator.
-	QString prgLocale = QLatin1String("rvthtool_") + locale;
+	QString prgLocale = QStringLiteral("rvthtool_") + locale;
 	foreach (const QString &path, d->pathList) {
 		if (d->prgTranslator->load(prgLocale, path)) {
 			break;

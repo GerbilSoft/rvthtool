@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * AboutDialog.cpp: About Dialog.                                          *
  *                                                                         *
- * Copyright (c) 2013-2022 by David Korth.                                 *
+ * Copyright (c) 2013-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -29,8 +29,8 @@
 // Linebreaks
 #define BR "<br/>\n"
 #define BRBR "<br/>\n<br/>\n"
-#define ql1BR QLatin1String(BR)
-#define ql1BRBR QLatin1String(BRBR)
+#define ql1BR QStringLiteral(BR)
+#define ql1BRBR QStringLiteral(BRBR)
 
 /** AboutDialogPrivate **/
 
@@ -83,15 +83,14 @@ void AboutDialogPrivate::initAboutDialogText(void)
 	// Build the program title text.
 	QString sPrgTitle;
 	sPrgTitle.reserve(4096);
-	sPrgTitle += QLatin1String("<b>") +
-			QApplication::applicationDisplayName() +
-			QLatin1String("</b>" BR) +
-			AboutDialog::tr("Version %1")
-			.arg(QApplication::applicationVersion());
+	sPrgTitle += QStringLiteral("<b>%1</b>" BR)
+		.arg(QApplication::applicationDisplayName());
+	sPrgTitle += AboutDialog::tr("Version %1")
+		.arg(QApplication::applicationVersion());
 #ifdef RP_GIT_VERSION
-	sPrgTitle += QString::fromUtf8(BR RP_GIT_VERSION);
+	sPrgTitle += QStringLiteral(BR RP_GIT_VERSION);
 #ifdef RP_GIT_DESCRIBE
-	sPrgTitle += QString::fromUtf8(BR RP_GIT_DESCRIBE);
+	sPrgTitle += QStringLiteral(BR RP_GIT_DESCRIBE);
 #endif /* RP_GIT_DESCRIBE */
 #endif /* RP_GIT_DESCRIBE */
 
@@ -108,11 +107,11 @@ void AboutDialogPrivate::initAboutDialogText(void)
 		// Qt Designer's QScrollArea implementation is horribly broken.
 		// Also, this has to be done after the labels are set, because
 		// QScrollArea is kinda dumb.
-		const QString css = QLatin1String(
+		const QString css = QStringLiteral(
 			"QScrollArea, QLabel { background-color: transparent; }");
 
 		QScrollArea *const scrlCredits = new QScrollArea();
-		scrlCredits->setObjectName(QLatin1String("scrlCredits"));
+		scrlCredits->setObjectName(QStringLiteral("scrlCredits"));
 		scrlCredits->setFrameShape(QFrame::NoFrame);
 		scrlCredits->setFrameShadow(QFrame::Plain);
 		scrlCredits->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -123,7 +122,7 @@ void AboutDialogPrivate::initAboutDialogText(void)
 		ui.vboxCredits->addWidget(scrlCredits);
 
 		QScrollArea *const scrlLibraries = new QScrollArea();
-		scrlLibraries->setObjectName(QLatin1String("scrlLibraries"));
+		scrlLibraries->setObjectName(QStringLiteral("scrlLibraries"));
 		scrlLibraries->setFrameShape(QFrame::NoFrame);
 		scrlLibraries->setFrameShadow(QFrame::Plain);
 		scrlLibraries->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -134,7 +133,7 @@ void AboutDialogPrivate::initAboutDialogText(void)
 		ui.vboxLibraries->addWidget(scrlLibraries);
 
 		QScrollArea *const scrlSupport = new QScrollArea();
-		scrlSupport->setObjectName(QLatin1String("setObjectName"));
+		scrlSupport->setObjectName(QStringLiteral("setObjectName"));
 		scrlSupport->setFrameShape(QFrame::NoFrame);
 		scrlSupport->setFrameShadow(QFrame::Plain);
 		scrlSupport->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -157,13 +156,13 @@ void AboutDialogPrivate::initAboutDialogText(void)
  */
 void AboutDialogPrivate::initCreditsTab(void)
 {
-	const QLatin1String sIndent("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;");
+	const QString sIndent(QStringLiteral("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"));
 	static const QChar chrBullet(0x2022);  // U+2022: BULLET
 
 	QString credits;
 	credits.reserve(4096);
-	credits += QLatin1String(
-		"Copyright (c) 2018-2022 by David Korth." BR
+	credits += QStringLiteral(
+		"Copyright (c) 2018-2023 by David Korth." BR
 		"This program is <b>NOT</b> licensed or endorsed by Nintendo Co., Ltd.");
 
 	enum CreditType_t {
@@ -195,36 +194,35 @@ void AboutDialogPrivate::initCreditsTab(void)
 		    creditsData->type != lastCreditType)
 		{
 			// New credit type.
-			credits += QLatin1String(BRBR "<b>");
+			QString creditType;
 
 			switch (creditsData->type) {
 				case CT_TESTERS:
-					credits += AboutDialog::tr("Testers:");
+					creditType = AboutDialog::tr("Testers:");
 					break;
 				case CT_TRANSLATORS:
-					credits += AboutDialog::tr("UI Translators:");
+					creditType = AboutDialog::tr("UI Translators:");
 				default:
 					break;
 			}
 
-			credits += QLatin1String("</b>");
+			credits += QStringLiteral(BRBR "<b>%1</b>")
+				.arg(creditType);
 		}
 
 		// Append the contributor's name.
 		credits += ql1BRBR + sIndent + chrBullet + QChar(L' ');
 		if (creditsData->url) {
-			credits += QLatin1String("<a href='") +
-				QLatin1String(creditsData->url) +
-				QLatin1String("'>");
+			credits += QStringLiteral("<a href='%1'>")
+				.arg(QLatin1String(creditsData->url));
 		}
 		credits += QString::fromUtf8(creditsData->name);
 		if (creditsData->url) {
-			credits += QLatin1String("</a>");
+			credits += QStringLiteral("</a>");
 		}
 		if (creditsData->sub) {
-			credits += QLatin1String(" (") +
-				QLatin1String(creditsData->sub) +
-				QChar(L')');
+			credits += QStringLiteral(" (%1)")
+				.arg(QLatin1String(creditsData->sub));
 		}
 	}
 
@@ -257,25 +255,25 @@ void AboutDialogPrivate::initLibrariesTab(void)
 	sLibraries.reserve(4096);
 
 	// Icon set.
-	sLibraries = QLatin1String(
+	sLibraries = QStringLiteral(
 		"Icon set is based on KDE's Oxygen icons. (5.46.0)" BR
 		"Copyright (C) 2005-2018 by David Vignoni." BR);
-	sLibraries += sLicenses.arg(QLatin1String("CC BY-SA 3.0, GNU LGPL v2.1+"));
+	sLibraries += sLicenses.arg(QStringLiteral("CC BY-SA 3.0, GNU LGPL v2.1+"));
 
 	// TODO: Don't show compiled-with version if the same as in-use version?
 
 	/** Qt **/
 	sLibraries += ql1BRBR;
-	QString qtVersion = QLatin1String("Qt ") + QLatin1String(qVersion());
+	QString qtVersion = QStringLiteral("Qt %1").arg(QLatin1String(qVersion()));
 #ifdef QT_IS_STATIC
 	sLibraries += sIntCopyOf.arg(qtVersion);
 #else
-	QString qtVersionCompiled = QLatin1String("Qt " QT_VERSION_STR);
+	QString qtVersionCompiled = QStringLiteral("Qt " QT_VERSION_STR);
 	sLibraries += sCompiledWith.arg(qtVersionCompiled) + ql1BR;
 	sLibraries += sUsingDll.arg(qtVersion);
 #endif /* QT_IS_STATIC */
-	sLibraries += QLatin1String(BR "Copyright (C) 1995-2019 The Qt Company Ltd. and/or its subsidiaries." BR);
-	sLibraries += sLicenses.arg(QLatin1String("GNU LGPL v2.1+, GNU GPL v2+"));
+	sLibraries += QStringLiteral(BR "Copyright (C) 1995-2019 The Qt Company Ltd. and/or its subsidiaries." BR);
+	sLibraries += sLicenses.arg(QStringLiteral("GNU LGPL v2.1+, GNU GPL v2+"));
 
 	/** nettle **/
 	sLibraries += ql1BRBR;
@@ -291,7 +289,7 @@ void AboutDialogPrivate::initLibrariesTab(void)
 	nettle_minor = 0;	// NOTE: handle as "2.x"
 #endif
 
-	const QString nettleVersion(QLatin1String("GNU Nettle %1.%2"));
+	const QString nettleVersion(QStringLiteral("GNU Nettle %1.%2"));
 	QString nettleVersionCompiled = nettleVersion.arg(nettle_major);
 #ifdef HAVE_NETTLE_3
 	nettleVersionCompiled = nettleVersionCompiled.arg(nettle_minor);
@@ -312,19 +310,19 @@ void AboutDialogPrivate::initLibrariesTab(void)
 
 #ifdef HAVE_NETTLE_3
 	if (nettle_minor >= 1) {
-		sLibraries += QString::fromUtf8("Copyright (C) 2001-2022 Niels Möller." BR
+		sLibraries += QStringLiteral("Copyright (C) 2001-2022 Niels Möller." BR
 			"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>" BR);
 	} else {
-		sLibraries += QString::fromUtf8("Copyright (C) 2001-2014 Niels Möller." BR
+		sLibraries += QStringLiteral("Copyright (C) 2001-2014 Niels Möller." BR
 			"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>" BR);
 	}
-	sLibraries += sLicenses.arg(QLatin1String("GNU LGPL v3+, GNU GPL v2+"));
+	sLibraries += sLicenses.arg(QStringLiteral("GNU LGPL v3+, GNU GPL v2+"));
 #else /* !HAVE_NETTLE_3 */
-	sLibraries += sCompiledWith.arg(QLatin1String("GNU Nettle 2.x"));
-	sLibraries += QString::fromUtf8("\n"
+	sLibraries += sCompiledWith.arg(QStringLiteral("GNU Nettle 2.x"));
+	sLibraries += QStringLiteral("\n"
 		"Copyright (C) 2001-2013 Niels Möller.\n"
 		"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>" BR;
-	sLibraries += sLicense.arg(QLatin1String("GNU LGPL v2.1+"));
+	sLibraries += sLicense.arg(QStringLiteral("GNU LGPL v2.1+"));
 #endif /* HAVE_NETTLE_3 */
 
 	/** getopt_msvc (TODO) **/
@@ -360,13 +358,8 @@ void AboutDialogPrivate::initSupportTab(void)
 	for (const supportSite_t *supportSite = &supportSites[0];
 	     supportSite->name != nullptr; supportSite++)
 	{
-		QString siteUrl = QLatin1String(supportSite->url);
-		QString siteName = QLatin1String(supportSite->name);
-		QString siteUrlHtml = QLatin1String("<a href=\"") +
-					siteUrl +
-					QLatin1String("\">") +
-					siteName +
-					QLatin1String("</a>");
+		QString siteUrlHtml = QStringLiteral("<a href=\"%1\">%2</a>")
+			.arg(QLatin1String(supportSite->url), QLatin1String(supportSite->name));
 
 		sSupport += chrBullet + QChar(L' ') + siteUrlHtml + ql1BR;
 	}
@@ -375,8 +368,7 @@ void AboutDialogPrivate::initSupportTab(void)
 	sSupport += ql1BR +
 		AboutDialog::tr(
 			"You can also email the developer directly:") +
-		ql1BR + chrBullet + QChar(L' ') +
-		QLatin1String(
+		ql1BR + chrBullet + QChar(L' ') + QStringLiteral(
 			"<a href=\"mailto:gerbilsoft@gerbilsoft.com\">"
 			"gerbilsoft@gerbilsoft.com"
 			"</a>");

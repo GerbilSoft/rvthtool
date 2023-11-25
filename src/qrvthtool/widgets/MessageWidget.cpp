@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * MessageWidget.hpp: Message widget.                                      *
  *                                                                         *
- * Copyright (c) 2014-2019 by David Korth.                                 *
+ * Copyright (c) 2014-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -98,14 +98,14 @@ MessageWidgetPrivate::~MessageWidgetPrivate()
 void MessageWidgetPrivate::Ui_MessageWidget::setupUi(QWidget *MessageWidget)
 {
 	if (MessageWidget->objectName().isEmpty())
-		MessageWidget->setObjectName(QLatin1String("MessageWidget"));
+		MessageWidget->setObjectName(QStringLiteral("MessageWidget"));
 
 	hboxMain = new QHBoxLayout(MessageWidget);
 	hboxMain->setContentsMargins(2, 2, 2, 2);
-	hboxMain->setObjectName(QLatin1String("hboxMain"));
+	hboxMain->setObjectName(QStringLiteral("hboxMain"));
 
 	content = new QFrame(MessageWidget);
-	content->setObjectName(QLatin1String("content"));
+	content->setObjectName(QStringLiteral("content"));
 	QSizePolicy sizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 	sizePolicy.setHorizontalStretch(0);
 	sizePolicy.setVerticalStretch(0);
@@ -116,10 +116,10 @@ void MessageWidgetPrivate::Ui_MessageWidget::setupUi(QWidget *MessageWidget)
 
 	hboxFrame = new QHBoxLayout(content);
 	hboxFrame->setContentsMargins(0, 0, 0, 0);
-	hboxFrame->setObjectName(QLatin1String("hboxFrame"));
+	hboxFrame->setObjectName(QStringLiteral("hboxFrame"));
 
 	lblIcon = new QLabel(content);
-	lblIcon->setObjectName(QLatin1String("lblIcon"));
+	lblIcon->setObjectName(QStringLiteral("lblIcon"));
 	QSizePolicy sizePolicy1(QSizePolicy::Fixed, QSizePolicy::Fixed);
 	sizePolicy1.setHorizontalStretch(0);
 	sizePolicy1.setVerticalStretch(0);
@@ -131,7 +131,7 @@ void MessageWidgetPrivate::Ui_MessageWidget::setupUi(QWidget *MessageWidget)
 	hboxFrame->setAlignment(lblIcon, Qt::AlignTop);
 
 	lblMessage = new QLabel(content);
-	lblMessage->setObjectName(QLatin1String("lblMessage"));
+	lblMessage->setObjectName(QStringLiteral("lblMessage"));
 	lblMessage->setAlignment(Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop);
 	lblMessage->setTextInteractionFlags(Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse);
 
@@ -139,13 +139,13 @@ void MessageWidgetPrivate::Ui_MessageWidget::setupUi(QWidget *MessageWidget)
 	hboxFrame->setAlignment(lblMessage, Qt::AlignTop);
 
 	btnDismiss = new QToolButton(content);
-	btnDismiss->setObjectName(QLatin1String("btnDismiss"));
+	btnDismiss->setObjectName(QStringLiteral("btnDismiss"));
 	btnDismiss->setFocusPolicy(Qt::NoFocus);
-	btnDismiss->setStyleSheet(QLatin1String("margin: 0px; padding: 0px;"));
+	btnDismiss->setStyleSheet(QStringLiteral("margin: 0px; padding: 0px;"));
 
 	// Icon for the "Dismiss" button.
-	if (QIcon::hasThemeIcon(QLatin1String("dialog-close"))) {
-		btnDismiss->setIcon(QIcon::fromTheme(QLatin1String("dialog-close")));
+	if (QIcon::hasThemeIcon(QStringLiteral("dialog-close"))) {
+		btnDismiss->setIcon(QIcon::fromTheme(QStringLiteral("dialog-close")));
 	} else {
 		btnDismiss->setIcon(MessageWidget->style()->standardIcon(
 			QStyle::SP_DialogCloseButton, nullptr, btnDismiss));

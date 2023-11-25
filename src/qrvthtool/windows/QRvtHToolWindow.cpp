@@ -435,8 +435,8 @@ QString QRvtHToolWindowPrivate::getDisplayFilename(const QString &filename)
 #ifdef _WIN32
 	// Does the path start with "\\\\.\\PhysicalDriveN"?
 	// FIXME: How does Qt's native slashes interact with this?
-	if (rfn.startsWith(QLatin1String("\\\\.\\PhysicalDrive"), Qt::CaseInsensitive) ||
-	    rfn.startsWith(QLatin1String("//./PhysicalDrive"), Qt::CaseInsensitive))
+	if (rfn.startsWith(QStringLiteral("\\\\.\\PhysicalDrive"), Qt::CaseInsensitive) ||
+	    rfn.startsWith(QStringLiteral("//./PhysicalDrive"), Qt::CaseInsensitive))
 	{
 		// Physical drive.
 		// TODO: Make sure it's all backslashes.
@@ -444,7 +444,7 @@ QString QRvtHToolWindowPrivate::getDisplayFilename(const QString &filename)
 	}
 #else /* !_WIN32 */
 	// Does the path start with "/dev/"?
-	if (rfn.startsWith(QLatin1String("/dev/"))) {
+	if (rfn.startsWith(QStringLiteral("/dev/"))) {
 		// Physical drive.
 		removeDir = false;
 	}
@@ -476,7 +476,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	// Recryption key.
 	ui.toolBar->insertSeparator(ui.actionAbout);
 	lblRecryptionKey = new QLabel(QRvtHToolWindow::tr("Recryption Key:"), q);
-	lblRecryptionKey->setObjectName(QLatin1String("lblRecryptionKey"));
+	lblRecryptionKey->setObjectName(QStringLiteral("lblRecryptionKey"));
 	lblRecryptionKey->setToolTip(QRvtHToolWindow::tr(
 		"Set the encryption key to use when extracting disc images.\n"
 		"Default is None, which retains the original key."));
@@ -484,7 +484,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
 
 	cboRecryptionKey = new QComboBox(q);
-	cboRecryptionKey->setObjectName(QLatin1String("cboRecryptionKey"));
+	cboRecryptionKey->setObjectName(QStringLiteral("cboRecryptionKey"));
 	cboRecryptionKey->addItem(QString(), -1);			// None
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Retail);	// Retail (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Korean);	// Korean (fakesigned)
@@ -571,7 +571,7 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	// the Aero theme on Windows Vista and 7.
 #if 0
 	this->Ui_QRvtHToolWindow::menuBar->setStyleSheet(
-		QLatin1String("QMenuBar { border: none }"));
+		QStringLiteral("QMenuBar { border: none }"));
 #endif
 #endif
 
@@ -610,20 +610,20 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 
 	/** Progress bar widgets **/
 	d->lblMessage = new QLabel();
-	d->lblMessage->setObjectName(QLatin1String("lblMessage"));
+	d->lblMessage->setObjectName(QStringLiteral("lblMessage"));
 	d->lblMessage->setTextFormat(Qt::PlainText);
 	d->ui.statusBar->addWidget(d->lblMessage, 1);
 
 	// TODO: Handle "Escape" keypresses as cancel?
 	// Disabling focus to prevent it from being highlighted.
 	d->btnCancel = new QToolButton();
-	d->btnCancel->setObjectName(QLatin1String("btnCancel"));
+	d->btnCancel->setObjectName(QStringLiteral("btnCancel"));
 	d->btnCancel->setVisible(false);
 	d->btnCancel->setFocusPolicy(Qt::NoFocus);
 	d->btnCancel->setToolTip(tr("Cancel the current operation."));
-	d->btnCancel->setStyleSheet(QLatin1String("margin: 0px; padding: 0px;"));
-	if (QIcon::hasThemeIcon(QLatin1String("dialog-close"))) {
-		d->btnCancel->setIcon(QIcon::fromTheme(QLatin1String("dialog-close")));
+	d->btnCancel->setStyleSheet(QStringLiteral("margin: 0px; padding: 0px;"));
+	if (QIcon::hasThemeIcon(QStringLiteral("dialog-close"))) {
+		d->btnCancel->setIcon(QIcon::fromTheme(QStringLiteral("dialog-close")));
 	} else {
 		d->btnCancel->setIcon(style()->standardIcon(
 			QStyle::SP_DialogCloseButton, nullptr, d->btnCancel));
@@ -633,7 +633,7 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->ui.statusBar->addPermanentWidget(d->btnCancel, 1);
 
 	d->progressBar = new QProgressBar();
-	d->progressBar->setObjectName(QLatin1String("progressBar"));
+	d->progressBar->setObjectName(QStringLiteral("progressBar"));
 	d->progressBar->setVisible(false);
 	d->ui.statusBar->addPermanentWidget(d->progressBar, 1);
 
@@ -737,17 +737,17 @@ void QRvtHToolWindow::openRvtH(const QString &filename, bool isDevice)
 			case NHCD_STATUS_UNKNOWN:
 			case NHCD_STATUS_MISSING:
 				message = tr("NHCD table is missing.");
-				d->nhcd_status = QLatin1String("!NHCD");
+				d->nhcd_status = QStringLiteral("!NHCD");
 				break;
 
 			case NHCD_STATUS_HAS_MBR:
 				message = tr("This appears to be a PC MBR-partitioned HDD.");
-				d->nhcd_status = QLatin1String("MBR?");
+				d->nhcd_status = QStringLiteral("MBR?");
 				break;
 
 			case NHCD_STATUS_HAS_GPT:
 				message = tr("This appears to be a PC GPT-partitioned HDD.");
-				d->nhcd_status = QLatin1String("GPT?");
+				d->nhcd_status = QStringLiteral("GPT?");
 				break;
 		}
 
@@ -960,20 +960,20 @@ void QRvtHToolWindow::on_actionOpenDiskImage_triggered(void)
 	// On Linux, Qt shows an extra space after the filter name, since
 	// it doesn't show the extension. Not sure about Windows...
 	const QString allSupportedFilter = tr("All Supported Files") +
-		QLatin1String(" (*.img *.bin *.gcm *.wbfs *.ciso *.cso *.iso)");
+		QStringLiteral(" (*.img *.bin *.gcm *.wbfs *.ciso *.cso *.iso)");
 	const QString hddFilter = tr("RVT-H Reader Disk Image Files") +
-		QLatin1String(" (*.img *.bin)");
+		QStringLiteral(" (*.img *.bin)");
 	const QString gcmFilter = tr("GameCube/Wii Disc Image Files") +
-		QLatin1String(" (*.gcm *.wbfs *.ciso *.cso *.iso)");
-	const QString allFilter = tr("All Files") + QLatin1String(" (*)");
+		QStringLiteral(" (*.gcm *.wbfs *.ciso *.cso *.iso)");
+	const QString allFilter = tr("All Files") + QStringLiteral(" (*)");
 
 	// NOTE: Using a QFileDialog instead of QFileDialog::getOpenFileName()
 	// causes a non-native appearance on Windows. Hence, we should use
 	// QFileDialog::getOpenFileName().
 	const QString filters =
-		allSupportedFilter + QLatin1String(";;") +
-		hddFilter + QLatin1String(";;") +
-		gcmFilter + QLatin1String(";;") +
+		allSupportedFilter + QStringLiteral(";;") +
+		hddFilter + QStringLiteral(";;") +
+		gcmFilter + QStringLiteral(";;") +
 		allFilter;
 
 	// Get the filename.
@@ -1001,7 +1001,7 @@ void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
 {
 	// Prompt the user to select a device.
 	SelectDeviceDialog *const selectDeviceDialog = new SelectDeviceDialog();
-	selectDeviceDialog->setObjectName(QLatin1String("selectDeviceDialog"));
+	selectDeviceDialog->setObjectName(QStringLiteral("selectDeviceDialog"));
 	int ret = selectDeviceDialog->exec();
 	if (ret == QDialog::Accepted) {
 		QString deviceName = selectDeviceDialog->deviceName();
@@ -1050,7 +1050,7 @@ void QRvtHToolWindow::on_actionAbout_triggered(void)
 	}
 
 	d->aboutDialog = new AboutDialog(this);
-	d->aboutDialog->setObjectName(QLatin1String("aboutDialog"));
+	d->aboutDialog->setObjectName(QStringLiteral("aboutDialog"));
 	QObject::connect(d->aboutDialog, &QObject::destroyed,
 		[d](QObject *obj) { Q_UNUSED(obj); d->aboutDialog = nullptr; });
 	d->aboutDialog->show();
@@ -1086,8 +1086,8 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 		tr("Extract Disc Image"),
 		QString(),	// Default filename (TODO)
 		// TODO: Remove extra space from the filename filter?
-		tr("GameCube/Wii Disc Images") + QLatin1String(" (*.gcm);;") +
-		tr("All Files") + QLatin1String(" (*)"));
+		tr("GameCube/Wii Disc Images") + QStringLiteral(" (*.gcm);;") +
+		tr("All Files") + QStringLiteral(" (*)"));
 	if (filename.isEmpty())
 		return;
 
@@ -1118,9 +1118,9 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
-	d->workerThread->setObjectName(QLatin1String("workerThread"));
+	d->workerThread->setObjectName(QStringLiteral("workerThread"));
 	d->workerObject = new WorkerObject();
-	d->workerObject->setObjectName(QLatin1String("workerObject"));
+	d->workerObject->setObjectName(QStringLiteral("workerObject"));
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
 	d->workerObject->setBank(bank);
@@ -1170,8 +1170,8 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 		tr("Import Disc Image"),
 		QString(),	// Default filename (TODO)
 		// TODO: Remove extra space from the filename filter?
-		tr("GameCube/Wii Disc Images") + QLatin1String(" (*.gcm *.wbfs *.ciso);;") +
-		tr("All Files") + QLatin1String(" (*)"));
+		tr("GameCube/Wii Disc Images") + QStringLiteral(" (*.gcm *.wbfs *.ciso);;") +
+		tr("All Files") + QStringLiteral(" (*)"));
 	if (filename.isEmpty())
 		return;
 
@@ -1196,9 +1196,9 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 
 	// Create the worker thread and object.
 	d->workerThread = new QThread(this);
-	d->workerThread->setObjectName(QLatin1String("workerThread"));
+	d->workerThread->setObjectName(QStringLiteral("workerThread"));
 	d->workerObject = new WorkerObject();
-	d->workerObject->setObjectName(QLatin1String("workerObject"));
+	d->workerObject->setObjectName(QStringLiteral("workerObject"));
 	d->workerObject->moveToThread(d->workerThread);
 	d->workerObject->setRvtH(d->rvth);
 	d->workerObject->setBank(bank);

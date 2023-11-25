@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * SelectDeviceDialog.hpp: Select an RVT-H Reader device.                  *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -268,9 +268,8 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 		QString s_err;
 		if (err != 0) {
 			// TODO: Enable rich text for the message and bold the first line?
-			s_err = QLatin1String("*** ") +
-				SelectDeviceDialog::tr("ERROR enumerating RVT-H Reader devices:") +
-				QLatin1String(" ***\n");
+			s_err = QStringLiteral("*** %1 ***\n")
+				.arg(SelectDeviceDialog::tr("ERROR enumerating RVT-H Reader devices:"));
 			// TODO: Translate strerror().
 			s_err += QString::fromUtf8(strerror(err));
 			if (err == EACCES) {
@@ -283,10 +282,10 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 					osvi.dwMajorVersion = 0;
 				}
 				if (osvi.dwMajorVersion >= 6) {
-					s_err += QLatin1String("\n\n") +
+					s_err += QStringLiteral("\n\n") +
 						SelectDeviceDialog::tr("Try rerunning qrvthtool as Administrator.");
 				} else {
-					s_err += QLatin1String("\n\n") +
+					s_err += QStringLiteral("\n\n") +
 						SelectDeviceDialog::tr("Try rerunning qrvthtool using an Administrator account.");
 				}
 #else /* _WIN32 */
@@ -375,9 +374,9 @@ SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
 
 	// Change the "Reset" button to "Refresh".
 	QPushButton *const btnRefresh = d->ui.buttonBox->button(QDialogButtonBox::Reset);
-	btnRefresh->setObjectName(QLatin1String("btnRefresh"));
+	btnRefresh->setObjectName(QStringLiteral("btnRefresh"));
 	btnRefresh->setText(tr("&Refresh"));
-	btnRefresh->setIcon(QIcon::fromTheme(QLatin1String("view-refresh")));
+	btnRefresh->setIcon(QIcon::fromTheme(QStringLiteral("view-refresh")));
 	connect(btnRefresh, SIGNAL(clicked()), this, SLOT(refresh()));
 
 	// Set the device list's decoration position.

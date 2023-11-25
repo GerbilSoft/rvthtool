@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * DockManager.hpp: DockManager D-Bus implementation.                      *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -110,8 +110,8 @@ net::launchpad::DockManager *DockManagerPrivate::GetDockManagerInterface(QObject
 	// Connect to the DockManager over D-Bus.
 	net::launchpad::DockManager *ifDockManager;
 	ifDockManager = new net::launchpad::DockManager(
-				QLatin1String("net.launchpad.DockManager"),
-				QLatin1String("/net/launchpad/DockManager"),
+				QStringLiteral("net.launchpad.DockManager"),
+				QStringLiteral("/net/launchpad/DockManager"),
 				bus, parent);
 	if (!ifDockManager->isValid()) {
 		// Cannot connect to the DockManager.
@@ -168,7 +168,7 @@ int DockManagerPrivate::connectToDockManager(void)
 	}
 
 	ifDockItem = new net::launchpad::DockItem(
-			QLatin1String("net.launchpad.DockManager"),
+			QStringLiteral("net.launchpad.DockManager"),
 			paths.at(0).path(), bus, q);
 	if (!ifDockItem->isValid()) {
 		// Cannot connect to DockItem.
@@ -209,7 +209,7 @@ void DockManagerPrivate::update(void)
 	} else {
 		progress = (int)(((float)curVal / (float)curMax) * 100);
 	}
-	dockItemProps[QLatin1String("progress")] = progress;
+	dockItemProps[QStringLiteral("progress")] = progress;
 
 	ifDockItem->UpdateDockItem(dockItemProps);
 }
