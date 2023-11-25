@@ -119,9 +119,9 @@ int main(int argc, char *argv[])
 		// TODO: Better device file check.
 		const QString &filename = args.at(1);
 #ifdef _WIN32
-		bool isDevice = filename.startsWith(QLatin1String("/dev/"));
-#else /* !_WIN32 */
 		bool isDevice = filename.startsWith(QLatin1String("\\\\.\\PhysicalDrive", Qt::CaseInsensitive));
+#else /* !_WIN32 */
+		bool isDevice = filename.startsWith(QLatin1String("/dev/"));
 #endif /* _WIN32 */
 		window->openRvtH(QDir::fromNativeSeparators(filename), isDevice);
 	}
