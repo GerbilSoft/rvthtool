@@ -408,17 +408,13 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 					.arg(bankEntry->aplerr_val[0]);
 				break;
 			case APLERR_PHYSMEMSIZE_MINUS_SIMMEMSIZE_NOT_GT_DEBUGMONSIZE:
-				aplerr += QStringLiteral("[Physical memory size(0x%1)] - "
-					"[Console simulated memory size(0x%2)] "
-					"must be greater than debug monitor size(0x%3).")
+				aplerr += QStringLiteral("[Physical memory size(0x%1)] - [Console simulated memory size(0x%2)] must be greater than debug monitor size(0x%3).")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
 					.arg(bankEntry->aplerr_val[1], 0, 16)
 					.arg(bankEntry->aplerr_val[2], 0, 16);
 				break;
 			case APLERR_SIMMEMSIZE_NOT_LE_PHYSMEMSIZE:
-				aplerr += QStringLiteral("Physical memory size is 0x%1 bytes."
-					"Console simulated memory size (0x%2) must be smaller than "
-					"or equal to the Physical memory size.")
+				aplerr += QStringLiteral("Physical memory size is 0x%1 bytes. Console simulated memory size (0x%2) must be smaller than or equal to the Physical memory size.")
 					.arg(bankEntry->aplerr_val[0], 0, 16)
 					.arg(bankEntry->aplerr_val[1], 0, 16);
 				break;
@@ -427,22 +423,18 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 					.arg(bankEntry->aplerr_val[0], 0, 16);
 				break;
 			case APLERR_DOL_EXCEEDS_SIZE_LIMIT:
-				aplerr += QStringLiteral("Total size of text/data sections of the dol file are too big (%1(0x%2) bytes). "
-					"Currently the limit is set as %3(0x%4) bytes.")
+				aplerr += QStringLiteral("Total size of text/data sections of the dol file are too big (%1(0x%2) bytes). Currently the limit is set as %3(0x%4) bytes.")
 					.arg(bankEntry->aplerr_val[0])
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'))
 					.arg(bankEntry->aplerr_val[1])
 					.arg(bankEntry->aplerr_val[1], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_ADDR_LIMIT_RETAIL_EXCEEDED:
-				aplerr += QStringLiteral("One of the sections in the dol file exceeded its boundary. "
-					"All the sections should not exceed 0x%1 (production mode).<br>\n"
-					"<i>*** NOTE: This disc will still boot on devkits.</i>")
+				aplerr += QStringLiteral("One of the sections in the dol file exceeded its boundary. All the sections should not exceed 0x%1 (production mode).<br>\n<i>*** NOTE: This disc will still boot on devkits.</i>")
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_ADDR_LIMIT_DEBUG_EXCEEDED:
-				aplerr += QStringLiteral("One of the sections in the dol file exceeded its boundary. "
-					"All the sections should not exceed 0x%1 (development mode).")
+				aplerr += QStringLiteral("One of the sections in the dol file exceeded its boundary. All the sections should not exceed 0x%1 (development mode).")
 					.arg(bankEntry->aplerr_val[0], 0, 16, QChar(L'0'));
 				break;
 			case APLERR_DOL_TEXTSEG2BIG:

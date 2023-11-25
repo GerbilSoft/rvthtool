@@ -83,14 +83,14 @@ void AboutDialogPrivate::initAboutDialogText(void)
 	// Build the program title text.
 	QString sPrgTitle;
 	sPrgTitle.reserve(4096);
-	sPrgTitle += QStringLiteral("<b>%1</b>" BR)
+	sPrgTitle += QStringLiteral("<b>%1</b><br/>")
 		.arg(QApplication::applicationDisplayName());
 	sPrgTitle += AboutDialog::tr("Version %1")
 		.arg(QApplication::applicationVersion());
 #ifdef RP_GIT_VERSION
-	sPrgTitle += QStringLiteral(BR RP_GIT_VERSION);
+	sPrgTitle += QStringLiteral("<br/>") + QStringLiteral(RP_GIT_VERSION);
 #ifdef RP_GIT_DESCRIBE
-	sPrgTitle += QStringLiteral(BR RP_GIT_DESCRIBE);
+	sPrgTitle += QStringLiteral("<br/>") + QStringLiteral(RP_GIT_DESCRIBE);
 #endif /* RP_GIT_DESCRIBE */
 #endif /* RP_GIT_DESCRIBE */
 
@@ -161,9 +161,7 @@ void AboutDialogPrivate::initCreditsTab(void)
 
 	QString credits;
 	credits.reserve(4096);
-	credits += QStringLiteral(
-		"Copyright (c) 2018-2023 by David Korth." BR
-		"This program is <b>NOT</b> licensed or endorsed by Nintendo Co., Ltd.");
+	credits += QStringLiteral("Copyright (c) 2018-2023 by David Korth.<br/>This program is <b>NOT</b> licensed or endorsed by Nintendo Co., Ltd.");
 
 	enum CreditType_t {
 		CT_CONTINUE = 0,	// Continue previous type.
@@ -206,7 +204,7 @@ void AboutDialogPrivate::initCreditsTab(void)
 					break;
 			}
 
-			credits += QStringLiteral(BRBR "<b>%1</b>")
+			credits += QStringLiteral("<br/><br/><b>%1</b>")
 				.arg(creditType);
 		}
 
@@ -256,8 +254,7 @@ void AboutDialogPrivate::initLibrariesTab(void)
 
 	// Icon set.
 	sLibraries = QStringLiteral(
-		"Icon set is based on KDE's Oxygen icons. (5.46.0)" BR
-		"Copyright (C) 2005-2018 by David Vignoni." BR);
+		"Icon set is based on KDE's Oxygen icons. (5.46.0)<br/>Copyright (C) 2005-2018 by David Vignoni.<br/>");
 	sLibraries += sLicenses.arg(QStringLiteral("CC BY-SA 3.0, GNU LGPL v2.1+"));
 
 	// TODO: Don't show compiled-with version if the same as in-use version?
@@ -268,11 +265,11 @@ void AboutDialogPrivate::initLibrariesTab(void)
 #ifdef QT_IS_STATIC
 	sLibraries += sIntCopyOf.arg(qtVersion);
 #else
-	QString qtVersionCompiled = QStringLiteral("Qt " QT_VERSION_STR);
+	QString qtVersionCompiled = QStringLiteral("Qt ") + QStringLiteral(QT_VERSION_STR);
 	sLibraries += sCompiledWith.arg(qtVersionCompiled) + ql1BR;
 	sLibraries += sUsingDll.arg(qtVersion);
 #endif /* QT_IS_STATIC */
-	sLibraries += QStringLiteral(BR "Copyright (C) 1995-2019 The Qt Company Ltd. and/or its subsidiaries." BR);
+	sLibraries += QStringLiteral("<br/>Copyright (C) 1995-2019 The Qt Company Ltd. and/or its subsidiaries.<br/>");
 	sLibraries += sLicenses.arg(QStringLiteral("GNU LGPL v2.1+, GNU GPL v2+"));
 
 	/** nettle **/
@@ -310,18 +307,14 @@ void AboutDialogPrivate::initLibrariesTab(void)
 
 #ifdef HAVE_NETTLE_3
 	if (nettle_minor >= 1) {
-		sLibraries += QStringLiteral("Copyright (C) 2001-2022 Niels Möller." BR
-			"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>" BR);
+		sLibraries += QStringLiteral("Copyright (C) 2001-2022 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
 	} else {
-		sLibraries += QStringLiteral("Copyright (C) 2001-2014 Niels Möller." BR
-			"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>" BR);
+		sLibraries += QStringLiteral("Copyright (C) 2001-2014 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
 	}
 	sLibraries += sLicenses.arg(QStringLiteral("GNU LGPL v3+, GNU GPL v2+"));
 #else /* !HAVE_NETTLE_3 */
 	sLibraries += sCompiledWith.arg(QStringLiteral("GNU Nettle 2.x"));
-	sLibraries += QStringLiteral("\n"
-		"Copyright (C) 2001-2013 Niels Möller.\n"
-		"<a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a>" BR;
+	sLibraries += QStringLiteral("<br/>Copyright (C) 2001-2013 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");;
 	sLibraries += sLicense.arg(QStringLiteral("GNU LGPL v2.1+"));
 #endif /* HAVE_NETTLE_3 */
 
@@ -366,12 +359,9 @@ void AboutDialogPrivate::initSupportTab(void)
 
 	// Email the author.
 	sSupport += ql1BR +
-		AboutDialog::tr(
-			"You can also email the developer directly:") +
-		ql1BR + chrBullet + QChar(L' ') + QStringLiteral(
-			"<a href=\"mailto:gerbilsoft@gerbilsoft.com\">"
-			"gerbilsoft@gerbilsoft.com"
-			"</a>");
+		AboutDialog::tr("You can also email the developer directly:") +
+			ql1BR + chrBullet + QChar(L' ') +
+			QStringLiteral("<a href=\"mailto:gerbilsoft@gerbilsoft.com\">gerbilsoft@gerbilsoft.com</a>");
 
 	// We're done building the string.
 	ui.lblSupport->setText(sSupport);
