@@ -27,7 +27,7 @@ extern "C" {
 #define WAD_TMD_SIZE_MAX (1024*1024)
 
 // Maximum data size supported by wadresign.
-#define WAD_DATA_SIZE_MAX (128*1024*1024)
+#define WAD_DATA_SIZE_MAX (256*1024*1024)
 
 // Maximum metadata size supported by wadresign.
 #define WAD_META_SIZE_MAX (1024*1024)

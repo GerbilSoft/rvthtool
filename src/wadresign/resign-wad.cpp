@@ -228,7 +228,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	}
 
 	if (wadInfo.data_size > WAD_DATA_SIZE_MAX) {
-		// Maximum of 128 MB.
+		// Maximum of 256 MB.
 		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' data size is too big. (%u; should be less than 128 MiB)\n"),
 			src_wad, wadInfo.data_size);
 		ret = 11;
