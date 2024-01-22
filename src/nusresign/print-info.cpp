@@ -502,7 +502,9 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	// Title version (TODO: Wii U changes?)
 	uint16_t title_version = be16_to_cpu(pTmdHeader->rvl.title_version);
 	_tprintf(_T("- Title version: %u.%u (v%u)\n"),
-		title_version >> 8, title_version & 0xFF, title_version);
+		(unsigned int)(title_version >> 8),
+		(unsigned int)(title_version & 0xFF),
+		title_version);
 
 	// OS version
 	// TODO: Error message if not an OS title?
