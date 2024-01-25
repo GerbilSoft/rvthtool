@@ -82,7 +82,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	// Construct the filenames.
 	// FIXME: Content ID or content index?
 	// Assuming content ID for filename, content index for IV.
-	TCHAR cidbuf[16];
+	TCHAR cidbuf[16], cidbuf_upper[16];
 	_sntprintf(cidbuf, ARRAY_SIZE(cidbuf), _T("%08x"), be32_to_cpu(entry->content_id));
 	tstring sf_app = nus_dir;
 	sf_app += DIR_SEP_CHR;
@@ -102,13 +102,27 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 
 	FILE *f_content = _tfopen(sf_app.c_str(), _T("rb"));
 	if (!f_content) {
-		// Error opening the content file.
 		int err = errno;
-		if (err == 0) {
-			err = EIO;
+		if (err == ENOENT) {
+			// Try again with an uppercase CID.
+			_sntprintf(cidbuf_upper, ARRAY_SIZE(cidbuf_upper), _T("%08X"), be32_to_cpu(entry->content_id));
+			sf_app = nus_dir;
+			sf_app += DIR_SEP_CHR;
+			sf_app += cidbuf_upper;
+			sf_app += _T(".app");
+
+			f_content = _tfopen(sf_app.c_str(), _T("rb"));
 		}
-		_ftprintf(stderr, _T("- *** ERROR opening %s.app: %s\n"), cidbuf, _tcserror(err));
-		return -err;
+
+		if (!f_content) {
+			// Error opening the content file.
+			err = errno;
+			if (err == 0) {
+				err = EIO;
+			}
+			_ftprintf(stderr, _T("- *** ERROR opening %s.app: %s\n"), cidbuf, _tcserror(err));
+			return -err;
+		}
 	}
 
 	// H3 table depends on the size of the contents.
@@ -118,14 +132,28 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	if (hasH3) {
 		FILE *f_h3 = _tfopen(sf_h3.c_str(), _T("rb"));
 		if (!f_h3) {
-			// Error opening the H3 file.
-			fclose(f_content);
 			int err = errno;
-			if (err == 0) {
-				err = EIO;
+			if (err == ENOENT) {
+				// Try again with an uppercase CID.
+				_sntprintf(cidbuf_upper, ARRAY_SIZE(cidbuf_upper), _T("%08X"), be32_to_cpu(entry->content_id));
+				sf_h3 = nus_dir;
+				sf_h3 += DIR_SEP_CHR;
+				sf_h3 += cidbuf_upper;
+				sf_h3 += _T(".h3");
+
+				f_h3 = _tfopen(sf_h3.c_str(), _T("rb"));
 			}
-			_ftprintf(stderr, _T("- *** ERROR opening %s.h3: %s\n"), cidbuf, _tcserror(err));
-			return -err;
+
+			if (!f_h3) {
+				// Error opening the H3 file.
+				fclose(f_content);
+				int err = errno;
+				if (err == 0) {
+					err = EIO;
+				}
+				_ftprintf(stderr, _T("- *** ERROR opening %s.h3: %s\n"), cidbuf, _tcserror(err));
+				return -err;
+			}
 		}
 
 		// Get the size.
