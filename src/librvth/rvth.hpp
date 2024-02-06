@@ -315,6 +315,19 @@ class RvtH {
 		NHCD_Status_e nhcd_status(void) const { return m_NHCD_status; }
 
 		/**
+		 * Get the NHCD Table Header.
+		 *
+		 * For any non HDD images this will always be a NULL pointer.
+		 * For HDD images this will be the raw bytes of the NHCD Bank Table Header.
+		 *
+		 * NOTE: the NHCD table may be wiped, and it may contain invalid, or
+		 * unexpected values.
+		 *
+		 * @return NHCD Bank Table Header.
+		 */
+		NHCD_BankTable_Header* nhcd_header(void) const;
+
+		/**
 		 * Get a bank table entry.
 		 * @param bank	[in] Bank number. (0-7)
 		 * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)

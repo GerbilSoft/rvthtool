@@ -557,6 +557,36 @@ bool RvtH::isHDD(void) const
 }
 
 /**
+ * Get the NHCD Table Header.
+ * @return NHCD Bank Table Header.
+ */
+NHCD_BankTable_Header* RvtH::nhcd_header(void) const
+{
+	NHCD_BankTable_Header *nhcd_header = nullptr;
+	// We won't have a header.
+	if (!this->isHDD()) {
+		return nhcd_header;
+	}
+	if (this->m_file == nullptr) {
+		return nhcd_header;
+	}
+
+	// Check the bank table header.
+	nhcd_header = (NHCD_BankTable_Header*)calloc(1, sizeof(NHCD_BankTable_Header));
+	size_t size = this->m_file->seekoAndRead(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET,
+		nhcd_header, 1, sizeof(NHCD_BankTable_Header));
+	if (size != sizeof(NHCD_BankTable_Header)) {
+		// Short read.
+		if (errno == 0) {
+			errno = EIO;
+		}
+		return nullptr;
+	}
+
+	return nhcd_header;
+}
+
+/**
  * Get a bank table entry.
  * @param bank	[in] Bank number. (0-7)
  * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)

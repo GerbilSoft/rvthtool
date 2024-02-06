@@ -2,7 +2,7 @@
  * RVT-H Tool                                                              *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2023 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -26,6 +26,7 @@
 #endif /* _WIN32 */
 
 #include "list-banks.hpp"
+#include "show-table.hpp"
 #include "extract.h"
 #include "undelete.h"
 #include "verify.h"
@@ -90,6 +91,9 @@ static void print_help(const TCHAR *argv0)
 		_T("\n")
 		_T("list rvth.img\n")
 		_T("- List banks in the specified RVT-H device or disk image.\n")
+		_T("\n")
+		_T("show-table rvth.img\n")
+		_T("- Print out the raw NHCD Bank Table information for debugging.\n")
 		_T("\n")
 		_T("extract ") _T(DEVICE_NAME_EXAMPLE) _T(" bank# disc.gcm\n")
 		_T("- Extract the specified bank number from rvth.img to disc.gcm.\n")
@@ -160,7 +164,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	setlocale(LC_ALL, "");
 
 	_fputts(_T("RVT-H Tool v") _T(VERSION_STRING) _T("\n")
-		_T("Copyright (c) 2018-2022 by David Korth.\n")
+		_T("Copyright (c) 2018-2023 by David Korth.\n")
 		_T("This program is NOT licensed or endorsed by Nintendo Co., Ltd.\n"), stdout);
 #ifdef RP_GIT_VERSION
 	fputs(RP_GIT_VERSION "\n"
@@ -265,6 +269,13 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = list_banks(argv[optind+1]);
+	} else if (!_tcscmp(argv[optind], _T("show-table"))) {
+		// Print raw table information.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("RVT-H device or disk image not specified"));
+			return EXIT_FAILURE;
+		}
+		ret = show_table(argv[optind+1]);
 	} else if (!_tcscmp(argv[optind], _T("extract"))) {
 		// Extract a bank.
 		if (argc < optind+3) {
