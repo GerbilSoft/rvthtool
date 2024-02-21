@@ -530,11 +530,9 @@ int cert_realsign_ticketOrTMD(uint8_t *data, size_t size, const RSA2048PrivateKe
 	// Determine the algorithm to use.
 	switch (be32_to_cpu(sig->type)) {
 		case RVL_CERT_SIGTYPE_RSA2048_SHA1:
-			hash_size = SHA1_DIGEST_SIZE;
 			doSHA256 = false;
 			break;
 		case WUP_CERT_SIGTYPE_RSA2048_SHA256:
-			hash_size = SHA256_DIGEST_SIZE;
 			doSHA256 = true;
 			break;
 		default:
