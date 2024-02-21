@@ -514,6 +514,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 			if (ret == 0) {
 				ret = -EIO;
 			}
+			free(sdk_header);
 			goto end;
 		}
 		free(sdk_header);
