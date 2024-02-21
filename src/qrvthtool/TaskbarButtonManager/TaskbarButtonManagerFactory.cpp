@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * TaskbarButtonManagerFactory.hpp: TaskbarButtonManager factory class.    *
  *                                                                         *
- * Copyright (c) 2015-2019 by David Korth.                                 *
+ * Copyright (c) 2015-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 

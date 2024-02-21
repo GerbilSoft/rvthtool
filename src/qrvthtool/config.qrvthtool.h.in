@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * config.qrvthtool.h.in: QRvthTool configuration. (source file)           *
  *                                                                         *
- * Copyright (c) 2013-2022 by David Korth.                                 *
+ * Copyright (c) 2013-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
