@@ -64,7 +64,14 @@ void MessageSound::play(QMessageBox::Icon notificationType, const QString &messa
 	// should be fast, and we won't have to maintain the QPluginLoader
 	// instance. (Keeping the lib.instance() pointer in memory is likely
 	// to be undefined behavior.)
+#  if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+	QPluginLoader lib(QStringLiteral("kf6/FrameworkIntegrationPlugin"));
+#  elif QT_VERSION >= QT_VERSION_CHECK(5,0,0)
 	QPluginLoader lib(QStringLiteral("kf5/FrameworkIntegrationPlugin"));
+#  else
+#    error Unsupported Qt version
+#  endif
+
 	QObject *rootObj = lib.instance();
 	if (rootObj) {
 		KMessageBoxNotifyInterface *iface =
