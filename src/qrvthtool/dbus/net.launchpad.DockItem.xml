@@ -9,7 +9,7 @@
     <method name="AddMenuItem">
       <arg type="u" direction="out"/>
       <arg name="hints" type="a{sv}" direction="in"/>
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
     </method>
     <method name="RemoveMenuItem">
       <arg type="u" direction="out"/>
@@ -17,7 +17,7 @@
     </method>
     <method name="UpdateDockItem">
       <arg name="hints" type="a{sv}" direction="in"/>
-      <annotation name="com.trolltech.QtDBus.QtTypeName.In0" value="QVariantMap"/>
+      <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="QVariantMap"/>
       <annotation name="org.freedesktop.DBus.Method.NoReply" value="true"/>
     </method>
   </interface>
