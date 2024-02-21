@@ -1,4 +1,3 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 PROJECT(src)
 
 # Check for Large File Support.

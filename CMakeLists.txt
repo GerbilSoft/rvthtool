@@ -1,7 +1,17 @@
 # RVT-H Tool
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+
+# CMP0048: Set VERSION variables based on the project version specified in PROJECT().
+# Introduced in CMake 3.0.
 CMAKE_POLICY(SET CMP0048 NEW)
-PROJECT(rvthtool-base VERSION 1.1.1.1)
+
+# CMP0063: Honor visibility properties for all target types,
+# including static libraries and executables.
+# Introduced in CMake 3.3.
+CMAKE_POLICY(SET CMP0063 NEW)
+
+SET(RVTHTOOL_VERSION 1.1.1.1)
+PROJECT(rvthtool-base VERSION ${RVTHTOOL_VERSION})
 
 # CMAKE_PROJECT_VERSION was introduced in 3.12.
 IF(NOT CMAKE_PROJECT_VERSION OR NOT CMAKE_PROJECT_VERSION_MAJOR)

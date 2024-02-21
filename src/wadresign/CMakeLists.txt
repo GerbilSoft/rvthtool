@@ -1,12 +1,5 @@
 # WAD Resigning and Conversion tool
-CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
-CMAKE_POLICY(SET CMP0048 NEW)
-IF(POLICY CMP0063)
-	# CMake 3.3: Enable symbol visibility presets for all
-	# target types, including static libraries and executables.
-	CMAKE_POLICY(SET CMP0063 NEW)
-ENDIF(POLICY CMP0063)
-PROJECT(wadresign LANGUAGES CXX)
+PROJECT(wadresign LANGUAGES C CXX)
 
 # Create the Win32 manifest file.
 IF(WIN32)
