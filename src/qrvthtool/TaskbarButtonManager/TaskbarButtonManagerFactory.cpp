@@ -17,9 +17,9 @@
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 # include "UnityLauncher.hpp"
 #endif
-#ifdef HAVE_Qt5DBus
+#ifdef HAVE_QtDBus
 # include "DockManager.hpp"
-#endif /* HAVE_Qt5DBus */
+#endif /* HAVE_QtDBus */
 
 /**
  * Create a TaskbarButtonManager.

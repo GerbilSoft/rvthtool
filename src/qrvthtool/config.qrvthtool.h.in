@@ -15,10 +15,10 @@
 /* Program version. */
 #define VERSION_STRING "@VERSION_STRING@"
 
-/* Define to 1 if you have KF5 WidgetsAddons. */
-#cmakedefine HAVE_KF5WIDGETSADDONS 1
+/* Define to 1 if you have WidgetsAddons from KDE Frameworks. */
+#cmakedefine HAVE_KF_WidgetsAddons 1
 
-/* Define to 1 if you have Qt5DBus. */
-#cmakedefine HAVE_Qt5DBus 1
+/* Define to 1 if you have QtDBus. */
+#cmakedefine HAVE_QtDBus 1
 
 #endif /* __RVTHTOOL_QRVTHTOOL_CONFIG_QRVTHTOOL_H__ */

@@ -14,6 +14,7 @@ IF(QT_VERSION EQUAL 5)
 		# Found Qt5.
 		SET(BUILD_QT ON)
 		SET(QT_NS Qt5)
+		SET(KF_NS KF5)
 		IF(ENABLE_DBUS)
 			# QtDBus is used for DockManager.
 			FIND_PACKAGE(Qt5DBus)
@@ -44,6 +45,10 @@ IF(QT_VERSION EQUAL 5)
 			SET("${sources}" "${${sources}}" PARENT_SCOPE)
 		ENDFUNCTION(QT_ADD_DBUS_INTERFACES sources)
 	ENDIF(Qt5_VERSION VERSION_LESS 5.15.0)
+
+	# Minimum ECM version for KF5.
+	UNSET(KF_MIN)
+	SET(ECM_MINIMUM_VERSION 0.0.11)
 ELSEIF(QT_VERSION EQUAL 6)
 	# Find Qt6.
 	SET(Qt6_NO_LINK_QTMAIN 1)
@@ -52,6 +57,7 @@ ELSEIF(QT_VERSION EQUAL 6)
 		# Found Qt6.
 		SET(BUILD_QT ON)
 		SET(QT_NS Qt6)
+		SET(KF_NS KF6)
 		IF(ENABLE_DBUS)
 			# QtDBus is used for DockManager.
 			FIND_PACKAGE(Qt6DBus)
@@ -61,6 +67,10 @@ ELSEIF(QT_VERSION EQUAL 6)
 		# Did not find Qt6.
 		MESSAGE(WARNING "Qt6 not found. Not building qrvthtool.")
 	ENDIF()
+
+	# Minimum ECM version for KF6.
+	SET(KF_MIN 5.248.0)
+	SET(ECM_MINIMUM_VERSION ${KF_MIN})
 ELSE()
 	MESSAGE(FATAL_ERROR "Unsupported Qt version: ${QT_VERSION}")
 ENDIF()
@@ -83,10 +93,10 @@ ELSE()
 ENDIF()
 
 # KDE5: Check for KWidgetsAddons headers for notification sounds.
-IF(UNIX AND NOT APPLE AND (QT_VERSION EQUAL 5))
+IF(UNIX AND NOT APPLE)
 	# Reference: http://www.proli.net/2014/06/21/porting-your-project-to-qt5kf5/
 	# Find KDE5 Extra CMake Modules.
-	FIND_PACKAGE(ECM ${REQUIRE_KDE5} 0.0.11 NO_MODULE)
+	FIND_PACKAGE(ECM ${ECM_MINIMUM_VERSION} NO_MODULE)
 	IF(ECM_MODULE_PATH AND ECM_KDE_MODULE_DIR)
 		# Make sure ECM's CMake files don't create an uninstall rule.
 		SET(KDE_SKIP_UNINSTALL_TARGET TRUE)
@@ -107,15 +117,15 @@ IF(UNIX AND NOT APPLE AND (QT_VERSION EQUAL 5))
 		#STRING(REPLACE "-std=iso9899:1990" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
 		# Find KDE5. (TODO: Version?)
-		FIND_PACKAGE(KF5 COMPONENTS WidgetsAddons)
-		IF(KF5WidgetsAddons_FOUND)
-			SET(HAVE_KF5WIDGETSADDONS 1)
+		FIND_PACKAGE(${KF_NS} ${KF_MIN} COMPONENTS WidgetsAddons)
+		IF(${KF_NS}WidgetsAddons_FOUND)
+			SET(HAVE_KF_WidgetsAddons 1)
 
 			# KDE code uses pthread_once().
 			FIND_PACKAGE(Threads REQUIRED)
-		ENDIF(KF5WidgetsAddons_FOUND)
+		ENDIF(${KF_NS}WidgetsAddons_FOUND)
 	ENDIF()
-ENDIF(UNIX AND NOT APPLE AND (QT_VERSION EQUAL 5))
+ENDIF(UNIX AND NOT APPLE)
 
 
 # Write the config.h file.
@@ -300,11 +310,11 @@ IF(CMAKE_THREAD_LIBS_INIT)
 	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 ENDIF(CMAKE_THREAD_LIBS_INIT)
 
-IF(HAVE_KF5WIDGETSADDONS)
+IF(HAVE_KF_WidgetsAddons)
 	# NOTE: The library isn't actually needed, but we need to
 	# link to the target in order to get the headers.
-	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE KF5::WidgetsAddons)
-ENDIF(HAVE_KF5WIDGETSADDONS)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${KF_NS}::WidgetsAddons)
+ENDIF(HAVE_KF_WidgetsAddons)
 
 # Nettle (for AboutDialog)
 IF(HAVE_NETTLE)

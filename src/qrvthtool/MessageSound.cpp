@@ -11,12 +11,12 @@
 #include "config.qrvthtool.h"
 
 #if defined(_WIN32)
-# include <windows.h>
-#elif defined(HAVE_KF5WIDGETSADDONS)
-# include <kmessageboxnotifyinterface.h>
-# include <QtCore/QPluginLoader>
-# include <QtCore/QVariant>
-# include <pthread.h>
+#  include <windows.h>
+#elif defined(HAVE_KF_WidgetsAddons)
+#  include <kmessageboxnotifyinterface.h>
+#  include <QtCore/QPluginLoader>
+#  include <QtCore/QVariant>
+#  include <pthread.h>
 #endif
 
 /**
@@ -58,7 +58,7 @@ void MessageSound::play(QMessageBox::Icon notificationType, const QString &messa
 	// TODO: Check XDG_DESKTOP_SESSION.
 	// TODO: More methods.
 
-#ifdef HAVE_KF5WIDGETSADDONS
+#ifdef HAVE_KF_WidgetsAddons
 	// If KDE is available, try FrameworkIntegrationPlugin.
 	// NOTE: Not unloading the plugin here, so QPluginLoader's lookup
 	// should be fast, and we won't have to maintain the QPluginLoader
@@ -74,7 +74,7 @@ void MessageSound::play(QMessageBox::Icon notificationType, const QString &messa
 			iface->sendNotification(notificationType, message, parent);
 		}
 	}
-#endif /* HAVE_KF5WIDGETSADDONS */
+#endif /* HAVE_KF_WidgetsAddons */
 
 #endif /* _WIN32 */
 }
