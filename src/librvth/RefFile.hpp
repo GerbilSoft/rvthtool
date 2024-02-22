@@ -2,14 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * RefFile.hpp: Reference-counted FILE*.                                   *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_REFFILE_HPP__
-#define __RVTHTOOL_LIBRVTH_REFFILE_HPP__
-
-#ifdef __cplusplus
+#pragma once
 
 #include "libwiicrypto/common.h"
 #include "tcharx.h"
@@ -188,11 +185,3 @@ class RefFile
 		std::tstring m_filename;	// Filename for reopening as writable
 		bool m_isWritable;		// Is the file writable?
 };
-
-#else /* !__cplusplus */
-// FIXME: C compatibility hack - remove this once everything is ported to C++.
-struct RefFile;
-typedef struct RefFile RefFile;
-#endif /* __cplusplus */
-
-#endif /* __RVTHTOOL_LIBRVTH_REFFILE_HPP__ */
