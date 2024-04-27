@@ -2,7 +2,17 @@
 version: '1.1.1.{build}'
 
 # Build worker image (VM template)
-image: Visual Studio 2013
+image:
+  - Visual Studio 2013
+  - Ubuntu
+configuration:
+  - Debug
+  - Release
+platform:
+  - x86
+  - x64
+
+# TODO: Re-add MinGW-w64 compiler for Windows builds.
 
 # scripts that are called at very beginning, before repo cloning
 init:
@@ -27,45 +37,26 @@ branches:
   except:
     - l10n_master
 
-environment:
-  matrix:
-    - platform: x86
-      configuration: Debug
-      compiler: msvc2013
-
-    - platform: x86
-      configuration: Release
-      compiler: msvc2013
-
-    - platform: x64
-      configuration: Debug
-      compiler: msvc2013
-
-    - platform: x64
-      configuration: Release
-      compiler: msvc2013
-
-#    - platform: x86
-#      configuration: Debug
-#      compiler: mingw-w64
-
-#    - platform: x64
-#      configuration: Debug
-#      compiler: mingw-w64
-
 # Run CMake.
 before_build:
-  - cd %APPVEYOR_BUILD_FOLDER%
-  - appveyor.cmd
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%
+  - cmd: appveyor.cmd
+  - sh: cd ${APPVEYOR_BUILD_FOLDER}
+  - sh: sudo ./appveyor-dpkg.sh
+  - sh: ./appveyor.sh
 
 build_script:
-  - cd %APPVEYOR_BUILD_FOLDER%\build
-  - cmake --build . --config %configuration%
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
+  - cmd: cmake --build . --config %configuration%
+  - sh: cd ${APPVEYOR_BUILD_FOLDER}/build
+  - sh: cmake --build . --config ${CONFIGURATION}
 
 test_script:
-  - cd %APPVEYOR_BUILD_FOLDER%\build
-  - ctest -V -C %configuration%
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
+  - cmd: ctest -V -C %configuration%
+  - sh: cd ${APPVEYOR_BUILD_FOLDER}/build
+  - sh: ctest -V -C ${CONFIGURATION}
 
 after_test:
-  - cd %APPVEYOR_BUILD_FOLDER%\build
-  - ..\appveyor-artifacts.cmd
+  - cmd: cd %APPVEYOR_BUILD_FOLDER%\build
+  - cmd: ..\appveyor-artifacts.cmd
