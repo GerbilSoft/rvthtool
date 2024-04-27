@@ -22,6 +22,11 @@ only_commits:
     - extlib/**/*
     - src/**/*
 
+# Ignore the l10n_master branch from Crowdin.
+branches:
+  except:
+    - l10n_master
+
 environment:
   matrix:
     - platform: x86
