@@ -1,0 +1,3 @@
+files:
+  - source: /locale/rvthtool_en.ts
+    translation: /locale/rvthtool_%two_letters_code%.ts
