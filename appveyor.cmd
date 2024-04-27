@@ -1,6 +1,9 @@
 @ECHO OFF
 cmake --version
 
+:: FIXME: Restore MinGW-w64 support?
+set compiler=msvc2013
+
 if "%compiler%" == "msvc2013" goto :msvc2013
 if "%compiler%" == "mingw-w64" goto :mingw-w64
 echo *** ERROR: Unsupported compiler '%compiler%'.
