@@ -38,7 +38,9 @@ IF(ENABLE_NLS)
 
 # Compile the translations.
 SET(TRANSLATION_FILES
+	rvthtool_de.ts
 	rvthtool_en.ts
+	rvthtool_es.ts
 	rvthtool_1337.ts
 	)
 
