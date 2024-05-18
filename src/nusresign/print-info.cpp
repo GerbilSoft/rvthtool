@@ -465,7 +465,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		return -err;
 	}
 
-	FILE *f_tmd = _tfopen(sf_tmd.c_str(), _T("rb+"));
+	FILE *f_tmd = _tfopen(sf_tmd.c_str(), _T("rb"));
 	if (!f_tmd) {
 		fclose(f_tik);
 
