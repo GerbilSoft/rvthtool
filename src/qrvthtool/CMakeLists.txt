@@ -92,10 +92,10 @@ ELSE()
         SET(QRVTHTOOL_TRANSLATIONS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${DIR_INSTALL_TRANSLATIONS}")
 ENDIF()
 
-# KDE5: Check for KWidgetsAddons headers for notification sounds.
+# KF5/KF6: Check for KWidgetsAddons headers for notification sounds.
 IF(UNIX AND NOT APPLE)
 	# Reference: http://www.proli.net/2014/06/21/porting-your-project-to-qt5kf5/
-	# Find KDE5 Extra CMake Modules.
+	# Find KF5/KF6 Extra CMake Modules.
 	FIND_PACKAGE(ECM ${ECM_MINIMUM_VERSION} NO_MODULE)
 	IF(ECM_MODULE_PATH AND ECM_KDE_MODULE_DIR)
 		# Make sure ECM's CMake files don't create an uninstall rule.
@@ -104,7 +104,7 @@ IF(UNIX AND NOT APPLE)
 		# Don't add KDE tests to the CTest build.
 		SET(KDE_SKIP_TEST_SETTINGS TRUE)
 
-		# Include KDE5 CMake modules.
+		# Include KF5/KF6 CMake modules.
 		LIST(APPEND CMAKE_MODULE_PATH ${ECM_MODULE_PATH} ${ECM_KDE_MODULE_DIR})
 		# NOTE: The following are not needed for rvthtool and cause
 		# duplicate moc generation, but we're leaving it here for reference.
@@ -116,7 +116,7 @@ IF(UNIX AND NOT APPLE)
 		# NOTE: Not needed because KDECompilerSettings isn't used.
 		#STRING(REPLACE "-std=iso9899:1990" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-		# Find KDE5. (TODO: Version?)
+		# Find KF5/KF6. (TODO: Version?)
 		FIND_PACKAGE(${KF_NS} ${KF_MIN} COMPONENTS WidgetsAddons)
 		IF(${KF_NS}WidgetsAddons_FOUND)
 			SET(HAVE_KF_WidgetsAddons 1)

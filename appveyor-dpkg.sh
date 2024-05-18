@@ -13,4 +13,5 @@ apt-get -y install \
 	\
 	qtbase5-dev \
 	qttools5-dev \
-	qttools5-dev-tools
+	qttools5-dev-tools \
+	libkf5widgetsaddons-dev
