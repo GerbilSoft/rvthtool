@@ -159,7 +159,7 @@ QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
 		static const array<const char*, 5> names = {{
 			"gcn", "nr", "wii", "rvtr", "rvth"
 		}};
-		static_assert(ARRAY_SIZE(names) == RvtHModel::ICON_MAX, "names[] needs to be updated!");
+		static_assert(names.size() == RvtHModel::ICON_MAX, "names[] needs to be updated!");
 		ms_icons[id] = loadIcon(QStringLiteral("hw"), QLatin1String(names[id]));
 		assert(!ms_icons[id].isNull());
 	}

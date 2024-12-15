@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * recrypt.cpp: RVT-H "recryption" functions.                              *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -37,7 +37,11 @@
 #include <cstddef>
 #include <cstring>
 
-// Sector buffer. (1 LBA)
+// C++ includes
+#include <array>
+using std::array;
+
+// Sector buffer (1 LBA)
 typedef union _sbuf1_t {
 	uint8_t u8[LBA_SIZE];
 	GCN_DiscHeader gcn;
@@ -59,7 +63,7 @@ typedef union _sbuf2_t {
 
 // ID
 static const uint32_t id_exp = 0x00010001;
-static const uint8_t id_pub[256] = {
+static const array<uint8_t, 256> id_pub = {{
 	0xB5,0xBC,0x70,0x4C,0x75,0x3D,0xCF,0x02,0x67,0x04,0x1A,0xAB,0xC3,0xC8,0x20,0xD6,
 	0x51,0xE8,0xE2,0xCC,0x6A,0x08,0xCF,0x70,0xEE,0xCF,0x45,0x20,0x27,0xCC,0x81,0x77,
 	0x98,0xBB,0x22,0x82,0x61,0xA4,0x1B,0x52,0x19,0xC0,0x3F,0x50,0xAF,0xCE,0x6E,0xAB,
@@ -76,7 +80,7 @@ static const uint8_t id_pub[256] = {
 	0x8F,0x06,0x25,0xD9,0xC1,0x88,0x03,0xEC,0xC3,0x0A,0xC2,0x72,0x49,0x4C,0x45,0xEF,
 	0xAB,0x2F,0x66,0xA1,0x3C,0xDC,0x28,0x39,0xFD,0x64,0x33,0xDF,0x72,0x43,0xD9,0x65,
 	0x2B,0xDF,0x94,0x14,0x0A,0x7B,0xE0,0xBA,0x40,0x29,0xC5,0x23,0x30,0x2C,0x14,0xC1
-};
+}};
 
 /**
  * @param id ID buffer.
@@ -88,9 +92,8 @@ static int rvth_create_id(uint8_t *id, size_t size,
 	const GCN_DiscHeader *gcn, const char *extra)
 {
 	// Leaving 16 bytes for the PKCS#1 header.
-	static const uint8_t id_hdr[] = {0x1B,0x1F,0x1D,0x01,0x1D,0x06,0x06,0x05,0x53,0x49};
+	static const array<uint8_t, 10> id_hdr = {{0x1B,0x1F,0x1D,0x01,0x1D,0x06,0x06,0x05,0x53,0x49}};
 	uint8_t buf[256-16];
-	unsigned int i;
 
 	char ts[64];
 	struct tm tmbuf_utc;
@@ -120,16 +123,16 @@ static int rvth_create_id(uint8_t *id, size_t size,
 		tzoffset / 60, tzoffset % 60);
 
 	// ID, extra data and timestamp.
-	memcpy(buf, id_hdr, sizeof(id_hdr));
-	for (i = 0; i < sizeof(id_hdr); i++) {
+	memcpy(buf, id_hdr.data(), id_hdr.size());
+	for (size_t i = 0; i < id_hdr.size(); i++) {
 		buf[i] ^= 0x69;
 	}
 	strftime(ts, sizeof(ts), "%Y/%m/%d %H:%M:%S", &tmbuf_local);
 	if (extra) {
-		snprintf((char*)&buf[sizeof(id_hdr)], /*0x40*/ sizeof(buf)-sizeof(id_hdr),
+		snprintf((char*)&buf[sizeof(id_hdr)], /*0x40*/ sizeof(buf)-id_hdr.size(),
 			 "%s, %s %s", extra, ts, tzval);
 	} else {
-		snprintf((char*)&buf[sizeof(id_hdr)], /*0x40*/ sizeof(buf)-sizeof(id_hdr),
+		snprintf((char*)&buf[sizeof(id_hdr)], /*0x40*/ sizeof(buf)-id_hdr.size(),
 			 "%s %s", ts, tzval);
 	}
 
@@ -137,7 +140,7 @@ static int rvth_create_id(uint8_t *id, size_t size,
 	memcpy(&buf[0x40], gcn, 0x68);
 
 	// Encrypt it!
-	return rsaw_encrypt(id, size, id_pub, sizeof(id_pub), id_exp, buf, sizeof(buf));
+	return rsaw_encrypt(id, size, id_pub.data(), id_pub.size(), id_exp, buf, sizeof(buf));
 }
 
 int RvtH::recryptID(unsigned int bank)
