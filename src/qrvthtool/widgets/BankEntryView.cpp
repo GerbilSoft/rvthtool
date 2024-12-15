@@ -11,13 +11,14 @@
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cstring>
 
-// Qt includes.
+// Qt includes
 #include <QtCore/QDateTime>
 #include <QtCore/QLocale>
+#include <QtCore/QTimeZone>
 
 /** BankEntryViewPrivate **/
 
@@ -275,8 +276,13 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 		// NOTE: Qt::DefaultLocaleShortDate was removed in Qt6,
 		// so switching to QLocale for formatting.
 		QLocale locale(QLocale::system());
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+		const QTimeZone timeZone = QTimeZone(QTimeZone::UTC);
+#else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
+		static constexpr Qt::TimeSpec timeZone = Qt::UTC;
+#endif
 		QDateTime ts = QDateTime::fromMSecsSinceEpoch(
-			(qint64)bankEntry->timestamp * 1000, Qt::UTC);
+			(qint64)bankEntry->timestamp * 1000, timeZone);
 		ui.lblTimestamp->setText(ts.toString(
 			locale.dateTimeFormat(QLocale::ShortFormat)));
 	} else {
