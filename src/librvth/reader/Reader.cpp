@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * Reader.cpp: Disc image reader base class.                               *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -14,10 +14,14 @@
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
+
+// C++ includes
+#include <array>
+using std::array;
 
 Reader::Reader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	: m_file(nullptr)
@@ -62,7 +66,7 @@ Reader::~Reader()
  */
 Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 {
-	assert(file != NULL);
+	assert(file != nullptr);
 	if (file->isDevice()) {
 		// This is an RVT-H Reader system.
 		// Only plain images are supported.
@@ -112,14 +116,14 @@ Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	// Check for SDK headers.
 	// TODO: Verify GC1L, NN2L. (These are all NN1L images.)
 	// TODO: Checksum at 0x0830.
-	static const uint8_t sdk_0x0000[4] = {0xFF,0xFF,0x00,0x00};
+	static const array<uint8_t, 4> sdk_0x0000 = {{0xFF,0xFF,0x00,0x00}};
 	// TODO: Some RVMs have extended headers at 0x0800, but not the 0x082C value.
-	static const uint8_t sdk_0x0820[4] = {0x00,0x02,0xF0,0x00};
-	static const uint8_t sdk_0x082C[4] = {0x00,0x00,0xE0,0x06};
+	static const array<uint8_t, 4> sdk_0x0820 = {{0x00,0x02,0xF0,0x00}};
+	static const array<uint8_t, 4> sdk_0x082C = {{0x00,0x00,0xE0,0x06}};
 	if (lba_len > BYTES_TO_LBA(32768) &&
-	    !memcmp(&sbuf[0x0000], sdk_0x0000, sizeof(sdk_0x0000)) &&
-	    (!memcmp(&sbuf[0x082C], sdk_0x082C, sizeof(sdk_0x082C)) ||
-	     !memcmp(&sbuf[0x0820], sdk_0x0820, sizeof(sdk_0x0820))))
+	     !memcmp(&sbuf[0x0000], sdk_0x0000.data(), sdk_0x0000.size()) &&
+	    (!memcmp(&sbuf[0x082C], sdk_0x082C.data(), sdk_0x082C.size()) ||
+	     !memcmp(&sbuf[0x0820], sdk_0x0820.data(), sdk_0x0820.size())))
 	{
 		// This image has an SDK header.
 		// Adjust the LBA values to skip it.

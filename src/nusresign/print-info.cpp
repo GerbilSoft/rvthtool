@@ -27,13 +27,15 @@
 #include <string.h>
 
 // C++ includes
+#include <array>
 #include <memory>
 #include <string>
+using std::array;
 using std::tstring;
 using std::unique_ptr;
 
 // Buffer size for verifying contents.
-#define READ_BUFFER_SIZE (1024*1024)
+static constexpr off64_t READ_BUFFER_SIZE = 1024U * 1024U;
 
 /**
  * Is an issuer retail or debug?
@@ -204,7 +206,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 
 	// Read the content, decrypt it, and hash it.
 	// TODO: Verify size; check fseeko() errors.
-	int64_t data_sz = be64_to_cpu(entry->size);
+	off64_t data_sz = be64_to_cpu(entry->size);
 
 	int ret = 0;
 	if (!hasH3) {
@@ -304,14 +306,14 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		// H4 == hash of the H3 hash, stored in the content entry
 
 		// Were any bad hashes found?
-		unsigned int bad_hash[4] = {0, 0, 0, 0};
+		array<unsigned int, 4> bad_hash = {{0, 0, 0, 0}};
 
-		#define ENC_BLOCK_SIZE 0x10000
-		#define DEC_BLOCK_SIZE 0xFC00
+		static constexpr off64_t ENC_BLOCK_SIZE = 0x10000U;
+		static constexpr off64_t DEC_BLOCK_SIZE = 0xFC00U;
 
 		// Zero IV for hashes.
-		uint8_t zero_iv[16];
-		memset(zero_iv, 0, sizeof(zero_iv));
+		array<uint8_t, 16> zero_iv;
+		zero_iv.fill(0);
 
 		EncBlock *const block = reinterpret_cast<EncBlock*>(buf.get());
 		unsigned int block_number = 0;
@@ -330,7 +332,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			}
 
 			// Decrypt the hashes. (zero IV)
-			aesw_set_iv(aesw, zero_iv, sizeof(zero_iv));
+			aesw_set_iv(aesw, zero_iv.data(), zero_iv.size());
 			aesw_decrypt(aesw, reinterpret_cast<uint8_t*>(&block->hashes), sizeof(block->hashes));
 
 			// Decrypt the data.
@@ -405,11 +407,11 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		}
 
 		// Verify the H4 SHA-1, which is stored in the content entry.
-		uint8_t digest[SHA1_DIGEST_SIZE];
+		array<uint8_t, SHA1_DIGEST_SIZE> digest;
 		sha1_ctx sha1_h4;
 		sha1_init(&sha1_h4);
 		sha1_update(&sha1_h4, hash_h3_len, hash_h3.get());
-		sha1_digest(&sha1_h4, sizeof(digest), digest);
+		sha1_digest(&sha1_h4, digest.size(), digest.data());
 		_fputts(_T("- Expected SHA-1: "), stdout);
 		for (size_t size = 0; size < sizeof(entry->sha1_hash); size++) {
 			_tprintf(_T("%02x"), entry->sha1_hash[size]);
@@ -420,7 +422,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			printf("%02x", digest[size]);
 		}
 		if (showH4status) {
-			if (!memcmp(digest, entry->sha1_hash, SHA1_DIGEST_SIZE)) {
+			if (!memcmp(digest.data(), entry->sha1_hash, SHA1_DIGEST_SIZE)) {
 				_fputts(_T(" [OK] (H4)\n"), stdout);
 			} else {
 				_fputts(_T(" [ERROR] (H4)\n"), stdout);

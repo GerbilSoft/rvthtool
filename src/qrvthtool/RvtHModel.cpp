@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
- * Copyright (c) 2018-2023 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -10,9 +10,13 @@
 
 #include "librvth/rvth.hpp"
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cstring>
+
+// C++ includes
+#include <array>
+using std::array;
 
 // Qt includes.
 #include <QApplication>
@@ -148,13 +152,13 @@ QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
 	assert(id >= 0);
 	assert(id < RvtHModel::ICON_MAX);
 	if (id < 0 || id >= RvtHModel::ICON_MAX) {
-		return QIcon();
+		return {};
 	}
 
 	if (ms_icons[id].isNull()) {
-		static const char *const names[] = {
+		static const array<const char*, 5> names = {{
 			"gcn", "nr", "wii", "rvtr", "rvth"
-		};
+		}};
 		static_assert(ARRAY_SIZE(names) == RvtHModel::ICON_MAX, "names[] needs to be updated!");
 		ms_icons[id] = loadIcon(QStringLiteral("hw"), QLatin1String(names[id]));
 		assert(!ms_icons[id].isNull());
@@ -170,12 +174,12 @@ QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
  */
 QIcon RvtHModelPrivate::loadIcon(const QString &dir, const QString &name)
 {
-	// Icon sizes.
-	static const uint8_t icoSz[] = {16, 22, 24, 32, 48, 64, 128, 0};
+	// Icon sizes
+	static const array<uint8_t, 7> icoSz = {{16, 22, 24, 32, 48, 64, 128}};
 
 	QIcon icon;
-	for (const uint8_t *p = icoSz; *p != 0; p++) {
-		const QString s_sz = QString::number(*p);
+	for (uint8_t p : icoSz) {
+		const QString s_sz = QString::number(p);
 		const QString full_path = QStringLiteral(":/%1/%2x%2/%3.png").arg(dir, s_sz, name);
 		QPixmap pxm(full_path);
 		if (!pxm.isNull()) {
@@ -328,17 +332,19 @@ int RvtHModel::columnCount(const QModelIndex& parent) const
 QVariant RvtHModel::data(const QModelIndex& index, int role) const
 {
 	Q_D(const RvtHModel);
-	if (!d->rvth || !index.isValid())
-		return QVariant();
-	if (index.row() >= rowCount())
-		return QVariant();
+	if (!d->rvth || !index.isValid()) {
+		return {};
+	}
+	if (index.row() >= rowCount()) {
+		return {};
+	}
 
 	// Get the bank entry.
 	const unsigned int bank = static_cast<unsigned int>(index.row());
 	const RvtH_BankEntry *const entry = d->rvth->bankEntry(bank);
 	if (!entry) {
 		// No entry...
-		return QVariant();
+		return {};
 	}
 
 	// HACK: Increase icon width on Windows.
@@ -383,10 +389,10 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 					break;
 			}
 			// All other columns are empty.
-			return QVariant();
+			return {};
 
 		case RVTH_BankType_Wii_DL_Bank2:
-			return QVariant();
+			return {};
 
 		default:
 			break;
@@ -518,7 +524,7 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 	}
 
 	// Default value.
-	return QVariant();
+	return {};
 }
 
 QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -549,7 +555,7 @@ QVariant RvtHModel::headerData(int section, Qt::Orientation orientation, int rol
 	}
 
 	// Default value.
-	return QVariant();
+	return {};
 }
 
 /**

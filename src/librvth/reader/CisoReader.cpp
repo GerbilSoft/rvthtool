@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * CisoReader.cpp: CISO disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -12,22 +12,27 @@
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 
-// CISO magic.
-static const char CISO_MAGIC[4] = {'C','I','S','O'};
+// C++ includes
+#include <array>
+using std::array;
 
-typedef struct PACKED _CisoHeader {
+// CISO magic
+static const array<char, 4> CISO_MAGIC = {{'C','I','S','O'}};
+
+typedef struct _CisoHeader {
 	char magic[4];			// "CISO"
 	uint32_t block_size;		// LE32
 	uint8_t map[CISO_MAP_SIZE];	// 0 == unused; 1 == used; other == invalid
 } CisoHeader;
+ASSERT_STRUCT(CisoHeader, 4+4+CISO_MAP_SIZE);
 
 /**
  * Is a given disc image supported by the CISO reader?
@@ -37,14 +42,14 @@ typedef struct PACKED _CisoHeader {
  */
 bool CisoReader::isSupported(const uint8_t *sbuf, size_t size)
 {
-	assert(sbuf != NULL);
+	assert(sbuf != nullptr);
 	assert(size >= LBA_SIZE);
 	if (!sbuf || size < LBA_SIZE) {
 		return false;
 	}
 
 	// Check for CISO magic.
-	if (memcmp(sbuf, CISO_MAGIC, sizeof(CISO_MAGIC)) != 0) {
+	if (memcmp(sbuf, CISO_MAGIC.data(), CISO_MAGIC.size()) != 0) {
 		// Invalid magic.
 		return false;
 	}

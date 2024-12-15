@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * WbfsReader.cpp: WBFS disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -12,18 +12,22 @@
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 
+// C++ includes
+#include <array>
+using std::array;
+
 #include "libwbfs.h"
 
 // WBFS magic.
-static const char WBFS_MAGIC[4] = {'W','B','F','S'};
+static const array<char, 4> WBFS_MAGIC = {{'W','B','F','S'}};
 
 /**
  * Is a given disc image supported by the WBFS reader?
@@ -33,7 +37,7 @@ static const char WBFS_MAGIC[4] = {'W','B','F','S'};
  */
 bool WbfsReader::isSupported(const uint8_t *sbuf, size_t size)
 {
-	assert(sbuf != NULL);
+	assert(sbuf != nullptr);
 	assert(size >= LBA_SIZE);
 	if (!sbuf || size < LBA_SIZE) {
 		return false;
@@ -41,7 +45,7 @@ bool WbfsReader::isSupported(const uint8_t *sbuf, size_t size)
 
 	// Check for WBFS magic.
 	wbfs_head_t *const head = (wbfs_head_t*)sbuf;
-	if (memcmp(&head->magic, WBFS_MAGIC, sizeof(WBFS_MAGIC)) != 0) {
+	if (memcmp(&head->magic, WBFS_MAGIC.data(), WBFS_MAGIC.size()) != 0) {
 		// Invalid magic.
 		return false;
 	}
@@ -80,8 +84,8 @@ static inline uint8_t size_to_shift(uint32_t size)
  */
 static wbfs_t *readWbfsHeader(RefFile *file, uint32_t lba_start)
 {
-	wbfs_head_t *head = NULL;
-	wbfs_t *p = NULL;
+	wbfs_head_t *head = nullptr;
+	wbfs_t *p = nullptr;
 
 	unsigned int hd_sec_sz;
 	int ret = -1;
@@ -173,7 +177,7 @@ static wbfs_t *readWbfsHeader(RefFile *file, uint32_t lba_start)
 
 	// Free blocks table.
 	p->freeblks_lba = (p->wbfs_sec_sz - p->n_wbfs_sec/8) >> p->hd_sec_sz_s;
-	p->freeblks = NULL;
+	p->freeblks = nullptr;
 	p->max_disc = (p->freeblks_lba-1) / (p->disc_info_sz >> p->hd_sec_sz_s);
 	if (p->max_disc > (p->hd_sec_sz - sizeof(wbfs_head_t)))
 		p->max_disc = (uint16_t)(p->hd_sec_sz - sizeof(wbfs_head_t));
@@ -185,7 +189,7 @@ end:
 		// Error...
 		free(head);
 		free(p);
-		return NULL;
+		return nullptr;
 	}
 
 	// wbfs_t opened.
@@ -200,8 +204,8 @@ end:
  */
 static void freeWbfsHeader(wbfs_t *p)
 {
-	assert(p != NULL);
-	assert(p->head != NULL);
+	assert(p != nullptr);
+	assert(p->head != nullptr);
 	assert(p->n_disc_open == 0);
 
 	// Free everything.
@@ -234,7 +238,7 @@ static wbfs_disc_t *openWbfsDisc(RefFile *file, uint32_t lba_start, wbfs_t *p, u
 				wbfs_disc_t *disc = (wbfs_disc_t*)malloc(sizeof(wbfs_disc_t));
 				if (!disc) {
 					// ENOMEM
-					return NULL;
+					return nullptr;
 				}
 				disc->p = p;
 				disc->i = i;
@@ -244,21 +248,21 @@ static wbfs_disc_t *openWbfsDisc(RefFile *file, uint32_t lba_start, wbfs_t *p, u
 				if (!disc->header) {
 					// ENOMEM
 					free(disc);
-					return NULL;
+					return nullptr;
 				}
 
 				ret = file->seeko(LBA_TO_BYTES(lba_start) + p->hd_sec_sz + (i*p->disc_info_sz), SEEK_SET);
 				if (ret != 0) {
 					// Seek error.
 					free(disc);
-					return NULL;
+					return nullptr;
 				}
 				size = file->read(disc->header, 1, p->disc_info_sz);
 				if (size != p->disc_info_sz) {
 					// Error reading the disc information.
 					free(disc->header);
 					free(disc);
-					return NULL;
+					return nullptr;
 				}
 
 				// TODO: Byteswap wlba_table[] here?
@@ -274,7 +278,7 @@ static wbfs_disc_t *openWbfsDisc(RefFile *file, uint32_t lba_start, wbfs_t *p, u
 	}
 
 	// Disc not found.
-	return NULL;
+	return nullptr;
 }
 
 /**
@@ -284,10 +288,10 @@ static wbfs_disc_t *openWbfsDisc(RefFile *file, uint32_t lba_start, wbfs_t *p, u
  */
 static void closeWbfsDisc(wbfs_disc_t *disc)
 {
-	assert(disc != NULL);
-	assert(disc->p != NULL);
+	assert(disc != nullptr);
+	assert(disc->p != nullptr);
 	assert(disc->p->n_disc_open > 0);
-	assert(disc->header != NULL);
+	assert(disc->header != nullptr);
 
 	// Free the disc.
 	disc->p->n_disc_open--;

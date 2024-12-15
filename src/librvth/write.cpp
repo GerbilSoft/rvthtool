@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * write.cpp: RVT-H write functions.                                       *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -12,13 +12,13 @@
 #include "byteswap.h"
 #include "nhcd_structs.h"
 
-// Disc image reader.
+// Disc image reader
 #include "reader/Reader.hpp"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
@@ -115,7 +115,6 @@ fail:
 		*pErr = -err;
 	}
 	errno = err;
-	return;
 }
 
 /**

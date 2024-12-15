@@ -3,7 +3,7 @@
  * PlainReader.cpp: Plain disc image reader class.                         *
  * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -57,7 +57,7 @@ PlainReader::PlainReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	if (lba_start == 0 && lba_len == 0) {
 		// NOTE: If not a multiple of the LBA size,
 		// the partial LBA will be ignored.
-		lba_len = (uint32_t)(filesize / LBA_SIZE);
+		lba_len = static_cast<uint32_t>(filesize / LBA_SIZE);
 	}
 	m_lba_start = lba_start;
 	m_lba_len = lba_len;
@@ -115,7 +115,7 @@ uint32_t PlainReader::read(void *ptr, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// Read the data.
-	return (uint32_t)m_file->read(ptr, LBA_SIZE, lba_len);
+	return static_cast<uint32_t>(m_file->read(ptr, LBA_SIZE, lba_len));
 }
 
 /**
@@ -149,5 +149,5 @@ uint32_t PlainReader::write(const void *ptr, uint32_t lba_start, uint32_t lba_le
 	}
 
 	// Write the data.
-	return (uint32_t)m_file->write(ptr, LBA_SIZE, lba_len);
+	return static_cast<uint32_t>(m_file->write(ptr, LBA_SIZE, lba_len));
 }

@@ -210,45 +210,43 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 		return EXIT_FAILURE;
 	} else if (!_tcscmp(argv[optind], _T("info"))) {
 		// Print WAD information.
-		int i;
 		if (argc < optind+2) {
 			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
 
 		ret = 0;
-		for (i = optind+1; i < argc; i++) {
+		for (int i = optind+1; i < argc; i++) {
 			ret |= print_wad_info(argv[i], false);
 		}
 	} else if (!_tcscmp(argv[optind], _T("verify"))) {
 		// Verify a WAD.
-		int i;
 		if (argc < optind+2) {
 			print_error(argv[0], _T("WAD filename not specified"));
 			return EXIT_FAILURE;
 		}
 
 		ret = 0;
-		for (i = optind+1; i < argc; i++) {
+		for (int i = optind+1; i < argc; i++) {
 			ret |= print_wad_info(argv[i], true);
 		}
 	} else if (!_tcscmp(argv[optind], _T("resign"))) {
 		// Resign a WAD.
 		if (argc < optind+2) {
 			print_error(argv[0], _T("WAD filenames not specified"));
-			return EXIT_FAILURE;
+			ret = EXIT_FAILURE;
 		} else if (argc < optind+3) {
 			print_error(argv[0], _T("Output WAD filename not specified"));
-			return EXIT_FAILURE;
+			ret = EXIT_FAILURE;
+		} else {
+			ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key, output_format);
 		}
-		ret = resign_wad(argv[optind+1], argv[optind+2], recrypt_key, output_format);
 	} else {
 		// If the "command" contains a slash or dot (or backslash on Windows),
 		// assume it's a filename and handle it as 'info'.
 		// TODO: If two filenames are specified, handle it as 'resign'.
-		const TCHAR *p;
 		bool isFilename = false;
-		for (p = argv[optind]; *p != 0; p++) {
+		for (const TCHAR *p = argv[optind]; *p != 0; p++) {
 			if (*p == _T('/') || *p == _T('.')) {
 				// Probably a filename.
 				isFilename = true;

@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * extract.cpp: RVT-H extract and import functions.                        *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -19,18 +19,20 @@
 // libwiicrypto
 #include "libwiicrypto/sig_tools.h"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 #include <sys/stat.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <ctime>
 
-// C++ includes.
+// C++ includes
+#include <memory>
 #include <string>
+using std::unique_ptr;
 using std::string;
 using std::wstring;
 
@@ -42,8 +44,8 @@ using std::wstring;
 #endif /* _WIN32 */
 
 // Buffer size
-#define BUF_SIZE	( 1U*1024U*1024U)
-#define LBA_COUNT_BUF	BYTES_TO_LBA(BUF_SIZE)
+static constexpr unsigned int BUF_SIZE = 1U * 1024U * 1024U;
+static constexpr unsigned int LBA_COUNT_BUF = BYTES_TO_LBA(BUF_SIZE);
 
 /**
  * Get the free disk space on the volume containing `filename`.
@@ -140,7 +142,6 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	uint32_t lba_count;
 	uint32_t lba_buf_max;	// Highest LBA that can be written using the buffer.
 	uint32_t lba_nonsparse;	// Last LBA written that wasn't sparse.
-	unsigned int sprs;		// Sparse counter.
 
 	// Callback state.
 	RvtH_Progress_State state;
@@ -236,7 +237,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	if (entry_src->timestamp >= 0) {
 		entry_dest->timestamp = entry_src->timestamp;
 	} else {
-		entry_dest->timestamp = time(NULL);
+		entry_dest->timestamp = time(nullptr);
 	}
 
 	// Number of LBAs to copy.
@@ -287,7 +288,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		}
 
 		// Check for empty 4 KB blocks.
-		for (sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
+		for (unsigned int sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
 			if (!isBlockEmpty(&buf[sprs], 4096)) {
 				// 4 KB block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
@@ -301,7 +302,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	// Process any remaining LBAs.
 	if (lba_count < lba_copy_len) {
 		const unsigned int lba_left = lba_copy_len - lba_count;
-		const unsigned int sz_left = (unsigned int)BYTES_TO_LBA(lba_left);
+		const unsigned int sz_left = static_cast<unsigned int>(BYTES_TO_LBA(lba_left));
 
 		if (callback) {
 			bool bRet;
@@ -317,7 +318,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 		entry_src->reader->read(buf, lba_count, lba_left);
 
 		// Check for empty 512-byte blocks.
-		for (sprs = 0; sprs < sz_left; sprs += 512) {
+		for (unsigned int sprs = 0; sprs < sz_left; sprs += 512) {
 			if (!isBlockEmpty(&buf[sprs], 512)) {
 				// 512-byte block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
@@ -376,10 +377,6 @@ end:
 int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	int recrypt_key, unsigned int flags, RvtH_Progress_Callback callback, void *userdata)
 {
-	RvtH *rvth_dest = nullptr;
-	int64_t diskFreeSpace_lba = 0;
-	int ret = 0;
-
 	if (!filename || filename[0] == 0) {
 		errno = EINVAL;
 		return -EINVAL;
@@ -409,8 +406,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 		if (!game_pte) {
 			// No game partition...
 			errno = EIO;
-			ret = RVTH_ERROR_NO_GAME_PARTITION;
-			goto end;
+			return RVTH_ERROR_NO_GAME_PARTITION;
 		}
 
 		// TODO: Read the partition header to determine the data offset.
@@ -431,8 +427,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 		if (entry->type == RVTH_BankType_GCN) {
 			// FIXME: Not supported.
 			errno = ENOTSUP;
-			ret = RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
-			goto end;
+			return RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
 		}
 		// Prepend 32k to the GCM.
 		gcm_lba_len += BYTES_TO_LBA(32768);
@@ -440,40 +435,40 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 
 	// Check that we have enough free disk space.
 	// NOTE: We're not checking for sparse sectors.
-	diskFreeSpace_lba = getDiskFreeSpace_lba(filename);
+	int64_t diskFreeSpace_lba = getDiskFreeSpace_lba(filename);
 	if (diskFreeSpace_lba < 0) {
 		// Error...
-		ret = static_cast<int>(diskFreeSpace_lba);
+		int ret = static_cast<int>(diskFreeSpace_lba);
 		errno = -ret;
-		goto end;
+		return ret;
 	} else if (diskFreeSpace_lba < gcm_lba_len) {
 		// Not enough free disk space.
 		errno = ENOSPC;
-		ret = -ENOSPC;
-		goto end;
+		return -ENOSPC;
 	}
 
-	rvth_dest = new RvtH(filename, gcm_lba_len, &ret);
+	int ret = 0;
+	unique_ptr<RvtH> rvth_dest(new RvtH(filename, gcm_lba_len, &ret));
 	if (!rvth_dest->isOpen()) {
 		// Error creating the standalone disc image.
 		errno = EIO;
 		if (ret == 0) {
 			ret = -EIO;
 		}
-		goto end;
+		return ret;
 	}
 
 	if (flags & RVTH_EXTRACT_PREPEND_SDK_HEADER) {
 		// Prepend 32k to the GCM.
 		size_t size;
 		Reader *const reader = rvth_dest->m_entries[0].reader;
-		uint8_t *const sdk_header = (uint8_t*)calloc(1, SDK_HEADER_SIZE_BYTES);
+		uint8_t *const sdk_header = static_cast<uint8_t*>(calloc(1, SDK_HEADER_SIZE_BYTES));
 		if (!sdk_header) {
-			ret = -errno;
+			int ret = -errno;
 			if (ret == 0) {
 				ret = -ENOMEM;
 			}
-			goto end;
+			return ret;
 		}
 
 		// TODO: Get headers for GC1L and NN2L.
@@ -484,8 +479,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 				// but it doesn't load with NDEV.
 				// Checksum field is always 0xAB0B.
 				// TODO: Delete the file?
-				ret = RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
-				goto end;
+				return RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED;
 			case RVTH_BankType_Wii_SL:
 			case RVTH_BankType_Wii_DL:
 				// 0x0000: FF FF 00 00
@@ -501,21 +495,20 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 			default:
 				// Should not get here...
 				assert(!"Incorrect bank type.");
-				ret = RVTH_ERROR_BANK_UNKNOWN;
 				free(sdk_header);
-				goto end;
+				return RVTH_ERROR_BANK_UNKNOWN;
 		}
 
 		size = reader->write(sdk_header, 0, SDK_HEADER_SIZE_LBA);
 		reader->flush();
 		if (size != SDK_HEADER_SIZE_LBA) {
 			// Write error.
-			ret = -errno;
+			int ret = -errno;
 			if (ret == 0) {
 				ret = -EIO;
 			}
 			free(sdk_header);
-			goto end;
+			return ret;
 		}
 		free(sdk_header);
 
@@ -525,9 +518,9 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 
 	// Copy the bank from the source image to the destination GCM.
 	if (unenc_to_enc) {
-		ret = copyToGcm_doCrypt(rvth_dest, bank, callback, userdata);
+		ret = copyToGcm_doCrypt(rvth_dest.get(), bank, callback, userdata);
 	} else {
-		ret = copyToGcm(rvth_dest, bank, callback, userdata);
+		ret = copyToGcm(rvth_dest.get(), bank, callback, userdata);
 	}
 	if (ret == 0 && recrypt_key > RVL_CryptoType_Unknown) {
 		// Recrypt the disc image.
@@ -537,9 +530,6 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 		}
 	}
 
-end:
-	// TODO: Delete the file on error?
-	delete rvth_dest;
 	return ret;
 }
 
@@ -558,13 +548,11 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	uint32_t lba_copy_len;	// Total number of LBAs to copy. (entry_src->lba_len)
 	uint32_t lba_count;
 	uint32_t lba_buf_max;	// Highest LBA that can be written using the buffer.
-	uint8_t *buf = NULL;
 
 	// Callback state.
 	RvtH_Progress_State state;
 
 	int ret = 0;	// errno or RvtH_Errors
-	int err = 0;	// errno setting
 
 	if (!rvth_dest) {
 		errno = EINVAL;
@@ -700,12 +688,14 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	ret = rvth_dest->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
+		int err;
 		if (ret < 0) {
 			err = -ret;
 		} else {
 			err = EROFS;
 		}
-		goto end;
+		errno = err;
+		return err;
 	}
 
 	// Reset the reader for the bank.
@@ -719,11 +709,12 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		entry_dest->lba_start, entry_src->lba_len);
 	if (!entry_dest->reader) {
 		// Cannot create a reader...
-		err = errno;
+		int err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
-		goto end;
+		errno = err;
+		return err;
 	}
 
 	if (entry_dest2) {
@@ -745,16 +736,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	}
 
 	// Allocate the memory buffer.
-	buf = (uint8_t*)malloc(BUF_SIZE);
-	if (!buf) {
-		// Error allocating memory.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		ret = -err;
-		goto end;
-	}
+	unique_ptr<uint8_t[]> buf(new uint8_t[BUF_SIZE]);
 
 	// Copy the bank table information.
 	entry_dest->lba_len	= entry_src->lba_len;
@@ -773,7 +755,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	if (entry_src->timestamp >= 0) {
 		entry_dest->timestamp = entry_src->timestamp;
 	} else {
-		entry_dest->timestamp = time(NULL);
+		entry_dest->timestamp = time(nullptr);
 	}
 
 	// NOTE: We're only writing up to the source image file size.
@@ -801,9 +783,8 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 			bRet = callback(&state, userdata);
 			if (!bRet) {
 				// Stop processing.
-				err = ECANCELED;
-				ret = -ECANCELED;
-				goto end;
+				errno = ECANCELED;
+				return -ECANCELED;
 			}
 		}
 
@@ -812,16 +793,16 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		// 16 KB zeroed out...
 
 		// TODO: Error handling.
-		entry_src->reader->read(buf, lba_count, LBA_COUNT_BUF);
-		entry_dest->reader->write(buf, lba_count, LBA_COUNT_BUF);
+		entry_src->reader->read(buf.get(), lba_count, LBA_COUNT_BUF);
+		entry_dest->reader->write(buf.get(), lba_count, LBA_COUNT_BUF);
 		entry_dest->reader->flush();
 	}
 
 	// Process any remaining LBAs.
 	if (lba_count < lba_copy_len) {
 		const unsigned int lba_left = lba_copy_len - lba_count;
-		entry_src->reader->read(buf, lba_count, lba_left);
-		entry_dest->reader->write(buf, lba_count, lba_left);
+		entry_src->reader->read(buf.get(), lba_count, lba_left);
+		entry_dest->reader->write(buf.get(), lba_count, lba_left);
 		entry_dest->reader->flush();
 	}
 
@@ -831,9 +812,8 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		bRet = callback(&state, userdata);
 		if (!bRet) {
 			// Stop processing.
-			err = ECANCELED;
-			ret = -ECANCELED;
-			goto end;
+			errno = ECANCELED;
+			return -ECANCELED;
 		}
 	}
 
@@ -845,13 +825,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	rvth_dest->writeBankEntry(bank_dest);
 
 	// Finished importing the disc image.
-
-end:
-	free(buf);
-	if (err != 0) {
-		errno = err;
-	}
-	return ret;
+	return 0;
 }
 
 /**
@@ -880,23 +854,20 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 
 	// Open the standalone disc image.
 	int ret = 0;
-	RvtH *const rvth_src = new RvtH(filename, &ret);
+	unique_ptr<RvtH> rvth_src(new RvtH(filename, &ret));
 	if (!rvth_src->isOpen()) {
 		// Error opening the standalone disc image.
 		if (ret == 0) {
 			ret = -EIO;
 		}
-		delete rvth_src;
 		return ret;
 	} else if (rvth_src->isHDD() || rvth_src->bankCount() > 1) {
 		// Not a standalone disc image.
-		delete rvth_src;
 		errno = EINVAL;
 		return RVTH_ERROR_IS_HDD_IMAGE;
 	} else if (rvth_src->bankCount() == 0) {
 		// Unrecognized file format.
 		// TODO: Distinguish between unrecognized and no banks.
-		delete rvth_src;
 		errno = EINVAL;
 		return RVTH_ERROR_NO_BANKS;
 	}
@@ -932,6 +903,5 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 			ret = recryptID(bank);
 		}
 	}
-	delete rvth_src;
 	return ret;
 }

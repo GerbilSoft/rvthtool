@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * verify.cpp: RVT-H verification functions.                               *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -40,7 +40,9 @@
 #include <cstring>
 
 // C++ includes
+#include <array>
 #include <memory>
+using std::array;
 using std::unique_ptr;
 
 // Sector buffer. (1 LBA)
@@ -192,7 +194,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 	}
 
 	struct sha1_ctx sha1;
-	uint8_t digest[SHA1_DIGEST_SIZE];
+	array<uint8_t, SHA1_DIGEST_SIZE> digest;
 	unique_ptr<RVL_PartitionHeader> pt_hdr(new RVL_PartitionHeader);
 	unique_ptr<Wii_Disc_H3_t> H3_tbl(new Wii_Disc_H3_t);
 	// NOTE: Retaining the encrypted version in order to do zero checks.
@@ -265,7 +267,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// This is usually accurate except for unencrypted partitions,
 		// in which case, this function won't work anyway!
 		if (pt_hdr->data_size != 0) {
-			const uint64_t data_size = (uint64_t)be32_to_cpu(pt_hdr->data_size) << 2;
+			const uint64_t data_size = static_cast<uint64_t>(be32_to_cpu(pt_hdr->data_size)) << 2;
 			if (data_size > 9ULL*1024*1024*1024) {
 				// Cannot be more than 9 GiB!
 				// H3 table is limited to 9,830.4 MiB,
@@ -274,10 +276,10 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				errno = EIO;
 				return -EIO;
 			}
-			group_count = (uint32_t)(data_size / GROUP_SIZE_ENC);
+			group_count = static_cast<uint32_t>(data_size / GROUP_SIZE_ENC);
 			if (data_size % GROUP_SIZE_ENC != 0) {
 				group_count++;
-				last_group_sectors = (uint32_t)((data_size % GROUP_SIZE_ENC) / 32768);
+				last_group_sectors = static_cast<uint32_t>((data_size % GROUP_SIZE_ENC) / 32768);
 			}
 			if (callback) {
 				state.group_total = group_count;
@@ -374,8 +376,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// Verify the H4 hash. (H3 table)
 		sha1_init(&sha1);
 		sha1_update(&sha1, sizeof(Wii_Disc_H3_t), reinterpret_cast<const uint8_t*>(H3_tbl.get()));
-		sha1_digest(&sha1, sizeof(digest), digest);
-		if (memcmp(pContentEntry->sha1_hash, digest, SHA1_DIGEST_SIZE) != 0) {
+		sha1_digest(&sha1, digest.size(), digest.data());
+		if (memcmp(pContentEntry->sha1_hash, digest.data(), SHA1_DIGEST_SIZE) != 0) {
 			state.is_zero = is_block_zero((const uint8_t*)H3_tbl.get(), 512);	// only check one LBA
 			if (error_count) {
 				error_count[4]++;
@@ -393,7 +395,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		// FIXME: Check for an incomplete final block.
 #define LBAS_PER_GROUP BYTES_TO_LBA(GROUP_SIZE_ENC)
 		const uint8_t *H3_entry = H3_tbl->h3[0];
-		uint32_t lba = pte->lba_start + BYTES_TO_LBA((uint64_t)be32_to_cpu(pt_hdr->data_offset) << 2);
+		uint32_t lba = pte->lba_start + BYTES_TO_LBA(static_cast<uint64_t>(be32_to_cpu(pt_hdr->data_offset)) << 2);
 		for (unsigned int g = 0; g < group_count; g++, lba += LBAS_PER_GROUP) {
 			const bool is_last_group = (g == (group_count - 1));
 
@@ -462,8 +464,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			// Verify the H3 hash. (hash of H2 table in sector 0)
 			sha1_init(&sha1);
 			sha1_update(&sha1, sizeof(gdata[0].hashes.H2), gdata[0].hashes.H2[0]);
-			sha1_digest(&sha1, sizeof(digest), digest);
-			if (memcmp(H3_entry, digest, SHA1_DIGEST_SIZE) != 0) {
+			sha1_digest(&sha1, digest.size(), digest.data());
+			if (memcmp(H3_entry, digest.data(), digest.size()) != 0) {
 				state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[0], sizeof(gdata_enc[0]));
 				if (error_count) {
 					error_count[3]++;
@@ -476,7 +478,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					callback(&state, userdata);
 				}
 			}
-			H3_entry += sizeof(digest);
+			H3_entry += digest.size();
 
 			// Make sure sectors 1-63 have the same H2 table as sector 0.
 			for (unsigned int sector = 1; sector < max_sector; sector++) {
@@ -503,8 +505,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				const unsigned int sg = sector / 8;
 				sha1_init(&sha1);
 				sha1_update(&sha1, sizeof(gdata[sector].hashes.H1), gdata[sector].hashes.H1[0]);
-				sha1_digest(&sha1, sizeof(digest), digest);
-				if (memcmp(gdata[0].hashes.H2[sg], digest, sizeof(digest)) != 0) {
+				sha1_digest(&sha1, digest.size(), digest.data());
+				if (memcmp(gdata[0].hashes.H2[sg], digest.data(), digest.size()) != 0) {
 					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
 					if (error_count) {
 						error_count[2]++;
@@ -550,8 +552,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			for (unsigned int sector = 0; sector < max_sector; sector++) {
 				sha1_init(&sha1);
 				sha1_update(&sha1, sizeof(gdata[sector].hashes.H0), gdata[sector].hashes.H0[0]);
-				sha1_digest(&sha1, sizeof(digest), digest);
-				if (memcmp(gdata[sector].hashes.H1[sector % 8], digest, sizeof(digest)) != 0) {
+				sha1_digest(&sha1, digest.size(), digest.data());
+				if (memcmp(gdata[sector].hashes.H1[sector % 8], digest.data(), digest.size()) != 0) {
 					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
 					if (error_count) {
 						error_count[1]++;
@@ -573,8 +575,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				for (unsigned int kb = 0; kb < 31; kb++, pData += 1024) {
 					sha1_init(&sha1);
 					sha1_update(&sha1, 1024, pData);
-					sha1_digest(&sha1, sizeof(digest), digest);
-					if (memcmp(gdata[sector].hashes.H0[kb], digest, sizeof(digest)) != 0) {
+					sha1_digest(&sha1, digest.size(), digest.data());
+					if (memcmp(gdata[sector].hashes.H0[kb], digest.data(), digest.size()) != 0) {
 						state.is_zero = is_block_zero(&gdata_enc[sector].data[kb * 1024], 1024);
 						if (error_count) {
 							error_count[0]++;

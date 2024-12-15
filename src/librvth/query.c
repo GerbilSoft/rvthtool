@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * query.c: Query storage devices. (common code)                           *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -28,7 +28,6 @@ TCHAR *rvth_create_full_serial_number(unsigned int serial)
 	TCHAR buf[16];
 	unsigned int serial_tmp = serial;
 	unsigned int even = 0, odd = 0;
-	int i;
 
 	if (serial < 10000000 || serial > 29999999) {
 		// Serial number is out of range.
@@ -42,7 +41,7 @@ TCHAR *rvth_create_full_serial_number(unsigned int serial)
 	// - Add even digits together.
 	// - Add odd digits together.
 	// - Calculate: ((even * 3) + odd) % 10
-	for (i = 0; i < 8; i += 2) {
+	for (unsigned int i = 0; i < 8; i += 2) {
 		// The first digit we're processing here is actually
 		// the last digit in the serial number, so it's
 		// considered an even digit.

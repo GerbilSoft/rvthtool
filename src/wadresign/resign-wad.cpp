@@ -2,7 +2,7 @@
  * RVT-H Tool: WAD Resigner                                                *
  * resign-wad.c: Re-sign a WAD file.                                       *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -170,17 +170,17 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// Verify the various sizes.
 	if (wadInfo.ticket_size < sizeof(RVL_Ticket)) {
 		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' ticket size is too small. (%u; should be %u)\n"),
-			src_wad, wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+			src_wad, wadInfo.ticket_size, static_cast<uint32_t>(sizeof(RVL_Ticket)));
 		ret = 3;
 		goto end;
 	} else if (wadInfo.ticket_size > WAD_TICKET_SIZE_MAX) {
 		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' ticket size is too big. (%u; should be %u)\n"),
-			src_wad, wadInfo.ticket_size, (uint32_t)sizeof(RVL_Ticket));
+			src_wad, wadInfo.ticket_size, static_cast<uint32_t>(sizeof(RVL_Ticket)));
 		ret = 4;
 		goto end;
 	} else if (wadInfo.tmd_size < sizeof(RVL_TMD_Header)) {
 		_ftprintf(stderr, _T("*** ERROR: WAD file '%s' TMD size is too small. (%u; should be at least %u)\n"),
-			src_wad, wadInfo.tmd_size, (uint32_t)sizeof(RVL_TMD_Header));
+			src_wad, wadInfo.tmd_size, static_cast<uint32_t>(sizeof(RVL_TMD_Header)));
 		ret = 5;
 		goto end;
 	} else if (wadInfo.tmd_size > WAD_TMD_SIZE_MAX) {
@@ -200,7 +200,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// Verify the data size.
 	fseeko(f_src_wad, 0, SEEK_END);
 	// FIXME: Why cast to uint32_t?
-	src_file_size = (uint32_t)ftello(f_src_wad);
+	src_file_size = static_cast<uint32_t>(ftello(f_src_wad));
 	if (isSrcBwf) {
 		// Data size is the rest of the file.
 		if (src_file_size < wadInfo.data_address) {
@@ -209,7 +209,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			ret = 8;
 			goto end;
 		}
-		wadInfo.data_size = (uint32_t)src_file_size - wadInfo.data_address;
+		wadInfo.data_size = static_cast<uint32_t>(src_file_size) - wadInfo.data_address;
 	} else {
 		// Verify the data size.
 		if (src_file_size < wadInfo.data_address) {
@@ -397,7 +397,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TICKET);
 		cert_ms		= NULL;
 		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TMD];
-		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket));
+		cert_chain_size	= static_cast<uint32_t>(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket));
 	} else {
 		// Debug certificates.
 		// Order: CA, TMD, Ticket, MS
@@ -407,7 +407,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TICKET);
 		cert_ms		= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DPKI_MS);
 		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TMD];
-		cert_chain_size	= (uint32_t)(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_ms));
+		cert_chain_size	= static_cast<uint32_t>(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_ms));
 	}
 
 	// Determine the data offset.
@@ -689,7 +689,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	for (; nbr_cont > 0; nbr_cont--, content++) {
 		// TODO: Show the actual table index, or just the
 		// index field in the entry?
-		const uint32_t content_size = (uint32_t)be64_to_cpu(content->size);
+		const uint32_t content_size = static_cast<uint32_t>(be64_to_cpu(content->size));
 		uint32_t size_to_copy = ALIGN_BYTES(16, content_size);
 		uint16_t content_index = be16_to_cpu(content->index);
 		_tprintf(_T("Copying WAD content #%d...\n"), content_index);

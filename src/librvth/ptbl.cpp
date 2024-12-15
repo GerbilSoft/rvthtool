@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * ptbl.cpp: Load and manage a Wii disc's partition tables.                *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -43,8 +43,8 @@ typedef union _ptbl_t {
  */
 static int compar_pt_entry_t(const void *a, const void *b)
 {
-	const pt_entry_t *const pt_a = (const pt_entry_t*)a;
-	const pt_entry_t *const pt_b = (const pt_entry_t*)b;
+	const pt_entry_t *const pt_a = static_cast<const pt_entry_t*>(a);
+	const pt_entry_t *const pt_b = static_cast<const pt_entry_t*>(b);
 	if (pt_a->lba_start < pt_b->lba_start) {
 		return -1;
 	} else if (pt_a->lba_start > pt_b->lba_start) {
@@ -69,8 +69,8 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 {
 	ptbl_t pt;	// On-disc partition table.
 
-	assert(entry != NULL);
-	assert(entry->reader != NULL);
+	assert(entry != nullptr);
+	assert(entry->reader != nullptr);
 	if (!entry || !entry->reader) {
 		return -EINVAL;
 	}
@@ -149,8 +149,8 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 		}
 
 		// TODO: Use uint32_t arithmetic instead of int64_t?
-		ptbl_addr = ((int64_t)be32_to_cpu(pt.vgtbl.vg[vg_idx].addr) << 2);
-		if (ptbl_addr < (int64_t)(RVL_VolumeGroupTable_ADDRESS + sizeof(pt.vgtbl))) {
+		ptbl_addr = static_cast<int64_t>(be32_to_cpu(pt.vgtbl.vg[vg_idx].addr) << 2);
+		if (ptbl_addr < static_cast<int64_t>(RVL_VolumeGroupTable_ADDRESS + sizeof(pt.vgtbl))) {
 			// Partition table starts *before* the volume group table.
 			// Something's wrong, but we'll just skip it for now.
 			continue;
@@ -170,7 +170,7 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
 			ptbl[pt_total_proc].lba_len = 0;	// will be calculated later
 			ptbl[pt_total_proc].type = be32_to_cpu(pte->type);
 			ptbl[pt_total_proc].vg = vg_idx;
-			ptbl[pt_total_proc].pt = (unsigned int)(pte - pte_start);
+			ptbl[pt_total_proc].pt = static_cast<unsigned int>(pte - pte_start);
 			ptbl[pt_total_proc].pt_orig = ptbl[pt_total_proc].pt + pt_adj;
 			pt_total_proc++;
 		}
@@ -210,8 +210,8 @@ int rvth_ptbl_load(RvtH_BankEntry *entry)
  */
 int rvth_ptbl_RemoveUpdates(RvtH_BankEntry *entry)
 {
-	assert(entry != NULL);
-	assert(entry->reader != NULL);
+	assert(entry != nullptr);
+	assert(entry->reader != nullptr);
 	if (!entry || !entry->reader) {
 		return -EINVAL;
 	}
@@ -261,8 +261,8 @@ int rvth_ptbl_write(RvtH_BankEntry *entry)
 	unsigned int vg_idx, pt_idx;
 	uint32_t lba_size;
 
-	assert(entry != NULL);
-	assert(entry->reader != NULL);
+	assert(entry != nullptr);
+	assert(entry->reader != nullptr);
 	if (!entry || !entry->reader) {
 		return -EINVAL;
 	}
@@ -328,15 +328,11 @@ int rvth_ptbl_write(RvtH_BankEntry *entry)
  */
 const pt_entry_t *rvth_ptbl_find_game(RvtH_BankEntry *entry)
 {
-	unsigned int i;
-	int ret;
-	const pt_entry_t *pte;
-
-	assert(entry != NULL);
-	assert(entry->reader != NULL);
+	assert(entry != nullptr);
+	assert(entry->reader != nullptr);
 	if (!entry || !entry->reader) {
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	// Bank must be Wii SL or DL.
@@ -345,19 +341,19 @@ const pt_entry_t *rvth_ptbl_find_game(RvtH_BankEntry *entry)
 	{
 		// Not a Wii disc image.
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	// Make sure the partition table is loaded.
-	ret = rvth_ptbl_load(entry);
+	int ret = rvth_ptbl_load(entry);
 	if (ret != 0 || entry->pt_count == 0 || !entry->ptbl) {
 		// Unable to load the partition table.
-		return NULL;
+		return nullptr;
 	}
 
 	// Find the game partition in Volume Group 0.
-	pte = entry->ptbl;
-	for (i = 0; i < entry->pt_count; i++, pte++) {
+	const pt_entry_t *pte = entry->ptbl;
+	for (unsigned int i = 0; i < entry->pt_count; i++, pte++) {
 		if (pte->vg == 0 && pte->type == 0) {
 			// Found the game partition.
 			return pte;
@@ -365,5 +361,5 @@ const pt_entry_t *rvth_ptbl_find_game(RvtH_BankEntry *entry)
 	}
 
 	// Not found.
-	return NULL;
+	return nullptr;
 }
