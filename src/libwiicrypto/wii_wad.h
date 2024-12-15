@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * wii_wad.h: Nintendo Wii WAD file data structures.                       *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WII_WAD_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WII_WAD_H__
+#pragma once
 
 // References:
 // - https://wiibrew.org/wiki/WAD_files
@@ -23,8 +22,6 @@
 extern "C" {
 #endif
 
-#pragma pack(1)
-
 /**
  * Nintendo Wii WAD file header.
  * Reference: https://wiibrew.org/wiki/WAD_files
@@ -34,7 +31,7 @@ extern "C" {
 #define WII_WAD_TYPE_Is	0x49730000	// 'Is\0\0'
 #define WII_WAD_TYPE_ib	0x69620000	// 'ib\0\0'
 #define WII_WAD_TYPE_Bk	0x426B0000	// 'Bk\0\0'
-typedef struct PACKED _Wii_WAD_Header {
+typedef struct _Wii_WAD_Header {
 	uint32_t header_size;		// [0x000] Header size. (0x0020)
 	uint32_t type;			// [0x004] Type. ('Is\0\0', 'ib\0\0', 'Bk\0\0')
 	uint32_t cert_chain_size;	// [0x008] Certificate chain size.
@@ -57,7 +54,7 @@ ASSERT_STRUCT(Wii_WAD_Header, 32);
  *
  * All fields are big-endian.
  */
-typedef struct PACKED _Wii_WAD_Header_BWF {
+typedef struct _Wii_WAD_Header_BWF {
 	uint32_t header_size;		// [0x000] Header size. (0x0020)
 	uint32_t data_offset;		// [0x004] Data offset. (usually 0x1140)
 	uint32_t cert_chain_size;	// [0x008] Certificate chain size.
@@ -83,6 +80,7 @@ ASSERT_STRUCT(Wii_WAD_Header_BWF, 32);
  *
  * All fields are big-endian.
  */
+#pragma pack(1)
 typedef struct PACKED _Wii_Content_Bin_Header {
 	RVL_TitleID_t title_id;		// [0x000] Title ID. (tid-hi is usually 0x00010001)
 	uint32_t partB_size;		// [0x008] Size of part B.
@@ -92,11 +90,8 @@ typedef struct PACKED _Wii_Content_Bin_Header {
 	RVL_TitleID_t tid_ref[2];	// [0x030] Title dependencies?
 } Wii_Content_Bin_Header;
 ASSERT_STRUCT(Wii_Content_Bin_Header, 64);
-
 #pragma pack()
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_WII_WAD_H__ */

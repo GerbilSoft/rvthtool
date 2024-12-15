@@ -2,7 +2,7 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * wiiu_structs.h: Nintendo Wii U data structures.                         *
  *                                                                         *
- * Copyright (c) 2016-2020 by David Korth.                                 *
+ * Copyright (c) 2016-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -10,8 +10,7 @@
 // For structs shared with Wii, see wii_structs.h.
 // For structs shared with GameCube, see gcn_structs.h.
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WIIU_STRUCTS_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WIIU_STRUCTS_H__
+#pragma once
 
 #include <stdint.h>
 #include "common.h"
@@ -124,5 +123,3 @@ ASSERT_STRUCT(WUP_Content_Entry, 0x30);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_WIIU_STRUCTS_H__ */

@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * gcn_structs.h: Nintendo GameCube data structures.                       *
  *                                                                         *
- * Copyright (c) 2016-2018 by David Korth.                                 *
+ * Copyright (c) 2016-2024 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_GCN_STRUCTS_H__
-#define __RVTHTOOL_LIBWIICRYPTO_GCN_STRUCTS_H__
+#pragma once
 
 #include <stdint.h>
 #include "common.h"
@@ -15,8 +14,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#pragma pack(1)
 
 /**
  * GameCube/Wii disc image header.
@@ -26,6 +23,7 @@ extern "C" {
  */
 #define GCN_MAGIC 0xC2339F3D
 #define WII_MAGIC 0x5D1C9EA3
+#pragma pack(1)
 typedef struct PACKED _GCN_DiscHeader {
 	union {
 		char id6[6];	// [0x000] Game code. (ID6)
@@ -54,6 +52,7 @@ typedef struct PACKED _GCN_DiscHeader {
 	uint8_t reserved2[6];		// [0x062] Reserved.
 } GCN_DiscHeader;
 ASSERT_STRUCT(GCN_DiscHeader, 0x68);
+#pragma pack()
 
 /**
  * GameCube region codes.
@@ -82,7 +81,7 @@ typedef enum {
  * All fields are big-endian.
  */
 #define GCN_Boot_Block_ADDRESS 0x420
-typedef struct PACKED _GCN_Boot_Block {
+typedef struct _GCN_Boot_Block {
 	uint32_t bootFilePosition;	// NOTE: 34-bit RSH2 on Wii.
 	uint32_t FSTPosition;		// NOTE: 34-bit RSH2 on Wii.
 	uint32_t FSTLength;		// FST size. (NOTE: 34-bit RSH2 on Wii.)
@@ -102,7 +101,7 @@ ASSERT_STRUCT(GCN_Boot_Block, 32);
  * All fields are big-endian.
  */
 #define GCN_Boot_Info_ADDRESS 0x440
-typedef struct PACKED _GCN_Boot_Info {
+typedef struct _GCN_Boot_Info {
 	uint32_t debugMonSize;		// Debug monitor size. [FIXME: Listed as signed?]
 	uint32_t simMemSize;		// Simulated memory size. (bytes) [FIXME: Listed as signed?]
 	uint32_t argOffset;		// Command line arguments.
@@ -122,7 +121,7 @@ ASSERT_STRUCT(GCN_Boot_Info, 48);
  *
  * All fields are big-endian.
  */
-typedef struct PACKED _DOL_Header {
+typedef struct _DOL_Header {
 	uint32_t textData[7];	// File offsets to Text sections.
 	uint32_t dataData[11];	// File offsets to Data sections.
 	uint32_t text[7];	// Load addresses for Text sections.
@@ -180,11 +179,8 @@ typedef enum {
 	// Data segment is too big.
 	APLERR_DOL_DATASEG2BIG,
 } AppLoader_Error_e;
-
 #pragma pack()
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_GCN_STRUCTS_H__ */
