@@ -302,7 +302,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	// Process any remaining LBAs.
 	if (lba_count < lba_copy_len) {
 		const unsigned int lba_left = lba_copy_len - lba_count;
-		const unsigned int sz_left = static_cast<unsigned int>(BYTES_TO_LBA(lba_left));
+		const unsigned int sz_left = static_cast<unsigned int>(LBA_TO_BYTES(lba_left));
 
 		if (callback) {
 			bool bRet;
