@@ -181,10 +181,9 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	AesCtx *aesw;
 
 	// Check the 'from' key.
-	if (!strncmp(ticket->issuer,
-	    RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
+	if (!strncmp(ticket->issuer, RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Wii: Retail.
+		// Wii: Retail
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
@@ -198,10 +197,9 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 				break;
 		}
 	}
-	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
+	else if (!strncmp(ticket->issuer, RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Wii: Debug.
+		// Wii: Debug
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
@@ -215,16 +213,16 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 				break;
 		}
 	}
-	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[WUP_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
+	else if (!strncmp(ticket->issuer, RVL_Cert_Issuers[WUP_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Wii U: Retail.
+		// Wii U: Retail
 		fromKey = WUP_KEY_RETAIL;
 	}
-	else if (!strncmp(ticket->issuer,
-		 RVL_Cert_Issuers[WUP_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
+	else if (!strncmp(ticket->issuer, RVL_Cert_Issuers[WUP_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)) ||
+	         !strncmp(ticket->issuer, RVL_Cert_Issuers[CTR_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Wii U: Debug.
+		// Wii U: Debug
+		// NOTE: Some dev titles might use the CTR issuer for some reason...
 		fromKey = WUP_KEY_DEBUG;
 	}
 	else
