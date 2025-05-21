@@ -218,32 +218,6 @@ private:
 	RvtHPrivate *const d_ptr;
 	DISABLE_COPY(RvtH);
 
-private:
-	/** Constructor functions (rvth.cpp) **/
-
-	/**
-	 * Open a Wii or GameCube disc image.
-	 * @param f_img	[in] RefFile*
-	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-	 */
-	int openGcm(RefFile *f_img);
-
-	/**
-	 * Check for MBR and/or GPT.
-	 * @param f_img	[in] RefFile*
-	 * @param pMBR	[out] True if the HDD has an MBR.
-	 * @param pGPT	[out] True if the HDD has a GPT.
-	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-	 */
-	static int checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT);
-
-	/**
-	 * Open an RVT-H disk image.
-	 * @param f_img	[in] RefFile*
-	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-	 */
-	int openHDD(RefFile *f_img);
-
 public:
 	/** Accessors **/
 
