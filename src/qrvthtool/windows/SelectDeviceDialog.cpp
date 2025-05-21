@@ -112,6 +112,9 @@ SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
 {
 	// Get the RVT-H Reader icon.
 	rvthReaderIcon = RvtHModel::getIcon(RvtHModel::ICON_RVTH);
+
+	// Set the window icon.
+	q->setWindowIcon(rvthReaderIcon);
 }
 
 SelectDeviceDialogPrivate::~SelectDeviceDialogPrivate()
