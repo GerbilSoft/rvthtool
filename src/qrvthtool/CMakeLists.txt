@@ -27,6 +27,9 @@ IF(QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 6)
 	# Minimum ECM version for KF6.
 	SET(KF_MIN 5.248.0)
 	SET(ECM_MINIMUM_VERSION ${KF_MIN})
+
+	# WinDeployQt in Qt6 does *not* have --no-svg.
+	SET(WINDEPLOY_NO_SVG "")
 ENDIF(QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 6)
 
 IF(NOT BUILD_QT AND (QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 5))
@@ -70,6 +73,9 @@ IF(NOT BUILD_QT AND (QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 5))
 	# Minimum ECM version for KF5.
 	UNSET(KF_MIN)
 	SET(ECM_MINIMUM_VERSION 0.0.11)
+
+	# WinDeployQt in Qt5 *does* have --no-svg.
+	SET(WINDEPLOY_NO_SVG "--no-svg")
 ENDIF(NOT BUILD_QT AND (QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 5))
 
 IF(NOT BUILD_QT)
@@ -409,7 +415,7 @@ IF(TARGET ${QT_NS}::windeployqt)
 	ADD_CUSTOM_COMMAND(TARGET qrvthtool POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
 		COMMAND set PATH=%PATH%$<SEMICOLON>${qt_install_prefix}/bin
-		COMMAND ${QT_NS}::windeployqt --no-svg --dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt" "$<TARGET_FILE_DIR:qrvthtool>/$<TARGET_FILE_NAME:qrvthtool>"
+		COMMAND ${QT_NS}::windeployqt ${WINDEPLOY_NO_SVG} --dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt" "$<TARGET_FILE_DIR:qrvthtool>/$<TARGET_FILE_NAME:qrvthtool>"
 	)
 
 	# copy deployment directory during installation
