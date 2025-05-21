@@ -42,8 +42,8 @@ IF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 ENDIF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 
 # Qt version
-SET(QT_VERSION 5 CACHE STRING "Qt version to use. (default is 5)")
-SET_PROPERTY(CACHE QT_VERSION PROPERTY STRINGS 5 6)
+SET(QT_VERSION AUTO CACHE STRING "Qt version to use (default is 'AUTO' to auto-detect Qt6 or Qt5)")
+SET_PROPERTY(CACHE QT_VERSION PROPERTY STRINGS AUTO 6 5)
 
 # Translations
 OPTION(ENABLE_NLS "Enable NLS using Qt's built-in localization system." ON)

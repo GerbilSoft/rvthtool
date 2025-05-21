@@ -2,39 +2,48 @@
 PROJECT(locale)
 
 # rvthtool translations subproject.
+SET(FOUND_LinguistTools NO)
 
-IF(QT_VERSION EQUAL 5)
-	FIND_PACKAGE(Qt5 COMPONENTS Core LinguistTools)
-	IF(Qt5_FOUND AND Qt5Core_FOUND AND Qt5LinguistTools_FOUND)
-		# Found Qt5.
-	ELSE()
-		# Did not find Qt5.
-		MESSAGE(WARNING "Qt5 not found. Not building localization files.")
-		SET(ENABLE_NLS OFF)
-	ENDIF()
+IF(QT_VERSION STREQUAL AUTO)
+	SET(FIND_QT_QUIET QUIET)
+ENDIF(QT_VERSION STREQUAL AUTO)
 
-	# Qt 5.15/6 has qt_add_translation
-	# We can't depend on having Qt 5.15, though.
-	IF(NOT COMMAND QT_ADD_TRANSLATION)
-		FUNCTION(QT_ADD_TRANSLATION _qm_files)
-			QT5_ADD_TRANSLATION("${_qm_files}" ${ARGN})
-			SET("${_qm_files}" "${${_qm_files}}" PARENT_SCOPE)
-		ENDFUNCTION(QT_ADD_TRANSLATION)
-	ENDIF(NOT COMMAND QT_ADD_TRANSLATION)
-ELSEIF(QT_VERSION EQUAL 6)
-	FIND_PACKAGE(Qt6 COMPONENTS Core LinguistTools)
+IF(QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 6)
+	FIND_PACKAGE(Qt6 ${FIND_QT_QUIET} COMPONENTS Core LinguistTools)
 	IF(Qt6_FOUND AND Qt6Core_FOUND AND Qt6LinguistTools_FOUND)
 		# Found Qt6.
-	ELSE()
-		# Did not find Qt6.
-		MESSAGE(WARNING "Qt6 not found. Not building localization files.")
-		SET(ENABLE_NLS OFF)
+		SET(FOUND_LinguistTools YES)
 	ENDIF()
-ELSE()
-	MESSAGE(FATAL_ERROR "Unsupported Qt version: ${QT_VERSION}")
-ENDIF()
+ENDIF(QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 6)
+
+IF(NOT FOUND_LinguistTools AND (QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 5))
+	FIND_PACKAGE(Qt5 ${FIND_QT_QUIET} COMPONENTS Core LinguistTools)
+	IF(Qt5_FOUND AND Qt5Core_FOUND AND Qt5LinguistTools_FOUND)
+		# Found Qt5.
+		SET(FOUND_LinguistTools YES)
+	ENDIF()
+ENDIF(NOT FOUND_LinguistTools AND (QT_VERSION STREQUAL AUTO OR QT_VERSION EQUAL 5))
+
+IF(NOT FOUND_LinguistTools)
+	IF(QT_VERSION STREQUAL AUTO)
+		MESSAGE(WARNING "A supported version of Qt (5, 6) was not found.\nNot building localizations.")
+	ELSE()
+		# TODO: FATAL_ERROR because a Qt version was explicitly specified?
+		MESSAGE(WARNING "Qt${QT_VERSION} was not found.\nNot building localizations")
+	ENDIF()
+	SET(ENABLE_NLS OFF)
+ENDIF(NOT FOUND_LinguistTools)
 
 IF(ENABLE_NLS)
+
+# Qt 5.15/6 has qt_add_translation
+# We can't depend on having Qt 5.15, though.
+IF(NOT COMMAND QT_ADD_TRANSLATION)
+	FUNCTION(QT_ADD_TRANSLATION _qm_files)
+		QT5_ADD_TRANSLATION("${_qm_files}" ${ARGN})
+		SET("${_qm_files}" "${${_qm_files}}" PARENT_SCOPE)
+	ENDFUNCTION(QT_ADD_TRANSLATION)
+ENDIF(NOT COMMAND QT_ADD_TRANSLATION)
 
 # Compile the translations.
 SET(TRANSLATION_FILES
