@@ -11,6 +11,7 @@ SET(rvthtool_SRCS
 	main.c
 	list-banks.cpp
 	extract.cpp
+	show-table.cpp
 	undelete.cpp
 	verify.cpp
 	query.c
@@ -18,6 +19,7 @@ SET(rvthtool_SRCS
 # Headers.
 SET(rvthtool_H
 	list-banks.hpp
+	show-table.hpp
 	extract.h
 	undelete.h
 	verify.h
