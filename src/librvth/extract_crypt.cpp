@@ -7,9 +7,11 @@
  ***************************************************************************/
 
 #include "rvth.hpp"
+#include "rvth_p.hpp"
+#include "rvth_error.h"
+
 #include "disc_header.hpp"
 #include "ptbl.h"
-#include "rvth_error.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -225,7 +227,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
 	}
 
 	// Check if the source bank can be extracted.
-	RvtH_BankEntry *const entry_src = &m_entries[bank_src];
+	RvtH_BankEntry *const entry_src = &d_ptr->entries[bank_src];
 	switch (entry_src->type) {
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -307,7 +309,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
 	// tell the file system what the file's size will be.
 
 	// Copy the bank table information.
-	entry_dest = &rvth_dest->m_entries[0];
+	entry_dest = &rvth_dest->d_ptr->entries[0];
 	entry_dest->type	= entry_src->type;
 	entry_dest->region_code	= entry_src->region_code;
 	entry_dest->is_deleted	= false;

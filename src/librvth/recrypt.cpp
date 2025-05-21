@@ -7,8 +7,10 @@
  ***************************************************************************/
 
 #include "rvth.hpp"
-#include "ptbl.h"
+#include "rvth_p.hpp"
 #include "rvth_error.h"
+
+#include "ptbl.h"
 
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
@@ -159,7 +161,7 @@ int RvtH::recryptID(unsigned int bank)
 	}
 
 	// Check the bank type.
-	RvtH_BankEntry *const entry = &m_entries[bank];
+	RvtH_BankEntry *const entry = &d_ptr->entries[bank];
 	bool is_wii;
 	switch (entry->type) {
 		case RVTH_BankType_GCN:
@@ -187,7 +189,7 @@ int RvtH::recryptID(unsigned int bank)
 	}
 
 	// Make the RVT-H object writable.
-	int ret = this->makeWritable();
+	int ret = d_ptr->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		if (ret < 0) {
@@ -229,7 +231,7 @@ int RvtH::recryptID(unsigned int bank)
 		reader->flush();
 
 		// Only if this area is empty!
-		if (isBlockEmpty(&sbuf.u8[0x80], 256)) {
+		if (d_ptr->isBlockEmpty(&sbuf.u8[0x80], 256)) {
 			rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
 			errno = 0;
 			lba_size = reader->write(&sbuf.u8, BYTES_TO_LBA(0x400), 1);
@@ -275,7 +277,7 @@ int RvtH::recryptID(unsigned int bank)
 			}
 
 			// Only if this area is empty!
-			if (!isBlockEmpty(&id_buf[256], 256))
+			if (!d_ptr->isBlockEmpty(&id_buf[256], 256))
 				continue;
 
 			// Write the identifier.
@@ -364,7 +366,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	}
 
 	// Check the bank type.
-	RvtH_BankEntry *const entry = &m_entries[bank];
+	RvtH_BankEntry *const entry = &d_ptr->entries[bank];
 	switch (entry->type) {
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:
@@ -422,7 +424,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// since we're doing that for each partition individually.
 
 	// Make the RVT-H object writable.
-	ret = this->makeWritable();
+	ret = d_ptr->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		int err;
@@ -646,7 +648,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 
 		// Write the identifier.
 		// (Only if this area is empty!)
-		if (isBlockEmpty(&hdr_new.data[sizeof(hdr_new.data)-256], 256)) {
+		if (d_ptr->isBlockEmpty(&hdr_new.data[sizeof(hdr_new.data)-256], 256)) {
 			char ptid_buf[24];
 			snprintf(ptid_buf, sizeof(ptid_buf), "%up%u -> %up%u",
 				pte->vg, pte->pt_orig,
@@ -724,7 +726,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	// If this is an HDD, write the bank table entry.
 	if (isHDD()) {
 		// TODO: Check for errors.
-		this->writeBankEntry(bank);
+		d_ptr->writeBankEntry(bank);
 	}
 
 	// Finished processing the disc image.

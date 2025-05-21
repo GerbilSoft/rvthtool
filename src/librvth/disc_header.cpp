@@ -2,14 +2,14 @@
  * RVT-H Tool (librvth)                                                    *
  * disc_header.cpp: Read a GCN/Wii disc header and determine its type.     *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "disc_header.hpp"
 #include "nhcd_structs.h"
 #include "rvth_enums.h"
-#include "rvth.hpp"	// for RvtH::isBlockEmpty()
+#include "rvth_p.hpp"	// for RvtH::isBlockEmpty()
 
 #include "RefFile.hpp"
 
@@ -211,7 +211,7 @@ int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
 
 	// If unknown, check if the entire sector is empty.
 	if (ret == RVTH_BankType_Unknown) {
-		if (RvtH::isBlockEmpty(sbuf.u8, sizeof(sbuf.u8))) {
+		if (RvtHPrivate::isBlockEmpty(sbuf.u8, sizeof(sbuf.u8))) {
 			// Empty sector.
 			ret = RVTH_BankType_Empty;
 		}

@@ -2,13 +2,15 @@
  * RVT-H Tool (librvth)                                                    *
  * verify.cpp: RVT-H verification functions.                               *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "rvth.hpp"
-#include "ptbl.h"
+#include "rvth_p.hpp"
 #include "rvth_error.h"
+
+#include "ptbl.h"
 
 // For LBA_TO_BYTES()
 #include "nhcd_structs.h"
@@ -131,7 +133,7 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 	}
 
 	// Make sure this is a Wii disc.
-	RvtH_BankEntry *const entry = &m_entries[bank];
+	RvtH_BankEntry *const entry = &d_ptr->entries[bank];
 	switch (entry->type) {
 		case RVTH_BankType_Wii_SL:
 		case RVTH_BankType_Wii_DL:

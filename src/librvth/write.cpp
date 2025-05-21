@@ -7,6 +7,7 @@
  ***************************************************************************/
 
 #include "rvth.hpp"
+#include "rvth_p.hpp"
 #include "rvth_error.h"
 
 #include "byteswap.h"
@@ -35,9 +36,7 @@
  * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
-	: m_file(nullptr)
-	, m_imageType(RVTH_ImageType_Unknown)
-	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
+	: d_ptr(new RvtHPrivate(this))
 {
 	RvtH_BankEntry *entry;
 
@@ -53,14 +52,14 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	errno = 0;
 
 	// Allocate memory for a single RvtH_BankEntry object.
-	m_entries.resize(1);
-	m_imageType = RVTH_ImageType_GCM;
+	d_ptr->entries.resize(1);
+	d_ptr->imageType = RVTH_ImageType_GCM;
 
 	// Attempt to create the file.
-	m_file = new RefFile(filename, true);
-	if (!m_file->isOpen()) {
+	d_ptr->file = new RefFile(filename, true);
+	if (!d_ptr->file->isOpen()) {
 		// Error creating the file.
-		err = m_file->lastError();
+		err = d_ptr->file->lastError();
 		if (err == 0) {
 			err = EIO;
 		}
@@ -69,7 +68,7 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	entry = &m_entries[0];
+	entry = &d_ptr->entries[0];
 	entry->lba_start = 0;
 	entry->lba_len = lba_len;
 	entry->type = RVTH_BankType_Empty;
@@ -80,7 +79,7 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	entry->timestamp = time(nullptr);
 
 	// Initialize the disc image reader.
-	entry->reader = Reader::open(m_file, entry->lba_start, entry->lba_len);
+	entry->reader = Reader::open(d_ptr->file, entry->lba_start, entry->lba_len);
 	if (!entry->reader) {
 		// Error creating the disc image reader.
 		err = errno;
@@ -96,9 +95,9 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 fail:
 	// Failed to create a GCM file.
 	// TODO: Delete it in case it was partially created?
-	if (m_file) {
-		m_file->unref();
-		m_file = nullptr;
+	if (d_ptr->file) {
+		d_ptr->file->unref();
+		d_ptr->file = nullptr;
 	}
 	if (pErr) {
 		*pErr = -err;
@@ -124,14 +123,14 @@ int RvtH::deleteBank(unsigned int bank)
 	}
 
 	// Make the RVT-H object writable.
-	int ret = this->makeWritable();
+	int ret = d_ptr->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		return ret;
 	}
 
 	// Is the bank deleted?
-	RvtH_BankEntry *const rvth_entry = &m_entries[bank];
+	RvtH_BankEntry *const rvth_entry = &d_ptr->entries[bank];
 	if (rvth_entry->is_deleted) {
 		// Bank is already deleted.
 		return RVTH_ERROR_BANK_IS_DELETED;
@@ -163,8 +162,8 @@ int RvtH::deleteBank(unsigned int bank)
 	// Delete the bank and write the entry.
 	rvth_entry->is_deleted = true;
 	rvth_entry->timestamp = -1;
-	ret = this->writeBankEntry(bank);
-	m_file->flush();
+	ret = d_ptr->writeBankEntry(bank);
+	d_ptr->file->flush();
 	if (ret != 0) {
 		// Error deleting the bank...
 		rvth_entry->is_deleted = false;
@@ -190,14 +189,14 @@ int RvtH::undeleteBank(unsigned int bank)
 	}
 
 	// Make the RVT-H object writable.
-	int ret = this->makeWritable();
+	int ret = d_ptr->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		return ret;
 	}
 
 	// Is the bank deleted?
-	RvtH_BankEntry *const rvth_entry = &m_entries[bank];
+	RvtH_BankEntry *const rvth_entry = &d_ptr->entries[bank];
 	if (!rvth_entry->is_deleted) {
 		// Bank is not deleted.
 		return RVTH_ERROR_BANK_NOT_DELETED;
@@ -242,8 +241,8 @@ int RvtH::undeleteBank(unsigned int bank)
 
 	// Undelete the bank and write the entry.
 	rvth_entry->is_deleted = false;
-	ret = this->writeBankEntry(bank, &rvth_entry->timestamp);
-	m_file->flush();
+	ret = d_ptr->writeBankEntry(bank, &rvth_entry->timestamp);
+	d_ptr->file->flush();
 	if (ret != 0) {
 		// Error undeleting the bank...
 		rvth_entry->is_deleted = true;

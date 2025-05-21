@@ -1,16 +1,17 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * rvth_p.cpp: RVT-H image handler. (PRIVATE FUNCTIONS)                    *
+ * rvth_p.cpp: RVT-H image handler. (PRIVATE CLASS)                        *
  *                                                                         *
  * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 #include "rvth.hpp"
+#include "rvth_p.hpp"
+#include "rvth_error.h"
 
 #include "RefFile.hpp"
 #include "rvth_time.h"
-#include "rvth_error.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -20,44 +21,20 @@
 #include <cerrno>
 #include <cstring>
 
-/**
- * Make the RVT-H object writable.
- * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
- */
-int RvtH::makeWritable(void)
-{
-	if (m_file->isWritable()) {
-		// RVT-H is already writable.
-		return 0;
-	}
-
-	// TODO: Allow making a disc image file writable.
-	// (Single bank)
-
-	// Make sure this is a device file.
-	if (!m_file->isDevice()) {
-		// This is not a device file.
-		// Cannot make it writable.
-		return RVTH_ERROR_NOT_A_DEVICE;
-	}
-
-	// If we're using a fake NHCD table, we can't write to it.
-	if (m_NHCD_status != NHCD_STATUS_OK) {
-		// Fake NHCD table is in use.
-		return RVTH_ERROR_NHCD_TABLE_MAGIC;
-	}
-
-	// Make this writable.
-	return m_file->makeWritable();
-}
+RvtHPrivate::RvtHPrivate(RvtH *q)
+	: q_ptr(q)
+	, file(nullptr)
+	, imageType(RVTH_ImageType_Unknown)
+	, nhcdStatus(NHCD_STATUS_UNKNOWN)
+{ }
 
 /**
  * Check if a block is empty.
- * @param block Block.
- * @param size Block size. (Must be a multiple of 64 bytes.)
+ * @param block Block
+ * @param size Block size (Must be a multiple of 64 bytes.)
  * @return True if the block is all zeroes; false if not.
  */
-bool RvtH::isBlockEmpty(const uint8_t *block, unsigned int size)
+bool RvtHPrivate::isBlockEmpty(const uint8_t *block, unsigned int size)
 {
 	// Process the block using 64-bit pointers.
 	const uint64_t *block64 = (const uint64_t*)block;
@@ -83,12 +60,43 @@ bool RvtH::isBlockEmpty(const uint8_t *block, unsigned int size)
 }
 
 /**
+ * Make the RVT-H object writable.
+ * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+ */
+int RvtHPrivate::makeWritable(void)
+{
+	if (file->isWritable()) {
+		// RVT-H is already writable.
+		return 0;
+	}
+
+	// TODO: Allow making a disc image file writable.
+	// (Single bank)
+
+	// Make sure this is a device file.
+	if (!file->isDevice()) {
+		// This is not a device file.
+		// Cannot make it writable.
+		return RVTH_ERROR_NOT_A_DEVICE;
+	}
+
+	// If we're using a fake NHCD table, we can't write to it.
+	if (nhcdStatus != NHCD_STATUS_OK) {
+		// Fake NHCD table is in use.
+		return RVTH_ERROR_NHCD_TABLE_MAGIC;
+	}
+
+	// Make this writable.
+	return file->makeWritable();
+}
+
+/**
  * Write a bank table entry to disk.
  * @param bank		[in] Bank number. (0-7)
  * @param pTimestamp	[out,opt] Timestamp written to the bank entry.
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int RvtH::writeBankEntry(unsigned int bank, time_t *pTimestamp)
+int RvtHPrivate::writeBankEntry(unsigned int bank, time_t *pTimestamp)
 {
 	if (!isHDD()) {
 		// Standalone disc image. No bank table.
@@ -113,7 +121,7 @@ int RvtH::writeBankEntry(unsigned int bank, time_t *pTimestamp)
 
 	// If the bank entry is deleted, then it should be
 	// all zeroes, so skip all of this.
-	RvtH_BankEntry *const rvth_entry = &m_entries[bank];
+	RvtH_BankEntry *const rvth_entry = &entries[bank];
 	if (!rvth_entry->is_deleted) {
 		// Bank entry is not deleted.
 		// Construct the NHCD bank entry.
@@ -165,7 +173,7 @@ int RvtH::writeBankEntry(unsigned int bank, time_t *pTimestamp)
 	}
 
 	// Write the bank entry.
-	ret = m_file->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
+	ret = file->seeko(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA + bank+1), SEEK_SET);
 	if (ret != 0) {
 		// Seek error.
 		if (errno == 0) {
@@ -173,7 +181,7 @@ int RvtH::writeBankEntry(unsigned int bank, time_t *pTimestamp)
 		}
 		return -errno;
 	}
-	size_t size = m_file->write(&nhcd_entry, 1, sizeof(nhcd_entry));
+	size_t size = file->write(&nhcd_entry, 1, sizeof(nhcd_entry));
 	if (size != sizeof(nhcd_entry)) {
 		// Write error.
 		if (errno == 0) {

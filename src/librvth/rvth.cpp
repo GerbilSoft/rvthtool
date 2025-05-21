@@ -7,12 +7,13 @@
  ***************************************************************************/
 
 #include "rvth.hpp"
+#include "rvth_p.hpp"
+#include "rvth_error.h"
 
 #include "nhcd_structs.h"
 #include "disc_header.hpp"
 #include "ptbl.h"
 #include "bank_init.h"
-#include "rvth_error.h"
 #include "reader/Reader.hpp"
 
 #include "libwiicrypto/byteswap.h"
@@ -105,14 +106,14 @@ int RvtH::openGcm(RefFile *f_img)
 	}
 
 	// Allocate memory for a single RvtH_BankEntry object.
-	m_entries.resize(1);
-	m_imageType = reader->type();
+	d_ptr->entries.resize(1);
+	d_ptr->imageType = reader->type();
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	m_file = f_img->ref();
-	m_NHCD_status = NHCD_STATUS_MISSING;
-	entry = m_entries.data();
+	d_ptr->file = f_img->ref();
+	d_ptr->nhcdStatus = NHCD_STATUS_MISSING;
+	entry = d_ptr->entries.data();
 	entry->lba_start = reader->lba_start();
 	entry->lba_len = reader->lba_len();
 	entry->type = type;
@@ -151,9 +152,9 @@ int RvtH::openGcm(RefFile *f_img)
 fail:
 	// Failed to open the disc image.
 	delete reader;
-	if (m_file) {
-		m_file->unref();
-		m_file = nullptr;
+	if (d_ptr->file) {
+		d_ptr->file->unref();
+		d_ptr->file = nullptr;
 	}
 	if (err != 0) {
 		errno = err;
@@ -258,9 +259,9 @@ int RvtH::openHDD(RefFile *f_img)
 	size_t size;
 
 	// Check the bank table header.
-	m_nhcdHeader.reset(new NHCD_BankTable_Header);
+	d_ptr->nhcdHeader.reset(new NHCD_BankTable_Header);
 	size = f_img->seekoAndRead(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET,
-		m_nhcdHeader.get(), 1, sizeof(NHCD_BankTable_Header));
+		d_ptr->nhcdHeader.get(), 1, sizeof(NHCD_BankTable_Header));
 	if (size != sizeof(NHCD_BankTable_Header)) {
 		// Short read.
 		err = errno;
@@ -268,19 +269,19 @@ int RvtH::openHDD(RefFile *f_img)
 			err = EIO;
 		}
 		ret = -err;
-		m_nhcdHeader.reset();
+		d_ptr->nhcdHeader.reset();
 		goto fail;
 	}
 
 	// Determine the device type.
-	m_imageType = (f_img->isDevice()
+	d_ptr->imageType = (f_img->isDevice()
 		? RVTH_ImageType_HDD_Reader
 		: RVTH_ImageType_HDD_Image);
 
 	// Check the magic number.
-	if (m_nhcdHeader->magic == be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
+	if (d_ptr->nhcdHeader->magic == be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
 		// Magic number is correct.
-		m_NHCD_status = NHCD_STATUS_OK;
+		d_ptr->nhcdStatus = NHCD_STATUS_OK;
 	} else {
 		// Incorrect magic number.
 		// We'll continue with a default bank table.
@@ -297,19 +298,19 @@ int RvtH::openHDD(RefFile *f_img)
 		}
 
 		if (hasGPT) {
-			m_NHCD_status = NHCD_STATUS_HAS_GPT;
+			d_ptr->nhcdStatus = NHCD_STATUS_HAS_GPT;
 		} else if (hasMBR) {
-			m_NHCD_status = NHCD_STATUS_HAS_MBR;
+			d_ptr->nhcdStatus = NHCD_STATUS_HAS_MBR;
 		} else {
-			m_NHCD_status = NHCD_STATUS_MISSING;
+			d_ptr->nhcdStatus = NHCD_STATUS_MISSING;
 		}
 
 		// Assuming a default 8-bank system.
 		static const unsigned int bankCount_default = 8;
-		m_entries.resize(bankCount_default);
+		d_ptr->entries.resize(bankCount_default);
 
-		m_file = f_img->ref();
-		rvth_entry = m_entries.data();
+		d_ptr->file = f_img->ref();
+		rvth_entry = d_ptr->entries.data();
 		lba_start = NHCD_BANK_START_LBA(0, 8);
 		for (unsigned int i = 0; i < bankCount_default; i++, rvth_entry++, lba_start += NHCD_BANK_SIZE_LBA) {
 			// Use "Empty" so we can try to detect the actual bank type.
@@ -323,7 +324,7 @@ int RvtH::openHDD(RefFile *f_img)
 	}
 
 	// Get the bank count.
-	bankCount = be32_to_cpu(m_nhcdHeader->bank_count);
+	bankCount = be32_to_cpu(d_ptr->nhcdHeader->bank_count);
 	if (bankCount < 8 || bankCount > 32) {
 		// Bank count is either too small or too large.
 		// RVT-H systems are set to 8 banks at the factory,
@@ -339,10 +340,10 @@ int RvtH::openHDD(RefFile *f_img)
 	}
 
 	// Allocate memory for the RvtH_BankEntry objects.
-	m_entries.resize(bankCount);
+	d_ptr->entries.resize(bankCount);
 
-	m_file = f_img->ref();
-	rvth_entry = m_entries.data();
+	d_ptr->file = f_img->ref();
+	rvth_entry = d_ptr->entries.data();
 	// FIXME: Why cast to uint32_t?
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
 	for (unsigned int i = 0; i < bankCount; i++, rvth_entry++, addr += 512) {
@@ -426,9 +427,9 @@ int RvtH::openHDD(RefFile *f_img)
 
 fail:
 	// Failed to open the HDD image.
-	if (m_file) {
-		m_file->unref();
-		m_file = nullptr;
+	if (d_ptr->file) {
+		d_ptr->file->unref();
+		d_ptr->file = nullptr;
 	}
 	if (err != 0) {
 		errno = err;
@@ -442,9 +443,7 @@ fail:
  * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 RvtH::RvtH(const TCHAR *filename, int *pErr)
-	: m_file(nullptr)
-	, m_imageType(RVTH_ImageType_Unknown)
-	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
+	: d_ptr(new RvtHPrivate(this))
 {
 	// Open the disk image.
 	RefFile *const f_img = new RefFile(filename);
@@ -496,42 +495,75 @@ RvtH::~RvtH()
 	// Close all bank entry files.
 	// RefFile has a reference count, so we have to clear the count.
 	for (unsigned int i = 0; i < bankCount(); i++) {
-		delete m_entries[i].reader;
-		free(m_entries[i].ptbl);
+		delete d_ptr->entries[i].reader;
+		free(d_ptr->entries[i].ptbl);
 	}
 
 	// Clear the main file reference.
-	if (m_file) {
-		m_file->unref();
+	if (d_ptr->file) {
+		d_ptr->file->unref();
 	}
+}
+
+/**
+ * Is the file open?
+ * @return True if open; false if not.
+ */
+bool RvtH::isOpen(void) const
+{
+	return (d_ptr->file != nullptr);
+}
+
+/**
+ * Get the number of banks in the RVT-H disk image.
+ * @return Number of banks
+ */
+unsigned int RvtH::bankCount(void) const
+{
+	return d_ptr->bankCount();
 }
 
 /**
  * Is this RVT-H object an RVT-H Reader / HDD image, or a standalone disc image?
- * @param rvth RVT-H object.
+ * @param rvth RVT-H object
  * @return True if the RVT-H object is an RVT-H Reader / HDD image; false if it's a standalone disc image.
  */
 bool RvtH::isHDD(void) const
 {
-	switch (m_imageType) {
-		case RVTH_ImageType_HDD_Reader:
-		case RVTH_ImageType_HDD_Image:
-			return true;
+	return d_ptr->isHDD();
+}
 
-		default:
-			break;
-	}
+/**
+ * Get the RVT-H image type.
+ * @param rvth RVT-H object
+ * @return RVT-H image type
+ */
+RvtH_ImageType_e RvtH::imageType(void) const
+{
+	return d_ptr->imageType;
+}
 
-	return false;
+/**
+ * Get the NHCD table status.
+ *
+ * For optical disc images, this is always NHCD_STATUS_MISSING.
+ * For HDD images, this should be NHCD_STATUS_OK unless the
+ * NHCD table was wiped or a PC-partitioned disk was selected.
+ *
+ * @return NHCD table status
+ */
+NHCD_Status_e RvtH::nhcd_status(void) const
+{
+	return d_ptr->nhcdStatus;
 }
 
 /**
  * Get the NHCD Table Header.
- * @return NHCD Bank Table Header.
+ * @return NHCD Bank Table Header
  */
 NHCD_BankTable_Header *RvtH::nhcd_header(void) const
 {
-	return m_nhcdHeader.get();
+	return d_ptr->nhcdHeader.get();
 }
 
 /**
@@ -550,5 +582,5 @@ const RvtH_BankEntry *RvtH::bankEntry(unsigned int bank, int *pErr) const
 		return nullptr;
 	}
 
-	return &m_entries[bank];
+	return &d_ptr->entries[bank];
 }

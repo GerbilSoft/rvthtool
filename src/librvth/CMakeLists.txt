@@ -55,6 +55,7 @@ SET(librvth_SRCS
 SET(librvth_H
 	nhcd_structs.h
 	rvth.hpp
+	rvth_p.hpp
 	rvth_time.h
 	RefFile.hpp
 	disc_header.hpp

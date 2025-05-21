@@ -183,12 +183,9 @@ typedef bool (*RvtH_Verify_Progress_Callback)(const RvtH_Verify_Progress_State *
 
 #ifdef __cplusplus
 
-// C++ STL classes
-#include <memory>
-#include <vector>
-
 /** Main class **/
 
+class RvtHPrivate;
 class RvtH {
 public:
 	/**
@@ -218,6 +215,10 @@ public:
 	~RvtH();
 
 private:
+	RvtHPrivate *const d_ptr;
+	DISABLE_COPY(RvtH);
+
+private:
 	/** Constructor functions (rvth.cpp) **/
 
 	/**
@@ -244,75 +245,33 @@ private:
 	int openHDD(RefFile *f_img);
 
 public:
-	/** General utility functions **/
-	// TODO: Move out of RvtH?
+	/** Accessors **/
 
-	/**
-	 * Check if a block is empty.
-	 * @param block Block.
-	 * @param size Block size. (Must be a multiple of 64 bytes.)
-	 * @return True if the block is all zeroes; false if not.
-	 */
-	static bool isBlockEmpty(const uint8_t *block, unsigned int size);
-
-private:
-	/** Private functions (rvth_p.cpp) **/
-
-	/**
-	 * Make the RVT-H object writable.
-	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-	 */
-	int makeWritable(void);
-
-	/**
-	 * Write a bank table entry to disk.
-	 * @param bank		[in] Bank number. (0-7)
-	 * @param pTimestamp	[out,opt] Timestamp written to the bank entry.
-	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-	 */
-	int writeBankEntry(unsigned int bank, time_t *pTimestamp = nullptr);
-
-private:
-	DISABLE_COPY(RvtH)
-
-public:
 	/**
 	 * Is the file open?
 	 * @return True if open; false if not.
 	 */
-	inline bool isOpen(void) const
-	{
-		return (m_file != nullptr);
-	}
-
-public:
-	/** Accessors **/
+	bool isOpen(void) const;
 
 	/**
 	 * Get the number of banks in the RVT-H disk image.
-	 * @return Number of banks.
+	 * @return Number of banks
 	 */
-	inline unsigned int bankCount(void) const
-	{
-		return static_cast<unsigned int>(m_entries.size());
-	}
+	unsigned int bankCount(void) const;
 
 	/**
 	 * Is this RVT-H object an HDD image or a standalone disc image?
-	 * @param rvth RVT-H object.
+	 * @param rvth RVT-H object
 	 * @return True if the RVT-H object is an HDD image; false if it's a standalone disc image.
 	 */
 	bool isHDD(void) const;
 
 	/**
 	 * Get the RVT-H image type.
-	 * @param rvth RVT-H object.
-	 * @return RVT-H image type.
+	 * @param rvth RVT-H object
+	 * @return RVT-H image type
 	 */
-	inline RvtH_ImageType_e imageType(void) const
-	{
-		return m_imageType;
-	}
+	RvtH_ImageType_e imageType(void) const;
 
 	/**
 	 * Get the NHCD table status.
@@ -321,12 +280,9 @@ public:
 	 * For HDD images, this should be NHCD_STATUS_OK unless the
 	 * NHCD table was wiped or a PC-partitioned disk was selected.
 	 *
-	 * @return NHCD table status.
+	 * @return NHCD table status
 	 */
-	inline NHCD_Status_e nhcd_status(void) const
-	{
-		return m_NHCD_status;
-	}
+	NHCD_Status_e nhcd_status(void) const;
 
 	/**
 	 * Get the NHCD Table Header.
@@ -505,25 +461,6 @@ public:
 		unsigned int error_count[5] = nullptr,
 		RvtH_Verify_Progress_Callback callback = nullptr,
 		void *userdata = nullptr);
-
-private:
-	// Reference-counted FILE*
-	RefFile *m_file;
-
-	// Image type
-	RvtH_ImageType_e m_imageType;
-
-	// NHCD header status
-	NHCD_Status_e m_NHCD_status;
-
-	// NHCD bank table header
-	// NOTE: This will be nullptr for e.g. GCM disc images.
-	std::unique_ptr<NHCD_BankTable_Header> m_nhcdHeader;
-
-	// BankEntry objects
-	// - RVT-H system or disk image: 8 (usually)
-	// - Standalone disc image: 1
-	std::vector<RvtH_BankEntry> m_entries;
 };
 
 #endif /* __cplusplus */

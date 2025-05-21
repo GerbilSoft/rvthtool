@@ -7,8 +7,10 @@
  ***************************************************************************/
 
 #include "rvth.hpp"
-#include "ptbl.h"
+#include "rvth_p.hpp"
 #include "rvth_error.h"
+
+#include "ptbl.h"
 
 #include "byteswap.h"
 #include "nhcd_structs.h"
@@ -166,7 +168,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	}
 
 	// Check if the source bank can be extracted.
-	const RvtH_BankEntry *const entry_src = &m_entries[bank_src];
+	const RvtH_BankEntry *const entry_src = &d_ptr->entries[bank_src];
 	switch (entry_src->type) {
 		case RVTH_BankType_GCN:
 		case RVTH_BankType_Wii_SL:
@@ -208,12 +210,12 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	// either truncate it or don't do sparse writes.
 
 	// Make this a sparse file.
-	entry_dest = &rvth_dest->m_entries[0];
-	ret = rvth_dest->m_file->makeSparse(LBA_TO_BYTES(entry_dest->lba_len));
+	entry_dest = &rvth_dest->d_ptr->entries[0];
+	ret = rvth_dest->d_ptr->file->makeSparse(LBA_TO_BYTES(entry_dest->lba_len));
 	if (ret != 0) {
 		// Error managing the sparse file.
 		// TODO: Delete the file?
-		err = rvth_dest->m_file->lastError();
+		err = rvth_dest->d_ptr->file->lastError();
 		if (err == 0) {
 			err = ENOMEM;
 		}
@@ -289,7 +291,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 
 		// Check for empty 4 KB blocks.
 		for (unsigned int sprs = 0; sprs < BUF_SIZE; sprs += 4096) {
-			if (!isBlockEmpty(&buf[sprs], 4096)) {
+			if (!d_ptr->isBlockEmpty(&buf[sprs], 4096)) {
 				// 4 KB block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
 				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 8);
@@ -319,7 +321,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 
 		// Check for empty 512-byte blocks.
 		for (unsigned int sprs = 0; sprs < sz_left; sprs += 512) {
-			if (!isBlockEmpty(&buf[sprs], 512)) {
+			if (!d_ptr->isBlockEmpty(&buf[sprs], 512)) {
 				// 512-byte block is not empty.
 				lba_nonsparse = lba_count + (sprs / 512);
 				entry_dest->reader->write(&buf[sprs], lba_nonsparse, 1);
@@ -393,7 +395,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	// handle it as -1.
 
 	// Create a standalone disc image.
-	RvtH_BankEntry *const entry = &m_entries[bank];
+	RvtH_BankEntry *const entry = &d_ptr->entries[bank];
 	const bool unenc_to_enc = (entry->type >= RVTH_BankType_Wii_SL &&
 				   entry->crypto_type == RVL_CryptoType_None &&
 				   recrypt_key > RVL_CryptoType_Unknown);
@@ -461,7 +463,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	if (flags & RVTH_EXTRACT_PREPEND_SDK_HEADER) {
 		// Prepend 32k to the GCM.
 		size_t size;
-		Reader *const reader = rvth_dest->m_entries[0].reader;
+		Reader *const reader = rvth_dest->d_ptr->entries[0].reader;
 		uint8_t *const sdk_header = static_cast<uint8_t*>(calloc(1, SDK_HEADER_SIZE_BYTES));
 		if (!sdk_header) {
 			int ret = -errno;
@@ -569,7 +571,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	}
 
 	// Check if the source bank can be imported.
-	const RvtH_BankEntry *const entry_src = &m_entries[bank_src];
+	const RvtH_BankEntry *const entry_src = &d_ptr->entries[bank_src];
 	switch (entry_src->type) {
 		case RVTH_BankType_GCN:
 		case RVTH_BankType_Wii_SL:
@@ -598,7 +600,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	// Get the bank count of the destination RVT-H device.
 	unsigned int bank_count_dest = rvth_dest->bankCount();
 	// Destination bank entry.
-	RvtH_BankEntry *const entry_dest = &rvth_dest->m_entries[bank_dest];
+	RvtH_BankEntry *const entry_dest = &rvth_dest->d_ptr->entries[bank_dest];
 
 	// Source image length cannot be larger than a single bank.
 	RvtH_BankEntry *entry_dest2 = nullptr;
@@ -633,7 +635,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		}
 
 		// Check that the second bank is empty or deleted.
-		entry_dest2 = &rvth_dest->m_entries[bank_dest+1];
+		entry_dest2 = &rvth_dest->d_ptr->entries[bank_dest+1];
 		if (entry_dest2->type != RVTH_BankType_Empty &&
 		    !entry_dest2->is_deleted)
 		{
@@ -685,7 +687,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	}
 
 	// Make the destination RVT-H object writable.
-	ret = rvth_dest->makeWritable();
+	ret = rvth_dest->d_ptr->makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		int err;
@@ -705,7 +707,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	}
 	// NOTE: Using the source LBA length, since we might be
 	// importing a dual-layer Wii image.
-	entry_dest->reader = Reader::open(rvth_dest->m_file,
+	entry_dest->reader = Reader::open(rvth_dest->d_ptr->file,
 		entry_dest->lba_start, entry_src->lba_len);
 	if (!entry_dest->reader) {
 		// Cannot create a reader...
@@ -822,7 +824,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 
 	// Update the bank table.
 	// TODO: Check for errors.
-	rvth_dest->writeBankEntry(bank_dest);
+	rvth_dest->d_ptr->writeBankEntry(bank_dest);
 
 	// Finished importing the disc image.
 	return 0;
