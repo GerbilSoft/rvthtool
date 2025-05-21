@@ -510,15 +510,15 @@ private:
 	// Reference-counted FILE*
 	RefFile *m_file;
 
-	// NHCD bank table header
-	// NOTE: This will be nullptr for e.g. GCM disc images.
-	std::unique_ptr<NHCD_BankTable_Header> m_nhcdHeader;
-
 	// Image type
 	RvtH_ImageType_e m_imageType;
 
 	// NHCD header status
 	NHCD_Status_e m_NHCD_status;
+
+	// NHCD bank table header
+	// NOTE: This will be nullptr for e.g. GCM disc images.
+	std::unique_ptr<NHCD_BankTable_Header> m_nhcdHeader;
 
 	// BankEntry objects
 	// - RVT-H system or disk image: 8 (usually)
