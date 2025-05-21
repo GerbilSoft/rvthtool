@@ -2,12 +2,11 @@
  * RVT-H Tool                                                              *
  * undelete.h: Delete or undelete a bank in an RVT-H disk image.           *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RVTHTOOL_UNDELETE_H__
-#define __RVTHTOOL_RVTHTOOL_UNDELETE_H__
+#pragma once
 
 #include "tcharx.h"
 
@@ -34,5 +33,3 @@ int undelete_bank(const TCHAR *rvth_filename, const TCHAR *s_bank);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_RVTHTOOL_UNDELETE_H__ */

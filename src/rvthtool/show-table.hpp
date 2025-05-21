@@ -3,7 +3,7 @@
  * show-table.hpp: Print out the NHCD Bank Table for debugging an invalid  *
  * bank.                                                                   *
  *                                                                         *
- * Copyright (c) 2023 by David Korth.                                      *
+ * Copyright (c) 2023-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 

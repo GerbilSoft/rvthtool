@@ -2,12 +2,11 @@
  * RVT-H Tool                                                              *
  * query.h: Query available RVT-H Reader devices.                          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RVTHTOOL_QUERY_H__
-#define __RVTHTOOL_RVTHTOOL_QUERY_H__
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,5 +21,3 @@ int query(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_RVTHTOOL_QUERY_H__ */

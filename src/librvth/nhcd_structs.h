@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * nhcd_structs.h: RVT-H data structures.                                  *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -13,8 +13,7 @@
 // rvth.h contains "RVTH_" high-level structs, which should
 // be used by the application.
 
-#ifndef __RVTHTOOL_LIBRVTH_NHCD_STRUCTS_H__
-#define __RVTHTOOL_LIBRVTH_NHCD_STRUCTS_H__
+#pragma once
 
 #include <stdint.h>
 #include "libwiicrypto/common.h"
@@ -159,5 +158,3 @@ ASSERT_STRUCT(NHCD_BankTable, 512*9);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBRVTH_NHCD_STRUCTS_H__ */

@@ -3,12 +3,11 @@
  * PlainReader.hpp: Plain disc image reader class.                         *
  * Used for plain binary disc images, e.g. .gcm and RVT-H images.          *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_READER_PLAINREADER_HPP__
-#define __RVTHTOOL_LIBRVTH_READER_PLAINREADER_HPP__
+#pragma once
 
 #include "Reader.hpp"
 
@@ -52,13 +51,3 @@ class PlainReader : public Reader
 		 */
 		uint32_t write(const void *ptr, uint32_t lba_start, uint32_t lba_len) final;
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __RVTHTOOL_LIBRVTH_READER_PLAINREADER_HPP__ */

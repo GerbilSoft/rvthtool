@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * TaskbarButtonManager.hpp: Taskbar button manager base class.            *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_HPP__
-#define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_HPP__
+#pragma once
 
 #include <QtCore/QObject>
 #include <QWidget>
@@ -95,5 +94,3 @@ class TaskbarButtonManager : public QObject
 		 */
 		void windowDestroyed_slot(QObject *obj);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_HPP__ */

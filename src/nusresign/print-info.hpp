@@ -2,12 +2,11 @@
  * RVT-H Tool: NUS Resigner                                                *
  * print-info.hpp: Print NUS information.                                  *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_NUSRESIGN_PRINT_INFO_HPP__
-#define __RVTHTOOL_NUSRESIGN_PRINT_INFO_HPP__
+#pragma once
 
 #include <stdint.h>
 #include <stdio.h>
@@ -33,5 +32,3 @@ int print_nus_info(const TCHAR *nus_dir, bool verify);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_NUSRESIGN_PRINT_INFO_HPP__ */

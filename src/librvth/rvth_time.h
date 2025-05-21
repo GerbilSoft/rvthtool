@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth_time.h: RVT-H timestamp functions.                                 *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_RVTH_TIME_H__
-#define __RVTHTOOL_LIBRVTH_RVTH_TIME_H__
+#pragma once
 
 #include "time_r.h"
 
@@ -34,5 +33,3 @@ int rvth_timestamp_create(char *buf, size_t size, time_t now);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBRVTH_RVTH_TIME_H__ */

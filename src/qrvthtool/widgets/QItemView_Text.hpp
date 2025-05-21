@@ -3,14 +3,13 @@
  * QItemView_text.hpp: QItemView subclasses that show a message if no      *
  * items are present.                                                      *
  *                                                                         *
- * Copyright (c) 2013-2022 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 // Reference: https://stackoverflow.com/questions/20765547/qlistview-show-text-when-list-is-empty
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_QITEMVIEW_TEXT_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WIDGETS_QITEMVIEW_TEXT_HPP__
+#pragma once
 
 #include <QListView>
 #include <QListWidget>
@@ -146,5 +145,3 @@ class QTreeWidget_Text : public QTreeWidget
 		inline QStyleOptionViewItem::Position decorationPosition(void) const { return m_decorationPosition; }
 		void setDecorationPosition(QStyleOptionViewItem::Position position);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_QITEMVIEW_TEXT_HPP__ */

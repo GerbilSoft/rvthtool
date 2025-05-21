@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * title_key.h: Title key management.                                      *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_TITLE_KEY_H__
-#define __RVTHTOOL_LIBWIICRYPTO_TITLE_KEY_H__
+#pragma once
 
 #include "wii_structs.h"
 
@@ -29,5 +28,3 @@ int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_t *cryp
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_TITLE_KEY_H__ */

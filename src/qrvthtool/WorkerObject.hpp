@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * WorkerObject.hpp: Worker object for extract/import/etc.                 *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WORKEROBJECT_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WORKEROBJECT_HPP__
+#pragma once
 
 // librvth
 #include "librvth/rvth.hpp"
@@ -154,5 +153,3 @@ class WorkerObject : public QObject
 		 */
 		void doImport(void);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WORKEROBJECT_HPP__ */

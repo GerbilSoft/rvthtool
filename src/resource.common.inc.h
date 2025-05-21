@@ -2,12 +2,11 @@
  * RVT-H Tool                                                              *
  * resource.common.inc.h: Common Win32 resource header.                    *
  *                                                                         *
- * Copyright (c) 2016-2018 by David Korth.                                 *
+ * Copyright (c) 2016-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RESOURCE_COMMON_INC_H__
-#define __RVTHTOOL_RESOURCE_COMMON_INC_H__
+#pragma once
 
 #ifndef RC_INVOKED
 # error This file should only be included in Win32 resource scripts.
@@ -48,5 +47,3 @@
 #endif
 
 #define RP_VS_FILEFLAGS (RP_VS_FF_DEBUG | RP_VS_FF_PRERELEASE)
-
-#endif /* __RVTHTOOL_RESOURCE_COMMON_INC_H__ */

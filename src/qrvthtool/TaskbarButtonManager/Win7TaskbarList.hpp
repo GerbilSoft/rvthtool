@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * Win7TaskbarList.hpp: Windows 7 ITaskBarList3 implementation.            *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_WIN7TASKBARLIST_HPP__
-#define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_WIN7TASKBARLIST_HPP__
+#pragma once
 
 #include "TaskbarButtonManager.hpp"
 
@@ -51,5 +50,3 @@ class Win7TaskbarList : public TaskbarButtonManager
 		 */
 		void update(void) final;
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_WIN7TASKBARLIST_HPP__ */

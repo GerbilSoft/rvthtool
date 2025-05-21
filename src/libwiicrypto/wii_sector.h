@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * wii_sector.cpp: Wii sector layout structures.                           *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WII_SECTOR_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WII_SECTOR_H__
+#pragma once
 
 #include <stdint.h>
 #include "common.h"
@@ -81,5 +80,3 @@ typedef struct _Wii_Disc_Sector_t {
 	uint8_t data[31*1024];
 } Wii_Disc_Sector_t;
 ASSERT_STRUCT(Wii_Disc_Sector_t, 32*1024);
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_WII_SECTOR_H__ */

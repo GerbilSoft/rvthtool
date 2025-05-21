@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_BANK_INIT_H__
-#define __RVTHTOOL_LIBRVTH_BANK_INIT_H__
+#pragma once
 
 #include "rvth.hpp"
 
@@ -64,5 +63,3 @@ int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBRVTH_BANK_INIT_H__ */

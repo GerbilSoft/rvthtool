@@ -2,25 +2,24 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * Win32_sdk.h: Windows SDK defines and includes.                          *
  *                                                                         *
- * Copyright (c) 2009-2018 by David Korth.                                 *
+ * Copyright (c) 2009-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SDK_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SDK_H__
+#pragma once
 
 // Show a warning if one of the macros isn't defined in CMake.
 #ifndef WINVER
-# pragma message("WINVER not defined; defaulting to 0x0500.")
-# define WINVER		0x0500
+#  pragma message("WINVER not defined; defaulting to 0x0500.")
+#  define WINVER		0x0500
 #endif
 #ifndef _WIN32_WINNT
-# pragma message("_WIN32_WINNT not defined; defaulting to 0x0500.")
-# define _WIN32_WINNT	0x0500
+#  pragma message("_WIN32_WINNT not defined; defaulting to 0x0500.")
+#  define _WIN32_WINNT	0x0500
 #endif
 #ifndef _WIN32_IE
-# pragma message("_WIN32_IE not defined; defaulting to 0x0500.")
-# define _WIN32_IE	0x0500
+#  pragma message("_WIN32_IE not defined; defaulting to 0x0500.")
+#  define _WIN32_IE	0x0500
 #endif
 
 // Define this symbol to get XP themes. See:
@@ -90,23 +89,23 @@ static inline ULONG InterlockedDecrement(ULONG volatile *Addend)
 
 // UUID attribute.
 #ifdef _MSC_VER
-# define UUID_ATTR(str) __declspec(uuid(str))
+#  define UUID_ATTR(str) __declspec(uuid(str))
 #else /* !_MSC_VER */
 // UUID attribute is not supported by gcc-5.2.0.
-# define UUID_ATTR(str)
+#  define UUID_ATTR(str)
 #endif /* _MSC_VER */
 
 // SAL 1.0 annotations not supported by MinGW-w64 5.0.1.
 #ifndef __out_opt
-# define __out_opt
+#  define __out_opt
 #endif
 
 // SAL 2.0 annotations not supported by MSVC 2010.
 #ifndef _COM_Outptr_
-# define _COM_Outptr_
+#  define _COM_Outptr_
 #endif
 #ifndef _Outptr_
-# define _Outptr_
+#  define _Outptr_
 #endif
 
 // Current image instance.
@@ -114,5 +113,3 @@ static inline ULONG InterlockedDecrement(ULONG volatile *Addend)
 // Reference: https://blogs.msdn.microsoft.com/oldnewthing/20041025-00/?p=37483
 EXTERN_C IMAGE_DOS_HEADER __ImageBase;
 #define HINST_THISCOMPONENT ((HINSTANCE)&__ImageBase)
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_WIN32_SDK_H__ */

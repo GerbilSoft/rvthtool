@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * TaskbarButtonManager_p.hpp: Taskbar button manager base class. (PRIVATE)*
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_P_HPP__
-#define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_P_HPP__
+#pragma once
 
 #include "TaskbarButtonManager.hpp"
 
@@ -31,5 +30,3 @@ class TaskbarButtonManagerPrivate
 		int progressBarValue;	// Current progress. (-1 for no bar)
 		int progressBarMax;	// Maximum progress.
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_TASKBARBUTTONMANAGER_P_HPP__ */

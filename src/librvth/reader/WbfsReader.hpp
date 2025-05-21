@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * WbfsReader.hpp: WBFS disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_READER_WBFSREADER_HPP__
-#define __RVTHTOOL_LIBRVTH_READER_WBFSREADER_HPP__
+#pragma once
 
 #include "Reader.hpp"
 
@@ -74,5 +73,3 @@ class WbfsReader : public Reader
 
 		const be16_t *m_wlba_table;	// Pointer to m_wbfs_disc->disc->header->wlba_table.
 };
-
-#endif /* __RVTHTOOL_LIBRVTH_READER_WBFSREADER_HPP__ */

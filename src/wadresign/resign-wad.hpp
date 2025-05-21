@@ -2,12 +2,11 @@
  * RVT-H Tool: WAD Resigner                                                *
  * resign-wad.h: Re-sign a WAD file.                                       *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_WADRESIGN_RESIGN_WAD_HPP__
-#define __RVTHTOOL_WADRESIGN_RESIGN_WAD_HPP__
+#pragma once
 
 #include "tcharx.h"
 #include <stdint.h>
@@ -37,5 +36,3 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_WADRESIGN_RESIGN_WAD_HPP__ */

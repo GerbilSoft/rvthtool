@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * rsaw.h: RSA encryption wrapper functions.                               *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_RSAW_H__
-#define __RVTHTOOL_LIBWIICRYPTO_RSAW_H__
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -76,5 +75,3 @@ int rsaw_rsa2048_sign(uint8_t *buf, size_t buf_size,
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_RSAW_H__ */

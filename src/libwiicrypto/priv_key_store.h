@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * priv_key_store.h: Private key store.                                    *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_PRIV_KEY_STORE_H__
-#define __RVTHTOOL_LIBWIICRYPTO_PRIV_KEY_STORE_H__
+#pragma once
 
 #include <stdint.h>
 #include "rsaw.h"
@@ -29,5 +28,3 @@ extern const RSA2048PrivateKey rvth_privkey_WUP_dpki_tmd;
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_PRIV_KEY_STORE_H__ */

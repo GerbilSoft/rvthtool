@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * ptbl.h: Load and manage a Wii disc's partition tables.                  *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_PTBL_H__
-#define __RVTHTOOL_LIBRVTH_PTBL_H__
+#pragma once
 
 #include "rvth.hpp"
 #include <stdint.h>
@@ -79,5 +78,3 @@ const pt_entry_t *rvth_ptbl_find_game(RvtH_BankEntry *entry);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBRVTH_PTBL_H__ */

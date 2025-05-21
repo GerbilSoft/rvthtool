@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * QRvtHToolWindow.hpp: Main window.                                       *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__
+#pragma once
 
 class QItemSelection;
 #include <QMainWindow>
@@ -112,5 +111,3 @@ class QRvtHToolWindow : public QMainWindow
 		 */
 		void btnCancel_clicked(void);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_QRVTHTOOLWINDOW_HPP__ */

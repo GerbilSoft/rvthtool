@@ -2,12 +2,11 @@
  * RVT-H Tool                                                              *
  * extract.h: Extract a bank from an RVT-H disk image.                     *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RVTHTOOL_EXTRACT_H__
-#define __RVTHTOOL_RVTHTOOL_EXTRACT_H__
+#pragma once
 
 #include "tcharx.h"
 
@@ -39,5 +38,3 @@ int import(const TCHAR *rvth_filename, const TCHAR *s_bank, const TCHAR *gcm_fil
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_RVTHTOOL_EXTRACT_H__ */

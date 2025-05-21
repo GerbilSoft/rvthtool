@@ -2,21 +2,20 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * secoptions_win8.h: Security options for executables. (Win8)             *
  *                                                                         *
- * Copyright (c) 2016-2018 by David Korth.                                 *
+ * Copyright (c) 2016-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN8_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_WIN8_H__
+#pragma once
 
 #ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__
-#error secoptions_win8.h should not be included directly - include secoptions.h instead
+#  error secoptions_win8.h should not be included directly - include secoptions.h instead
 #endif
 
 /* NOTE: MinGW-w64 v5.0.3 has ProcessDynamicCodePolicy
  * defined as ProcessReserved1MitigationPolicy. */
 #ifdef __GNUC__
-#define ProcessDynamicCodePolicy ProcessReserved1MitigationPolicy
+#  define ProcessDynamicCodePolicy ProcessReserved1MitigationPolicy
 #endif
 
 /**
@@ -173,5 +172,3 @@ typedef struct _PROCESS_MITIGATION_IMAGE_LOAD_POLICY {
 	} DUMMYUNIONNAME;
 } PROCESS_MITIGATION_IMAGE_LOAD_POLICY, *PPROCESS_MITIGATION_IMAGE_LOAD_POLICY;
 #endif /* !_WIN32_WINNT_WIN10 */
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_SECOPTIONS_WIN8_H__ */

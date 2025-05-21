@@ -2,12 +2,11 @@
  * RVT-H Tool: WAD Resigner                                                *
  * wad-fns.h: General WAD functions.                                       *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_WADRESIGN_WAD_FNS_H__
-#define __RVTHTOOL_WADRESIGN_WAD_FNS_H__
+#pragma once
 
 #include <stdint.h>
 
@@ -70,5 +69,3 @@ int getWadInfo_BWF(const Wii_WAD_Header_BWF *pWadHeader, WAD_Info_t *pWadInfo);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_WADRESIGN_PRINT_INFO_H__ */

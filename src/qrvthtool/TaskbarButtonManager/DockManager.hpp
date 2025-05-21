@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * DockManager.cpp: DockManager D-Bus implementation.                      *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_DOCKMANAGER_HPP__
-#define __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_DOCKMANAGER_HPP__
+#pragma once
 
 #include "TaskbarButtonManager.hpp"
 
@@ -59,5 +58,3 @@ class DockManager : public TaskbarButtonManager
 		 */
 		void setWindow_timer_slot(void);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_TASKBARBUTTONMANAGER_DOCKMANAGER_HPP__ */

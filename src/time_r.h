@@ -2,12 +2,11 @@
  * RVT-H Tool                                                              *
  * time_r.h: Workaround for missing time functions.                        *
  *                                                                         *
- * Copyright (c) 2017-2022 by David Korth.                                 *
+ * Copyright (c) 2017-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_TIME_R_H__
-#define __RVTHTOOL_TIME_R_H__
+#pragma once
 
 #include "config.libc.h"
 
@@ -86,5 +85,3 @@ static inline time_t timegm(struct tm *tm)
 #endif
 }
 #endif /* !HAVE_TIMEGM */
-
-#endif /* __ROMPROPERTIES_TIME_R_H__ */

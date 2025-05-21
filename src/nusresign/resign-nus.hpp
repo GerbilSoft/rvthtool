@@ -2,12 +2,11 @@
  * RVT-H Tool: WAD Resigner                                                *
  * resign-wad.hpp: Re-sign a WAD file.                                     *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_NUSRESIGN_RESIGN_NUS_HPP__
-#define __RVTHTOOL_NUSRESIGN_RESIGN_NUS_HPP__
+#pragma once
 
 #include "tcharx.h"
 #include <stdint.h>
@@ -27,5 +26,3 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_NUSRESIGN_RESIGN_NUS_HPP__ */

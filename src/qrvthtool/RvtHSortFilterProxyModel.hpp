@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * RvtHSortFilterProxyModel.hpp: RvtHModel sort filter proxy.              *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_RVTHSORTFILTERPROXYMODEL_HPP__
-#define __RVTHTOOL_QRVTHTOOL_RVTHSORTFILTERPROXYMODEL_HPP__
+#pragma once
 
 #include <QtCore/QSortFilterProxyModel>
 
@@ -26,5 +25,3 @@ class RvtHSortFilterProxyModel : public QSortFilterProxyModel
 		bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const final;
 		bool lessThan(const QModelIndex &left, const QModelIndex &right) const final;
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_RVTHSORTFILTERPROXYMODEL_HPP__ */

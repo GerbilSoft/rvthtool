@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * BankEntryView.hpp: Bank Entry view widget.                              *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__
+#pragma once
 
 #include <QWidget>
 
@@ -54,5 +53,3 @@ class BankEntryView : public QWidget
 		// State change event. (Used for switching the UI language at runtime.)
 		void changeEvent(QEvent *event) final;
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_BANKENTRYVIEW_HPP__ */

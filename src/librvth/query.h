@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * query.h: Query storage devices.                                         *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_QUERY_H__
-#define __RVTHTOOL_LIBRVTH_QUERY_H__
+#pragma once
 
 #include <stdint.h>
 #include "tcharx.h"
@@ -139,5 +138,3 @@ void rvth_listener_stop(RvtH_ListenForDevices *listener);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBRVTH_QUERY_H__ */

@@ -2,12 +2,13 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * secoptions.h: Security options for executables.                         *
  *                                                                         *
- * Copyright (c) 2016-2018 by David Korth.                                 *
+ * Copyright (c) 2016-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__
-#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__
+#pragma once
+
+#define __RVTHTOOL_LIBWIICRYPTO_WIN32_SECOPTIONS_H__ 1
 
 #include "Win32_sdk.h"
 #include "sdkddkver.h"
@@ -24,10 +25,10 @@ extern "C" {
 // DEP policy. (Vista SP1; later backported to XP SP3)
 typedef BOOL (WINAPI *PFNSETPROCESSDEPPOLICY)(_In_ DWORD dwFlags);
 #ifndef PROCESS_DEP_ENABLE
-#define PROCESS_DEP_ENABLE 0x1
+#  define PROCESS_DEP_ENABLE 0x1
 #endif
 #ifndef PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION
-#define PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION 0x2
+#  define PROCESS_DEP_DISABLE_ATL_THUNK_EMULATION 0x2
 #endif
 
 // SetDllDirectory() (Win2003; later backported to XP SP1)
@@ -36,19 +37,19 @@ typedef BOOL (WINAPI *PFNSETDLLDIRECTORYW)(_In_opt_ LPCWSTR lpPathName);
 // SetDefaultDllDirectories() (Win8; later backported to Vista and Win7)
 typedef BOOL (WINAPI *PFNSETDEFAULTDLLDIRECTORIES)(_In_ DWORD DirectoryFlags);
 #ifndef LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
-#define LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR    0x00000100
+#  define LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR    0x00000100
 #endif
 #ifndef LOAD_LIBRARY_SEARCH_APPLICATION_DIR
-#define LOAD_LIBRARY_SEARCH_APPLICATION_DIR 0x00000200
+#  define LOAD_LIBRARY_SEARCH_APPLICATION_DIR 0x00000200
 #endif
 #ifndef LOAD_LIBRARY_SEARCH_USER_DIRS
-#define LOAD_LIBRARY_SEARCH_USER_DIRS       0x00000400
+#  define LOAD_LIBRARY_SEARCH_USER_DIRS       0x00000400
 #endif
 #ifndef LOAD_LIBRARY_SEARCH_SYSTEM32
-#define LOAD_LIBRARY_SEARCH_SYSTEM32        0x00000800
+#  define LOAD_LIBRARY_SEARCH_SYSTEM32        0x00000800
 #endif
 #ifndef LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
-#define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS    0x00001000
+#  define LOAD_LIBRARY_SEARCH_DEFAULT_DIRS    0x00001000
 #endif
 
 // HeapSetInformation() (WinXP)
@@ -64,11 +65,11 @@ typedef BOOL (WINAPI *PFNHEAPSETINFORMATION)
 typedef BOOL (WINAPI *PFNSETPROCESSMITIGATIONPOLICY)(_In_ PROCESS_MITIGATION_POLICY MitigationPolicy, _In_ PVOID lpBuffer, _In_ SIZE_T dwLength);
 
 #ifndef INLINE
-#ifdef _MSC_VER
-#define INLINE __inline
-#else /* !_MSC_VER */
-#define INLINE inline
-#endif /* _MSC_VER */
+#  ifdef _MSC_VER
+#    define INLINE __inline
+#  else /* !_MSC_VER */
+#    define INLINE inline
+#  endif /* _MSC_VER */
 #endif /* !INLINE */
 
 /**
@@ -231,5 +232,3 @@ static INLINE int secoptions_init(void)
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_SECOPTIONS_H__ */

@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * cert_store.h: Certificate store.                                        *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_CERT_STORE_H__
-#define __RVTHTOOL_LIBWIICRYPTO_CERT_STORE_H__
+#pragma once
 
 #include <stdint.h>
 #include "common.h"
@@ -360,5 +359,3 @@ ASSERT_STRUCT(RVL_Cert_RSA2048_ECC, 0x240);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_CERT_STORE_H__ */

@@ -2,12 +2,11 @@
  * RVT-H Tool: WAD Resigner                                                *
  * print-info.h: Print WAD information.                                    *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_WADRESIGN_PRINT_INFO_H__
-#define __RVTHTOOL_WADRESIGN_PRINT_INFO_H__
+#pragma once
 
 #include <stdint.h>
 #include <stdio.h>
@@ -54,5 +53,3 @@ int print_wad_info(const TCHAR *wad_filename, bool verify);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_WADRESIGN_PRINT_INFO_H__ */

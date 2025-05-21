@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * TranslationManager.hpp: Qt translation manager.                         *
  *                                                                         *
- * Copyright (c) 2014-2018 by David Korth.                                 *
+ * Copyright (c) 2014-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_TRANSLATIONMANAGER_HPP__
-#define __RVTHTOOL_QRVTHTOOL_TRANSLATIONMANAGER_HPP__
+#pragma once
 
 // Qt includes.
 #include <QtCore/QObject>
@@ -50,5 +49,3 @@ class TranslationManager : public QObject
 		 */
 		QMap<QString, QString> enumerate(void) const;
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_TRANSLATIONMANAGER_HPP__ */

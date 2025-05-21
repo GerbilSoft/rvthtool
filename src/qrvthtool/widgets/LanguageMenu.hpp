@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * LanguageMenu.hpp: QMenu subclass for selecting a UI language.           *
  *                                                                         *
- * Copyright (c) 2012-2019 by David Korth.                                 *
+ * Copyright (c) 2012-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_LANGUAGEMENU_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WIDGETS_LANGUAGEMENU_HPP__
+#pragma once
 
 #include <QMenu>
 
@@ -60,5 +59,3 @@ class LanguageMenu : public QMenu
 		 */
 		void changeEvent(QEvent *event) final;
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_LANGUAGEMENU_HPP__ */

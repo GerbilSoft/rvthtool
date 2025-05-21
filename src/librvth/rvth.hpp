@@ -6,8 +6,7 @@
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_RVTH_HPP__
-#define __RVTHTOOL_LIBRVTH_RVTH_HPP__
+#pragma once
 
 #include "libwiicrypto/common.h"
 #include "libwiicrypto/gcn_structs.h"
@@ -438,5 +437,3 @@ public:
 };
 
 #endif /* __cplusplus */
-
-#endif /* __RVTHTOOL_LIBRVTH_RVTH_HPP__ */

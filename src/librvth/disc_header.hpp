@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * disc_header.hpp: Read a GCN/Wii disc header and determine its type.     *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_DISC_HEADER_H__
-#define __RVTHTOOL_LIBRVTH_DISC_HEADER_H__
+#pragma once
 
 #include "libwiicrypto/common.h"
 
@@ -49,5 +48,3 @@ int rvth_disc_header_identify(const struct _GCN_DiscHeader *discHeader);
  */
 int rvth_disc_header_get(RefFile *f_img, uint32_t lba_start,
 	struct _GCN_DiscHeader *discHeader, bool *pIsDeleted);
-
-#endif /* __RVTHTOOL_LIBRVTH_DISC_HEADER_H__ */

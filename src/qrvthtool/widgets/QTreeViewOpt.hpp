@@ -3,12 +3,11 @@
  * QTreeViewOpt.hpp: QTreeView with drawing optimizations.                 *
  * Specifically, don't update rows that are offscreen.                     *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_QTREEVIEWOPT_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WIDGETS_QTREEVIEWOPT_HPP__
+#pragma once
 
 // Qt includes and classes.
 #include <QTreeView>
@@ -34,5 +33,3 @@ class QTreeViewOpt : public QTreeView
 	protected slots:
 		void showColumnContextMenu(const QPoint &point);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_QTREEVIEWOPT_HPP__ */

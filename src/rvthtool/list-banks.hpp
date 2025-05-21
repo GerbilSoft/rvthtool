@@ -2,12 +2,11 @@
  * RVT-H Tool                                                              *
  * list-banks.h: List banks in an RVT-H disk image.                        *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__
-#define __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__
+#pragma once
 
 #include "tcharx.h"
 #include "librvth/rvth.hpp"
@@ -36,5 +35,3 @@ int list_banks(const TCHAR *rvth_filename);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_RVTHTOOL_LIST_BANKS_H__ */

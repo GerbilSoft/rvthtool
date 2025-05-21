@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * MessageWidget.hpp: Message widget.                                      *
  *                                                                         *
- * Copyright (c) 2014-2019 by David Korth.                                 *
+ * Copyright (c) 2014-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_MESSAGEWIDGET_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WIDGETS_MESSAGEWIDGET_HPP__
+#pragma once
 
 #include <QWidget>
 
@@ -107,5 +106,3 @@ class MessageWidget : public QWidget
 		 */
 		void dismissed(bool timeout);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_MESSAGEWIDGET_HPP__ */

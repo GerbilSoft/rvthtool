@@ -2,12 +2,11 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * cert.h: Certificate management.                                         *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_CERT_H__
-#define __RVTHTOOL_LIBWIICRYPTO_CERT_H__
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -126,5 +125,3 @@ int cert_realsign_ticketOrTMD(uint8_t *data, size_t size, const RSA2048PrivateKe
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_CERT_H__ */

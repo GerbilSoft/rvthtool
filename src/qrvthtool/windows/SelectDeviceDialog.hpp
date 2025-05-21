@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * SelectDeviceDialog.hpp: Select an RVT-H Reader device.                  *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__
+#pragma once
 
 #include <QDialog>
 #include <QItemSelection>
@@ -149,5 +148,3 @@ class SelectDeviceDialog : public QDialog
 		 */
 		void deviceStateChanged(const DeviceQueryData &queryData, RvtH_Listen_State_e state);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_SELECTDEVICEDIALOG_HPP__ */

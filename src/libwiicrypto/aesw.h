@@ -2,14 +2,13 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * aesw.h: AES wrapper functions.                                          *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
 // NOTE: Currently only supports AES-128-CBC.
 
-#ifndef __RVTHTOOL_LIBWIICRYPTO_AESW_H__
-#define __RVTHTOOL_LIBWIICRYPTO_AESW_H__
+#pragma once
 
 #include <stdint.h>
 #include <stddef.h>
@@ -72,5 +71,3 @@ size_t aesw_decrypt(AesCtx *aesw, uint8_t *pData, size_t size);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __RVTHTOOL_LIBWIICRYPTO_AESW_H__ */

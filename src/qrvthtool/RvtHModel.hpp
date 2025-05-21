@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_RVTHMODEL_HPP__
-#define __RVTHTOOL_QRVTHTOOL_RVTHMODEL_HPP__
+#pragma once
 
 class RvtH;
 
@@ -100,5 +99,3 @@ class RvtHModel : public QAbstractListModel
 		 */
 		void forceBankUpdate(unsigned int bank);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_RVTHMODEL_HPP__ */

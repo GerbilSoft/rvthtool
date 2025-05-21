@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * Reader.hpp: Disc image reader base class.                               *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_READER_READER_HPP__
-#define __RVTHTOOL_LIBRVTH_READER_READER_HPP__
+#pragma once
 
 #include "libwiicrypto/common.h"
 #include "RefFile.hpp"
@@ -140,5 +139,3 @@ class Reader
 struct Reader;
 typedef struct Reader Reader;
 #endif /* __cplusplus */
-
-#endif /* __RVTHTOOL_LIBRVTH_READER_READER_HPP__ */

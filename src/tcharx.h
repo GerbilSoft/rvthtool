@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * tcharx.h: TCHAR support for Windows and Linux.                          *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_TCHAR_H__
-#define __RVTHTOOL_TCHAR_H__
+#pragma once
 
 #ifdef _WIN32
 
@@ -64,5 +63,3 @@ typedef char TCHAR;
 #define _tcsrchr(s, c)			strrchr((s), (c))
 
 #endif /* _WIN32 */
-
-#endif /* __RVTHTOOL_TCHAR_H__ */

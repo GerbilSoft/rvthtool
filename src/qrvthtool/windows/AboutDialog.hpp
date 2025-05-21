@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * AboutDialog.hpp: About Dialog.                                          *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WINDOWS_ABOUTDIALOG_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WINDOWS_ABOUTDIALOG_HPP__
+#pragma once
 
 #include <QDialog>
 
@@ -34,5 +33,3 @@ class AboutDialog : public QDialog
 		// State change event. (Used for switching the UI language at runtime.)
 		void changeEvent(QEvent *event) final;
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WINDOWS_ABOUTDIALOG_HPP__ */

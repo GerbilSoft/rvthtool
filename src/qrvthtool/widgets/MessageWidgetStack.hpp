@@ -2,12 +2,11 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * MessageWidgetStack.hpp: Message widget stack.                           *
  *                                                                         *
- * Copyright (c) 2014-2019 by David Korth.                                 *
+ * Copyright (c) 2014-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_QRVTHTOOL_WIDGETS_MESSAGEWIDGETSTACK_HPP__
-#define __RVTHTOOL_QRVTHTOOL_WIDGETS_MESSAGEWIDGETSTACK_HPP__
+#pragma once
 
 #include <QWidget>
 #include "MessageWidget.hpp"
@@ -45,5 +44,3 @@ class MessageWidgetStack : public QWidget
 		 */
 		void messageWidget_destroyed_slot(QObject *obj);
 };
-
-#endif /* __RVTHTOOL_QRVTHTOOL_WIDGETS_MESSAGEWIDGETSTACK_HPP__ */

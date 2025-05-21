@@ -2,12 +2,11 @@
  * RVT-H Tool (librvth)                                                    *
  * CisoReader.hpp: CISO disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
-#ifndef __RVTHTOOL_LIBRVTH_READER_CISOREADER_HPP__
-#define __RVTHTOOL_LIBRVTH_READER_CISOREADER_HPP__
+#pragma once
 
 #include "Reader.hpp"
 
@@ -72,5 +71,3 @@ class CisoReader : public Reader
 		// 0xFFFF == empty block.
 		uint16_t m_blockMap[CISO_MAP_SIZE];
 };
-
-#endif /* __RVTHTOOL_LIBRVTH_READER_CISOREADER_HPP__ */
