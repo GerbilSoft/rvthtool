@@ -53,7 +53,11 @@ class QRvtHToolWindow : public QMainWindow
 
 #ifdef Q_OS_WIN
 		// Windows message handler. Used for TaskbarButtonManager.
+#  if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+		bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) final;
+#  else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
 		bool nativeEvent(const QByteArray &eventType, void *message, long *result) final;
+#  endif /* QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) */
 #endif /* Q_OS_WIN */
 
 	protected slots:

@@ -875,7 +875,11 @@ void QRvtHToolWindow::closeEvent(QCloseEvent *event)
  * @param result
  * @return
  */
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
+#else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
 bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
+#endif /* QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) */
 {
 	// Reference: http://nicug.blogspot.com/2011/03/windows-7-taskbar-extensions-in-qt.html
 	Q_D(QRvtHToolWindow);
