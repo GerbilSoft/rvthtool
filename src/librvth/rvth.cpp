@@ -268,18 +268,17 @@ int RvtH::openHDD(RefFile *f_img)
 	size_t size;
 
 	// Check the bank table header.
-	m_nhcdHeader = new NHCD_BankTable_Header;
+	m_nhcdHeader.reset(new NHCD_BankTable_Header);
 	size = f_img->seekoAndRead(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET,
-		m_nhcdHeader, 1, sizeof(*m_nhcdHeader));
-	if (size != sizeof(*m_nhcdHeader)) {
+		m_nhcdHeader.get(), 1, sizeof(NHCD_BankTable_Header));
+	if (size != sizeof(NHCD_BankTable_Header)) {
 		// Short read.
 		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
 		ret = -err;
-		delete m_nhcdHeader;
-		m_nhcdHeader = nullptr;
+		m_nhcdHeader.reset();
 		goto fail;
 	}
 
@@ -471,7 +470,6 @@ fail:
  */
 RvtH::RvtH(const TCHAR *filename, int *pErr)
 	: m_file(nullptr)
-	, m_nhcdHeader(nullptr)
 	, m_bankCount(0)
 	, m_imageType(RVTH_ImageType_Unknown)
 	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
@@ -534,9 +532,6 @@ RvtH::~RvtH()
 	// Free the bank entries array.
 	free(m_entries);
 
-	// Delete the NHCD bank table header.
-	delete m_nhcdHeader;
-
 	// Clear the main file reference.
 	if (m_file) {
 		m_file->unref();
@@ -568,7 +563,7 @@ bool RvtH::isHDD(void) const
  */
 NHCD_BankTable_Header *RvtH::nhcd_header(void) const
 {
-	return m_nhcdHeader;
+	return m_nhcdHeader.get();
 }
 
 /**

@@ -183,6 +183,9 @@ typedef bool (*RvtH_Verify_Progress_Callback)(const RvtH_Verify_Progress_State *
 
 #ifdef __cplusplus
 
+// C++ STL classes
+#include <memory>
+
 /** Main class **/
 
 class RvtH {
@@ -508,7 +511,7 @@ private:
 
 	// NHCD bank table header
 	// NOTE: This will be nullptr for e.g. GCM disc images.
-	NHCD_BankTable_Header *m_nhcdHeader;
+	std::unique_ptr<NHCD_BankTable_Header> m_nhcdHeader;
 
 	// Number of banks.
 	// - RVT-H system or disk image: 8
