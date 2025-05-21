@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth.cpp: RVT-H image handler.                                          *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -259,7 +259,6 @@ int RvtH::checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT)
  */
 int RvtH::openHDD(RefFile *f_img)
 {
-	NHCD_BankTable_Header nhcd_header;
 	RvtH_BankEntry *rvth_entry;
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
@@ -269,15 +268,18 @@ int RvtH::openHDD(RefFile *f_img)
 	size_t size;
 
 	// Check the bank table header.
+	m_nhcdHeader = new NHCD_BankTable_Header;
 	size = f_img->seekoAndRead(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET,
-		&nhcd_header, 1, sizeof(nhcd_header));
-	if (size != sizeof(nhcd_header)) {
+		m_nhcdHeader, 1, sizeof(*m_nhcdHeader));
+	if (size != sizeof(*m_nhcdHeader)) {
 		// Short read.
 		err = errno;
 		if (err == 0) {
 			err = EIO;
 		}
 		ret = -err;
+		delete m_nhcdHeader;
+		m_nhcdHeader = nullptr;
 		goto fail;
 	}
 
@@ -287,7 +289,7 @@ int RvtH::openHDD(RefFile *f_img)
 		: RVTH_ImageType_HDD_Image);
 
 	// Check the magic number.
-	if (nhcd_header.magic == be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
+	if (m_nhcdHeader->magic == be32_to_cpu(NHCD_BANKTABLE_MAGIC)) {
 		// Magic number is correct.
 		m_NHCD_status = NHCD_STATUS_OK;
 	} else {
@@ -340,7 +342,7 @@ int RvtH::openHDD(RefFile *f_img)
 	}
 
 	// Get the bank count.
-	m_bankCount = be32_to_cpu(nhcd_header.bank_count);
+	m_bankCount = be32_to_cpu(m_nhcdHeader->bank_count);
 	if (m_bankCount < 8 || m_bankCount > 32) {
 		// Bank count is either too small or too large.
 		// RVT-H systems are set to 8 banks at the factory,
@@ -469,6 +471,7 @@ fail:
  */
 RvtH::RvtH(const TCHAR *filename, int *pErr)
 	: m_file(nullptr)
+	, m_nhcdHeader(nullptr)
 	, m_bankCount(0)
 	, m_imageType(RVTH_ImageType_Unknown)
 	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
@@ -531,6 +534,9 @@ RvtH::~RvtH()
 	// Free the bank entries array.
 	free(m_entries);
 
+	// Delete the NHCD bank table header.
+	delete m_nhcdHeader;
+
 	// Clear the main file reference.
 	if (m_file) {
 		m_file->unref();
@@ -560,30 +566,9 @@ bool RvtH::isHDD(void) const
  * Get the NHCD Table Header.
  * @return NHCD Bank Table Header.
  */
-NHCD_BankTable_Header* RvtH::nhcd_header(void) const
+NHCD_BankTable_Header *RvtH::nhcd_header(void) const
 {
-	NHCD_BankTable_Header *nhcd_header = nullptr;
-	// We won't have a header.
-	if (!this->isHDD()) {
-		return nhcd_header;
-	}
-	if (this->m_file == nullptr) {
-		return nhcd_header;
-	}
-
-	// Check the bank table header.
-	nhcd_header = (NHCD_BankTable_Header*)calloc(1, sizeof(NHCD_BankTable_Header));
-	size_t size = this->m_file->seekoAndRead(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA), SEEK_SET,
-		nhcd_header, 1, sizeof(NHCD_BankTable_Header));
-	if (size != sizeof(NHCD_BankTable_Header)) {
-		// Short read.
-		if (errno == 0) {
-			errno = EIO;
-		}
-		return nullptr;
-	}
-
-	return nhcd_header;
+	return m_nhcdHeader;
 }
 
 /**

@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth.hpp: RVT-H image handler.                                          *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -335,7 +335,7 @@ public:
 	 *
 	 * @return NHCD Bank Table Header.
 	 */
-	NHCD_BankTable_Header* nhcd_header(void) const;
+	NHCD_BankTable_Header *nhcd_header(void) const;
 
 	/**
 	 * Get a bank table entry.
@@ -505,6 +505,10 @@ public:
 private:
 	// Reference-counted FILE*
 	RefFile *m_file;
+
+	// NHCD bank table header
+	// NOTE: This will be nullptr for e.g. GCM disc images.
+	NHCD_BankTable_Header *m_nhcdHeader;
 
 	// Number of banks.
 	// - RVT-H system or disk image: 8
