@@ -105,24 +105,14 @@ int RvtH::openGcm(RefFile *f_img)
 	}
 
 	// Allocate memory for a single RvtH_BankEntry object.
-	m_bankCount = 1;
+	m_entries.resize(1);
 	m_imageType = reader->type();
-	m_entries = (RvtH_BankEntry*)calloc(1, sizeof(RvtH_BankEntry));
-	if (!m_entries) {
-		// Error allocating memory.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		ret = -err;
-		goto fail;
-	};
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
 	m_file = f_img->ref();
 	m_NHCD_status = NHCD_STATUS_MISSING;
-	entry = m_entries;
+	entry = m_entries.data();
 	entry->lba_start = reader->lba_start();
 	entry->lba_len = reader->lba_len();
 	entry->type = type;
@@ -260,10 +250,10 @@ int RvtH::checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT)
 int RvtH::openHDD(RefFile *f_img)
 {
 	RvtH_BankEntry *rvth_entry;
+	uint32_t bankCount;
 	int ret = 0;	// errno or RvtH_Errors
 	int err = 0;	// errno setting
 
-	unsigned int i;
 	off64_t addr;
 	size_t size;
 
@@ -314,22 +304,14 @@ int RvtH::openHDD(RefFile *f_img)
 			m_NHCD_status = NHCD_STATUS_MISSING;
 		}
 
-		m_bankCount = 8;
-		m_entries = (RvtH_BankEntry*)calloc(m_bankCount, sizeof(RvtH_BankEntry));
-		if (!m_entries) {
-			// Error allocating memory.
-			err = errno;
-			if (err == 0) {
-				err = ENOMEM;
-			}
-			ret = -err;
-			goto fail;
-		}
+		// Assuming a default 8-bank system.
+		static const unsigned int bankCount_default = 8;
+		m_entries.resize(bankCount_default);
 
 		m_file = f_img->ref();
-		rvth_entry = m_entries;
+		rvth_entry = m_entries.data();
 		lba_start = NHCD_BANK_START_LBA(0, 8);
-		for (i = 0; i < m_bankCount; i++, rvth_entry++, lba_start += NHCD_BANK_SIZE_LBA) {
+		for (unsigned int i = 0; i < bankCount_default; i++, rvth_entry++, lba_start += NHCD_BANK_SIZE_LBA) {
 			// Use "Empty" so we can try to detect the actual bank type.
 			rvth_init_BankEntry(rvth_entry, f_img,
 				RVTH_BankType_Empty,
@@ -341,8 +323,8 @@ int RvtH::openHDD(RefFile *f_img)
 	}
 
 	// Get the bank count.
-	m_bankCount = be32_to_cpu(m_nhcdHeader->bank_count);
-	if (m_bankCount < 8 || m_bankCount > 32) {
+	bankCount = be32_to_cpu(m_nhcdHeader->bank_count);
+	if (bankCount < 8 || bankCount > 32) {
 		// Bank count is either too small or too large.
 		// RVT-H systems are set to 8 banks at the factory,
 		// but we're supporting up to 32 in case the user
@@ -356,23 +338,14 @@ int RvtH::openHDD(RefFile *f_img)
 		goto fail;
 	}
 
-	// Allocate memory for the 8 RvtH_BankEntry objects.
-	m_entries = (RvtH_BankEntry*)calloc(m_bankCount, sizeof(RvtH_BankEntry));
-	if (!m_entries) {
-		// Error allocating memory.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		ret = -err;
-		goto fail;
-	};
+	// Allocate memory for the RvtH_BankEntry objects.
+	m_entries.resize(bankCount);
 
 	m_file = f_img->ref();
-	rvth_entry = m_entries;
+	rvth_entry = m_entries.data();
 	// FIXME: Why cast to uint32_t?
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
-	for (i = 0; i < m_bankCount; i++, rvth_entry++, addr += 512) {
+	for (unsigned int i = 0; i < bankCount; i++, rvth_entry++, addr += 512) {
 		NHCD_BankEntry nhcd_entry;
 		uint32_t lba_start = 0, lba_len = 0;
 		uint8_t type = RVTH_BankType_Unknown;
@@ -439,7 +412,7 @@ int RvtH::openHDD(RefFile *f_img)
 		if (lba_start == 0 || lba_len == 0) {
 			// Invalid LBAs. Use the default starting offset.
 			// Bank size will be determined by rvth_init_BankEntry().
-			lba_start = NHCD_BANK_START_LBA(i, m_bankCount);
+			lba_start = NHCD_BANK_START_LBA(i, bankCount);
 			lba_len = 0;
 		}
 
@@ -470,10 +443,8 @@ fail:
  */
 RvtH::RvtH(const TCHAR *filename, int *pErr)
 	: m_file(nullptr)
-	, m_bankCount(0)
 	, m_imageType(RVTH_ImageType_Unknown)
 	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
-	, m_entries(nullptr)
 {
 	// Open the disk image.
 	RefFile *const f_img = new RefFile(filename);
@@ -524,13 +495,10 @@ RvtH::~RvtH()
 {
 	// Close all bank entry files.
 	// RefFile has a reference count, so we have to clear the count.
-	for (unsigned int i = 0; i < m_bankCount; i++) {
+	for (unsigned int i = 0; i < bankCount(); i++) {
 		delete m_entries[i].reader;
 		free(m_entries[i].ptbl);
 	}
-
-	// Free the bank entries array.
-	free(m_entries);
 
 	// Clear the main file reference.
 	if (m_file) {
@@ -574,7 +542,7 @@ NHCD_BankTable_Header *RvtH::nhcd_header(void) const
  */
 const RvtH_BankEntry *RvtH::bankEntry(unsigned int bank, int *pErr) const
 {
-	if (bank >= m_bankCount) {
+	if (bank >= bankCount()) {
 		errno = ERANGE;
 		if (pErr) {
 			*pErr = -ERANGE;

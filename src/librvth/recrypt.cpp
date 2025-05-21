@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * recrypt.cpp: RVT-H "recryption" functions.                              *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -152,7 +152,7 @@ int RvtH::recryptID(unsigned int bank)
 	sbuf1_t sbuf;
 	GCN_DiscHeader gcn;
 
-	if (bank >= m_bankCount) {
+	if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
@@ -357,7 +357,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 	{
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank >= m_bankCount) {
+	} else if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;

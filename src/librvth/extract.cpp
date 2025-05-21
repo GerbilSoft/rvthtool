@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * extract.cpp: RVT-H extract and import functions.                        *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -155,7 +155,7 @@ int RvtH::copyToGcm(RvtH *rvth_dest, unsigned int bank_src, RvtH_Progress_Callba
 	if (!rvth_dest) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank_src >= m_bankCount) {
+	} else if (bank_src >= bankCount()) {
 		errno = ERANGE;
 		return -ERANGE;
 	} else if (rvth_dest->isHDD() || rvth_dest->bankCount() != 1) {
@@ -380,7 +380,7 @@ int RvtH::extract(unsigned int bank, const TCHAR *filename,
 	if (!filename || filename[0] == 0) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank >= m_bankCount) {
+	} else if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
@@ -557,7 +557,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	if (!rvth_dest) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank_src >= m_bankCount ||
+	} else if (bank_src >= bankCount() ||
 		   bank_dest >= rvth_dest->bankCount())
 	{
 		errno = ERANGE;
@@ -846,7 +846,7 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 	if (!filename || filename[0] == 0) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank >= m_bankCount) {
+	} else if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;

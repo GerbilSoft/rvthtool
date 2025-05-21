@@ -185,6 +185,7 @@ typedef bool (*RvtH_Verify_Progress_Callback)(const RvtH_Verify_Progress_State *
 
 // C++ STL classes
 #include <memory>
+#include <vector>
 
 /** Main class **/
 
@@ -293,7 +294,7 @@ public:
 	 */
 	inline unsigned int bankCount(void) const
 	{
-		return m_bankCount;
+		return static_cast<unsigned int>(m_entries.size());
 	}
 
 	/**
@@ -513,11 +514,6 @@ private:
 	// NOTE: This will be nullptr for e.g. GCM disc images.
 	std::unique_ptr<NHCD_BankTable_Header> m_nhcdHeader;
 
-	// Number of banks.
-	// - RVT-H system or disk image: 8
-	// - Standalone disc image: 1
-	unsigned int m_bankCount;
-
 	// Image type
 	RvtH_ImageType_e m_imageType;
 
@@ -525,7 +521,9 @@ private:
 	NHCD_Status_e m_NHCD_status;
 
 	// BankEntry objects
-	RvtH_BankEntry *m_entries;
+	// - RVT-H system or disk image: 8 (usually)
+	// - Standalone disc image: 1
+	std::vector<RvtH_BankEntry> m_entries;
 };
 
 #endif /* __cplusplus */

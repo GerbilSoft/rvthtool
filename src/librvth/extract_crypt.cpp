@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * extract_crypt.cpp: Extract and encrypt an unencrypted image.            *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -214,7 +214,7 @@ int RvtH::copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
 	if (!rvth_dest) {
 		errno = EINVAL;
 		return -EINVAL;
-	} else if (bank_src >= m_bankCount) {
+	} else if (bank_src >= bankCount()) {
 		errno = ERANGE;
 		return -ERANGE;
 	} else if (rvth_dest->isHDD() || rvth_dest->bankCount() != 1) {

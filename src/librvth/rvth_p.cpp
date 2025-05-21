@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * rvth_p.cpp: RVT-H image handler. (PRIVATE FUNCTIONS)                    *
  *                                                                         *
- * Copyright (c) 2018-2020 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -94,7 +94,7 @@ int RvtH::writeBankEntry(unsigned int bank, time_t *pTimestamp)
 		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= m_bankCount) {
+	} else if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;

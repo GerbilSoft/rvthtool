@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * write.cpp: RVT-H write functions.                                       *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -36,10 +36,8 @@
  */
 RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	: m_file(nullptr)
-	, m_bankCount(0)
 	, m_imageType(RVTH_ImageType_Unknown)
 	, m_NHCD_status(NHCD_STATUS_UNKNOWN)
-	, m_entries(nullptr)
 {
 	RvtH_BankEntry *entry;
 
@@ -55,17 +53,8 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	errno = 0;
 
 	// Allocate memory for a single RvtH_BankEntry object.
-	m_bankCount = 1;
+	m_entries.resize(1);
 	m_imageType = RVTH_ImageType_GCM;
-	m_entries = (RvtH_BankEntry*)calloc(1, sizeof(RvtH_BankEntry));
-	if (!m_entries) {
-		// Error allocating memory.
-		err = errno;
-		if (err == 0) {
-			err = ENOMEM;
-		}
-		goto fail;
-	};
 
 	// Attempt to create the file.
 	m_file = new RefFile(filename, true);
@@ -128,7 +117,7 @@ int RvtH::deleteBank(unsigned int bank)
 		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= m_bankCount) {
+	} else if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
@@ -194,7 +183,7 @@ int RvtH::undeleteBank(unsigned int bank)
 		// Standalone disc image. No bank table.
 		errno = EINVAL;
 		return RVTH_ERROR_NOT_HDD_IMAGE;
-	} else if (bank >= m_bankCount) {
+	} else if (bank >= bankCount()) {
 		// Bank number is out of range.
 		errno = ERANGE;
 		return -ERANGE;
