@@ -186,329 +186,339 @@ typedef bool (*RvtH_Verify_Progress_Callback)(const RvtH_Verify_Progress_State *
 /** Main class **/
 
 class RvtH {
-	public:
-		/**
-		 * Open an RVT-H disk image.
-		 * TODO: R/W mode.
-		 *
-		 * Check isOpen() after constructing the object to determine
-		 * if the file was opened successfully.
-		 *
-		 * @param filename	[in] Filename.
-		 * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		RvtH(const TCHAR *filename, int *pErr = nullptr);
+public:
+	/**
+	 * Open an RVT-H disk image.
+	 * TODO: R/W mode.
+	 *
+	 * Check isOpen() after constructing the object to determine
+	 * if the file was opened successfully.
+	 *
+	 * @param filename	[in] Filename.
+	 * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	RvtH(const TCHAR *filename, int *pErr = nullptr);
 
-		/**
-		 * Create a writable RVT-H disc image object.
-		 *
-		 * Check isOpen() after constructing the object to determine
-		 * if the file was opened successfully.
-		 *
-		 * @param filename	[in] Filename.
-		 * @param lba_len	[in] LBA length. (Will NOT be allocated initially.)
-		 * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr = nullptr);
+	/**
+	 * Create a writable RVT-H disc image object.
+	 *
+	 * Check isOpen() after constructing the object to determine
+	 * if the file was opened successfully.
+	 *
+	 * @param filename	[in] Filename.
+	 * @param lba_len	[in] LBA length. (Will NOT be allocated initially.)
+	 * @param pErr		[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr = nullptr);
 
-		~RvtH();
+	~RvtH();
 
-	private:
-		/** Constructor functions (rvth.cpp) **/
+private:
+	/** Constructor functions (rvth.cpp) **/
 
-		/**
-		 * Open a Wii or GameCube disc image.
-		 * @param f_img	[in] RefFile*
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int openGcm(RefFile *f_img);
+	/**
+	 * Open a Wii or GameCube disc image.
+	 * @param f_img	[in] RefFile*
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int openGcm(RefFile *f_img);
 
-		/**
-		 * Check for MBR and/or GPT.
-		 * @param f_img	[in] RefFile*
-		 * @param pMBR	[out] True if the HDD has an MBR.
-		 * @param pGPT	[out] True if the HDD has a GPT.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		static int checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT);
+	/**
+	 * Check for MBR and/or GPT.
+	 * @param f_img	[in] RefFile*
+	 * @param pMBR	[out] True if the HDD has an MBR.
+	 * @param pGPT	[out] True if the HDD has a GPT.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	static int checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT);
 
-		/**
-		 * Open an RVT-H disk image.
-		 * @param f_img	[in] RefFile*
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int openHDD(RefFile *f_img);
+	/**
+	 * Open an RVT-H disk image.
+	 * @param f_img	[in] RefFile*
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int openHDD(RefFile *f_img);
 
-	public:
-		/** General utility functions. **/
-		// TODO: Move out of RvtH?
-		/**
-		 * Check if a block is empty.
-		 * @param block Block.
-		 * @param size Block size. (Must be a multiple of 64 bytes.)
-		 * @return True if the block is all zeroes; false if not.
-		 */
-		static bool isBlockEmpty(const uint8_t *block, unsigned int size);
+public:
+	/** General utility functions **/
+	// TODO: Move out of RvtH?
 
-	private:
-		/** Private functions (rvth_p.cpp) **/
+	/**
+	 * Check if a block is empty.
+	 * @param block Block.
+	 * @param size Block size. (Must be a multiple of 64 bytes.)
+	 * @return True if the block is all zeroes; false if not.
+	 */
+	static bool isBlockEmpty(const uint8_t *block, unsigned int size);
 
-		/**
-		 * Make the RVT-H object writable.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int makeWritable(void);
+private:
+	/** Private functions (rvth_p.cpp) **/
 
-		/**
-		 * Write a bank table entry to disk.
-		 * @param bank		[in] Bank number. (0-7)
-		 * @param pTimestamp	[out,opt] Timestamp written to the bank entry.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int writeBankEntry(unsigned int bank, time_t *pTimestamp = nullptr);
+	/**
+	 * Make the RVT-H object writable.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int makeWritable(void);
 
-	private:
-		DISABLE_COPY(RvtH)
+	/**
+	 * Write a bank table entry to disk.
+	 * @param bank		[in] Bank number. (0-7)
+	 * @param pTimestamp	[out,opt] Timestamp written to the bank entry.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int writeBankEntry(unsigned int bank, time_t *pTimestamp = nullptr);
 
-	public:
-		/**
-		 * Is the file open?
-		 * @return True if open; false if not.
-		 */
-		inline bool isOpen(void) const
-		{
-			return (m_file != nullptr);
-		}
+private:
+	DISABLE_COPY(RvtH)
 
-	public:
-		/** Accessors **/
+public:
+	/**
+	 * Is the file open?
+	 * @return True if open; false if not.
+	 */
+	inline bool isOpen(void) const
+	{
+		return (m_file != nullptr);
+	}
 
-		/**
-		 * Get the number of banks in the RVT-H disk image.
-		 * @return Number of banks.
-		 */
-		inline unsigned int bankCount(void) const { return m_bankCount; }
+public:
+	/** Accessors **/
 
-		/**
-		 * Is this RVT-H object an HDD image or a standalone disc image?
-		 * @param rvth RVT-H object.
-		 * @return True if the RVT-H object is an HDD image; false if it's a standalone disc image.
-		 */
-		bool isHDD(void) const;
+	/**
+	 * Get the number of banks in the RVT-H disk image.
+	 * @return Number of banks.
+	 */
+	inline unsigned int bankCount(void) const
+	{
+		return m_bankCount;
+	}
 
-		/**
-		 * Get the RVT-H image type.
-		 * @param rvth RVT-H object.
-		 * @return RVT-H image type.
-		 */
-		RvtH_ImageType_e imageType(void) const { return m_imageType; }
+	/**
+	 * Is this RVT-H object an HDD image or a standalone disc image?
+	 * @param rvth RVT-H object.
+	 * @return True if the RVT-H object is an HDD image; false if it's a standalone disc image.
+	 */
+	bool isHDD(void) const;
 
-		/**
-		 * Get the NHCD table status.
-		 *
-		 * For optical disc images, this is always NHCD_STATUS_MISSING.
-		 * For HDD images, this should be NHCD_STATUS_OK unless the
-		 * NHCD table was wiped or a PC-partitioned disk was selected.
-		 *
-		 * @return NHCD table status.
-		 */
-		NHCD_Status_e nhcd_status(void) const { return m_NHCD_status; }
+	/**
+	 * Get the RVT-H image type.
+	 * @param rvth RVT-H object.
+	 * @return RVT-H image type.
+	 */
+	inline RvtH_ImageType_e imageType(void) const
+	{
+		return m_imageType;
+	}
 
-		/**
-		 * Get the NHCD Table Header.
-		 *
-		 * For any non HDD images this will always be a NULL pointer.
-		 * For HDD images this will be the raw bytes of the NHCD Bank Table Header.
-		 *
-		 * NOTE: the NHCD table may be wiped, and it may contain invalid, or
-		 * unexpected values.
-		 *
-		 * @return NHCD Bank Table Header.
-		 */
-		NHCD_BankTable_Header* nhcd_header(void) const;
+	/**
+	 * Get the NHCD table status.
+	 *
+	 * For optical disc images, this is always NHCD_STATUS_MISSING.
+	 * For HDD images, this should be NHCD_STATUS_OK unless the
+	 * NHCD table was wiped or a PC-partitioned disk was selected.
+	 *
+	 * @return NHCD table status.
+	 */
+	inline NHCD_Status_e nhcd_status(void) const
+	{
+		return m_NHCD_status;
+	}
 
-		/**
-		 * Get a bank table entry.
-		 * @param bank	[in] Bank number. (0-7)
-		 * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 * @return Bank table entry.
-		 */
-		const RvtH_BankEntry *bankEntry(unsigned int bank, int *pErr = nullptr) const;
+	/**
+	 * Get the NHCD Table Header.
+	 *
+	 * For any non HDD images this will always be a NULL pointer.
+	 * For HDD images this will be the raw bytes of the NHCD Bank Table Header.
+	 *
+	 * NOTE: the NHCD table may be wiped, and it may contain invalid, or
+	 * unexpected values.
+	 *
+	 * @return NHCD Bank Table Header.
+	 */
+	NHCD_BankTable_Header* nhcd_header(void) const;
 
-	public:
-		/** Write functions (write.cpp) **/
+	/**
+	 * Get a bank table entry.
+	 * @param bank	[in] Bank number. (0-7)
+	 * @param pErr	[out,opt] Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 * @return Bank table entry.
+	 */
+	const RvtH_BankEntry *bankEntry(unsigned int bank, int *pErr = nullptr) const;
 
-		/**
-		 * Delete a bank on an RVT-H device.
-		 * @param bank	[in] Bank number. (0-7)
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int deleteBank(unsigned int bank);
+public:
+	/** Write functions (write.cpp) **/
 
-		/**
-		 * Undelete a bank on an RVT-H device.
-		 * @param bank	[in] Bank number. (0-7)
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int undeleteBank(unsigned int bank);
+	/**
+	 * Delete a bank on an RVT-H device.
+	 * @param bank	[in] Bank number. (0-7)
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int deleteBank(unsigned int bank);
 
-	public:
-		/** Extract functions (extract.cpp, extract_crypt.cpp) **/
+	/**
+	 * Undelete a bank on an RVT-H device.
+	 * @param bank	[in] Bank number. (0-7)
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int undeleteBank(unsigned int bank);
 
-		/**
-		 * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
-		 * @param rvth_dest	[out] Destination RvtH object.
-		 * @param bank_src	[in] Source bank number. (0-7)
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int copyToGcm(RvtH *rvth_dest, unsigned int bank_src,
-			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+public:
+	/** Extract functions (extract.cpp, extract_crypt.cpp) **/
 
-		/**
-		 * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
-		 *
-		 * This function copies an unencrypted Game Partition and encrypts it
-		 * using the existing title key. It does *not* change the encryption
-		 * method or signature, so recryption will be needed afterwards.
-		 *
-		 * @param rvth_dest	[out] Destination RvtH object.
-		 * @param bank_src	[in] Source bank number. (0-7)
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
-			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+	/**
+	 * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
+	 * @param rvth_dest	[out] Destination RvtH object.
+	 * @param bank_src	[in] Source bank number. (0-7)
+	 * @param callback	[in,opt] Progress callback.
+	 * @param userdata	[in,opt] User data for progress callback.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int copyToGcm(RvtH *rvth_dest, unsigned int bank_src,
+		RvtH_Progress_Callback callback = nullptr,
+		void *userdata = nullptr);
 
-		/**
-		 * Extract a disc image from this RVT-H disk image.
-		 * Compatibility wrapper; this function creates a new RvtH
-		 * using the GCM constructor and then copyToGcm().
-		 * @param bank		[in] Bank number. (0-7)
-		 * @param filename	[in] Destination filename.
-		 * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RVL_CryptoType_e)
-		 * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int extract(unsigned int bank, const TCHAR *filename,
-			int recrypt_key, unsigned int flags,
-			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+	/**
+	 * Copy a bank from this RVT-H HDD or standalone disc image to a writable standalone disc image.
+	 *
+	 * This function copies an unencrypted Game Partition and encrypts it
+	 * using the existing title key. It does *not* change the encryption
+	 * method or signature, so recryption will be needed afterwards.
+	 *
+	 * @param rvth_dest	[out] Destination RvtH object.
+	 * @param bank_src	[in] Source bank number. (0-7)
+	 * @param callback	[in,opt] Progress callback.
+	 * @param userdata	[in,opt] User data for progress callback.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int copyToGcm_doCrypt(RvtH *rvth_dest, unsigned int bank_src,
+		RvtH_Progress_Callback callback = nullptr,
+		void *userdata = nullptr);
 
-		/**
-		 * Copy a bank from this HDD or standalone disc image to an RVT-H system.
-		 * @param rvth_dest	[in] Destination RvtH object.
-		 * @param bank_dest	[in] Destination bank number. (0-7)
-		 * @param bank_src	[in] Source bank number. (0-7)
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
-			unsigned int bank_src,
-			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+	/**
+	 * Extract a disc image from this RVT-H disk image.
+	 * Compatibility wrapper; this function creates a new RvtH
+	 * using the GCM constructor and then copyToGcm().
+	 * @param bank		[in] Bank number. (0-7)
+	 * @param filename	[in] Destination filename.
+	 * @param recrypt_key	[in] Key for recryption. (-1 for default; otherwise, see RVL_CryptoType_e)
+	 * @param flags		[in] Flags. (See RvtH_Extract_Flags.)
+	 * @param callback	[in,opt] Progress callback.
+	 * @param userdata	[in,opt] User data for progress callback.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int extract(unsigned int bank, const TCHAR *filename,
+		int recrypt_key, unsigned int flags,
+		RvtH_Progress_Callback callback = nullptr,
+		void *userdata = nullptr);
 
-		/**
-		 * Import a disc image into this RVT-H disk image.
-		 * Compatibility wrapper; this function creates an RvtH object for the
-		 * RVT-H disk image and then copyToHDD().
-		 * @param bank		[in] Bank number. (0-7)
-		 * @param filename	[in] Source GCM filename.
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
-		 * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int import(unsigned int bank, const TCHAR *filename,
-			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr,
-			int ios_force = -1);
+	/**
+	 * Copy a bank from this HDD or standalone disc image to an RVT-H system.
+	 * @param rvth_dest	[in] Destination RvtH object.
+	 * @param bank_dest	[in] Destination bank number. (0-7)
+	 * @param bank_src	[in] Source bank number. (0-7)
+	 * @param callback	[in,opt] Progress callback.
+	 * @param userdata	[in,opt] User data for progress callback.
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
+		unsigned int bank_src,
+		RvtH_Progress_Callback callback = nullptr,
+		void *userdata = nullptr);
 
-	public:
-		/** Recryption functions (recrypt.cpp) **/
+	/**
+	 * Import a disc image into this RVT-H disk image.
+	 * Compatibility wrapper; this function creates an RvtH object for the
+	 * RVT-H disk image and then copyToHDD().
+	 * @param bank		[in] Bank number. (0-7)
+	 * @param filename	[in] Source GCM filename.
+	 * @param callback	[in,opt] Progress callback.
+	 * @param userdata	[in,opt] User data for progress callback.
+	 * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int import(unsigned int bank, const TCHAR *filename,
+		RvtH_Progress_Callback callback = nullptr,
+		void *userdata = nullptr,
+		int ios_force = -1);
 
-		int recryptID(unsigned int bank);
+public:
+	/** Recryption functions (recrypt.cpp) **/
 
-		/**
-		 * Re-encrypt partitions in a Wii disc image.
-		 *
-		 * This operation will *wipe* the update partition, since installing
-		 * retail updates on a debug system and vice-versa can result in a brick.
-		 *
-		 * NOTE: This function only supports converting from one encryption to
-		 * another. It does not support converting unencrypted to encrypted or
-		 * vice-versa.
-		 *
-		 * NOTE 2: Any partitions that are already encrypted with the specified key
-		 * will be left as-is; however, the tickets and TMDs wlil be re-signed.
-		 *
-		 * @param bank		[in] Bank number. (0-7)
-		 * @param cryptoType	[in] New encryption type.
-		 * @param callback	[in,opt] Progress callback.
-		 * @param userdata	[in,opt] User data for progress callback.
-		 * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int recryptWiiPartitions(unsigned int bank,
-			RVL_CryptoType_e cryptoType,
-			RvtH_Progress_Callback callback = nullptr,
-			void *userdata = nullptr,
-			int ios_force = -1);
+	int recryptID(unsigned int bank);
 
-	public:
-		/** Verification functions (verify.cpp) **/
+	/**
+	 * Re-encrypt partitions in a Wii disc image.
+	 *
+	 * This operation will *wipe* the update partition, since installing
+	 * retail updates on a debug system and vice-versa can result in a brick.
+	 *
+	 * NOTE: This function only supports converting from one encryption to
+	 * another. It does not support converting unencrypted to encrypted or
+	 * vice-versa.
+	 *
+	 * NOTE 2: Any partitions that are already encrypted with the specified key
+	 * will be left as-is; however, the tickets and TMDs wlil be re-signed.
+	 *
+	 * @param bank		[in] Bank number. (0-7)
+	 * @param cryptoType	[in] New encryption type.
+	 * @param callback	[in,opt] Progress callback.
+	 * @param userdata	[in,opt] User data for progress callback.
+	 * @param ios_force	[in,opt] IOS version to force. (-1 to use the existing IOS)
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int recryptWiiPartitions(unsigned int bank,
+		RVL_CryptoType_e cryptoType,
+		RvtH_Progress_Callback callback = nullptr,
+		void *userdata = nullptr,
+		int ios_force = -1);
 
-		/**
-		 * Verify partitions in a Wii disc image.
-		 *
-		 * NOTE: This function only supports encrypted Wii disc images,
-		 * either retail or debug encryption.
-		 *
-		 * This will check all five levels of hashes:
-		 * - H4: Hash of H3 table (stored in the TMD)
-		 * - H3: Hash of all H2 tables (H2 table = 2 MB group)
-		 * - H2: Hash of all H1 tables (H1 table = 256 KB subgroup)
-		 * - H1: Hash of all H0 tables (H0 table = 32 KB block)
-		 * - H0: Hash of a single KB   (H0 = 1 KB)
-		 *
-		 * NOTE: Assuming the TMD signature is valid, which means
-		 * the H4 hash is correct.
-		 *
-		 * @param bank		[in] Bank number (0-7)
-		 * @param errors	[out] Error counts for all 5 hash tables
-		 * @param callback	[in,opt] Progress callback
-		 * @param userdata	[in,opt] User data for progress callback
-		 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
-		 */
-		int verifyWiiPartitions(unsigned int bank,
-			unsigned int error_count[5] = nullptr,
-			RvtH_Verify_Progress_Callback callback = nullptr,
-			void *userdata = nullptr);
+public:
+	/** Verification functions (verify.cpp) **/
 
-	private:
-		// Reference-counted FILE*.
-		RefFile *m_file;
+	/**
+	 * Verify partitions in a Wii disc image.
+	 *
+	 * NOTE: This function only supports encrypted Wii disc images,
+	 * either retail or debug encryption.
+	 *
+	 * This will check all five levels of hashes:
+	 * - H4: Hash of H3 table (stored in the TMD)
+	 * - H3: Hash of all H2 tables (H2 table = 2 MB group)
+	 * - H2: Hash of all H1 tables (H1 table = 256 KB subgroup)
+	 * - H1: Hash of all H0 tables (H0 table = 32 KB block)
+	 * - H0: Hash of a single KB   (H0 = 1 KB)
+	 *
+	 * NOTE: Assuming the TMD signature is valid, which means
+	 * the H4 hash is correct.
+	 *
+	 * @param bank		[in] Bank number (0-7)
+	 * @param errors	[out] Error counts for all 5 hash tables
+	 * @param callback	[in,opt] Progress callback
+	 * @param userdata	[in,opt] User data for progress callback
+	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
+	 */
+	int verifyWiiPartitions(unsigned int bank,
+		unsigned int error_count[5] = nullptr,
+		RvtH_Verify_Progress_Callback callback = nullptr,
+		void *userdata = nullptr);
 
-		// Number of banks.
-		// - RVT-H system or disk image: 8
-		// - Standalone disc image: 1
-		unsigned int m_bankCount;
+private:
+	// Reference-counted FILE*
+	RefFile *m_file;
 
-		// Image type.
-		RvtH_ImageType_e m_imageType;
+	// Number of banks.
+	// - RVT-H system or disk image: 8
+	// - Standalone disc image: 1
+	unsigned int m_bankCount;
 
-		// NHCD header status.
-		NHCD_Status_e m_NHCD_status;
+	// Image type
+	RvtH_ImageType_e m_imageType;
 
-		// BankEntry objects.
-		RvtH_BankEntry *m_entries;
+	// NHCD header status
+	NHCD_Status_e m_NHCD_status;
+
+	// BankEntry objects
+	RvtH_BankEntry *m_entries;
 };
 
 #endif /* __cplusplus */
