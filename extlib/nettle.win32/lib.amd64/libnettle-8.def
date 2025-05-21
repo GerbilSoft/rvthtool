@@ -63,532 +63,543 @@ EXPORTS
     _nettle_sha256_compress_n_sha_ni @62
     _nettle_sha256_compress_n_x86_64 @63
     _nettle_sha3_pad @64
-    _nettle_sha3_update @65
-    _nettle_sha512_compress @66
-    _nettle_siv_ghash_set_key @67
-    _nettle_siv_ghash_update @68
-    _nettle_umac_l2 @69
-    _nettle_umac_l2_final @70
-    _nettle_umac_l2_init @71
-    _nettle_umac_l3 @72
-    _nettle_umac_l3_init @73
-    _nettle_umac_nh @74
-    _nettle_umac_nh_n @75
-    _nettle_umac_poly128 @76
-    _nettle_umac_poly64 @77
-    _nettle_umac_set_key @78
-    _nettle_write_be32 @79
-    _nettle_write_le32 @80
-    _nettle_write_le64 @81
-    nettle_MD5Final @82
-    nettle_MD5Init @83
-    nettle_MD5Update @84
-    nettle_aes128 @85 DATA
-    nettle_aes128_decrypt @86
-    nettle_aes128_encrypt @87
-    nettle_aes128_invert_key @88
-    nettle_aes128_keyunwrap @89
-    nettle_aes128_keywrap @90
-    nettle_aes128_set_decrypt_key @91
-    nettle_aes128_set_encrypt_key @92
-    nettle_aes192 @93 DATA
-    nettle_aes192_decrypt @94
-    nettle_aes192_encrypt @95
-    nettle_aes192_invert_key @96
-    nettle_aes192_keyunwrap @97
-    nettle_aes192_keywrap @98
-    nettle_aes192_set_decrypt_key @99
-    nettle_aes192_set_encrypt_key @100
-    nettle_aes256 @101 DATA
-    nettle_aes256_decrypt @102
-    nettle_aes256_encrypt @103
-    nettle_aes256_invert_key @104
-    nettle_aes256_keyunwrap @105
-    nettle_aes256_keywrap @106
-    nettle_aes256_set_decrypt_key @107
-    nettle_aes256_set_encrypt_key @108
-    nettle_aes_decrypt @109
-    nettle_aes_encrypt @110
-    nettle_aes_invert_key @111
-    nettle_aes_set_decrypt_key @112
-    nettle_aes_set_encrypt_key @113
-    nettle_arcfour128_set_key @114
-    nettle_arcfour_crypt @115
-    nettle_arcfour_set_key @116
-    nettle_arctwo128 @117 DATA
-    nettle_arctwo128_set_key @118
-    nettle_arctwo128_set_key_gutmann @119
-    nettle_arctwo40 @120 DATA
-    nettle_arctwo40_set_key @121
-    nettle_arctwo64 @122 DATA
-    nettle_arctwo64_set_key @123
-    nettle_arctwo_decrypt @124
-    nettle_arctwo_encrypt @125
-    nettle_arctwo_gutmann128 @126 DATA
-    nettle_arctwo_set_key @127
-    nettle_arctwo_set_key_ekb @128
-    nettle_arctwo_set_key_gutmann @129
-    nettle_balloon @130
-    nettle_balloon_itch @131
-    nettle_balloon_sha1 @132
-    nettle_balloon_sha256 @133
-    nettle_balloon_sha384 @134
-    nettle_balloon_sha512 @135
-    nettle_base16 @136 DATA
-    nettle_base16_decode_final @137
-    nettle_base16_decode_init @138
-    nettle_base16_decode_single @139
-    nettle_base16_decode_update @140
-    nettle_base16_encode_single @141
-    nettle_base16_encode_update @142
-    nettle_base64 @143 DATA
-    nettle_base64_decode_final @144
-    nettle_base64_decode_init @145
-    nettle_base64_decode_single @146
-    nettle_base64_decode_update @147
-    nettle_base64_encode_final @148
-    nettle_base64_encode_group @149
-    nettle_base64_encode_init @150
-    nettle_base64_encode_raw @151
-    nettle_base64_encode_single @152
-    nettle_base64_encode_update @153
-    nettle_base64url @154 DATA
-    nettle_base64url_decode_init @155
-    nettle_base64url_encode_init @156
-    nettle_blowfish128_set_key @157
-    nettle_blowfish_bcrypt_hash @158
-    nettle_blowfish_bcrypt_verify @159
-    nettle_blowfish_decrypt @160
-    nettle_blowfish_encrypt @161
-    nettle_blowfish_set_key @162
-    nettle_buffer_clear @163
-    nettle_buffer_copy @164
-    nettle_buffer_grow @165
-    nettle_buffer_init @166
-    nettle_buffer_init_realloc @167
-    nettle_buffer_init_size @168
-    nettle_buffer_reset @169
-    nettle_buffer_space @170
-    nettle_buffer_write @171
-    nettle_camellia128 @172 DATA
-    nettle_camellia128_crypt @173
-    nettle_camellia128_invert_key @174
-    nettle_camellia128_set_encrypt_key @175
-    nettle_camellia192 @176 DATA
-    nettle_camellia192_set_decrypt_key @177
-    nettle_camellia192_set_encrypt_key @178
-    nettle_camellia256 @179 DATA
-    nettle_camellia256_crypt @180
-    nettle_camellia256_invert_key @181
-    nettle_camellia256_set_decrypt_key @182
-    nettle_camellia256_set_encrypt_key @183
-    nettle_camellia_set_decrypt_key @184
-    nettle_cast128 @185 DATA
-    nettle_cast128_decrypt @186
-    nettle_cast128_encrypt @187
-    nettle_cast128_set_key @188
-    nettle_cast5_set_key @189
-    nettle_cbc_aes128_encrypt @190
-    nettle_cbc_aes192_encrypt @191
-    nettle_cbc_aes256_encrypt @192
-    nettle_cbc_decrypt @193
-    nettle_cbc_encrypt @194
-    nettle_ccm_aes128_decrypt @195
-    nettle_ccm_aes128_decrypt_message @196
-    nettle_ccm_aes128_digest @197
-    nettle_ccm_aes128_encrypt @198
-    nettle_ccm_aes128_encrypt_message @199
-    nettle_ccm_aes128_set_key @200
-    nettle_ccm_aes128_set_nonce @201
-    nettle_ccm_aes128_update @202
-    nettle_ccm_aes192_decrypt @203
-    nettle_ccm_aes192_decrypt_message @204
-    nettle_ccm_aes192_digest @205
-    nettle_ccm_aes192_encrypt @206
-    nettle_ccm_aes192_encrypt_message @207
-    nettle_ccm_aes192_set_key @208
-    nettle_ccm_aes192_set_nonce @209
-    nettle_ccm_aes192_update @210
-    nettle_ccm_aes256_decrypt @211
-    nettle_ccm_aes256_decrypt_message @212
-    nettle_ccm_aes256_digest @213
-    nettle_ccm_aes256_encrypt @214
-    nettle_ccm_aes256_encrypt_message @215
-    nettle_ccm_aes256_set_key @216
-    nettle_ccm_aes256_set_nonce @217
-    nettle_ccm_aes256_update @218
-    nettle_ccm_decrypt @219
-    nettle_ccm_decrypt_message @220
-    nettle_ccm_digest @221
-    nettle_ccm_encrypt @222
-    nettle_ccm_encrypt_message @223
-    nettle_ccm_set_nonce @224
-    nettle_ccm_update @225
-    nettle_cfb8_decrypt @226
-    nettle_cfb8_encrypt @227
-    nettle_cfb_decrypt @228
-    nettle_cfb_encrypt @229
-    nettle_chacha_crypt @230
-    nettle_chacha_crypt32 @231
-    nettle_chacha_poly1305 @232 DATA
-    nettle_chacha_poly1305_decrypt @233
-    nettle_chacha_poly1305_digest @234
-    nettle_chacha_poly1305_encrypt @235
-    nettle_chacha_poly1305_set_key @236
-    nettle_chacha_poly1305_set_nonce @237
-    nettle_chacha_poly1305_update @238
-    nettle_chacha_set_counter @239
-    nettle_chacha_set_counter32 @240
-    nettle_chacha_set_key @241
-    nettle_chacha_set_nonce @242
-    nettle_chacha_set_nonce96 @243
-    nettle_cmac128_digest @244
-    nettle_cmac128_init @245
-    nettle_cmac128_set_key @246
-    nettle_cmac128_update @247
-    nettle_cmac64_digest @248
-    nettle_cmac64_init @249
-    nettle_cmac64_set_key @250
-    nettle_cmac64_update @251
-    nettle_cmac_aes128 @252 DATA
-    nettle_cmac_aes128_digest @253
-    nettle_cmac_aes128_set_key @254
-    nettle_cmac_aes128_update @255
-    nettle_cmac_aes256 @256 DATA
-    nettle_cmac_aes256_digest @257
-    nettle_cmac_aes256_set_key @258
-    nettle_cmac_aes256_update @259
-    nettle_cmac_des3 @260 DATA
-    nettle_cmac_des3_digest @261
-    nettle_cmac_des3_set_key @262
-    nettle_cmac_des3_update @263
-    nettle_cnd_memcpy @264
-    nettle_ctr_crypt @265
-    nettle_des3_decrypt @266
-    nettle_des3_encrypt @267
-    nettle_des3_set_key @268
-    nettle_des_check_parity @269
-    nettle_des_decrypt @270
-    nettle_des_encrypt @271
-    nettle_des_fix_parity @272
-    nettle_des_set_key @273
-    nettle_eax_aes128 @274 DATA
-    nettle_eax_aes128_decrypt @275
-    nettle_eax_aes128_digest @276
-    nettle_eax_aes128_encrypt @277
-    nettle_eax_aes128_set_key @278
-    nettle_eax_aes128_set_nonce @279
-    nettle_eax_aes128_update @280
-    nettle_eax_decrypt @281
-    nettle_eax_digest @282
-    nettle_eax_encrypt @283
-    nettle_eax_set_key @284
-    nettle_eax_set_nonce @285
-    nettle_eax_update @286
-    nettle_gcm_aes128 @287 DATA
-    nettle_gcm_aes128_decrypt @288
-    nettle_gcm_aes128_digest @289
-    nettle_gcm_aes128_encrypt @290
-    nettle_gcm_aes128_set_iv @291
-    nettle_gcm_aes128_set_key @292
-    nettle_gcm_aes128_update @293
-    nettle_gcm_aes192 @294 DATA
-    nettle_gcm_aes192_decrypt @295
-    nettle_gcm_aes192_digest @296
-    nettle_gcm_aes192_encrypt @297
-    nettle_gcm_aes192_set_iv @298
-    nettle_gcm_aes192_set_key @299
-    nettle_gcm_aes192_update @300
-    nettle_gcm_aes256 @301 DATA
-    nettle_gcm_aes256_decrypt @302
-    nettle_gcm_aes256_digest @303
-    nettle_gcm_aes256_encrypt @304
-    nettle_gcm_aes256_set_iv @305
-    nettle_gcm_aes256_set_key @306
-    nettle_gcm_aes256_update @307
-    nettle_gcm_aes_decrypt @308
-    nettle_gcm_aes_digest @309
-    nettle_gcm_aes_encrypt @310
-    nettle_gcm_aes_set_iv @311
-    nettle_gcm_aes_set_key @312
-    nettle_gcm_aes_update @313
-    nettle_gcm_camellia128 @314 DATA
-    nettle_gcm_camellia128_decrypt @315
-    nettle_gcm_camellia128_digest @316
-    nettle_gcm_camellia128_encrypt @317
-    nettle_gcm_camellia128_set_iv @318
-    nettle_gcm_camellia128_set_key @319
-    nettle_gcm_camellia128_update @320
-    nettle_gcm_camellia256 @321 DATA
-    nettle_gcm_camellia256_decrypt @322
-    nettle_gcm_camellia256_digest @323
-    nettle_gcm_camellia256_encrypt @324
-    nettle_gcm_camellia256_set_iv @325
-    nettle_gcm_camellia256_set_key @326
-    nettle_gcm_camellia256_update @327
-    nettle_gcm_decrypt @328
-    nettle_gcm_digest @329
-    nettle_gcm_encrypt @330
-    nettle_gcm_set_iv @331
-    nettle_gcm_set_key @332
-    nettle_gcm_sm4 @333 DATA
-    nettle_gcm_sm4_decrypt @334
-    nettle_gcm_sm4_digest @335
-    nettle_gcm_sm4_encrypt @336
-    nettle_gcm_sm4_set_iv @337
-    nettle_gcm_sm4_set_key @338
-    nettle_gcm_sm4_update @339
-    nettle_gcm_update @340
-    nettle_get_aeads @341
-    nettle_get_armors @342
-    nettle_get_ciphers @343
-    nettle_get_hashes @344
-    nettle_get_macs @345
-    nettle_gosthash94 @346 DATA
-    nettle_gosthash94_digest @347
-    nettle_gosthash94_init @348
-    nettle_gosthash94_update @349
-    nettle_gosthash94cp @350 DATA
-    nettle_gosthash94cp_digest @351
-    nettle_gosthash94cp_update @352
-    nettle_hkdf_expand @353
-    nettle_hkdf_extract @354
-    nettle_hmac_digest @355
-    nettle_hmac_gosthash94_digest @356
-    nettle_hmac_gosthash94_set_key @357
-    nettle_hmac_gosthash94_update @358
-    nettle_hmac_gosthash94cp_digest @359
-    nettle_hmac_gosthash94cp_set_key @360
-    nettle_hmac_gosthash94cp_update @361
-    nettle_hmac_md5 @362 DATA
-    nettle_hmac_md5_digest @363
-    nettle_hmac_md5_set_key @364
-    nettle_hmac_md5_update @365
-    nettle_hmac_ripemd160 @366 DATA
-    nettle_hmac_ripemd160_digest @367
-    nettle_hmac_ripemd160_set_key @368
-    nettle_hmac_ripemd160_update @369
-    nettle_hmac_set_key @370
-    nettle_hmac_sha1 @371 DATA
-    nettle_hmac_sha1_digest @372
-    nettle_hmac_sha1_set_key @373
-    nettle_hmac_sha1_update @374
-    nettle_hmac_sha224 @375 DATA
-    nettle_hmac_sha224_digest @376
-    nettle_hmac_sha224_set_key @377
-    nettle_hmac_sha256 @378 DATA
-    nettle_hmac_sha256_digest @379
-    nettle_hmac_sha256_set_key @380
-    nettle_hmac_sha256_update @381
-    nettle_hmac_sha384 @382 DATA
-    nettle_hmac_sha384_digest @383
-    nettle_hmac_sha384_set_key @384
-    nettle_hmac_sha512 @385 DATA
-    nettle_hmac_sha512_digest @386
-    nettle_hmac_sha512_set_key @387
-    nettle_hmac_sha512_update @388
-    nettle_hmac_sm3 @389 DATA
-    nettle_hmac_sm3_digest @390
-    nettle_hmac_sm3_set_key @391
-    nettle_hmac_sm3_update @392
-    nettle_hmac_streebog256 @393 DATA
-    nettle_hmac_streebog256_digest @394
-    nettle_hmac_streebog256_set_key @395
-    nettle_hmac_streebog512 @396 DATA
-    nettle_hmac_streebog512_digest @397
-    nettle_hmac_streebog512_set_key @398
-    nettle_hmac_streebog512_update @399
-    nettle_hmac_update @400
-    nettle_knuth_lfib_get @401
-    nettle_knuth_lfib_get_array @402
-    nettle_knuth_lfib_init @403
-    nettle_knuth_lfib_random @404
-    nettle_lookup_hash @405
-    nettle_md2 @406 DATA
-    nettle_md2_digest @407
-    nettle_md2_init @408
-    nettle_md2_update @409
-    nettle_md4 @410 DATA
-    nettle_md4_digest @411
-    nettle_md4_init @412
-    nettle_md4_update @413
-    nettle_md5 @414 DATA
-    nettle_md5_compress @415
-    nettle_md5_digest @416
-    nettle_md5_init @417
-    nettle_md5_update @418
-    nettle_memeql_sec @419
-    nettle_memxor @420
-    nettle_memxor3 @421
-    nettle_nist_keyunwrap16 @422
-    nettle_nist_keywrap16 @423
-    nettle_ocb_aes128_decrypt @424
-    nettle_ocb_aes128_decrypt_message @425
-    nettle_ocb_aes128_digest @426
-    nettle_ocb_aes128_encrypt @427
-    nettle_ocb_aes128_encrypt_message @428
-    nettle_ocb_aes128_set_decrypt_key @429
-    nettle_ocb_aes128_set_encrypt_key @430
-    nettle_ocb_aes128_set_nonce @431
-    nettle_ocb_aes128_update @432
-    nettle_ocb_decrypt @433
-    nettle_ocb_decrypt_message @434
-    nettle_ocb_digest @435
-    nettle_ocb_encrypt @436
-    nettle_ocb_encrypt_message @437
-    nettle_ocb_set_key @438
-    nettle_ocb_set_nonce @439
-    nettle_ocb_update @440
-    nettle_pbkdf2 @441
-    nettle_pbkdf2_hmac_gosthash94cp @442
-    nettle_pbkdf2_hmac_sha1 @443
-    nettle_pbkdf2_hmac_sha256 @444
-    nettle_pbkdf2_hmac_sha384 @445
-    nettle_pbkdf2_hmac_sha512 @446
-    nettle_poly1305_aes_digest @447
-    nettle_poly1305_aes_set_key @448
-    nettle_poly1305_aes_set_nonce @449
-    nettle_poly1305_aes_update @450
-    nettle_realloc @451
-    nettle_ripemd160 @452 DATA
-    nettle_ripemd160_digest @453
-    nettle_ripemd160_init @454
-    nettle_ripemd160_update @455
-    nettle_salsa20_128_set_key @456
-    nettle_salsa20_256_set_key @457
-    nettle_salsa20_crypt @458
-    nettle_salsa20_set_key @459
-    nettle_salsa20_set_nonce @460
-    nettle_salsa20r12_crypt @461
-    nettle_serpent128 @462 DATA
-    nettle_serpent128_set_key @463
-    nettle_serpent192 @464 DATA
-    nettle_serpent192_set_key @465
-    nettle_serpent256 @466 DATA
-    nettle_serpent256_set_key @467
-    nettle_serpent_decrypt @468
-    nettle_serpent_encrypt @469
-    nettle_serpent_set_key @470
-    nettle_sha1 @471 DATA
-    nettle_sha1_compress @472
-    nettle_sha1_digest @473
-    nettle_sha1_init @474
-    nettle_sha1_update @475
-    nettle_sha224 @476 DATA
-    nettle_sha224_digest @477
-    nettle_sha224_init @478
-    nettle_sha256 @479 DATA
-    nettle_sha256_compress @480
-    nettle_sha256_digest @481
-    nettle_sha256_init @482
-    nettle_sha256_update @483
-    nettle_sha384 @484 DATA
-    nettle_sha384_digest @485
-    nettle_sha384_init @486
-    nettle_sha3_224 @487 DATA
-    nettle_sha3_224_digest @488
-    nettle_sha3_224_init @489
-    nettle_sha3_224_update @490
-    nettle_sha3_256 @491 DATA
-    nettle_sha3_256_digest @492
-    nettle_sha3_256_init @493
-    nettle_sha3_256_shake @494
-    nettle_sha3_256_update @495
-    nettle_sha3_384 @496 DATA
-    nettle_sha3_384_digest @497
-    nettle_sha3_384_init @498
-    nettle_sha3_384_update @499
-    nettle_sha3_512 @500 DATA
-    nettle_sha3_512_digest @501
-    nettle_sha3_512_init @502
-    nettle_sha3_512_update @503
-    nettle_sha3_permute @504
-    nettle_sha512 @505 DATA
-    nettle_sha512_224 @506 DATA
-    nettle_sha512_224_digest @507
-    nettle_sha512_224_init @508
-    nettle_sha512_256 @509 DATA
-    nettle_sha512_256_digest @510
-    nettle_sha512_256_init @511
-    nettle_sha512_compress @512
-    nettle_sha512_digest @513
-    nettle_sha512_init @514
-    nettle_sha512_update @515
-    nettle_siv_cmac_aes128_decrypt_message @516
-    nettle_siv_cmac_aes128_encrypt_message @517
-    nettle_siv_cmac_aes128_set_key @518
-    nettle_siv_cmac_aes256_decrypt_message @519
-    nettle_siv_cmac_aes256_encrypt_message @520
-    nettle_siv_cmac_aes256_set_key @521
-    nettle_siv_cmac_decrypt_message @522
-    nettle_siv_cmac_encrypt_message @523
-    nettle_siv_cmac_set_key @524
-    nettle_siv_gcm_aes128_decrypt_message @525
-    nettle_siv_gcm_aes128_encrypt_message @526
-    nettle_siv_gcm_aes256_decrypt_message @527
-    nettle_siv_gcm_aes256_encrypt_message @528
-    nettle_siv_gcm_decrypt_message @529
-    nettle_siv_gcm_encrypt_message @530
-    nettle_sm3 @531 DATA
-    nettle_sm3_digest @532
-    nettle_sm3_init @533
-    nettle_sm3_update @534
-    nettle_sm4 @535 DATA
-    nettle_sm4_crypt @536
-    nettle_sm4_set_decrypt_key @537
-    nettle_sm4_set_encrypt_key @538
-    nettle_streebog256 @539 DATA
-    nettle_streebog256_digest @540
-    nettle_streebog256_init @541
-    nettle_streebog512 @542 DATA
-    nettle_streebog512_digest @543
-    nettle_streebog512_init @544
-    nettle_streebog512_update @545
-    nettle_twofish128 @546 DATA
-    nettle_twofish128_set_key @547
-    nettle_twofish192 @548 DATA
-    nettle_twofish192_set_key @549
-    nettle_twofish256 @550 DATA
-    nettle_twofish256_set_key @551
-    nettle_twofish_decrypt @552
-    nettle_twofish_encrypt @553
-    nettle_twofish_set_key @554
-    nettle_umac128_digest @555
-    nettle_umac128_set_key @556
-    nettle_umac128_set_nonce @557
-    nettle_umac128_update @558
-    nettle_umac32_digest @559
-    nettle_umac32_set_key @560
-    nettle_umac32_set_nonce @561
-    nettle_umac32_update @562
-    nettle_umac64_digest @563
-    nettle_umac64_set_key @564
-    nettle_umac64_set_nonce @565
-    nettle_umac64_update @566
-    nettle_umac96_digest @567
-    nettle_umac96_set_key @568
-    nettle_umac96_set_nonce @569
-    nettle_umac96_update @570
-    nettle_version_major @571
-    nettle_version_minor @572
-    nettle_xrealloc @573
-    nettle_xts_aes128_decrypt_message @574
-    nettle_xts_aes128_encrypt_message @575
-    nettle_xts_aes128_set_decrypt_key @576
-    nettle_xts_aes128_set_encrypt_key @577
-    nettle_xts_aes256_decrypt_message @578
-    nettle_xts_aes256_encrypt_message @579
-    nettle_xts_aes256_set_decrypt_key @580
-    nettle_xts_aes256_set_encrypt_key @581
-    nettle_xts_decrypt_message @582
-    nettle_xts_encrypt_message @583
-    nettle_yarrow256_fast_reseed @584
-    nettle_yarrow256_init @585
-    nettle_yarrow256_is_seeded @586
-    nettle_yarrow256_needed_sources @587
-    nettle_yarrow256_random @588
-    nettle_yarrow256_seed @589
-    nettle_yarrow256_slow_reseed @590
-    nettle_yarrow256_update @591
-    nettle_yarrow_key_event_estimate @592
-    nettle_yarrow_key_event_init @593
+    _nettle_sha3_shake @65
+    _nettle_sha3_shake_output @66
+    _nettle_sha3_update @67
+    _nettle_sha512_compress @68
+    _nettle_siv_ghash_set_key @69
+    _nettle_siv_ghash_update @70
+    _nettle_umac_l2 @71
+    _nettle_umac_l2_final @72
+    _nettle_umac_l2_init @73
+    _nettle_umac_l3 @74
+    _nettle_umac_l3_init @75
+    _nettle_umac_nh @76
+    _nettle_umac_nh_n @77
+    _nettle_umac_poly128 @78
+    _nettle_umac_poly64 @79
+    _nettle_umac_set_key @80
+    _nettle_write_be32 @81
+    _nettle_write_le32 @82
+    _nettle_write_le64 @83
+    nettle_MD5Final @84
+    nettle_MD5Init @85
+    nettle_MD5Update @86
+    nettle_aes128 @87 DATA
+    nettle_aes128_decrypt @88
+    nettle_aes128_encrypt @89
+    nettle_aes128_invert_key @90
+    nettle_aes128_keyunwrap @91
+    nettle_aes128_keywrap @92
+    nettle_aes128_set_decrypt_key @93
+    nettle_aes128_set_encrypt_key @94
+    nettle_aes192 @95 DATA
+    nettle_aes192_decrypt @96
+    nettle_aes192_encrypt @97
+    nettle_aes192_invert_key @98
+    nettle_aes192_keyunwrap @99
+    nettle_aes192_keywrap @100
+    nettle_aes192_set_decrypt_key @101
+    nettle_aes192_set_encrypt_key @102
+    nettle_aes256 @103 DATA
+    nettle_aes256_decrypt @104
+    nettle_aes256_encrypt @105
+    nettle_aes256_invert_key @106
+    nettle_aes256_keyunwrap @107
+    nettle_aes256_keywrap @108
+    nettle_aes256_set_decrypt_key @109
+    nettle_aes256_set_encrypt_key @110
+    nettle_aes_decrypt @111
+    nettle_aes_encrypt @112
+    nettle_aes_invert_key @113
+    nettle_aes_set_decrypt_key @114
+    nettle_aes_set_encrypt_key @115
+    nettle_arcfour128_set_key @116
+    nettle_arcfour_crypt @117
+    nettle_arcfour_set_key @118
+    nettle_arctwo128 @119 DATA
+    nettle_arctwo128_set_key @120
+    nettle_arctwo128_set_key_gutmann @121
+    nettle_arctwo40 @122 DATA
+    nettle_arctwo40_set_key @123
+    nettle_arctwo64 @124 DATA
+    nettle_arctwo64_set_key @125
+    nettle_arctwo_decrypt @126
+    nettle_arctwo_encrypt @127
+    nettle_arctwo_gutmann128 @128 DATA
+    nettle_arctwo_set_key @129
+    nettle_arctwo_set_key_ekb @130
+    nettle_arctwo_set_key_gutmann @131
+    nettle_balloon @132
+    nettle_balloon_itch @133
+    nettle_balloon_sha1 @134
+    nettle_balloon_sha256 @135
+    nettle_balloon_sha384 @136
+    nettle_balloon_sha512 @137
+    nettle_base16 @138 DATA
+    nettle_base16_decode_final @139
+    nettle_base16_decode_init @140
+    nettle_base16_decode_single @141
+    nettle_base16_decode_update @142
+    nettle_base16_encode_single @143
+    nettle_base16_encode_update @144
+    nettle_base64 @145 DATA
+    nettle_base64_decode_final @146
+    nettle_base64_decode_init @147
+    nettle_base64_decode_single @148
+    nettle_base64_decode_update @149
+    nettle_base64_encode_final @150
+    nettle_base64_encode_group @151
+    nettle_base64_encode_init @152
+    nettle_base64_encode_raw @153
+    nettle_base64_encode_single @154
+    nettle_base64_encode_update @155
+    nettle_base64url @156 DATA
+    nettle_base64url_decode_init @157
+    nettle_base64url_encode_init @158
+    nettle_blowfish128_set_key @159
+    nettle_blowfish_bcrypt_hash @160
+    nettle_blowfish_bcrypt_verify @161
+    nettle_blowfish_decrypt @162
+    nettle_blowfish_encrypt @163
+    nettle_blowfish_set_key @164
+    nettle_buffer_clear @165
+    nettle_buffer_copy @166
+    nettle_buffer_grow @167
+    nettle_buffer_init @168
+    nettle_buffer_init_realloc @169
+    nettle_buffer_init_size @170
+    nettle_buffer_reset @171
+    nettle_buffer_space @172
+    nettle_buffer_write @173
+    nettle_camellia128 @174 DATA
+    nettle_camellia128_crypt @175
+    nettle_camellia128_invert_key @176
+    nettle_camellia128_set_encrypt_key @177
+    nettle_camellia192 @178 DATA
+    nettle_camellia192_set_decrypt_key @179
+    nettle_camellia192_set_encrypt_key @180
+    nettle_camellia256 @181 DATA
+    nettle_camellia256_crypt @182
+    nettle_camellia256_invert_key @183
+    nettle_camellia256_set_decrypt_key @184
+    nettle_camellia256_set_encrypt_key @185
+    nettle_camellia_set_decrypt_key @186
+    nettle_cast128 @187 DATA
+    nettle_cast128_decrypt @188
+    nettle_cast128_encrypt @189
+    nettle_cast128_set_key @190
+    nettle_cast5_set_key @191
+    nettle_cbc_aes128_encrypt @192
+    nettle_cbc_aes192_encrypt @193
+    nettle_cbc_aes256_encrypt @194
+    nettle_cbc_decrypt @195
+    nettle_cbc_encrypt @196
+    nettle_ccm_aes128_decrypt @197
+    nettle_ccm_aes128_decrypt_message @198
+    nettle_ccm_aes128_digest @199
+    nettle_ccm_aes128_encrypt @200
+    nettle_ccm_aes128_encrypt_message @201
+    nettle_ccm_aes128_set_key @202
+    nettle_ccm_aes128_set_nonce @203
+    nettle_ccm_aes128_update @204
+    nettle_ccm_aes192_decrypt @205
+    nettle_ccm_aes192_decrypt_message @206
+    nettle_ccm_aes192_digest @207
+    nettle_ccm_aes192_encrypt @208
+    nettle_ccm_aes192_encrypt_message @209
+    nettle_ccm_aes192_set_key @210
+    nettle_ccm_aes192_set_nonce @211
+    nettle_ccm_aes192_update @212
+    nettle_ccm_aes256_decrypt @213
+    nettle_ccm_aes256_decrypt_message @214
+    nettle_ccm_aes256_digest @215
+    nettle_ccm_aes256_encrypt @216
+    nettle_ccm_aes256_encrypt_message @217
+    nettle_ccm_aes256_set_key @218
+    nettle_ccm_aes256_set_nonce @219
+    nettle_ccm_aes256_update @220
+    nettle_ccm_decrypt @221
+    nettle_ccm_decrypt_message @222
+    nettle_ccm_digest @223
+    nettle_ccm_encrypt @224
+    nettle_ccm_encrypt_message @225
+    nettle_ccm_set_nonce @226
+    nettle_ccm_update @227
+    nettle_cfb8_decrypt @228
+    nettle_cfb8_encrypt @229
+    nettle_cfb_decrypt @230
+    nettle_cfb_encrypt @231
+    nettle_chacha_crypt @232
+    nettle_chacha_crypt32 @233
+    nettle_chacha_poly1305 @234 DATA
+    nettle_chacha_poly1305_decrypt @235
+    nettle_chacha_poly1305_digest @236
+    nettle_chacha_poly1305_encrypt @237
+    nettle_chacha_poly1305_set_key @238
+    nettle_chacha_poly1305_set_nonce @239
+    nettle_chacha_poly1305_update @240
+    nettle_chacha_set_counter @241
+    nettle_chacha_set_counter32 @242
+    nettle_chacha_set_key @243
+    nettle_chacha_set_nonce @244
+    nettle_chacha_set_nonce96 @245
+    nettle_cmac128_digest @246
+    nettle_cmac128_init @247
+    nettle_cmac128_set_key @248
+    nettle_cmac128_update @249
+    nettle_cmac64_digest @250
+    nettle_cmac64_init @251
+    nettle_cmac64_set_key @252
+    nettle_cmac64_update @253
+    nettle_cmac_aes128 @254 DATA
+    nettle_cmac_aes128_digest @255
+    nettle_cmac_aes128_set_key @256
+    nettle_cmac_aes128_update @257
+    nettle_cmac_aes256 @258 DATA
+    nettle_cmac_aes256_digest @259
+    nettle_cmac_aes256_set_key @260
+    nettle_cmac_aes256_update @261
+    nettle_cmac_des3 @262 DATA
+    nettle_cmac_des3_digest @263
+    nettle_cmac_des3_set_key @264
+    nettle_cmac_des3_update @265
+    nettle_cnd_memcpy @266
+    nettle_ctr_crypt @267
+    nettle_des3_decrypt @268
+    nettle_des3_encrypt @269
+    nettle_des3_set_key @270
+    nettle_des_check_parity @271
+    nettle_des_decrypt @272
+    nettle_des_encrypt @273
+    nettle_des_fix_parity @274
+    nettle_des_set_key @275
+    nettle_drbg_ctr_aes256_init @276
+    nettle_drbg_ctr_aes256_random @277
+    nettle_eax_aes128 @278 DATA
+    nettle_eax_aes128_decrypt @279
+    nettle_eax_aes128_digest @280
+    nettle_eax_aes128_encrypt @281
+    nettle_eax_aes128_set_key @282
+    nettle_eax_aes128_set_nonce @283
+    nettle_eax_aes128_update @284
+    nettle_eax_decrypt @285
+    nettle_eax_digest @286
+    nettle_eax_encrypt @287
+    nettle_eax_set_key @288
+    nettle_eax_set_nonce @289
+    nettle_eax_update @290
+    nettle_gcm_aes128 @291 DATA
+    nettle_gcm_aes128_decrypt @292
+    nettle_gcm_aes128_digest @293
+    nettle_gcm_aes128_encrypt @294
+    nettle_gcm_aes128_set_iv @295
+    nettle_gcm_aes128_set_key @296
+    nettle_gcm_aes128_update @297
+    nettle_gcm_aes192 @298 DATA
+    nettle_gcm_aes192_decrypt @299
+    nettle_gcm_aes192_digest @300
+    nettle_gcm_aes192_encrypt @301
+    nettle_gcm_aes192_set_iv @302
+    nettle_gcm_aes192_set_key @303
+    nettle_gcm_aes192_update @304
+    nettle_gcm_aes256 @305 DATA
+    nettle_gcm_aes256_decrypt @306
+    nettle_gcm_aes256_digest @307
+    nettle_gcm_aes256_encrypt @308
+    nettle_gcm_aes256_set_iv @309
+    nettle_gcm_aes256_set_key @310
+    nettle_gcm_aes256_update @311
+    nettle_gcm_aes_decrypt @312
+    nettle_gcm_aes_digest @313
+    nettle_gcm_aes_encrypt @314
+    nettle_gcm_aes_set_iv @315
+    nettle_gcm_aes_set_key @316
+    nettle_gcm_aes_update @317
+    nettle_gcm_camellia128 @318 DATA
+    nettle_gcm_camellia128_decrypt @319
+    nettle_gcm_camellia128_digest @320
+    nettle_gcm_camellia128_encrypt @321
+    nettle_gcm_camellia128_set_iv @322
+    nettle_gcm_camellia128_set_key @323
+    nettle_gcm_camellia128_update @324
+    nettle_gcm_camellia256 @325 DATA
+    nettle_gcm_camellia256_decrypt @326
+    nettle_gcm_camellia256_digest @327
+    nettle_gcm_camellia256_encrypt @328
+    nettle_gcm_camellia256_set_iv @329
+    nettle_gcm_camellia256_set_key @330
+    nettle_gcm_camellia256_update @331
+    nettle_gcm_decrypt @332
+    nettle_gcm_digest @333
+    nettle_gcm_encrypt @334
+    nettle_gcm_set_iv @335
+    nettle_gcm_set_key @336
+    nettle_gcm_sm4 @337 DATA
+    nettle_gcm_sm4_decrypt @338
+    nettle_gcm_sm4_digest @339
+    nettle_gcm_sm4_encrypt @340
+    nettle_gcm_sm4_set_iv @341
+    nettle_gcm_sm4_set_key @342
+    nettle_gcm_sm4_update @343
+    nettle_gcm_update @344
+    nettle_get_aeads @345
+    nettle_get_armors @346
+    nettle_get_ciphers @347
+    nettle_get_hashes @348
+    nettle_get_macs @349
+    nettle_gosthash94 @350 DATA
+    nettle_gosthash94_digest @351
+    nettle_gosthash94_init @352
+    nettle_gosthash94_update @353
+    nettle_gosthash94cp @354 DATA
+    nettle_gosthash94cp_digest @355
+    nettle_gosthash94cp_update @356
+    nettle_hkdf_expand @357
+    nettle_hkdf_extract @358
+    nettle_hmac_digest @359
+    nettle_hmac_gosthash94 @360 DATA
+    nettle_hmac_gosthash94_digest @361
+    nettle_hmac_gosthash94_set_key @362
+    nettle_hmac_gosthash94_update @363
+    nettle_hmac_gosthash94cp @364 DATA
+    nettle_hmac_gosthash94cp_digest @365
+    nettle_hmac_gosthash94cp_set_key @366
+    nettle_hmac_gosthash94cp_update @367
+    nettle_hmac_md5 @368 DATA
+    nettle_hmac_md5_digest @369
+    nettle_hmac_md5_set_key @370
+    nettle_hmac_md5_update @371
+    nettle_hmac_ripemd160 @372 DATA
+    nettle_hmac_ripemd160_digest @373
+    nettle_hmac_ripemd160_set_key @374
+    nettle_hmac_ripemd160_update @375
+    nettle_hmac_set_key @376
+    nettle_hmac_sha1 @377 DATA
+    nettle_hmac_sha1_digest @378
+    nettle_hmac_sha1_set_key @379
+    nettle_hmac_sha1_update @380
+    nettle_hmac_sha224 @381 DATA
+    nettle_hmac_sha224_digest @382
+    nettle_hmac_sha224_set_key @383
+    nettle_hmac_sha256 @384 DATA
+    nettle_hmac_sha256_digest @385
+    nettle_hmac_sha256_set_key @386
+    nettle_hmac_sha256_update @387
+    nettle_hmac_sha384 @388 DATA
+    nettle_hmac_sha384_digest @389
+    nettle_hmac_sha384_set_key @390
+    nettle_hmac_sha512 @391 DATA
+    nettle_hmac_sha512_digest @392
+    nettle_hmac_sha512_set_key @393
+    nettle_hmac_sha512_update @394
+    nettle_hmac_sm3 @395 DATA
+    nettle_hmac_sm3_digest @396
+    nettle_hmac_sm3_set_key @397
+    nettle_hmac_sm3_update @398
+    nettle_hmac_streebog256 @399 DATA
+    nettle_hmac_streebog256_digest @400
+    nettle_hmac_streebog256_set_key @401
+    nettle_hmac_streebog512 @402 DATA
+    nettle_hmac_streebog512_digest @403
+    nettle_hmac_streebog512_set_key @404
+    nettle_hmac_streebog512_update @405
+    nettle_hmac_update @406
+    nettle_knuth_lfib_get @407
+    nettle_knuth_lfib_get_array @408
+    nettle_knuth_lfib_init @409
+    nettle_knuth_lfib_random @410
+    nettle_lookup_hash @411
+    nettle_md2 @412 DATA
+    nettle_md2_digest @413
+    nettle_md2_init @414
+    nettle_md2_update @415
+    nettle_md4 @416 DATA
+    nettle_md4_digest @417
+    nettle_md4_init @418
+    nettle_md4_update @419
+    nettle_md5 @420 DATA
+    nettle_md5_compress @421
+    nettle_md5_digest @422
+    nettle_md5_init @423
+    nettle_md5_update @424
+    nettle_memeql_sec @425
+    nettle_memxor @426
+    nettle_memxor3 @427
+    nettle_nist_keyunwrap16 @428
+    nettle_nist_keywrap16 @429
+    nettle_ocb_aes128_decrypt @430
+    nettle_ocb_aes128_decrypt_message @431
+    nettle_ocb_aes128_digest @432
+    nettle_ocb_aes128_encrypt @433
+    nettle_ocb_aes128_encrypt_message @434
+    nettle_ocb_aes128_set_decrypt_key @435
+    nettle_ocb_aes128_set_encrypt_key @436
+    nettle_ocb_aes128_set_nonce @437
+    nettle_ocb_aes128_update @438
+    nettle_ocb_decrypt @439
+    nettle_ocb_decrypt_message @440
+    nettle_ocb_digest @441
+    nettle_ocb_encrypt @442
+    nettle_ocb_encrypt_message @443
+    nettle_ocb_set_key @444
+    nettle_ocb_set_nonce @445
+    nettle_ocb_update @446
+    nettle_pbkdf2 @447
+    nettle_pbkdf2_hmac_gosthash94cp @448
+    nettle_pbkdf2_hmac_sha1 @449
+    nettle_pbkdf2_hmac_sha256 @450
+    nettle_pbkdf2_hmac_sha384 @451
+    nettle_pbkdf2_hmac_sha512 @452
+    nettle_poly1305_aes_digest @453
+    nettle_poly1305_aes_set_key @454
+    nettle_poly1305_aes_set_nonce @455
+    nettle_poly1305_aes_update @456
+    nettle_realloc @457
+    nettle_ripemd160 @458 DATA
+    nettle_ripemd160_digest @459
+    nettle_ripemd160_init @460
+    nettle_ripemd160_update @461
+    nettle_salsa20_128_set_key @462
+    nettle_salsa20_256_set_key @463
+    nettle_salsa20_crypt @464
+    nettle_salsa20_set_key @465
+    nettle_salsa20_set_nonce @466
+    nettle_salsa20r12_crypt @467
+    nettle_serpent128 @468 DATA
+    nettle_serpent128_set_key @469
+    nettle_serpent192 @470 DATA
+    nettle_serpent192_set_key @471
+    nettle_serpent256 @472 DATA
+    nettle_serpent256_set_key @473
+    nettle_serpent_decrypt @474
+    nettle_serpent_encrypt @475
+    nettle_serpent_set_key @476
+    nettle_sha1 @477 DATA
+    nettle_sha1_compress @478
+    nettle_sha1_digest @479
+    nettle_sha1_init @480
+    nettle_sha1_update @481
+    nettle_sha224 @482 DATA
+    nettle_sha224_digest @483
+    nettle_sha224_init @484
+    nettle_sha256 @485 DATA
+    nettle_sha256_compress @486
+    nettle_sha256_digest @487
+    nettle_sha256_init @488
+    nettle_sha256_update @489
+    nettle_sha384 @490 DATA
+    nettle_sha384_digest @491
+    nettle_sha384_init @492
+    nettle_sha3_128_init @493
+    nettle_sha3_128_shake @494
+    nettle_sha3_128_shake_output @495
+    nettle_sha3_128_update @496
+    nettle_sha3_224 @497 DATA
+    nettle_sha3_224_digest @498
+    nettle_sha3_224_init @499
+    nettle_sha3_224_update @500
+    nettle_sha3_256 @501 DATA
+    nettle_sha3_256_digest @502
+    nettle_sha3_256_init @503
+    nettle_sha3_256_shake @504
+    nettle_sha3_256_shake_output @505
+    nettle_sha3_256_update @506
+    nettle_sha3_384 @507 DATA
+    nettle_sha3_384_digest @508
+    nettle_sha3_384_init @509
+    nettle_sha3_384_update @510
+    nettle_sha3_512 @511 DATA
+    nettle_sha3_512_digest @512
+    nettle_sha3_512_init @513
+    nettle_sha3_512_update @514
+    nettle_sha3_permute @515
+    nettle_sha512 @516 DATA
+    nettle_sha512_224 @517 DATA
+    nettle_sha512_224_digest @518
+    nettle_sha512_224_init @519
+    nettle_sha512_256 @520 DATA
+    nettle_sha512_256_digest @521
+    nettle_sha512_256_init @522
+    nettle_sha512_compress @523
+    nettle_sha512_digest @524
+    nettle_sha512_init @525
+    nettle_sha512_update @526
+    nettle_siv_cmac_aes128_decrypt_message @527
+    nettle_siv_cmac_aes128_encrypt_message @528
+    nettle_siv_cmac_aes128_set_key @529
+    nettle_siv_cmac_aes256_decrypt_message @530
+    nettle_siv_cmac_aes256_encrypt_message @531
+    nettle_siv_cmac_aes256_set_key @532
+    nettle_siv_cmac_decrypt_message @533
+    nettle_siv_cmac_encrypt_message @534
+    nettle_siv_cmac_set_key @535
+    nettle_siv_gcm_aes128_decrypt_message @536
+    nettle_siv_gcm_aes128_encrypt_message @537
+    nettle_siv_gcm_aes256_decrypt_message @538
+    nettle_siv_gcm_aes256_encrypt_message @539
+    nettle_siv_gcm_decrypt_message @540
+    nettle_siv_gcm_encrypt_message @541
+    nettle_sm3 @542 DATA
+    nettle_sm3_digest @543
+    nettle_sm3_init @544
+    nettle_sm3_update @545
+    nettle_sm4 @546 DATA
+    nettle_sm4_crypt @547
+    nettle_sm4_set_decrypt_key @548
+    nettle_sm4_set_encrypt_key @549
+    nettle_streebog256 @550 DATA
+    nettle_streebog256_digest @551
+    nettle_streebog256_init @552
+    nettle_streebog512 @553 DATA
+    nettle_streebog512_digest @554
+    nettle_streebog512_init @555
+    nettle_streebog512_update @556
+    nettle_twofish128 @557 DATA
+    nettle_twofish128_set_key @558
+    nettle_twofish192 @559 DATA
+    nettle_twofish192_set_key @560
+    nettle_twofish256 @561 DATA
+    nettle_twofish256_set_key @562
+    nettle_twofish_decrypt @563
+    nettle_twofish_encrypt @564
+    nettle_twofish_set_key @565
+    nettle_umac128_digest @566
+    nettle_umac128_set_key @567
+    nettle_umac128_set_nonce @568
+    nettle_umac128_update @569
+    nettle_umac32_digest @570
+    nettle_umac32_set_key @571
+    nettle_umac32_set_nonce @572
+    nettle_umac32_update @573
+    nettle_umac64_digest @574
+    nettle_umac64_set_key @575
+    nettle_umac64_set_nonce @576
+    nettle_umac64_update @577
+    nettle_umac96_digest @578
+    nettle_umac96_set_key @579
+    nettle_umac96_set_nonce @580
+    nettle_umac96_update @581
+    nettle_version_major @582
+    nettle_version_minor @583
+    nettle_xrealloc @584
+    nettle_xts_aes128_decrypt_message @585
+    nettle_xts_aes128_encrypt_message @586
+    nettle_xts_aes128_set_decrypt_key @587
+    nettle_xts_aes128_set_encrypt_key @588
+    nettle_xts_aes256_decrypt_message @589
+    nettle_xts_aes256_encrypt_message @590
+    nettle_xts_aes256_set_decrypt_key @591
+    nettle_xts_aes256_set_encrypt_key @592
+    nettle_xts_decrypt_message @593
+    nettle_xts_encrypt_message @594
+    nettle_yarrow256_fast_reseed @595
+    nettle_yarrow256_init @596
+    nettle_yarrow256_is_seeded @597
+    nettle_yarrow256_needed_sources @598
+    nettle_yarrow256_random @599
+    nettle_yarrow256_seed @600
+    nettle_yarrow256_slow_reseed @601
+    nettle_yarrow256_update @602
+    nettle_yarrow_key_event_estimate @603
+    nettle_yarrow_key_event_init @604
