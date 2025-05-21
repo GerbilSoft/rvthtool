@@ -5,7 +5,7 @@ to provide a Microsoft Visual C friendly derivative. This code
 provides functionality for both Unicode and Multibyte builds.
 
 Date: 02/03/2011 - Ludvik Jerabek - Initial Release
-Version: 1.0
+Version: 1.1
 Comment: Supports getopt, getopt_long, and getopt_long_only
 and POSIXLY_CORRECT environment flag
 License: LGPL
@@ -21,6 +21,8 @@ Revisions:
 08/01/2012 - Ludvik Jerabek - Created separate functions for char and wchar_t characters so single dll can do both unicode and ansi
 10/15/2012 - Ludvik Jerabek - Modified to match latest GNU features
 06/19/2015 - Ludvik Jerabek - Fixed maximum option limitation caused by option_a (255) and option_w (65535) structure val variable
+09/24/2022 - Ludvik Jerabek - Updated to match most recent getopt release
+09/25/2022 - Ludvik Jerabek - Fixed memory allocation (malloc call) issue for wchar_t* 
 
 **DISCLAIMER**
 THIS MATERIAL IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND,
@@ -36,15 +38,17 @@ YOUR INFORMATION HANDLING SYSTEM OR OTHERWISE, EVEN If WE ARE
 EXPRESSLY ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
 */
 #define _CRT_SECURE_NO_WARNINGS
+
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
 #include "getopt.h"
 
 #ifdef __cplusplus
-	#define _GETOPT_THROW throw()
+#define _GETOPT_THROW throw()
 #else
-	#define _GETOPT_THROW
+#define _GETOPT_THROW
 #endif
 
 int optind = 1;
@@ -63,28 +67,27 @@ static struct _getopt_data_a
 	int optind;
 	int opterr;
 	int optopt;
-	char *optarg;
+	char* optarg;
 	int __initialized;
-	char *__nextchar;
+	char* __nextchar;
 	enum ENUM_ORDERING __ordering;
-	int __posixly_correct;
 	int __first_nonopt;
 	int __last_nonopt;
 } getopt_data_a;
-char *optarg_a;
+char* optarg_a;
 
-static void exchange_a(char **argv, struct _getopt_data_a *d)
+static void exchange_a(char** argv, struct _getopt_data_a* d)
 {
 	int bottom = d->__first_nonopt;
 	int middle = d->__last_nonopt;
 	int top = d->optind;
-	char *tem;
+	char* tem;
 	while (top > middle && middle > bottom)
 	{
 		if (top - middle > middle - bottom)
 		{
 			int len = middle - bottom;
-			register int i;
+			int i;
 			for (i = 0; i < len; i++)
 			{
 				tem = argv[bottom + i];
@@ -96,7 +99,7 @@ static void exchange_a(char **argv, struct _getopt_data_a *d)
 		else
 		{
 			int len = top - middle;
-			register int i;
+			int i;
 			for (i = 0; i < len; i++)
 			{
 				tem = argv[bottom + i];
@@ -109,11 +112,148 @@ static void exchange_a(char **argv, struct _getopt_data_a *d)
 	d->__first_nonopt += (d->optind - d->__last_nonopt);
 	d->__last_nonopt = d->optind;
 }
-static const char *_getopt_initialize_a (const char *optstring, struct _getopt_data_a *d, int posixly_correct)
+
+static int process_long_option_a(int argc, char** argv, const char* optstring, const struct option_a* longopts, int* longind, int long_only, struct _getopt_data_a* d, int print_errors, const char* prefix)
 {
+	assert(longopts != NULL);
+	char* nameend;
+	size_t namelen;
+	const struct option_a* p;
+	const struct option_a* pfound = NULL;
+	int n_options;
+	int option_index = 0;
+	for (nameend = d->__nextchar; *nameend && *nameend != '='; nameend++);
+	namelen = nameend - d->__nextchar;
+	for (p = longopts, n_options = 0; p->name; p++, n_options++)
+		if (!strncmp(p->name, d->__nextchar, namelen) && namelen == strlen(p->name))
+		{
+			pfound = p;
+			option_index = n_options;
+			break;
+		}
+	if (pfound == NULL)
+	{
+		unsigned char* ambig_set = NULL;
+		int ambig_fallback = 0;
+		int indfound = -1;
+		for (p = longopts, option_index = 0; p->name; p++, option_index++)
+			if (!strncmp(p->name, d->__nextchar, namelen))
+			{
+				if (pfound == NULL)
+				{
+					pfound = p;
+					indfound = option_index;
+				}
+				else if (long_only
+					|| pfound->has_arg != p->has_arg
+					|| pfound->flag != p->flag
+					|| pfound->val != p->val)
+				{
+					if (!ambig_fallback)
+					{
+						if (!print_errors)
+							ambig_fallback = 1;
+
+						else if (!ambig_set)
+						{
+							if ((ambig_set = malloc(n_options * sizeof(char))) == NULL)
+								ambig_fallback = 1;
+
+							if (ambig_set)
+							{
+								memset(ambig_set, 0, n_options * sizeof(char));
+								ambig_set[indfound] = 1;
+							}
+						}
+						if (ambig_set)
+							ambig_set[option_index] = 1;
+					}
+				}
+			}
+		if (ambig_set || ambig_fallback)
+		{
+			if (print_errors)
+			{
+				if (ambig_fallback)
+					fprintf(stderr, "%s: option '%s%s' is ambiguous\n", argv[0], prefix, d->__nextchar);
+				else
+				{
+					_lock_file(stderr);
+					fprintf(stderr, "%s: option '%s%s' is ambiguous; possibilities:", argv[0], prefix, d->__nextchar);
+					for (option_index = 0; option_index < n_options; option_index++)
+						if (ambig_set[option_index])
+							fprintf(stderr, " '%s%s'", prefix, longopts[option_index].name);
+					fprintf(stderr, "\n");
+					_unlock_file(stderr);
+				}
+			}
+			free(ambig_set);
+			d->__nextchar += strlen(d->__nextchar);
+			d->optind++;
+			d->optopt = 0;
+			return '?';
+		}
+		option_index = indfound;
+	}
+	if (pfound == NULL)
+	{
+		if (!long_only || argv[d->optind][1] == '-'
+			|| strchr(optstring, *d->__nextchar) == NULL)
+		{
+			if (print_errors)
+				fprintf(stderr, "%s: unrecognized option '%s%s'\n", argv[0], prefix, d->__nextchar);
+			d->__nextchar = NULL;
+			d->optind++;
+			d->optopt = 0;
+			return '?';
+		}
+		return -1;
+	}
+	d->optind++;
+	d->__nextchar = NULL;
+	if (*nameend)
+	{
+		if (pfound->has_arg)
+			d->optarg = nameend + 1;
+		else
+		{
+			if (print_errors)
+				fprintf(stderr, "%s: option '%s%s' doesn't allow an argument\n", argv[0], prefix, pfound->name);
+			d->optopt = pfound->val;
+			return '?';
+		}
+	}
+	else if (pfound->has_arg == 1)
+	{
+		if (d->optind < argc)
+			d->optarg = argv[d->optind++];
+		else
+		{
+			if (print_errors)
+				fprintf(stderr, "%s: option '%s%s' requires an argument\n", argv[0], prefix, pfound->name);
+			d->optopt = pfound->val;
+			return optstring[0] == ':' ? ':' : '?';
+		}
+	}
+	if (longind != NULL)
+		*longind = option_index;
+
+	if (pfound->flag)
+	{
+		*(pfound->flag) = pfound->val;
+		return 0;
+	}
+	return pfound->val;
+}
+
+static const char* _getopt_initialize_a(const char* optstring, struct _getopt_data_a* d, int posixly_correct)
+{
+	if (d->optind == 0)
+		d->optind = 1;
+
 	d->__first_nonopt = d->__last_nonopt = d->optind;
 	d->__nextchar = NULL;
-	d->__posixly_correct = posixly_correct | !!getenv("POSIXLY_CORRECT");
+
 	if (optstring[0] == '-')
 	{
 		d->__ordering = RETURN_IN_ORDER;
@@ -124,29 +264,28 @@ static const char *_getopt_initialize_a (const char *optstring, struct _getopt_d
 		d->__ordering = REQUIRE_ORDER;
 		++optstring;
 	}
-	else if (d->__posixly_correct)
+	else if (posixly_correct | !!getenv("POSIXLY_CORRECT"))
 		d->__ordering = REQUIRE_ORDER;
 	else
 		d->__ordering = PERMUTE;
+
+	d->__initialized = 1;
 	return optstring;
 }
-int _getopt_internal_r_a (int argc, char *const *argv, const char *optstring, const struct option_a *longopts, int *longind, int long_only, struct _getopt_data_a *d, int posixly_correct)
+
+int _getopt_internal_r_a(int argc, char* const* argv, const char* optstring, const struct option_a* longopts, int* longind, int long_only, struct _getopt_data_a* d, int posixly_correct)
 {
 	int print_errors = d->opterr;
 	if (argc < 1)
 		return -1;
 	d->optarg = NULL;
 	if (d->optind == 0 || !d->__initialized)
-	{
-		if (d->optind == 0)
-			d->optind = 1;
-		optstring = _getopt_initialize_a (optstring, d, posixly_correct);
-		d->__initialized = 1;
-	}
+		optstring = _getopt_initialize_a(optstring, d, posixly_correct);
 	else if (optstring[0] == '-' || optstring[0] == '+')
 		optstring++;
 	if (optstring[0] == ':')
 		print_errors = 0;
+
 	if (d->__nextchar == NULL || *d->__nextchar == '\0')
 	{
 		if (d->__last_nonopt > d->optind)
@@ -155,8 +294,9 @@ int _getopt_internal_r_a (int argc, char *const *argv, const char *optstring, co
 			d->__first_nonopt = d->optind;
 		if (d->__ordering == PERMUTE)
 		{
-			if (d->__first_nonopt != d->__last_nonopt && d->__last_nonopt != d->optind)
-				exchange_a ((char **) argv, d);
+			if (d->__first_nonopt != d->__last_nonopt
+				&& d->__last_nonopt != d->optind)
+				exchange_a((char**)argv, d);
 			else if (d->__last_nonopt != d->optind)
 				d->__first_nonopt = d->optind;
 			while (d->optind < argc && (argv[d->optind][0] != '-' || argv[d->optind][1] == '\0'))
@@ -166,8 +306,9 @@ int _getopt_internal_r_a (int argc, char *const *argv, const char *optstring, co
 		if (d->optind != argc && !strcmp(argv[d->optind], "--"))
 		{
 			d->optind++;
-			if (d->__first_nonopt != d->__last_nonopt && d->__last_nonopt != d->optind)
-				exchange_a((char **) argv, d);
+			if (d->__first_nonopt != d->__last_nonopt
+				&& d->__last_nonopt != d->optind)
+				exchange_a((char**)argv, d);
 			else if (d->__first_nonopt == d->__last_nonopt)
 				d->__first_nonopt = d->optind;
 			d->__last_nonopt = argc;
@@ -179,182 +320,54 @@ int _getopt_internal_r_a (int argc, char *const *argv, const char *optstring, co
 				d->optind = d->__first_nonopt;
 			return -1;
 		}
-		if ((argv[d->optind][0] != '-' || argv[d->optind][1] == '\0'))
+		if (argv[d->optind][0] != '-' || argv[d->optind][1] == '\0')
 		{
 			if (d->__ordering == REQUIRE_ORDER)
 				return -1;
 			d->optarg = argv[d->optind++];
 			return 1;
 		}
-		d->__nextchar = (argv[d->optind] + 1 + (longopts != NULL && argv[d->optind][1] == '-'));
-	}
-	if (longopts != NULL && (argv[d->optind][1] == '-' || (long_only && (argv[d->optind][2] || !strchr(optstring, argv[d->optind][1])))))
-	{
-		char *nameend;
-		unsigned int namelen;
-		const struct option_a *p;
-		const struct option_a *pfound = NULL;
-		struct option_list
+		if (longopts)
 		{
-			const struct option_a *p;
-			struct option_list *next;
-		} *ambig_list = NULL;
-		int exact = 0;
-		int indfound = -1;
-		int option_index;
-		for (nameend = d->__nextchar; *nameend && *nameend != '='; nameend++);
-		namelen = (unsigned int)(nameend - d->__nextchar);
-		for (p = longopts, option_index = 0; p->name; p++, option_index++)
-			if (!strncmp(p->name, d->__nextchar, namelen))
+			if (argv[d->optind][1] == '-')
 			{
-				if (namelen == (unsigned int)strlen(p->name))
-				{
-					pfound = p;
-					indfound = option_index;
-					exact = 1;
-					break;
-				}
-				else if (pfound == NULL)
-				{
-					pfound = p;
-					indfound = option_index;
-				}
-				else if (long_only || pfound->has_arg != p->has_arg || pfound->flag != p->flag || pfound->val != p->val)
-				{
-					struct option_list *newp = (struct option_list*)alloca(sizeof(*newp));
-					newp->p = p;
-					newp->next = ambig_list;
-					ambig_list = newp;
-				}
+				d->__nextchar = argv[d->optind] + 2;
+				return process_long_option_a(argc, (char**)argv, optstring, longopts, longind, long_only, d, print_errors, "--");
 			}
-			if (ambig_list != NULL && !exact)
+			if (long_only && (argv[d->optind][2]
+				|| !strchr(optstring, argv[d->optind][1])))
 			{
-				if (print_errors)
-				{
-					struct option_list first;
-					first.p = pfound;
-					first.next = ambig_list;
-					ambig_list = &first;
-					fprintf (stderr, "%s: option '%s' is ambiguous; possibilities:", argv[0], argv[d->optind]);
-					do
-					{
-						fprintf (stderr, " '--%s'", ambig_list->p->name);
-						ambig_list = ambig_list->next;
-					}
-					while (ambig_list != NULL);
-					fputc ('\n', stderr);
-				}
-				d->__nextchar += strlen(d->__nextchar);
-				d->optind++;
-				d->optopt = 0;
-				return '?';
+				int code;
+				d->__nextchar = argv[d->optind] + 1;
+				code = process_long_option_a(argc, (char**)argv, optstring, longopts,
+					longind, long_only, d,
+					print_errors, "-");
+				if (code != -1)
+					return code;
 			}
-			if (pfound != NULL)
-			{
-				option_index = indfound;
-				d->optind++;
-				if (*nameend)
-				{
-					if (pfound->has_arg)
-						d->optarg = nameend + 1;
-					else
-					{
-						if (print_errors)
-						{
-							if (argv[d->optind - 1][1] == '-')
-							{
-								fprintf(stderr, "%s: option '--%s' doesn't allow an argument\n",argv[0], pfound->name);
-							}
-							else
-							{
-								fprintf(stderr, "%s: option '%c%s' doesn't allow an argument\n",argv[0], argv[d->optind - 1][0],pfound->name);
-							}
-						}
-						d->__nextchar += strlen(d->__nextchar);
-						d->optopt = pfound->val;
-						return '?';
-					}
-				}
-				else if (pfound->has_arg == 1)
-				{
-					if (d->optind < argc)
-						d->optarg = argv[d->optind++];
-					else
-					{
-						if (print_errors)
-						{
-							fprintf(stderr,"%s: option '--%s' requires an argument\n",argv[0], pfound->name);
-						}
-						d->__nextchar += strlen(d->__nextchar);
-						d->optopt = pfound->val;
-						return optstring[0] == ':' ? ':' : '?';
-					}
-				}
-				d->__nextchar += strlen(d->__nextchar);
-				if (longind != NULL)
-					*longind = option_index;
-				if (pfound->flag)
-				{
-					*(pfound->flag) = pfound->val;
-					return 0;
-				}
-				return pfound->val;
-			}
-			if (!long_only || argv[d->optind][1] == '-' || strchr(optstring, *d->__nextchar) == NULL)
-			{
-				if (print_errors)
-				{
-					if (argv[d->optind][1] == '-')
-					{
-						fprintf(stderr, "%s: unrecognized option '--%s'\n",argv[0], d->__nextchar);
-					}
-					else
-					{
-						fprintf(stderr, "%s: unrecognized option '%c%s'\n",argv[0], argv[d->optind][0], d->__nextchar);
-					}
-				}
-				d->__nextchar = (char *)"";
-				d->optind++;
-				d->optopt = 0;
-				return '?';
-			}
+		}
+		d->__nextchar = argv[d->optind] + 1;
 	}
 	{
 		char c = *d->__nextchar++;
-		char *temp = (char*)strchr(optstring, c);
+		const char* temp = strchr(optstring, c);
 		if (*d->__nextchar == '\0')
 			++d->optind;
 		if (temp == NULL || c == ':' || c == ';')
 		{
 			if (print_errors)
-			{
 				fprintf(stderr, "%s: invalid option -- '%c'\n", argv[0], c);
-			}
 			d->optopt = c;
 			return '?';
 		}
-		if (temp[0] == 'W' && temp[1] == ';')
+		if (temp[0] == 'W' && temp[1] == ';' && longopts != NULL)
 		{
-			char *nameend;
-			const struct option_a *p;
-			const struct option_a *pfound = NULL;
-			int exact = 0;
-			int ambig = 0;
-			int indfound = 0;
-			int option_index;
-			if (longopts == NULL)
-				goto no_longs;
 			if (*d->__nextchar != '\0')
-			{
 				d->optarg = d->__nextchar;
-				d->optind++;
-			}
 			else if (d->optind == argc)
 			{
 				if (print_errors)
-				{
-					fprintf(stderr,"%s: option requires an argument -- '%c'\n",argv[0], c);
-				}
+					fprintf(stderr, "%s: option requires an argument -- '%c'\n", argv[0], c);
 				d->optopt = c;
 				if (optstring[0] == ':')
 					c = ':';
@@ -363,82 +376,10 @@ int _getopt_internal_r_a (int argc, char *const *argv, const char *optstring, co
 				return c;
 			}
 			else
-				d->optarg = argv[d->optind++];
-			for (d->__nextchar = nameend = d->optarg; *nameend && *nameend != '='; nameend++);
-			for (p = longopts, option_index = 0; p->name; p++, option_index++)
-				if (!strncmp(p->name, d->__nextchar, nameend - d->__nextchar))
-				{
-					if ((unsigned int) (nameend - d->__nextchar) == strlen(p->name))
-					{
-						pfound = p;
-						indfound = option_index;
-						exact = 1;
-						break;
-					}
-					else if (pfound == NULL)
-					{
-						pfound = p;
-						indfound = option_index;
-					}
-					else if (long_only || pfound->has_arg != p->has_arg || pfound->flag != p->flag || pfound->val != p->val)
-						ambig = 1;
-				}
-				if (ambig && !exact)
-				{
-					if (print_errors)
-					{
-						fprintf(stderr, "%s: option '-W %s' is ambiguous\n",argv[0], d->optarg);
-					}
-					d->__nextchar += strlen(d->__nextchar);
-					d->optind++;
-					return '?';
-				}
-				if (pfound != NULL)
-				{
-					option_index = indfound;
-					if (*nameend)
-					{
-						if (pfound->has_arg)
-							d->optarg = nameend + 1;
-						else
-						{
-							if (print_errors)
-							{
-								fprintf(stderr, "%s: option '-W %s' doesn't allow an argument\n",argv[0], pfound->name);
-							}
-							d->__nextchar += strlen(d->__nextchar);
-							return '?';
-						}
-					}
-					else if (pfound->has_arg == 1)
-					{
-						if (d->optind < argc)
-							d->optarg = argv[d->optind++];
-						else
-						{
-							if (print_errors)
-							{
-								fprintf(stderr, "%s: option '-W %s' requires an argument\n",argv[0], pfound->name);
-							}
-							d->__nextchar += strlen(d->__nextchar);
-							return optstring[0] == ':' ? ':' : '?';
-						}
-					}
-					else
-						d->optarg = NULL;
-					d->__nextchar += strlen(d->__nextchar);
-					if (longind != NULL)
-						*longind = option_index;
-					if (pfound->flag)
-					{
-						*(pfound->flag) = pfound->val;
-						return 0;
-					}
-					return pfound->val;
-				}
-no_longs:
-				d->__nextchar = NULL;
-				return 'W';
+				d->optarg = argv[d->optind];
+			d->__nextchar = d->optarg;
+			d->optarg = NULL;
+			return process_long_option_a(argc, (char**)argv, optstring, longopts, longind, 0, d, print_errors, "-W ");
 		}
 		if (temp[1] == ':')
 		{
@@ -463,9 +404,7 @@ no_longs:
 				else if (d->optind == argc)
 				{
 					if (print_errors)
-					{
-						fprintf(stderr,"%s: option requires an argument -- '%c'\n",argv[0], c);
-					}
+						fprintf(stderr, "%s: option requires an argument -- '%c'\n", argv[0], c);
 					d->optopt = c;
 					if (optstring[0] == ':')
 						c = ':';
@@ -480,36 +419,42 @@ no_longs:
 		return c;
 	}
 }
-int _getopt_internal_a (int argc, char *const *argv, const char *optstring, const struct option_a *longopts, int *longind, int long_only, int posixly_correct)
+
+int _getopt_internal_a(int argc, char* const* argv, const char* optstring, const struct option_a* longopts, int* longind, int long_only, int posixly_correct)
 {
 	int result;
 	getopt_data_a.optind = optind;
 	getopt_data_a.opterr = opterr;
-	result = _getopt_internal_r_a (argc, argv, optstring, longopts,longind, long_only, &getopt_data_a,posixly_correct);
+	result = _getopt_internal_r_a(argc, argv, optstring, longopts, longind, long_only, &getopt_data_a, posixly_correct);
 	optind = getopt_data_a.optind;
 	optarg_a = getopt_data_a.optarg;
 	optopt = getopt_data_a.optopt;
 	return result;
 }
-int getopt_a (int argc, char *const *argv, const char *optstring) _GETOPT_THROW
+
+int getopt_a(int argc, char* const* argv, const char* optstring) _GETOPT_THROW
 {
-	return _getopt_internal_a (argc, argv, optstring, (const struct option_a *) 0, (int *) 0, 0, 0);
+	return _getopt_internal_a(argc, argv, optstring, (const struct option_a*)0, (int*)0, 0, 0);
 }
-int getopt_long_a (int argc, char *const *argv, const char *options, const struct option_a *long_options, int *opt_index) _GETOPT_THROW
+
+int getopt_long_a(int argc, char* const* argv, const char* options, const struct option_a* long_options, int* opt_index) _GETOPT_THROW
 {
-	return _getopt_internal_a (argc, argv, options, long_options, opt_index, 0, 0);
+	return _getopt_internal_a(argc, argv, options, long_options, opt_index, 0, 0);
 }
-int getopt_long_only_a (int argc, char *const *argv, const char *options, const struct option_a *long_options, int *opt_index) _GETOPT_THROW
+
+int getopt_long_only_a(int argc, char* const* argv, const char* options, const struct option_a* long_options, int* opt_index) _GETOPT_THROW
 {
-	return _getopt_internal_a (argc, argv, options, long_options, opt_index, 1, 0);
+	return _getopt_internal_a(argc, argv, options, long_options, opt_index, 1, 0);
 }
-int _getopt_long_r_a (int argc, char *const *argv, const char *options, const struct option_a *long_options, int *opt_index, struct _getopt_data_a *d)
+
+int _getopt_long_r_a(int argc, char* const* argv, const char* options, const struct option_a* long_options, int* opt_index, struct _getopt_data_a* d)
 {
-	return _getopt_internal_r_a (argc, argv, options, long_options, opt_index,0, d, 0);
+	return _getopt_internal_r_a(argc, argv, options, long_options, opt_index, 0, d, 0);
 }
-int _getopt_long_only_r_a (int argc, char *const *argv, const char *options, const struct option_a *long_options, int *opt_index, struct _getopt_data_a *d)
+
+int _getopt_long_only_r_a(int argc, char* const* argv, const char* options, const struct option_a* long_options, int* opt_index, struct _getopt_data_a* d)
 {
-	return _getopt_internal_r_a (argc, argv, options, long_options, opt_index, 1, d, 0);
+	return _getopt_internal_r_a(argc, argv, options, long_options, opt_index, 1, d, 0);
 }
 
 //
@@ -523,28 +468,27 @@ static struct _getopt_data_w
 	int optind;
 	int opterr;
 	int optopt;
-	wchar_t *optarg;
+	wchar_t* optarg;
 	int __initialized;
-	wchar_t *__nextchar;
+	wchar_t* __nextchar;
 	enum ENUM_ORDERING __ordering;
-	int __posixly_correct;
 	int __first_nonopt;
 	int __last_nonopt;
 } getopt_data_w;
-wchar_t *optarg_w;
+wchar_t* optarg_w;
 
-static void exchange_w(wchar_t **argv, struct _getopt_data_w *d)
+static void exchange_w(wchar_t** argv, struct _getopt_data_w* d)
 {
 	int bottom = d->__first_nonopt;
 	int middle = d->__last_nonopt;
 	int top = d->optind;
-	wchar_t *tem;
+	wchar_t* tem;
 	while (top > middle && middle > bottom)
 	{
 		if (top - middle > middle - bottom)
 		{
 			int len = middle - bottom;
-			register int i;
+			int i;
 			for (i = 0; i < len; i++)
 			{
 				tem = argv[bottom + i];
@@ -556,7 +500,7 @@ static void exchange_w(wchar_t **argv, struct _getopt_data_w *d)
 		else
 		{
 			int len = top - middle;
-			register int i;
+			int i;
 			for (i = 0; i < len; i++)
 			{
 				tem = argv[bottom + i];
@@ -569,11 +513,146 @@ static void exchange_w(wchar_t **argv, struct _getopt_data_w *d)
 	d->__first_nonopt += (d->optind - d->__last_nonopt);
 	d->__last_nonopt = d->optind;
 }
-static const wchar_t *_getopt_initialize_w (const wchar_t *optstring, struct _getopt_data_w *d, int posixly_correct)
+
+static int process_long_option_w(int argc, wchar_t** argv, const wchar_t* optstring, const struct option_w* longopts, int* longind, int long_only, struct _getopt_data_w* d, int print_errors, const wchar_t* prefix)
 {
+	assert(longopts != NULL);
+	wchar_t* nameend;
+	size_t namelen;
+	const struct option_w* p;
+	const struct option_w* pfound = NULL;
+	int n_options;
+	int option_index = 0;
+	for (nameend = d->__nextchar; *nameend && *nameend != L'='; nameend++);
+	namelen = nameend - d->__nextchar;
+	for (p = longopts, n_options = 0; p->name; p++, n_options++)
+		if (!wcsncmp(p->name, d->__nextchar, namelen) && namelen == wcslen(p->name))
+		{
+			pfound = p;
+			option_index = n_options;
+			break;
+		}
+	if (pfound == NULL)
+	{
+		wchar_t* ambig_set = NULL;
+		int ambig_fallback = 0;
+		int indfound = -1;
+		for (p = longopts, option_index = 0; p->name; p++, option_index++)
+			if (!wcsncmp(p->name, d->__nextchar, namelen))
+			{
+				if (pfound == NULL)
+				{
+					pfound = p;
+					indfound = option_index;
+				}
+				else if (long_only
+					|| pfound->has_arg != p->has_arg
+					|| pfound->flag != p->flag
+					|| pfound->val != p->val)
+				{
+					if (!ambig_fallback)
+					{
+						if (!print_errors)
+							ambig_fallback = 1;
+
+						else if (!ambig_set)
+						{
+							if ((ambig_set = malloc(n_options * sizeof(wchar_t))) == NULL)
+								ambig_fallback = 1;
+
+							if (ambig_set)
+							{
+								memset(ambig_set, 0, n_options * sizeof(wchar_t));
+								ambig_set[indfound] = 1;
+							}
+						}
+						if (ambig_set)
+							ambig_set[option_index] = 1;
+					}
+				}
+			}
+		if (ambig_set || ambig_fallback)
+		{
+			if (print_errors)
+			{
+				if (ambig_fallback)
+					fwprintf(stderr, L"%s: option '%s%s' is ambiguous\n", argv[0], prefix, d->__nextchar);
+				else
+				{
+					_lock_file(stderr);
+					fwprintf(stderr, L"%s: option '%s%s' is ambiguous; possibilities:", argv[0], prefix, d->__nextchar);
+					for (option_index = 0; option_index < n_options; option_index++)
+						if (ambig_set[option_index])
+							fwprintf(stderr, L" '%s%s'", prefix, longopts[option_index].name);
+					fwprintf(stderr, L"\n");
+					_unlock_file(stderr);
+				}
+			}
+			free(ambig_set);
+			d->__nextchar += wcslen(d->__nextchar);
+			d->optind++;
+			d->optopt = 0;
+			return L'?';
+		}
+		option_index = indfound;
+	}
+	if (pfound == NULL)
+	{
+		if (!long_only || argv[d->optind][1] == L'-' || wcschr(optstring, *d->__nextchar) == NULL)
+		{
+			if (print_errors)
+				fwprintf(stderr, L"%s: unrecognized option '%s%s'\n", argv[0], prefix, d->__nextchar);
+			d->__nextchar = NULL;
+			d->optind++;
+			d->optopt = 0;
+			return L'?';
+		}
+		return -1;
+	}
+	d->optind++;
+	d->__nextchar = NULL;
+	if (*nameend)
+	{
+		if (pfound->has_arg)
+			d->optarg = nameend + 1;
+		else
+		{
+			if (print_errors)
+				fwprintf(stderr, L"%s: option '%s%s' doesn't allow an argument\n", argv[0], prefix, pfound->name);
+			d->optopt = pfound->val;
+			return L'?';
+		}
+	}
+	else if (pfound->has_arg == 1)
+	{
+		if (d->optind < argc)
+			d->optarg = argv[d->optind++];
+		else
+		{
+			if (print_errors)
+				fwprintf(stderr, L"%s: option '%s%s' requires an argument\n", argv[0], prefix, pfound->name);
+			d->optopt = pfound->val;
+			return optstring[0] == L':' ? L':' : L'?';
+		}
+	}
+	if (longind != NULL)
+		*longind = option_index;
+	if (pfound->flag)
+	{
+		*(pfound->flag) = pfound->val;
+		return 0;
+	}
+	return pfound->val;
+}
+
+static const wchar_t* _getopt_initialize_w(const wchar_t* optstring, struct _getopt_data_w* d, int posixly_correct)
+{
+	if (d->optind == 0)
+		d->optind = 1;
+
 	d->__first_nonopt = d->__last_nonopt = d->optind;
 	d->__nextchar = NULL;
-	d->__posixly_correct = posixly_correct | !!_wgetenv(L"POSIXLY_CORRECT");
+
 	if (optstring[0] == L'-')
 	{
 		d->__ordering = RETURN_IN_ORDER;
@@ -584,29 +663,29 @@ static const wchar_t *_getopt_initialize_w (const wchar_t *optstring, struct _ge
 		d->__ordering = REQUIRE_ORDER;
 		++optstring;
 	}
-	else if (d->__posixly_correct)
+	else if (posixly_correct | !!_wgetenv(L"POSIXLY_CORRECT"))
 		d->__ordering = REQUIRE_ORDER;
 	else
 		d->__ordering = PERMUTE;
+
+	d->__initialized = 1;
 	return optstring;
 }
-int _getopt_internal_r_w (int argc, wchar_t *const *argv, const wchar_t *optstring, const struct option_w *longopts, int *longind, int long_only, struct _getopt_data_w *d, int posixly_correct)
+
+int _getopt_internal_r_w(int argc, wchar_t* const* argv, const wchar_t* optstring, const struct option_w* longopts, int* longind, int long_only, struct _getopt_data_w* d, int posixly_correct)
 {
 	int print_errors = d->opterr;
 	if (argc < 1)
 		return -1;
 	d->optarg = NULL;
 	if (d->optind == 0 || !d->__initialized)
-	{
-		if (d->optind == 0)
-			d->optind = 1;
-		optstring = _getopt_initialize_w (optstring, d, posixly_correct);
-		d->__initialized = 1;
-	}
+		optstring = _getopt_initialize_w(optstring, d, posixly_correct);
 	else if (optstring[0] == L'-' || optstring[0] == L'+')
 		optstring++;
 	if (optstring[0] == L':')
 		print_errors = 0;
+#define NONOPTION_P (argv[d->optind][0] != L'-' || argv[d->optind][1] == L'\0')
+
 	if (d->__nextchar == NULL || *d->__nextchar == L'\0')
 	{
 		if (d->__last_nonopt > d->optind)
@@ -615,19 +694,21 @@ int _getopt_internal_r_w (int argc, wchar_t *const *argv, const wchar_t *optstri
 			d->__first_nonopt = d->optind;
 		if (d->__ordering == PERMUTE)
 		{
-			if (d->__first_nonopt != d->__last_nonopt && d->__last_nonopt != d->optind)
-				exchange_w((wchar_t **) argv, d);
+			if (d->__first_nonopt != d->__last_nonopt
+				&& d->__last_nonopt != d->optind)
+				exchange_w((wchar_t**)argv, d);
 			else if (d->__last_nonopt != d->optind)
 				d->__first_nonopt = d->optind;
-			while (d->optind < argc && (argv[d->optind][0] != L'-' || argv[d->optind][1] == L'\0'))
+			while (d->optind < argc && NONOPTION_P)
 				d->optind++;
 			d->__last_nonopt = d->optind;
 		}
 		if (d->optind != argc && !wcscmp(argv[d->optind], L"--"))
 		{
 			d->optind++;
-			if (d->__first_nonopt != d->__last_nonopt && d->__last_nonopt != d->optind)
-				exchange_w((wchar_t **) argv, d);
+			if (d->__first_nonopt != d->__last_nonopt
+				&& d->__last_nonopt != d->optind)
+				exchange_w((wchar_t**)argv, d);
 			else if (d->__first_nonopt == d->__last_nonopt)
 				d->__first_nonopt = d->optind;
 			d->__last_nonopt = argc;
@@ -639,182 +720,51 @@ int _getopt_internal_r_w (int argc, wchar_t *const *argv, const wchar_t *optstri
 				d->optind = d->__first_nonopt;
 			return -1;
 		}
-		if ((argv[d->optind][0] != L'-' || argv[d->optind][1] == L'\0'))
+		if (NONOPTION_P)
 		{
 			if (d->__ordering == REQUIRE_ORDER)
 				return -1;
 			d->optarg = argv[d->optind++];
 			return 1;
 		}
-		d->__nextchar = (argv[d->optind] + 1 + (longopts != NULL && argv[d->optind][1] == L'-'));
-	}
-	if (longopts != NULL && (argv[d->optind][1] == L'-' || (long_only && (argv[d->optind][2] || !wcschr(optstring, argv[d->optind][1])))))
-	{
-		wchar_t *nameend;
-		unsigned int namelen;
-		const struct option_w *p;
-		const struct option_w *pfound = NULL;
-		struct option_list
+		if (longopts)
 		{
-			const struct option_w *p;
-			struct option_list *next;
-		} *ambig_list = NULL;
-		int exact = 0;
-		int indfound = -1;
-		int option_index;
-		for (nameend = d->__nextchar; *nameend && *nameend != L'='; nameend++);
-		namelen = (unsigned int)(nameend - d->__nextchar);
-		for (p = longopts, option_index = 0; p->name; p++, option_index++)
-			if (!wcsncmp(p->name, d->__nextchar, namelen))
+			if (argv[d->optind][1] == L'-')
 			{
-				if (namelen == (unsigned int)wcslen(p->name))
-				{
-					pfound = p;
-					indfound = option_index;
-					exact = 1;
-					break;
-				}
-				else if (pfound == NULL)
-				{
-					pfound = p;
-					indfound = option_index;
-				}
-				else if (long_only || pfound->has_arg != p->has_arg || pfound->flag != p->flag || pfound->val != p->val)
-				{
-					struct option_list *newp = (struct option_list*)alloca(sizeof(*newp));
-					newp->p = p;
-					newp->next = ambig_list;
-					ambig_list = newp;
-				}
+				d->__nextchar = argv[d->optind] + 2;
+				return process_long_option_w(argc, (wchar_t**)argv, optstring, longopts, longind, long_only, d, print_errors, L"--");
 			}
-			if (ambig_list != NULL && !exact)
+			if (long_only && (argv[d->optind][2] || !wcschr(optstring, argv[d->optind][1])))
 			{
-				if (print_errors)
-				{						
-					struct option_list first;
-					first.p = pfound;
-					first.next = ambig_list;
-					ambig_list = &first;
-					fwprintf(stderr, L"%s: option '%s' is ambiguous; possibilities:", argv[0], argv[d->optind]);
-					do
-					{
-						fwprintf (stderr, L" '--%s'", ambig_list->p->name);
-						ambig_list = ambig_list->next;
-					}
-					while (ambig_list != NULL);
-					fputwc (L'\n', stderr);
-				}
-				d->__nextchar += wcslen(d->__nextchar);
-				d->optind++;
-				d->optopt = 0;
-				return L'?';
+				int code;
+				d->__nextchar = argv[d->optind] + 1;
+				code = process_long_option_w(argc, (wchar_t**)argv, optstring, longopts, longind, long_only, d, print_errors, L"-");
+				if (code != -1)
+					return code;
 			}
-			if (pfound != NULL)
-			{
-				option_index = indfound;
-				d->optind++;
-				if (*nameend)
-				{
-					if (pfound->has_arg)
-						d->optarg = nameend + 1;
-					else
-					{
-						if (print_errors)
-						{
-							if (argv[d->optind - 1][1] == L'-')
-							{
-								fwprintf(stderr, L"%s: option '--%s' doesn't allow an argument\n",argv[0], pfound->name);
-							}
-							else
-							{
-								fwprintf(stderr, L"%s: option '%c%s' doesn't allow an argument\n",argv[0], argv[d->optind - 1][0],pfound->name);
-							}
-						}
-						d->__nextchar += wcslen(d->__nextchar);
-						d->optopt = pfound->val;
-						return L'?';
-					}
-				}
-				else if (pfound->has_arg == 1)
-				{
-					if (d->optind < argc)
-						d->optarg = argv[d->optind++];
-					else
-					{
-						if (print_errors)
-						{
-							fwprintf(stderr,L"%s: option '--%s' requires an argument\n",argv[0], pfound->name);
-						}
-						d->__nextchar += wcslen(d->__nextchar);
-						d->optopt = pfound->val;
-						return optstring[0] == L':' ? L':' : L'?';
-					}
-				}
-				d->__nextchar += wcslen(d->__nextchar);
-				if (longind != NULL)
-					*longind = option_index;
-				if (pfound->flag)
-				{
-					*(pfound->flag) = pfound->val;
-					return 0;
-				}
-				return pfound->val;
-			}
-			if (!long_only || argv[d->optind][1] == L'-' || wcschr(optstring, *d->__nextchar) == NULL)
-			{
-				if (print_errors)
-				{
-					if (argv[d->optind][1] == L'-')
-					{
-						fwprintf(stderr, L"%s: unrecognized option '--%s'\n",argv[0], d->__nextchar);
-					}
-					else
-					{
-						fwprintf(stderr, L"%s: unrecognized option '%c%s'\n",argv[0], argv[d->optind][0], d->__nextchar);
-					}
-				}
-				d->__nextchar = (wchar_t *)L"";
-				d->optind++;
-				d->optopt = 0;
-				return L'?';
-			}
+		}
+		d->__nextchar = argv[d->optind] + 1;
 	}
 	{
 		wchar_t c = *d->__nextchar++;
-		wchar_t *temp = (wchar_t*)wcschr(optstring, c);
+		const wchar_t* temp = wcschr(optstring, c);
 		if (*d->__nextchar == L'\0')
 			++d->optind;
 		if (temp == NULL || c == L':' || c == L';')
 		{
 			if (print_errors)
-			{
 				fwprintf(stderr, L"%s: invalid option -- '%c'\n", argv[0], c);
-			}
 			d->optopt = c;
 			return L'?';
 		}
-		if (temp[0] == L'W' && temp[1] == L';')
+		if (temp[0] == L'W' && temp[1] == L';' && longopts != NULL)
 		{
-			wchar_t *nameend;
-			const struct option_w *p;
-			const struct option_w *pfound = NULL;
-			int exact = 0;
-			int ambig = 0;
-			int indfound = 0;
-			int option_index;
-			if (longopts == NULL)
-				goto no_longs;
 			if (*d->__nextchar != L'\0')
-			{
 				d->optarg = d->__nextchar;
-				d->optind++;
-			}
 			else if (d->optind == argc)
 			{
 				if (print_errors)
-				{
-					fwprintf(stderr,L"%s: option requires an argument -- '%c'\n",argv[0], c);
-				}
+					fwprintf(stderr, L"%s: option requires an argument -- '%c'\n", argv[0], c);
 				d->optopt = c;
 				if (optstring[0] == L':')
 					c = L':';
@@ -823,82 +773,11 @@ int _getopt_internal_r_w (int argc, wchar_t *const *argv, const wchar_t *optstri
 				return c;
 			}
 			else
-				d->optarg = argv[d->optind++];
-			for (d->__nextchar = nameend = d->optarg; *nameend && *nameend != L'='; nameend++);
-			for (p = longopts, option_index = 0; p->name; p++, option_index++)
-				if (!wcsncmp(p->name, d->__nextchar, nameend - d->__nextchar))
-				{
-					if ((unsigned int) (nameend - d->__nextchar) == wcslen(p->name))
-					{
-						pfound = p;
-						indfound = option_index;
-						exact = 1;
-						break;
-					}
-					else if (pfound == NULL)
-					{
-						pfound = p;
-						indfound = option_index;
-					}
-					else if (long_only || pfound->has_arg != p->has_arg || pfound->flag != p->flag || pfound->val != p->val)
-						ambig = 1;
-				}
-				if (ambig && !exact)
-				{
-					if (print_errors)
-					{
-						fwprintf(stderr, L"%s: option '-W %s' is ambiguous\n",argv[0], d->optarg);
-					}
-					d->__nextchar += wcslen(d->__nextchar);
-					d->optind++;
-					return L'?';
-				}
-				if (pfound != NULL)
-				{
-					option_index = indfound;
-					if (*nameend)
-					{
-						if (pfound->has_arg)
-							d->optarg = nameend + 1;
-						else
-						{
-							if (print_errors)
-							{
-								fwprintf(stderr, L"%s: option '-W %s' doesn't allow an argument\n",argv[0], pfound->name);
-							}
-							d->__nextchar += wcslen(d->__nextchar);
-							return L'?';
-						}
-					}
-					else if (pfound->has_arg == 1)
-					{
-						if (d->optind < argc)
-							d->optarg = argv[d->optind++];
-						else
-						{
-							if (print_errors)
-							{
-								fwprintf(stderr, L"%s: option '-W %s' requires an argument\n",argv[0], pfound->name);
-							}
-							d->__nextchar += wcslen(d->__nextchar);
-							return optstring[0] == L':' ? L':' : L'?';
-						}
-					}
-					else
-						d->optarg = NULL;
-					d->__nextchar += wcslen(d->__nextchar);
-					if (longind != NULL)
-						*longind = option_index;
-					if (pfound->flag)
-					{
-						*(pfound->flag) = pfound->val;
-						return 0;
-					}
-					return pfound->val;
-				}
-no_longs:
-				d->__nextchar = NULL;
-				return L'W';
+				d->optarg = argv[d->optind];
+			d->__nextchar = d->optarg;
+			d->optarg = NULL;
+			return process_long_option_w(argc, (wchar_t**)argv, optstring, longopts, longind,
+				0, d, print_errors, L"-W ");
 		}
 		if (temp[1] == L':')
 		{
@@ -923,9 +802,7 @@ no_longs:
 				else if (d->optind == argc)
 				{
 					if (print_errors)
-					{
-						fwprintf(stderr,L"%s: option requires an argument -- '%c'\n",argv[0], c);
-					}
+						fwprintf(stderr, L"%s: option requires an argument -- '%c'\n", argv[0], c);
 					d->optopt = c;
 					if (optstring[0] == L':')
 						c = L':';
@@ -940,34 +817,40 @@ no_longs:
 		return c;
 	}
 }
-int _getopt_internal_w (int argc, wchar_t *const *argv, const wchar_t *optstring, const struct option_w *longopts, int *longind, int long_only, int posixly_correct)
+
+int _getopt_internal_w(int argc, wchar_t* const* argv, const wchar_t* optstring, const struct option_w* longopts, int* longind, int long_only, int posixly_correct)
 {
 	int result;
 	getopt_data_w.optind = optind;
 	getopt_data_w.opterr = opterr;
-	result = _getopt_internal_r_w (argc, argv, optstring, longopts,longind, long_only, &getopt_data_w,posixly_correct);
+	result = _getopt_internal_r_w(argc, argv, optstring, longopts, longind, long_only, &getopt_data_w, posixly_correct);
 	optind = getopt_data_w.optind;
 	optarg_w = getopt_data_w.optarg;
 	optopt = getopt_data_w.optopt;
 	return result;
 }
-int getopt_w (int argc, wchar_t *const *argv, const wchar_t *optstring) _GETOPT_THROW
+
+int getopt_w(int argc, wchar_t* const* argv, const wchar_t* optstring) _GETOPT_THROW
 {
-	return _getopt_internal_w (argc, argv, optstring, (const struct option_w *) 0, (int *) 0, 0, 0);
+	return _getopt_internal_w(argc, argv, optstring, (const struct option_w*)0, (int*)0, 0, 0);
 }
-int getopt_long_w (int argc, wchar_t *const *argv, const wchar_t *options, const struct option_w *long_options, int *opt_index) _GETOPT_THROW
+
+int getopt_long_w(int argc, wchar_t* const* argv, const wchar_t* options, const struct option_w* long_options, int* opt_index) _GETOPT_THROW
 {
-	return _getopt_internal_w (argc, argv, options, long_options, opt_index, 0, 0);
+	return _getopt_internal_w(argc, argv, options, long_options, opt_index, 0, 0);
 }
-int getopt_long_only_w (int argc, wchar_t *const *argv, const wchar_t *options, const struct option_w *long_options, int *opt_index) _GETOPT_THROW
+
+int getopt_long_only_w(int argc, wchar_t* const* argv, const wchar_t* options, const struct option_w* long_options, int* opt_index) _GETOPT_THROW
 {
-	return _getopt_internal_w (argc, argv, options, long_options, opt_index, 1, 0);
+	return _getopt_internal_w(argc, argv, options, long_options, opt_index, 1, 0);
 }
-int _getopt_long_r_w (int argc, wchar_t *const *argv, const wchar_t *options, const struct option_w *long_options, int *opt_index, struct _getopt_data_w *d)
+
+int _getopt_long_r_w(int argc, wchar_t* const* argv, const wchar_t* options, const struct option_w* long_options, int* opt_index, struct _getopt_data_w* d)
 {
-	return _getopt_internal_r_w (argc, argv, options, long_options, opt_index,0, d, 0);
+	return _getopt_internal_r_w(argc, argv, options, long_options, opt_index, 0, d, 0);
 }
-int _getopt_long_only_r_w (int argc, wchar_t *const *argv, const wchar_t *options, const struct option_w *long_options, int *opt_index, struct _getopt_data_w *d)
+
+int _getopt_long_only_r_w(int argc, wchar_t* const* argv, const wchar_t* options, const struct option_w* long_options, int* opt_index, struct _getopt_data_w* d)
 {
-	return _getopt_internal_r_w (argc, argv, options, long_options, opt_index, 1, d, 0);
+	return _getopt_internal_r_w(argc, argv, options, long_options, opt_index, 1, d, 0);
 }

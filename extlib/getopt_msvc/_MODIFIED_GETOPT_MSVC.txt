@@ -1,0 +1,15 @@
+This copy of getopt-msvc-1.1.0 is a modified version of the original.
+
+commit c620fc78d6c098c1fda3eccad585d016dbd783f0
+Updated to match most recent getopt release
+
+Tag: v1.1.0
+
+The following changes have been made to the original:
+
+- Only including the source code files.
+
+- CMakeLists.txt is completely custom.
+
+To obtain the original getopt-msvc-1.1.0, visit:
+https://github.com/ludvikjerabek/getopt-win
