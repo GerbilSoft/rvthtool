@@ -309,7 +309,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		array<unsigned int, 4> bad_hash = {{0, 0, 0, 0}};
 
 		static constexpr off64_t ENC_BLOCK_SIZE = 0x10000U;
-		static constexpr off64_t DEC_BLOCK_SIZE = 0xFC00U;
+		//static constexpr off64_t DEC_BLOCK_SIZE = 0xFC00U;
 
 		// Zero IV for hashes.
 		array<uint8_t, 16> zero_iv;
@@ -512,12 +512,23 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 	// Read the ticket and TMD.
 	// TODO: Check for errors?
 	unique_ptr<uint8_t[]> tik_data(new uint8_t[tik_size]);
-	fread(tik_data.get(), 1, tik_size, f_tik);
+	size_t sz_read = fread(tik_data.get(), 1, tik_size, f_tik);
+	if (sz_read != tik_size) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		_fputts(_T("*** ERROR reading ticket file: Short read.\n"), stderr);
+		return -EIO;
+	}
 	fclose(f_tik);
 	WUP_Ticket *const pTicket = reinterpret_cast<WUP_Ticket*>(tik_data.get());
 
 	unique_ptr<uint8_t[]> tmd_data(new uint8_t[tmd_size]);
-	fread(tmd_data.get(), 1, tmd_size, f_tmd);
+	sz_read = fread(tmd_data.get(), 1, tmd_size, f_tmd);
+	if (sz_read != tik_size) {
+		fclose(f_tmd);
+		_fputts(_T("*** ERROR reading TMD file: Short read.\n"), stderr);
+		return -EIO;
+	}
 	fclose(f_tmd);
 	WUP_TMD_Header *const pTmdHeader = reinterpret_cast<WUP_TMD_Header*>(tmd_data.get());
 

@@ -63,8 +63,13 @@ int main(int argc, char **argv)
 		fclose(f);
 		return EXIT_FAILURE;
 	}
-	fread(bin, 1, fsize, f);
+	size_t sz_read = fread(bin, 1, fsize, f);
 	fclose(f);
+	if (sz_read != fsize) {
+		// Short read...
+		fprintf(stderr, "*** fread() failed, short read\n");
+		return EXIT_FAILURE;
+	}
 
 	/* name for the .h content */
 	basenamelen = strrchr(dest_h, '.') - dest_h;

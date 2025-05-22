@@ -203,11 +203,23 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	// Read the ticket and TMD.
 	// TODO: Check for errors?
 	unique_ptr<uint8_t[]> tik_data(new uint8_t[tik_size]);
-	fread(tik_data.get(), 1, tik_size, f_tik);
+	size_t sz_read = fread(tik_data.get(), 1, tik_size, f_tik);
+	if (sz_read != tik_size) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		_fputts(_T("*** ERROR reading ticket file: Short read.\n"), stderr);
+		return -EIO;
+	}
 	WUP_Ticket *const pTicket = reinterpret_cast<WUP_Ticket*>(tik_data.get());
 
 	unique_ptr<uint8_t[]> tmd_data(new uint8_t[tmd_size]);
-	fread(tmd_data.get(), 1, tmd_size, f_tmd);
+	sz_read = fread(tmd_data.get(), 1, tmd_size, f_tmd);
+	if (sz_read != tik_size) {
+		fclose(f_tik);
+		fclose(f_tmd);
+		_fputts(_T("*** ERROR reading TMD file: Short read.\n"), stderr);
+		return -EIO;
+	}
 	WUP_TMD_Header *const pTmdHeader = reinterpret_cast<WUP_TMD_Header*>(tmd_data.get());
 
 	// Check the encryption key.
