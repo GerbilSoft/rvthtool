@@ -145,7 +145,7 @@ static int rvth_create_id(uint8_t *id, size_t size,
 	return rsaw_encrypt(id, size, id_pub.data(), id_pub.size(), id_exp, buf, sizeof(buf));
 }
 
-int RvtH::recryptID(unsigned int bank)
+int RvtHPrivate::recryptID(unsigned int bank)
 {
 	int err = 0;	// errno
 
@@ -161,7 +161,7 @@ int RvtH::recryptID(unsigned int bank)
 	}
 
 	// Check the bank type.
-	RvtH_BankEntry *const entry = &d_ptr->entries[bank];
+	RvtH_BankEntry *const entry = &entries[bank];
 	bool is_wii;
 	switch (entry->type) {
 		case RVTH_BankType_GCN:
@@ -189,7 +189,7 @@ int RvtH::recryptID(unsigned int bank)
 	}
 
 	// Make the RVT-H object writable.
-	int ret = d_ptr->makeWritable();
+	int ret = makeWritable();
 	if (ret != 0) {
 		// Could not make the RVT-H object writable.
 		if (ret < 0) {
@@ -231,7 +231,7 @@ int RvtH::recryptID(unsigned int bank)
 		reader->flush();
 
 		// Only if this area is empty!
-		if (d_ptr->isBlockEmpty(&sbuf.u8[0x80], 256)) {
+		if (isBlockEmpty(&sbuf.u8[0x80], 256)) {
 			rvth_create_id(&sbuf.u8[0x80], 256, &gcn, NULL);
 			errno = 0;
 			lba_size = reader->write(&sbuf.u8, BYTES_TO_LBA(0x400), 1);
@@ -277,8 +277,9 @@ int RvtH::recryptID(unsigned int bank)
 			}
 
 			// Only if this area is empty!
-			if (!d_ptr->isBlockEmpty(&id_buf[256], 256))
+			if (!isBlockEmpty(&id_buf[256], 256)) {
 				continue;
+			}
 
 			// Write the identifier.
 			char ptid_buf[24];

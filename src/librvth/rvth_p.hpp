@@ -116,6 +116,11 @@ public:
 	int writeBankEntry(unsigned int bank, time_t *pTimestamp = nullptr);
 
 public:
+	/** Recryption functions (recrypt.cpp) **/
+
+	int recryptID(unsigned int bank);
+
+public:
 	// Reference-counted FILE*
 	RefFilePtr file;
 

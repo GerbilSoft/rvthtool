@@ -551,7 +551,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	uint32_t lba_count;
 	uint32_t lba_buf_max;	// Highest LBA that can be written using the buffer.
 
-	// Callback state.
+	// Callback state
 	RvtH_Progress_State state;
 
 	int ret = 0;	// errno or RvtH_Errors
@@ -598,7 +598,7 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 	}
 
 	// Get the bank count of the destination RVT-H device.
-	unsigned int bank_count_dest = rvth_dest->bankCount();
+	const unsigned int bank_count_dest = rvth_dest->bankCount();
 	// Destination bank entry.
 	RvtH_BankEntry *const entry_dest = &rvth_dest->d_ptr->entries[bank_dest];
 
@@ -775,7 +775,6 @@ int RvtH::copyToHDD(RvtH *rvth_dest, unsigned int bank_dest,
 		state.lba_total = lba_copy_len;
 	}
 
-	// TODO: Special indicator.
 	// TODO: Optimize seeking? (Reader::write() seeks every time.)
 	lba_buf_max = entry_dest->lba_len & ~(LBA_COUNT_BUF-1);
 	for (lba_count = 0; lba_count < lba_buf_max; lba_count += LBA_COUNT_BUF) {
@@ -902,7 +901,7 @@ int RvtH::import(unsigned int bank, const TCHAR *filename,
 		{
 			// No recryption needed.
 			// Write the identifier to indicate that this bank was imported.
-			ret = recryptID(bank);
+			ret = d_ptr->recryptID(bank);
 		}
 	}
 	return ret;

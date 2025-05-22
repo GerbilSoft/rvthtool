@@ -369,8 +369,6 @@ public:
 public:
 	/** Recryption functions (recrypt.cpp) **/
 
-	int recryptID(unsigned int bank);
-
 	/**
 	 * Re-encrypt partitions in a Wii disc image.
 	 *
