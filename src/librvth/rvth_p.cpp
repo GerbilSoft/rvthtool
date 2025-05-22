@@ -31,6 +31,21 @@ RvtHPrivate::RvtHPrivate(RvtH *q)
 	, nhcdStatus(NHCD_STATUS_UNKNOWN)
 { }
 
+RvtHPrivate::~RvtHPrivate()
+{
+	// Close all bank entry files.
+	// RefFile has a reference count, so we have to clear the count.
+	for (RvtH_BankEntry &entry : entries) {
+		delete entry.reader;
+		free(entry.ptbl);
+	}
+
+	// Clear the main file reference.
+	if (file) {
+		file->unref();
+	}
+}
+
 /** General utility functions **/
 
 /**

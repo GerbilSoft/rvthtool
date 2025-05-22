@@ -84,17 +84,7 @@ RvtH::RvtH(const TCHAR *filename, int *pErr)
 
 RvtH::~RvtH()
 {
-	// Close all bank entry files.
-	// RefFile has a reference count, so we have to clear the count.
-	for (unsigned int i = 0; i < bankCount(); i++) {
-		delete d_ptr->entries[i].reader;
-		free(d_ptr->entries[i].ptbl);
-	}
-
-	// Clear the main file reference.
-	if (d_ptr->file) {
-		d_ptr->file->unref();
-	}
+	delete d_ptr;
 }
 
 /**

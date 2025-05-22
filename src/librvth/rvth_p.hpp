@@ -23,7 +23,7 @@ class RvtHPrivate
 {
 public:
 	explicit RvtHPrivate(RvtH *q);
-	~RvtHPrivate() = default;
+	~RvtHPrivate();
 
 private:
 	RvtH *const q_ptr;
