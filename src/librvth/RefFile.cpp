@@ -1,8 +1,8 @@
 /***************************************************************************
  * RVT-H Tool (librvth)                                                    *
- * RefFile.cpp: Reference-counted FILE*.                                   *
+ * RefFile.cpp: Reference-counted FILE*. (use std::shared_ptr<>)           *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -54,9 +54,8 @@
  * @return RefFile*, or NULL if an error occurred.
  */
 RefFile::RefFile(const TCHAR *filename, bool create)
-	: m_refCount(1)
+	: m_file(nullptr)
 	, m_lastError(0)
-	, m_file(nullptr)
 	, m_isWritable(false)
 {
 	if (!filename) {

@@ -9,6 +9,7 @@
 #pragma once
 
 #include "rvth.hpp"
+#include "RefFile.hpp"
 
 // Enums
 #include "rvth_enums.h"
@@ -45,10 +46,10 @@ public:
 
 	/**
 	 * Open a Wii or GameCube disc image.
-	 * @param f_img	[in] RefFile*
+	 * @param f_img	[in] RefFile
 	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 	 */
-	int openGcm(RefFile *f_img);
+	int openGcm(const RefFilePtr &f_img);
 
 	/**
 	 * Check for MBR and/or GPT.
@@ -64,7 +65,7 @@ public:
 	 * @param f_img	[in] RefFile*
 	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 	 */
-	int openHDD(RefFile *f_img);
+	int openHDD(const RefFilePtr &f_img);
 
 public:
 	/** Accessors **/
@@ -116,13 +117,7 @@ public:
 
 public:
 	// Reference-counted FILE*
-	RefFile *file;
-
-	// Image type
-	RvtH_ImageType_e imageType;
-
-	// NHCD header status
-	NHCD_Status_e nhcdStatus;
+	RefFilePtr file;
 
 	// NHCD bank table header
 	// NOTE: This will be nullptr for e.g. GCM disc images.
@@ -132,4 +127,10 @@ public:
 	// - RVT-H system or disk image: 8 (usually)
 	// - Standalone disc image: 1
 	std::vector<RvtH_BankEntry> entries;
+
+	// Image type
+	RvtH_ImageType_e imageType;
+
+	// NHCD header status
+	NHCD_Status_e nhcdStatus;
 };

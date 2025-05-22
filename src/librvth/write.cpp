@@ -56,7 +56,7 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 	d_ptr->imageType = RVTH_ImageType_GCM;
 
 	// Attempt to create the file.
-	d_ptr->file = new RefFile(filename, true);
+	d_ptr->file = std::make_shared<RefFile>(filename, true);
 	if (!d_ptr->file->isOpen()) {
 		// Error creating the file.
 		err = d_ptr->file->lastError();
@@ -95,10 +95,7 @@ RvtH::RvtH(const TCHAR *filename, uint32_t lba_len, int *pErr)
 fail:
 	// Failed to create a GCM file.
 	// TODO: Delete it in case it was partially created?
-	if (d_ptr->file) {
-		d_ptr->file->unref();
-		d_ptr->file = nullptr;
-	}
+	d_ptr->file.reset();
 	if (pErr) {
 		*pErr = -err;
 	}

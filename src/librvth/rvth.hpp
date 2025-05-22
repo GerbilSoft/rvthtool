@@ -24,14 +24,6 @@
 #include "rvth_enums.h"
 #include "nhcd_structs.h"
 
-// RefFile class
-#ifdef __cplusplus
-class RefFile;
-#else
-struct RefFile;
-typedef struct RefFile RefFile;
-#endif
-
 // Reader class
 #ifdef __cplusplus
 class Reader;

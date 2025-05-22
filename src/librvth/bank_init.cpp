@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * bank_init.cpp: RvtH_BankEntry initialization functions.                 *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -587,14 +587,14 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 /**
  * Initialize an RVT-H bank entry from an opened HDD image.
  * @param entry			[out] RvtH_BankEntry
- * @param f_img			[in] RefFile*
+ * @param f_img			[in] RefFile
  * @param type			[in] Bank type. (See RvtH_BankType_e.)
  * @param lba_start		[in] Starting LBA.
  * @param lba_len		[in] Length, in LBAs.
  * @param nhcd_timestamp	[in] Timestamp string pointer from the bank table.
  * @return 0 on success; negative POSIX error code on error.
  */
-int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
+int rvth_init_BankEntry(RvtH_BankEntry *entry, const RefFilePtr &f_img,
 	uint8_t type, uint32_t lba_start, uint32_t lba_len,
 	const char *nhcd_timestamp)
 {
@@ -621,7 +621,7 @@ int rvth_init_BankEntry(RvtH_BankEntry *entry, RefFile *f_img,
 
 	// Read the GCN disc header.
 	// TODO: For non-deleted banks, verify the magic number?
-	ret = rvth_disc_header_get(f_img, lba_start, &entry->discHeader, &isDeleted);
+	ret = rvth_disc_header_get(f_img.get(), lba_start, &entry->discHeader, &isDeleted);
 	if (ret < 0) {
 		// Error...
 		// TODO: Mark the bank as invalid?

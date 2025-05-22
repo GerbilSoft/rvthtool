@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * CisoReader.cpp: CISO disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -88,12 +88,12 @@ bool CisoReader::isSupported(const uint8_t *sbuf, size_t size)
  * NOTE: If lba_start == 0 and lba_len == 0, the entire file
  * will be used.
  *
- * @param file		RefFile*.
- * @param lba_start	[in] Starting LBA,
- * @param lba_len	[in] Length, in LBAs.
+ * @param file		RefFile
+ * @param lba_start	[in] Starting LBA
+ * @param lba_len	[in] Length, in LBAs
  * @return Reader*, or NULL on error.
  */
-CisoReader::CisoReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+CisoReader::CisoReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len)
 	: super(file, lba_start, lba_len)
 	, m_real_lba_len(0)
 	, m_block_size_lba(0)
@@ -194,8 +194,7 @@ CisoReader::CisoReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 fail:
 	// Failed to initialize the reader.
 	delete cisoHeader;
-	m_file->unref();
-	m_file = nullptr;
+	m_file.reset();
 	errno = err;
 }
 

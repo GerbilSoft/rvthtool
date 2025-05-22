@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * WbfsReader.cpp: WBFS disc image reader class.                           *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -328,11 +328,11 @@ static off64_t getWbfsDiscSize(const be16_t *wlba_table, const wbfs_disc_t *disc
  * NOTE: If lba_start == 0 and lba_len == 0, the entire file
  * will be used.
  *
- * @param file		RefFile*.
- * @param lba_start	[in] Starting LBA,
- * @param lba_len	[in] Length, in LBAs.
+ * @param file		RefFile
+ * @param lba_start	[in] Starting LBA
+ * @param lba_len	[in] Length, in LBAs
  */
-WbfsReader::WbfsReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+WbfsReader::WbfsReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len)
 	: super(file, lba_start, lba_len)
 	, m_real_lba_len(0)
 	, m_block_size_lba(0)
@@ -373,14 +373,14 @@ WbfsReader::WbfsReader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	m_real_lba_len = lba_len;
 
 	// Read the WBFS header.
-	m_wbfs = readWbfsHeader(file, lba_start);
+	m_wbfs = readWbfsHeader(file.get(), lba_start);
 	if (!m_wbfs) {
 		// Error reading the WBFS header.
 		goto fail;
 	}
 
 	// Open the first disc.
-	m_wbfs_disc = openWbfsDisc(file, lba_start, m_wbfs, 0);
+	m_wbfs_disc = openWbfsDisc(file.get(), lba_start, m_wbfs, 0);
 	if (!m_wbfs_disc) {
 		// Error opening the WBFS disc.
 		goto fail;
@@ -408,8 +408,8 @@ fail:
 		freeWbfsHeader(m_wbfs);
 		m_wbfs = nullptr;
 	}
-	m_file->unref();
-	m_file = nullptr;
+
+	m_file.reset();
 	errno = err;
 	return;
 }

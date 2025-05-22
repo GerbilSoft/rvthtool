@@ -25,12 +25,12 @@ class WbfsReader : public Reader
 		 * NOTE: If lba_start == 0 and lba_len == 0, the entire file
 		 * will be used.
 		 *
-		 * @param file		RefFile*.
-		 * @param lba_start	[in] Starting LBA,
-		 * @param lba_len	[in] Length, in LBAs.
+		 * @param file		RefFile
+		 * @param lba_start	[in] Starting LBA
+		 * @param lba_len	[in] Length, in LBAs
 		 * @return Reader*, or NULL on error.
 		 */
-		WbfsReader(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+		WbfsReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len);
 
 		virtual ~WbfsReader();
 

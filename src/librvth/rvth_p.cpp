@@ -26,7 +26,6 @@
 
 RvtHPrivate::RvtHPrivate(RvtH *q)
 	: q_ptr(q)
-	, file(nullptr)
 	, imageType(RVTH_ImageType_Unknown)
 	, nhcdStatus(NHCD_STATUS_UNKNOWN)
 { }
@@ -38,11 +37,6 @@ RvtHPrivate::~RvtHPrivate()
 	for (RvtH_BankEntry &entry : entries) {
 		delete entry.reader;
 		free(entry.ptbl);
-	}
-
-	// Clear the main file reference.
-	if (file) {
-		file->unref();
 	}
 }
 
@@ -86,7 +80,7 @@ bool RvtHPrivate::isBlockEmpty(const uint8_t *block, unsigned int size)
  * @param f_img	[in] RefFile*
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int RvtHPrivate::openGcm(RefFile *f_img)
+int RvtHPrivate::openGcm(const RefFilePtr &f_img)
 {
 	RvtH_BankEntry *entry;
 	int ret = 0;	// errno or RvtH_Errors
@@ -163,7 +157,7 @@ int RvtHPrivate::openGcm(RefFile *f_img)
 
 	// Initialize the bank entry.
 	// NOTE: Not using rvth_init_BankEntry() here.
-	file = f_img->ref();
+	file = f_img;
 	nhcdStatus = NHCD_STATUS_MISSING;
 	entry = entries.data();
 	entry->lba_start = reader->lba_start();
@@ -204,10 +198,7 @@ int RvtHPrivate::openGcm(RefFile *f_img)
 fail:
 	// Failed to open the disc image.
 	delete reader;
-	if (file) {
-		file->unref();
-		file = nullptr;
-	}
+	file.reset();
 	if (err != 0) {
 		errno = err;
 	}
@@ -297,10 +288,10 @@ int RvtHPrivate::checkMBR(RefFile *f_img, bool *pMBR, bool *pGPT)
 
 /**
  * Open an RVT-H disk image.
- * @param f_img	[in] RefFile*
+ * @param f_img	[in] RefFile
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
-int RvtHPrivate::openHDD(RefFile *f_img)
+int RvtHPrivate::openHDD(const RefFilePtr &f_img)
 {
 	RvtH_BankEntry *rvth_entry;
 	uint32_t bankCount;
@@ -342,7 +333,7 @@ int RvtHPrivate::openHDD(RefFile *f_img)
 
 		// Check for MBR or GPT for better error reporting.
 		bool hasMBR = false, hasGPT = false;
-		ret = checkMBR(f_img, &hasMBR, &hasGPT);
+		ret = checkMBR(f_img.get(), &hasMBR, &hasGPT);
 		if (ret != 0) {
 			// Error checking for MBR or GPT.
 			err = -ret;
@@ -361,7 +352,7 @@ int RvtHPrivate::openHDD(RefFile *f_img)
 		static const unsigned int bankCount_default = 8;
 		entries.resize(bankCount_default);
 
-		file = f_img->ref();
+		file = f_img;
 		rvth_entry = entries.data();
 		lba_start = NHCD_BANK_START_LBA(0, 8);
 		for (unsigned int i = 0; i < bankCount_default; i++, rvth_entry++, lba_start += NHCD_BANK_SIZE_LBA) {
@@ -394,7 +385,7 @@ int RvtHPrivate::openHDD(RefFile *f_img)
 	// Allocate memory for the RvtH_BankEntry objects.
 	entries.resize(bankCount);
 
-	file = f_img->ref();
+	file = f_img;
 	rvth_entry = entries.data();
 	// FIXME: Why cast to uint32_t?
 	addr = (uint32_t)(LBA_TO_BYTES(NHCD_BANKTABLE_ADDRESS_LBA) + NHCD_BLOCK_SIZE);
@@ -479,10 +470,7 @@ int RvtHPrivate::openHDD(RefFile *f_img)
 
 fail:
 	// Failed to open the HDD image.
-	if (file) {
-		file->unref();
-		file = nullptr;
-	}
+	file.reset();
 	if (err != 0) {
 		errno = err;
 	}

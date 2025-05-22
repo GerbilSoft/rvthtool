@@ -20,11 +20,11 @@ class PlainReader : public Reader
 		 * NOTE: If lba_start == 0 and lba_len == 0, the entire file
 		 * will be used.
 		 *
-		 * @param file		RefFile*.
-		 * @param lba_start	[in] Starting LBA,
-		 * @param lba_len	[in] Length, in LBAs.
+		 * @param file		RefFile
+		 * @param lba_start	[in] Starting LBA
+		 * @param lba_len	[in] Length, in LBAs
 		 */
-		PlainReader(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+		PlainReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len);
 
 	private:
 		typedef Reader super;

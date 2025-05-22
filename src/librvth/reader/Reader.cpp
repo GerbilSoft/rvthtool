@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * Reader.cpp: Disc image reader base class.                               *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -23,14 +23,20 @@
 #include <array>
 using std::array;
 
-Reader::Reader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+/**
+ * Reader base class
+ * @param file		RefFile
+ * @param lba_start	[in] Starting LBA
+ * @param lba_len	[in] Length, in LBAs
+ */
+Reader::Reader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len)
 	: m_file(nullptr)
 	, m_lba_start(lba_start)
 	, m_lba_len(lba_len)
 	, m_type(RVTH_ImageType_Unknown)
 {
 	// Validate parameters.
-	assert(file != nullptr);
+	assert((bool)file);
 	assert(lba_start == 0 || lba_len != 0);
 	if (!file || (lba_start > 0 && lba_len == 0)) {
 		// Invalid parameters.
@@ -39,14 +45,7 @@ Reader::Reader(RefFile *file, uint32_t lba_start, uint32_t lba_len)
 	}
 
 	// ref() the file.
-	m_file = file->ref();
-}
-
-Reader::~Reader()
-{
-	if (m_file) {
-		m_file->unref();
-	}
+	m_file = file;
 }
 
 /**
@@ -59,14 +58,18 @@ Reader::~Reader()
  * NOTE: If lba_start == 0 and lba_len == 0, the entire file
  * will be used.
  *
- * @param file		RefFile*.
- * @param lba_start	[in] Starting LBA,
- * @param lba_len	[in] Length, in LBAs.
+ * @param file		RefFile
+ * @param lba_start	[in] Starting LBA
+ * @param lba_len	[in] Length, in LBAs
  * @return Reader*, or NULL on error.
  */
-Reader *Reader::open(RefFile *file, uint32_t lba_start, uint32_t lba_len)
+Reader *Reader::open(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len)
 {
-	assert(file != nullptr);
+	assert((bool)file);
+	if (!file) {
+		return nullptr;
+	}
+
 	if (file->isDevice()) {
 		// This is an RVT-H Reader system.
 		// Only plain images are supported.

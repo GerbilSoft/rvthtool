@@ -19,11 +19,11 @@ class CisoReader : public Reader
 		 * NOTE: If lba_start == 0 and lba_len == 0, the entire file
 		 * will be used.
 		 *
-		 * @param file		RefFile*.
-		 * @param lba_start	[in] Starting LBA,
-		 * @param lba_len	[in] Length, in LBAs.
+		 * @param file		RefFile
+		 * @param lba_start	[in] Starting LBA
+		 * @param lba_len	[in] Length, in LBAs
 		 */
-		CisoReader(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+		CisoReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len);
 
 	private:
 		typedef Reader super;

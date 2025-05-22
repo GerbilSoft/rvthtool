@@ -38,13 +38,12 @@ RvtH::RvtH(const TCHAR *filename, int *pErr)
 	: d_ptr(new RvtHPrivate(this))
 {
 	// Open the disk image.
-	RefFile *const f_img = new RefFile(filename);
+	RefFilePtr f_img = std::make_shared<RefFile>(filename);
 	if (!f_img->isOpen()) {
 		// Could not open the file.
 		if (pErr) {
 			*pErr = -f_img->lastError();
 		}
-		f_img->unref();
 		return;
 	}
 
@@ -76,10 +75,6 @@ RvtH::RvtH(const TCHAR *filename, int *pErr)
 			*pErr = err;
 		}
 	}
-
-	// If the RvtH object was opened, it will have
-	// called f_img->ref() to increment the reference count.
-	f_img->unref();
 }
 
 RvtH::~RvtH()

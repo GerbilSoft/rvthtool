@@ -20,14 +20,14 @@ class Reader
 {
 	protected:
 		/**
-		 * Reader base class.
-		 * @param file		RefFile*.
-		 * @param lba_start	[in] Starting LBA,
-		 * @param lba_len	[in] Length, in LBAs.
+		 * Reader base class
+		 * @param file		RefFile
+		 * @param lba_start	[in] Starting LBA
+		 * @param lba_len	[in] Length, in LBAs
 		 */
-		Reader(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+		Reader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len);
 	public:
-		virtual ~Reader();
+		virtual ~Reader() = default;
 
 	private:
 		DISABLE_COPY(Reader)
@@ -43,12 +43,12 @@ class Reader
 		 * NOTE: If lba_start == 0 and lba_len == 0, the entire file
 		 * will be used.
 		 *
-		 * @param file		RefFile*.
-		 * @param lba_start	[in] Starting LBA,
-		 * @param lba_len	[in] Length, in LBAs.
+		 * @param file		RefFile
+		 * @param lba_start	[in] Starting LBA
+		 * @param lba_len	[in] Length, in LBAs
 		 * @return Reader*, or NULL on error.
 		 */
-		static Reader *open(RefFile *file, uint32_t lba_start, uint32_t lba_len);
+		static Reader *open(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_len);
 
 	public:
 		/**
@@ -128,7 +128,7 @@ class Reader
 		}
 
 	protected:
-		RefFile *m_file;		// Disc image file
+		RefFilePtr m_file;		// Disc image file
 		uint32_t m_lba_start;		// Starting LBA
 		uint32_t m_lba_len;		// Length of image, in LBAs
 		RvtH_ImageType_e m_type;	// Disc image type
