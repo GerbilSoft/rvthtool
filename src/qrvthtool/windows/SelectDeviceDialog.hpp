@@ -98,14 +98,14 @@ protected:
 #endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
 
 	/**
-	 * Native event
+	 * Windows native event handler.
+	 * Used for device add/remove events.
 	 * @param eventType
 	 * @param message
 	 * @param result
 	 * @return
 	 */
-	bool nativeEvent(const QByteArray &eventType, void *message,
-		native_event_result_t *result) final;
+	bool nativeEvent(const QByteArray &eventType, void *message, native_event_result_t *result) final;
 #endif /* _WIN32 */
 
 public:

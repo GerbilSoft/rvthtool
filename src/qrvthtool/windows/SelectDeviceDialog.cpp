@@ -452,14 +452,14 @@ void SelectDeviceDialog::changeEvent(QEvent *event)
 
 #ifdef _WIN32
 /**
- * Native event
+ * Windows native event handler.
+ * Used for device add/remove events.
  * @param eventType
  * @param message
  * @param result
  * @return
  */
-bool SelectDeviceDialog::nativeEvent(const QByteArray &eventType, void *message,
-	native_event_result_t *result)
+bool SelectDeviceDialog::nativeEvent(const QByteArray &eventType, void *message, native_event_result_t *result)
 {
 	// Assuming this is MSG.
 	Q_UNUSED(eventType);

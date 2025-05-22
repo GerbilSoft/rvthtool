@@ -868,18 +868,14 @@ void QRvtHToolWindow::closeEvent(QCloseEvent *event)
 
 #ifdef Q_OS_WIN
 /**
- * Windows message handler.
+ * Windows native event handler.
  * Used for TaskbarButtonManager.
  * @param eventType
  * @param message
  * @param result
  * @return
  */
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, qintptr *result)
-#else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
-bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, long *result)
-#endif /* QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) */
+bool QRvtHToolWindow::nativeEvent(const QByteArray &eventType, void *message, native_event_result_t *result)
 {
 	// Reference: http://nicug.blogspot.com/2011/03/windows-7-taskbar-extensions-in-qt.html
 	Q_D(QRvtHToolWindow);

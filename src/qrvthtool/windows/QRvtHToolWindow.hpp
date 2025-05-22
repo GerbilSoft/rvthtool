@@ -51,12 +51,21 @@ protected:
 	void closeEvent(QCloseEvent *event) final;
 
 #ifdef Q_OS_WIN
-	// Windows message handler. Used for TaskbarButtonManager.
-#  if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-	bool nativeEvent(const QByteArray &eventType, void *message, qintptr *result) final;
-#  else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
-	bool nativeEvent(const QByteArray &eventType, void *message, long *result) final;
-#  endif /* QT_VERSION >= QT_VERSION_CHECK(6, 0, 0) */
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+	typedef qintptr native_event_result_t;
+#else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
+	typedef long native_event_result_t;
+#endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
+
+	/**
+	 * Windows native event handler.
+	 * Used for TaskbarButtonManager.
+	 * @param eventType
+	 * @param message
+	 * @param result
+	 * @return
+	 */
+	bool nativeEvent(const QByteArray &eventType, void *message, native_event_result_t *result) final;
 #endif /* Q_OS_WIN */
 
 protected slots:
