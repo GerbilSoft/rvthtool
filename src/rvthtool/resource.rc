@@ -36,7 +36,7 @@ BEGIN
 			VALUE "FileDescription", "RVT-H Tool\0"
 			VALUE "FileVersion", "rvthtool " Win32_RC_FileVersion "\0"
 			VALUE "InternalName", "rvthtool\0"
-			VALUE "LegalCopyright", "Copyright (c) 2018-2019 by David Korth.\0"
+			VALUE "LegalCopyright", "Copyright (c) 2018-2025 by David Korth.\0"
 			//VALUE "LegalTrademarks", "\0"
 			//VALUE "OriginalFilename", "\0"
 			//VALUE "PrivateBuild", "\0"
