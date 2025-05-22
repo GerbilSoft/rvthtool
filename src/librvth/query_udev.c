@@ -117,9 +117,7 @@ static RvtH_QueryEntry *rvth_parse_udev_device(struct udev_device *dev, int *pEr
 	hw_serial = (unsigned int)strtoul(s_usb_serial, NULL, 10);
 
 	// Is the serial number valid?
-	// - Wired:    10xxxxxx
-	// - Wireless: 20xxxxxx
-	// FIXME: The above might not be accurate, but those are the usual ranges.
+	// FIXME: This might not be accurate...
 	if (hw_serial < 10000000 || hw_serial > 29999999) {
 		// Not a valid serial number.
 		return NULL;

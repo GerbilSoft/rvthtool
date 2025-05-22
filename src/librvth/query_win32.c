@@ -147,8 +147,7 @@ static RvtH_QueryEntry *rvth_parse_devinst(DWORD devInst, int *pErr)
 		return NULL;
 
 	// Is the serial number valid?
-	// - Wired:    10xxxxxx
-	// - Wireless: 20xxxxxx
+	// FIXME: This might not be accurate...
 	if (hw_serial < 10000000 || hw_serial > 29999999) {
 		// Not a valid serial number.
 		return NULL;

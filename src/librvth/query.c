@@ -32,6 +32,7 @@ TCHAR *rvth_create_full_serial_number(unsigned int serial)
 	if (serial < 10000000 || serial > 29999999) {
 		// Serial number is out of range.
 		// Print it as-is.
+		// FIXME: This might not be accurate...
 		_sntprintf(buf, sizeof(buf), _T("%08u"), serial);
 		return _tcsdup(buf);
 	}
