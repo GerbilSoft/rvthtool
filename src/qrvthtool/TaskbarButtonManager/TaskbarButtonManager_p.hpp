@@ -12,21 +12,21 @@
 
 class TaskbarButtonManagerPrivate
 {
-	public:
-		explicit TaskbarButtonManagerPrivate(TaskbarButtonManager *const q);
-		virtual ~TaskbarButtonManagerPrivate();
+public:
+	explicit TaskbarButtonManagerPrivate(TaskbarButtonManager *const q);
+	virtual ~TaskbarButtonManagerPrivate();
 
-	protected:
-		TaskbarButtonManager *const q_ptr;
-		Q_DECLARE_PUBLIC(TaskbarButtonManager)
-	private:
-		Q_DISABLE_COPY(TaskbarButtonManagerPrivate)
+protected:
+	TaskbarButtonManager *const q_ptr;
+	Q_DECLARE_PUBLIC(TaskbarButtonManager)
+private:
+	Q_DISABLE_COPY(TaskbarButtonManagerPrivate)
 
-	public:
-		// Window.
-		QWidget *window;
+public:
+	// Window
+	QWidget *window;
 
-		// Status elements.
-		int progressBarValue;	// Current progress. (-1 for no bar)
-		int progressBarMax;	// Maximum progress.
+	// Status elements
+	int progressBarValue;	// Current progress. (-1 for no bar)
+	int progressBarMax;	// Maximum progress.
 };

@@ -16,20 +16,20 @@ class QFocusEvent;
 
 class QTreeViewOpt : public QTreeView
 {
-	Q_OBJECT
-	typedef QTreeView super;
+Q_OBJECT
+typedef QTreeView super;
 
-	public:
-		explicit QTreeViewOpt(QWidget *parent = nullptr);
+public:
+	explicit QTreeViewOpt(QWidget *parent = nullptr);
 
-	private:
-		Q_DISABLE_COPY(QTreeViewOpt);
+private:
+	Q_DISABLE_COPY(QTreeViewOpt);
 
-	public:
-		void dataChanged(const QModelIndex &topLeft,
-			const QModelIndex &bottomRight,
-			const QVector<int> &roles = QVector<int>()) final;
+public:
+	void dataChanged(const QModelIndex &topLeft,
+		const QModelIndex &bottomRight,
+		const QVector<int> &roles = QVector<int>()) final;
 
-	protected slots:
-		void showColumnContextMenu(const QPoint &point);
+protected slots:
+	void showColumnContextMenu(const QPoint &point);
 };

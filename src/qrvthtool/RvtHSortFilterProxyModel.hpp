@@ -12,16 +12,16 @@
 
 class RvtHSortFilterProxyModel : public QSortFilterProxyModel
 {
-	Q_OBJECT
-	typedef QSortFilterProxyModel super;
+Q_OBJECT
+typedef QSortFilterProxyModel super;
 
-	public:
-		explicit RvtHSortFilterProxyModel(QObject *parent = nullptr);
+public:
+	explicit RvtHSortFilterProxyModel(QObject *parent = nullptr);
 
-	private:
-		Q_DISABLE_COPY(RvtHSortFilterProxyModel)
+private:
+	Q_DISABLE_COPY(RvtHSortFilterProxyModel)
 
-	public:
-		bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const final;
-		bool lessThan(const QModelIndex &left, const QModelIndex &right) const final;
+public:
+	bool filterAcceptsRow(int source_row, const QModelIndex &source_parent) const final;
+	bool lessThan(const QModelIndex &left, const QModelIndex &right) const final;
 };

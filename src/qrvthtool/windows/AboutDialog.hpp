@@ -16,20 +16,20 @@ class QWidget;
 class AboutDialogPrivate;
 class AboutDialog : public QDialog
 {
-	Q_OBJECT
-	typedef QDialog super;
+Q_OBJECT
+typedef QDialog super;
 	
-	public:
-		explicit AboutDialog(QWidget *parent = nullptr);
-		virtual ~AboutDialog();
+public:
+	explicit AboutDialog(QWidget *parent = nullptr);
+	virtual ~AboutDialog();
 
-	protected:
-		AboutDialogPrivate *const d_ptr;
-		Q_DECLARE_PRIVATE(AboutDialog)
-	private:
-		Q_DISABLE_COPY(AboutDialog)
+protected:
+	AboutDialogPrivate *const d_ptr;
+	Q_DECLARE_PRIVATE(AboutDialog)
+private:
+	Q_DISABLE_COPY(AboutDialog)
 
-	protected:
-		// State change event. (Used for switching the UI language at runtime.)
-		void changeEvent(QEvent *event) final;
+protected:
+	// State change event. (Used for switching the UI language at runtime.)
+	void changeEvent(QEvent *event) final;
 };

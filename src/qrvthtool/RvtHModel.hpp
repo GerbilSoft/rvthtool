@@ -16,86 +16,86 @@ class RvtH;
 class RvtHModelPrivate;
 class RvtHModel : public QAbstractListModel
 {
-	Q_OBJECT
-	typedef QAbstractListModel super;
+Q_OBJECT
+typedef QAbstractListModel super;
 	
-	public:
-		explicit RvtHModel(QObject *parent = nullptr);
-		virtual ~RvtHModel();
+public:
+	explicit RvtHModel(QObject *parent = nullptr);
+	virtual ~RvtHModel();
 
-	protected:
-		RvtHModelPrivate *const d_ptr;
-		Q_DECLARE_PRIVATE(RvtHModel)
-	private:
-		Q_DISABLE_COPY(RvtHModel)
+protected:
+	RvtHModelPrivate *const d_ptr;
+	Q_DECLARE_PRIVATE(RvtHModel)
+private:
+	Q_DISABLE_COPY(RvtHModel)
 
-	public:
-		enum Column {
-			COL_BANKNUM,		// Bank #
-			COL_TYPE,		// Type (HW)
-			COL_TITLE,		// Title
-			COL_GAMEID,		// Game ID
-			COL_DISCNUM,		// Disc #
-			COL_REVISION,		// Revision
-			COL_REGION,		// Region
-			COL_IOS_VERSION,	// IOS version (Wii only)
-			
-			COL_MAX
-		};
+public:
+	enum Column {
+		COL_BANKNUM,		// Bank #
+		COL_TYPE,		// Type (HW)
+		COL_TITLE,		// Title
+		COL_GAMEID,		// Game ID
+		COL_DISCNUM,		// Disc #
+		COL_REVISION,		// Revision
+		COL_REGION,		// Region
+		COL_IOS_VERSION,	// IOS version (Wii only)
 
-		// Icon IDs.
-		enum IconID {
-			ICON_GCN,	// GameCube (retail)
-			ICON_NR,	// NR Reader (debug)
-			ICON_WII,	// Wii (retail)
-			ICON_RVTR,	// RVT-R Reader (debug)
-			ICON_RVTH,	// RVT-H Reader (debug)
+		COL_MAX
+	};
 
-			ICON_MAX
-		};
+	// Icon IDs
+	enum IconID {
+		ICON_GCN,	// GameCube (retail)
+		ICON_NR,	// NR Reader (debug)
+		ICON_WII,	// Wii (retail)
+		ICON_RVTR,	// RVT-R Reader (debug)
+		ICON_RVTH,	// RVT-H Reader (debug)
 
-		// Dual-layer role.
-		// If true, this is a Wii DL image and should be
-		// represented as taking up two banks.
-		static const int DualLayerRole = Qt::UserRole;
+		ICON_MAX
+	};
 
-		// Qt Model/View interface.
-		int rowCount(const QModelIndex& parent = QModelIndex()) const final;
-		int columnCount(const QModelIndex& parent = QModelIndex()) const final;
+	// Dual-layer role.
+	// If true, this is a Wii DL image and should be
+	// represented as taking up two banks.
+	static const int DualLayerRole = Qt::UserRole;
 
-		QVariant data(const QModelIndex& index, int role) const final;
-		QVariant headerData(int section, Qt::Orientation orientation, int role) const final;
+	// Qt Model/View interface.
+	int rowCount(const QModelIndex& parent = QModelIndex()) const final;
+	int columnCount(const QModelIndex& parent = QModelIndex()) const final;
 
-		/**
-		 * Set the RVT-H Reader disk image to use in this model.
-		 * @param rvth RVT-H Reader disk image.
-		 */
-		void setRvtH(RvtH *rvth);
+	QVariant data(const QModelIndex& index, int role) const final;
+	QVariant headerData(int section, Qt::Orientation orientation, int role) const final;
 
-		/**
-		 * Load an icon.
-		 * @param id Icon ID.
-		 * @return Icon.
-		 */
-		static QIcon getIcon(IconID id);
+	/**
+	 * Set the RVT-H Reader disk image to use in this model.
+	 * @param rvth RVT-H Reader disk image
+	 */
+	void setRvtH(RvtH *rvth);
 
-		/**
-		 * Get the icon ID for the first bank.
-		 * Used for the application icon.
-		 * @return Icon ID, or ICON_MAX on error.
-		 */
-		IconID iconIDForBank1(void) const;
+	/**
+	 * Load an icon.
+	 * @param id Icon ID
+	 * @return Icon
+	 */
+	static QIcon getIcon(IconID id);
 
-	private slots:
-		/**
-		 * The system theme has changed.
-		 */
-		void themeChanged_slot(void);
+	/**
+	 * Get the icon ID for the first bank.
+	 * Used for the application icon.
+	 * @return Icon ID, or ICON_MAX on error.
+	 */
+	IconID iconIDForBank1(void) const;
 
-	public slots:
-		/**
-		 * Force the RVT-H model to update a bank.
-		 * @param bank Bank number.
-		 */
-		void forceBankUpdate(unsigned int bank);
+private slots:
+	/**
+	 * The system theme has changed.
+	 */
+	void themeChanged_slot(void);
+
+public slots:
+	/**
+	 * Force the RVT-H model to update a bank.
+	 * @param bank Bank number
+	 */
+	void forceBankUpdate(unsigned int bank);
 };

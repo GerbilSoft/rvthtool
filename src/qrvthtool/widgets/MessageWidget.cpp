@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * MessageWidget.hpp: Message widget.                                      *
  *                                                                         *
- * Copyright (c) 2014-2023 by David Korth.                                 *
+ * Copyright (c) 2014-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -27,56 +27,56 @@
 
 class MessageWidgetPrivate
 {
-	public:
-		explicit MessageWidgetPrivate(MessageWidget *q);
-		~MessageWidgetPrivate();
+public:
+	explicit MessageWidgetPrivate(MessageWidget *q);
+	~MessageWidgetPrivate();
 
-	protected:
-		MessageWidget *const q_ptr;
-		Q_DECLARE_PUBLIC(MessageWidget)
-	private:
-		Q_DISABLE_COPY(MessageWidgetPrivate)
-
-	public:
-		struct Ui_MessageWidget {
-			QHBoxLayout *hboxMain;
-			QFrame *content;
-			QHBoxLayout *hboxFrame;
-			QLabel *lblIcon;
-			QLabel *lblMessage;
-			QToolButton *btnDismiss;
-
-			void setupUi(QWidget *MessageWidget);
-		};
-		Ui_MessageWidget ui;
-
-		/**
-		 * Set the icon.
-		 * @param icon Icon to set
-		 */
-		void setIcon(MessageWidget::MsgIcon icon);
-
-		/*
-		 * Calculate the best height for the widget.
-		 * @return Best height
-		 */
-		int calcBestHeight(void) const;
-
-	public:
-		// Colors
-		// TODO: Use system colors on KDE?
-		static const QRgb colorCritical = 0xEE4444;
-		static const QRgb colorQuestion = 0x66EE66;
-		static const QRgb colorWarning = 0xEECC66;
-		static const QRgb colorInformation = 0x66CCEE;
+protected:
+	MessageWidget *const q_ptr;
+	Q_DECLARE_PUBLIC(MessageWidget)
+private:
+	Q_DISABLE_COPY(MessageWidgetPrivate)
 
 public:
-		QTimer* tmrTimeout;				// Message timeout
-		QTimeLine* timeLine;			// Animation timeline
-		MessageWidget::MsgIcon icon;	// Icon
-		static const int iconSz = 22;	// Icon size
-		bool timeout;					// True if message was dismissed via timeout.
-		bool animateOnShow;				// Animate the widget on show?
+	struct Ui_MessageWidget {
+		QHBoxLayout *hboxMain;
+		QFrame *content;
+		QHBoxLayout *hboxFrame;
+		QLabel *lblIcon;
+		QLabel *lblMessage;
+		QToolButton *btnDismiss;
+
+		void setupUi(QWidget *MessageWidget);
+	};
+	Ui_MessageWidget ui;
+
+	/**
+	 * Set the icon.
+	 * @param icon Icon to set
+	 */
+	void setIcon(MessageWidget::MsgIcon icon);
+
+	/*
+	 * Calculate the best height for the widget.
+	 * @return Best height
+	 */
+	int calcBestHeight(void) const;
+
+public:
+	// Colors
+	// TODO: Use system colors on KDE?
+	static const QRgb colorCritical = 0xEE4444;
+	static const QRgb colorQuestion = 0x66EE66;
+	static const QRgb colorWarning = 0xEECC66;
+	static const QRgb colorInformation = 0x66CCEE;
+
+public:
+	QTimer* tmrTimeout;		// Message timeout
+	QTimeLine* timeLine;		// Animation timeline
+	MessageWidget::MsgIcon icon;	// Icon
+	static const int iconSz = 22;	// Icon size
+	bool timeout;			// True if message was dismissed via timeout.
+	bool animateOnShow;		// Animate the widget on show?
 };
 
 MessageWidgetPrivate::MessageWidgetPrivate(MessageWidget *q)
@@ -323,9 +323,9 @@ void MessageWidget::showEvent(QShowEvent *event)
 
 /**
  * Show a message.
- * @param msg Message text. (supports Qt RichText formatting)
- * @param icon Icon.
- * @param timeout Timeout, in milliseconds. (0 for no timeout)
+ * @param msg Message text (supports Qt RichText formatting)
+ * @param icon Icon
+ * @param timeout Timeout, in milliseconds (0 for no timeout)
  * @param closeOnDestroy Close the message when the specified QObject is destroyed.
  */
 void MessageWidget::showMessage(const QString &msg, MsgIcon icon, int timeout, QObject *closeOnDestroy)
@@ -397,7 +397,7 @@ void MessageWidget::tmrTimeout_timeout(void)
 
 /**
  * Animation timeline has changed.
- * @param value Timeline value.
+ * @param value Timeline value
  */
 void MessageWidget::timeLineChanged_slot(qreal value)
 {

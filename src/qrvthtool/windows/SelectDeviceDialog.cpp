@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * SelectDeviceDialog.hpp: Select an RVT-H Reader device.                  *
  *                                                                         *
- * Copyright (c) 2018-2023 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -35,71 +35,71 @@
 #include "ui_SelectDeviceDialog.h"
 class SelectDeviceDialogPrivate
 {
-	public:
-		explicit SelectDeviceDialogPrivate(SelectDeviceDialog *q);
-		~SelectDeviceDialogPrivate();
+public:
+	explicit SelectDeviceDialogPrivate(SelectDeviceDialog *q);
+	~SelectDeviceDialogPrivate();
 
-	protected:
-		SelectDeviceDialog *const q_ptr;
-		Q_DECLARE_PUBLIC(SelectDeviceDialog)
-	private:
-		Q_DISABLE_COPY(SelectDeviceDialogPrivate)
+protected:
+	SelectDeviceDialog *const q_ptr;
+	Q_DECLARE_PUBLIC(SelectDeviceDialog)
+private:
+	Q_DISABLE_COPY(SelectDeviceDialogPrivate)
 
-	public:
-		Ui::SelectDeviceDialog ui;
+public:
+	Ui::SelectDeviceDialog ui;
 
-		// RVT-H Reader icon
-		QIcon rvthReaderIcon;
+	// RVT-H Reader icon
+	QIcon rvthReaderIcon;
 
-		// Selected device
-		DeviceQueryData *sel_device;
+	// Selected device
+	DeviceQueryData *sel_device;
 
-		// Device information
-		QList<DeviceQueryData> lstQueryData;
+	// Device information
+	QList<DeviceQueryData> lstQueryData;
 
-		// Device listener
-		RvtH_ListenForDevices *listener;
+	// Device listener
+	RvtH_ListenForDevices *listener;
 #ifdef _WIN32
-		HDEVNOTIFY hDeviceNotify;
+	HDEVNOTIFY hDeviceNotify;
 #endif /* _WIN32 */
 
-	private:
-		static inline int calc_frac_part(int64_t size, int64_t mask);
+private:
+	static inline int calc_frac_part(int64_t size, int64_t mask);
 
-		/**
-		* Format a block device size.
-		* @param size	[in] Block device size.
-		* @return Formatted block device size.
-		*/
-		static QString format_size(int64_t size);
+	/**
+	* Format a block device size.
+	* @param size	[in] Block device size
+	* @return Formatted block device size.
+	*/
+	static QString format_size(int64_t size);
 
-		/**
-		 * Add a device to the list.
-		 * @param queryData DeviceQueryData
-		 */
-		void addDevice(const DeviceQueryData &queryData);
+	/**
+	 * Add a device to the list.
+	 * @param queryData DeviceQueryData
+	 */
+	void addDevice(const DeviceQueryData &queryData);
 
-	public:
-		// Refresh the device list.
-		void refreshDeviceList(void);
+public:
+	// Refresh the device list.
+	void refreshDeviceList(void);
 
-		/**
-		 * RvtH device listener callback.
-		 * @param listener Listener
-		 * @param entry Device that was added/removed (if removed, only contains device name)
-		 * @param state Device state (see RvtH_Listen_State_e)
-		 * @param userdata User data specified on initialization
-		 *
-		 * NOTE: query's data is not guaranteed to remain valid once the
-		 * callback function returns. Copy everything out immediately!
-		 *
-		 * NOTE: On RVTH_LISTEN_DISCONNECTED, only query->device_name is set.
-		 * udev doesn't seem to let us get the correct USB parent device, so
-		 * the callback function will need to verify that query->device_name
-		 * is a previously-received RVT-H Reader device.
-		 */
-		static void rvth_listener_callback(RvtH_ListenForDevices *listener,
-			const RvtH_QueryEntry *entry, RvtH_Listen_State_e state, void *userdata);
+	/**
+	 * RvtH device listener callback.
+	 * @param listener Listener
+	 * @param entry Device that was added/removed (if removed, only contains device name)
+	 * @param state Device state (see RvtH_Listen_State_e)
+	 * @param userdata User data specified on initialization
+	 *
+	 * NOTE: query's data is not guaranteed to remain valid once the
+	 * callback function returns. Copy everything out immediately!
+	 *
+	 * NOTE: On RVTH_LISTEN_DISCONNECTED, only query->device_name is set.
+	 * udev doesn't seem to let us get the correct USB parent device, so
+	 * the callback function will need to verify that query->device_name
+	 * is a previously-received RVT-H Reader device.
+	 */
+	static void rvth_listener_callback(RvtH_ListenForDevices *listener,
+		const RvtH_QueryEntry *entry, RvtH_Listen_State_e state, void *userdata);
 };
 
 SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
@@ -144,7 +144,7 @@ inline int SelectDeviceDialogPrivate::calc_frac_part(int64_t size, int64_t mask)
 
 /**
  * Format a block device size.
- * @param size	[in] Block device size.
+ * @param size	[in] Block device size
  * @return Formatted block device size.
  */
 QString SelectDeviceDialogPrivate::format_size(int64_t size)

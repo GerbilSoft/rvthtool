@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * UnityLauncher.cpp: Unity Launcher implementation.                       *
  *                                                                         *
- * Copyright (c) 2013-2023 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -26,36 +26,38 @@
 #include "TaskbarButtonManager_p.hpp"
 class UnityLauncherPrivate : public TaskbarButtonManagerPrivate
 {
-	public:
-		explicit UnityLauncherPrivate(UnityLauncher *const q)
-			: super(q) { }
+public:
+	explicit UnityLauncherPrivate(UnityLauncher *const q)
+		: super(q)
+	{ }
 
-	private:
-		typedef TaskbarButtonManagerPrivate super;
-		Q_DECLARE_PUBLIC(UnityLauncher)
-		Q_DISABLE_COPY(UnityLauncherPrivate)
+private:
+	typedef TaskbarButtonManagerPrivate super;
+	Q_DECLARE_PUBLIC(UnityLauncher)
+	Q_DISABLE_COPY(UnityLauncherPrivate)
 
-	public:
-		static inline void sendMessage(const QVariantMap &map)
-		{
-			QDBusMessage message = QDBusMessage::createSignal(
-				QStringLiteral("/qrvthtool"),
-				QStringLiteral("com.canonical.Unity.LauncherEntry"),
-				QStringLiteral("Update"));
-			QVariantList args;
-			args << QStringLiteral("application://" DESKTOP_FILENAME) << map;
-			message.setArguments(args);
-			if (!QDBusConnection::sessionBus().send(message))
-				qWarning("Unable to send message");
+public:
+	static inline void sendMessage(const QVariantMap &map)
+	{
+		QDBusMessage message = QDBusMessage::createSignal(
+			QStringLiteral("/qrvthtool"),
+			QStringLiteral("com.canonical.Unity.LauncherEntry"),
+			QStringLiteral("Update"));
+		QVariantList args;
+		args << QStringLiteral("application://" DESKTOP_FILENAME) << map;
+		message.setArguments(args);
+		if (!QDBusConnection::sessionBus().send(message)) {
+			qWarning("Unable to send message");
 		}
+	}
 
-		template<typename T>
-		static void sendMessage(const char *name, const T &value)
-		{
-			QVariantMap map;
-			map.insert(QLatin1String(name), value);
-			sendMessage(map);
-		}
+	template<typename T>
+	static void sendMessage(const char *name, const T &value)
+	{
+		QVariantMap map;
+		map.insert(QLatin1String(name), value);
+		sendMessage(map);
+	}
 };
 
 /** UnityLauncher **/
@@ -84,7 +86,7 @@ bool UnityLauncher::IsUsable(void)
  *
  * TODO: Make a separate protected function that setWindow() calls?
  *
- * @param window Window.
+ * @param window Window
  */
 void UnityLauncher::setWindow(QWidget *window)
 {

@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * LanguageMenu.cpp: QMenu subclass for selecting a UI language.           *
  *                                                                         *
- * Copyright (c) 2012-2023 by David Korth.                                 *
+ * Copyright (c) 2012-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -40,43 +40,43 @@ namespace Qt {
 
 class LanguageMenuPrivate
 {
-	public:
-		explicit LanguageMenuPrivate(LanguageMenu *q);
+public:
+	explicit LanguageMenuPrivate(LanguageMenu *q);
 
-	private:
-		LanguageMenu *const q_ptr;
-		Q_DECLARE_PUBLIC(LanguageMenu)
-		Q_DISABLE_COPY(LanguageMenuPrivate)
+private:
+	LanguageMenu *const q_ptr;
+	Q_DECLARE_PUBLIC(LanguageMenu)
+	Q_DISABLE_COPY(LanguageMenuPrivate)
 
-	public:
-		// "System Default" language.
-		QAction *actLanguageSysDefault;
-		// Key: Locale ID; value: QAction
-		QHash<QString, QAction*> hashActions;
+public:
+	// "System Default" language
+	QAction *actLanguageSysDefault;
+	// Key: Locale ID; value: QAction
+	QHash<QString, QAction*> hashActions;
 
-		// Action group.
-		QActionGroup *actgrp;
+	// Action group
+	QActionGroup *actgrp;
 
-		// Current language. (locale tag, e.g. "en_US")
-		// If empty, we're using the System Default language.
-		QString locale;
+	// Current language (locale tag, e.g. "en_US")
+	// If empty, we're using the System Default language.
+	QString locale;
 
-		/**
-		 * Get an icon for a given locale.
-		 * @param locale Locale tag, e.g. "en_US".
-		 * @return Icon, or null QIcon if not found.
-		 */
-		static QIcon iconForLocale(const QString &locale);
+	/**
+	 * Get an icon for a given locale.
+	 * @param locale Locale tag, e.g. "en_US".
+	 * @return Icon, or null QIcon if not found.
+	 */
+	static QIcon iconForLocale(const QString &locale);
 
-		/**
-		 * Clear the Language Menu.
-		 */
-		void clear(void);
+	/**
+	 * Clear the Language Menu.
+	 */
+	void clear(void);
 
-		/**
-		 * Retranslate the "System Default" language action.
-		 */
-		void retranslateSystemDefault(void);
+	/**
+	 * Retranslate the "System Default" language action.
+	 */
+	void retranslateSystemDefault(void);
 };
 
 LanguageMenuPrivate::LanguageMenuPrivate(LanguageMenu *q)

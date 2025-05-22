@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * DockManager.hpp: DockManager D-Bus implementation.                      *
  *                                                                         *
- * Copyright (c) 2013-2023 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -30,44 +30,44 @@
 #include "TaskbarButtonManager_p.hpp"
 class DockManagerPrivate : public TaskbarButtonManagerPrivate
 {
-	public:
-		explicit DockManagerPrivate(DockManager *const q);
-		virtual ~DockManagerPrivate();
+public:
+	explicit DockManagerPrivate(DockManager *const q);
+	virtual ~DockManagerPrivate();
 
-	private:
-		typedef TaskbarButtonManagerPrivate super;
-		Q_DECLARE_PUBLIC(DockManager)
-		Q_DISABLE_COPY(DockManagerPrivate)
+private:
+	typedef TaskbarButtonManagerPrivate super;
+	Q_DECLARE_PUBLIC(DockManager)
+	Q_DISABLE_COPY(DockManagerPrivate)
 
-	public:
-		/**
-		 * Close all DockManager connections.
-		 */
-		void close(void);
+public:
+	/**
+	 * Close all DockManager connections.
+	 */
+	void close(void);
 
-		/**
-		 * Get the DockManager interface.
-		 * @param parent Parent for the DockManager interface object.
-		 * @return DockManager interface, or nullptr on error.
-		 */
-		static net::launchpad::DockManager *GetDockManagerInterface(QObject *parent = 0);
+	/**
+	 * Get the DockManager interface.
+	 * @param parent Parent for the DockManager interface object.
+	 * @return DockManager interface, or nullptr on error.
+	 */
+	static net::launchpad::DockManager *GetDockManagerInterface(QObject *parent = 0);
 
-		/**
-		 * Connect to the DockManager.
-		 * @return 0 on success; non-zero on error.
-		 */
-		int connectToDockManager(void);
+	/**
+	 * Connect to the DockManager.
+	 * @return 0 on success; non-zero on error.
+	 */
+	int connectToDockManager(void);
 
-		/**
-		 * Update the DockItem status.
-		 * DockItem must be connected.
-		 */
-		void update(void);
+	/**
+	 * Update the DockItem status.
+	 * DockItem must be connected.
+	 */
+	void update(void);
 
-	private:
-		// DockManager.
-		net::launchpad::DockManager *ifDockManager;
-		net::launchpad::DockItem *ifDockItem;
+private:
+	// DockManager
+	net::launchpad::DockManager *ifDockManager;
+	net::launchpad::DockItem *ifDockItem;
 };
 
 DockManagerPrivate::DockManagerPrivate(DockManager *const q)
@@ -242,7 +242,7 @@ bool DockManager::IsUsable(void)
  *
  * TODO: Make a separate protected function that setWindow() calls?
  *
- * @param window Window.
+ * @param window Window
  */
 void DockManager::setWindow(QWidget *window)
 {

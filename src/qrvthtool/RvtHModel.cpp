@@ -29,67 +29,67 @@ using std::array;
 
 class RvtHModelPrivate
 {
-	public:
-		explicit RvtHModelPrivate(RvtHModel *q);
+public:
+	explicit RvtHModelPrivate(RvtHModel *q);
 
-	protected:
-		RvtHModel *const q_ptr;
-		Q_DECLARE_PUBLIC(RvtHModel)
-	private:
-		Q_DISABLE_COPY(RvtHModelPrivate)
+protected:
+	RvtHModel *const q_ptr;
+	Q_DECLARE_PUBLIC(RvtHModel)
+private:
+	Q_DISABLE_COPY(RvtHModelPrivate)
 
-	public:
-		RvtH *rvth;
+public:
+	RvtH *rvth;
 
-		// Style variables.
-		struct style_t {
-			/**
-			 * Initialize the style variables.
-			 */
-			void init(void);
-
-			// Background colors for "deleted" banks.
-			QBrush brush_lostFile;
-			QBrush brush_lostFile_alt;
-
-			// Monosapced font.
-			QFont fntMonospace;
-		};
-		style_t style;
-
+	// Style variables.
+	struct style_t {
 		/**
-		 * Load an icon.
-		 * @param id Icon ID.
-		 * @return Icon.
+		 * Initialize the style variables.
 		 */
-		static QIcon getIcon(RvtHModel::IconID id);
+		void init(void);
 
-	private:
-		/**
-		 * Load an icon from the Qt resources.
-		 * @param dir Base directory.
-		 * @param name Icon name.
-		 */
-		static QIcon loadIcon(const QString &dir, const QString &name);
+		// Background colors for "deleted" banks.
+		QBrush brush_lostFile;
+		QBrush brush_lostFile_alt;
 
-		// Icons for COL_TYPE.
-		// TODO: QMutexLocker?
-		static QIcon ms_icons[RvtHModel::ICON_MAX];
+		// Monosapced font.
+		QFont fntMonospace;
+	};
+	style_t style;
 
-	public:
-		/**
-		 * Get the icon ID for the specified bank.
-		 * @param bank Bank number.
-		 * @return RvtHModel::IconID, or RvtHModel::ICON_MAX on error.
-		 */
-		RvtHModel::IconID iconIDForBank(unsigned int bank) const;
+	/**
+	 * Load an icon.
+	 * @param id Icon ID
+	 * @return Icon
+	 */
+	static QIcon getIcon(RvtHModel::IconID id);
 
-		/**
-		 * Get the icon for the specified bank.
-		 * @param bank Bank number.
-		 * @return QIcon.
-		 */
-		QIcon iconForBank(unsigned int bank) const;
+private:
+	/**
+	 * Load an icon from the Qt resources.
+	 * @param dir Base directory
+	 * @param name Icon name
+	 */
+	static QIcon loadIcon(const QString &dir, const QString &name);
+
+	// Icons for COL_TYPE.
+	// TODO: QMutexLocker?
+	static QIcon ms_icons[RvtHModel::ICON_MAX];
+
+public:
+	/**
+	 * Get the icon ID for the specified bank.
+	 * @param bank Bank number
+	 * @return RvtHModel::IconID, or RvtHModel::ICON_MAX on error.
+	 */
+	RvtHModel::IconID iconIDForBank(unsigned int bank) const;
+
+	/**
+	 * Get the icon for the specified bank.
+	 * @param bank Bank number
+	 * @return QIcon
+	 */
+	QIcon iconForBank(unsigned int bank) const;
 };
 
 /** RvtHModelPrivate **/
@@ -144,8 +144,8 @@ void RvtHModelPrivate::style_t::init(void)
 
 /**
  * Load an icon.
- * @param id Icon ID.
- * @return Icon.
+ * @param id Icon ID
+ * @return Icon
  */
 QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
 {
@@ -169,8 +169,8 @@ QIcon RvtHModelPrivate::getIcon(RvtHModel::IconID id)
 
 /**
  * Load an icon from the Qt resources.
- * @param dir Base directory.
- * @param name Icon name.
+ * @param dir Base directory
+ * @param name Icon name
  */
 QIcon RvtHModelPrivate::loadIcon(const QString &dir, const QString &name)
 {
@@ -192,7 +192,7 @@ QIcon RvtHModelPrivate::loadIcon(const QString &dir, const QString &name)
 
 /**
  * Get the icon ID for the specified bank.
- * @param bank Bank number.
+ * @param bank Bank number
  * @return RvtHModel::IconID, or RvtHModel::ICON_MAX on error.
  */
 RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
@@ -275,8 +275,8 @@ RvtHModel::IconID RvtHModelPrivate::iconIDForBank(unsigned int bank) const
 
 /**
  * Get the icon for the specified bank.
- * @param bank Bank number.
- * @return QIcon.
+ * @param bank Bank number
+ * @return QIcon
  */
 QIcon RvtHModelPrivate::iconForBank(unsigned int bank) const
 {

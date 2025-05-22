@@ -2,7 +2,7 @@
  * RVT-H Tool (libwiicrypto/tests)                                         *
  * CertVerifyTest.cpp: Certificate verification test.                      *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -27,18 +27,18 @@ namespace LibWiiCrypto { namespace Tests {
 
 class CertVerifyTest : public ::testing::TestWithParam<RVL_Cert_Issuer>
 {
-	protected:
-		CertVerifyTest() { }
+protected:
+	CertVerifyTest() = default;
 
-	public:
-		/** Test case parameters. **/
+public:
+	/** Test case parameters **/
 
-		/**
-		 * Test case suffix generator.
-		 * @param info Test parameter information.
-		 * @return Test case suffix.
-		 */
-		static string test_case_suffix_generator(const ::testing::TestParamInfo<RVL_Cert_Issuer> &info);
+	/**
+	 * Test case suffix generator.
+	 * @param info Test parameter information.
+	 * @return Test case suffix.
+	 */
+	static string test_case_suffix_generator(const ::testing::TestParamInfo<RVL_Cert_Issuer> &info);
 };
 
 /**

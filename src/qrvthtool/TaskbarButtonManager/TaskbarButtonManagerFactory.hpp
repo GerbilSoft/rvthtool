@@ -15,17 +15,17 @@ class QObject;
 class TaskbarButtonManager;
 class TaskbarButtonManagerFactory
 {
-	private:
-		TaskbarButtonManagerFactory();
-		~TaskbarButtonManagerFactory();
-	private:
-		Q_DISABLE_COPY(TaskbarButtonManagerFactory)
+private:
+	TaskbarButtonManagerFactory();
+	~TaskbarButtonManagerFactory();
+private:
+	Q_DISABLE_COPY(TaskbarButtonManagerFactory)
 
-	public:
-		/**
-		 * Create a TaskbarButtonManager.
-		 * @param parent Parent object.
-		 * @return System-specific TaskbarButtonManager, or nullptr on error.
-		 */
-		static TaskbarButtonManager *createManager(QObject *parent = nullptr);
+public:
+	/**
+	 * Create a TaskbarButtonManager.
+	 * @param parent Parent object.
+	 * @return System-specific TaskbarButtonManager, or nullptr on error.
+	 */
+	static TaskbarButtonManager *createManager(QObject *parent = nullptr);
 };

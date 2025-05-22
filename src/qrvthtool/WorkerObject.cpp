@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * WorkerObject.cpp: Worker object for extract/import/etc.                 *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -22,50 +22,51 @@
 
 class WorkerObjectPrivate
 {
-	public:
-		explicit WorkerObjectPrivate(WorkerObject *q)
-			: q_ptr(q)
-			, rvth(nullptr)
-			, bank(~0U)
-			, flags(0U)
-			, recryption_key(-1)
-			, cancel(false) { }
+public:
+	explicit WorkerObjectPrivate(WorkerObject *q)
+		: q_ptr(q)
+		, rvth(nullptr)
+		, bank(~0U)
+		, flags(0U)
+		, recryption_key(-1)
+		, cancel(false)
+	{ }
 
-	protected:
-		WorkerObject *const q_ptr;
-		Q_DECLARE_PUBLIC(WorkerObject)
-	private:
-		Q_DISABLE_COPY(WorkerObjectPrivate)
+protected:
+	WorkerObject *const q_ptr;
+	Q_DECLARE_PUBLIC(WorkerObject)
+private:
+	Q_DISABLE_COPY(WorkerObjectPrivate)
 
-	public:
-		RvtH *rvth;
-		QString gcmFilename;
-		QString gcmFilenameOnly;
+public:
+	RvtH *rvth;
+	QString gcmFilename;
+	QString gcmFilenameOnly;
 
-		unsigned int bank;
-		unsigned int flags;
-		int recryption_key;
+	unsigned int bank;
+	unsigned int flags;
+	int recryption_key;
 
-		// Cancel the current process.
-		// TODO: Mutex?
-		bool cancel;
+	// Cancel the current process.
+	// TODO: Mutex?
+	bool cancel;
 
-	public:
-		/**
-		 * RVT-H progress callback.
-		 * @param state		[in] Current progress.
-		 * @param userdata	[in] User data specified when calling the RVT-H function.
-		 * @return True to continue; false to abort.
-		 */
-		static bool progress_callback(const RvtH_Progress_State *state, void *userdata);
+public:
+	/**
+	 * RVT-H progress callback.
+	 * @param state		[in] Current progress
+	 * @param userdata	[in] User data specified when calling the RVT-H function
+	 * @return True to continue; false to abort.
+	 */
+	static bool progress_callback(const RvtH_Progress_State *state, void *userdata);
 };
 
 /** WorkerObjectPrivate **/
 
 /**
  * RVT-H progress callback.
- * @param state		[in] Current progress.
- * @param userdata	[in] User data specified when calling the RVT-H function.
+ * @param state		[in] Current progress
+ * @param userdata	[in] User data specified when calling the RVT-H function
  * @return True to continue; false to abort.
  */
 bool WorkerObjectPrivate::progress_callback(const RvtH_Progress_State *state, void *userdata)
@@ -140,7 +141,7 @@ WorkerObject::WorkerObject(QObject *parent)
 
 /**
  * Get the RVT-H object.
- * @return RVT-H object.
+ * @return RVT-H object
  */
 RvtH *WorkerObject::rvth(void) const
 {
@@ -150,7 +151,7 @@ RvtH *WorkerObject::rvth(void) const
 
 /**
  * Set the RVT-H object.
- * @param rvth RVT-H object.
+ * @param rvth RVT-H object
  */
 void WorkerObject::setRvtH(RvtH *rvth)
 {
@@ -160,7 +161,7 @@ void WorkerObject::setRvtH(RvtH *rvth)
 
 /**
  * Get the RVT-H bank number.
- * @return RVT-H bank number. (~0 if not set)
+ * @return RVT-H bank number (~0 if not set)
  */
 unsigned int WorkerObject::bank(void) const
 {
@@ -170,7 +171,7 @@ unsigned int WorkerObject::bank(void) const
 
 /**
  * Set the RVT-H bank number.
- * @param bank Bank number.
+ * @param bank Bank number
  */
 void WorkerObject::setBank(unsigned int bank)
 {
@@ -182,7 +183,7 @@ void WorkerObject::setBank(unsigned int bank)
  * Get the GCM filename.
  * For extract: This will be the destination GCM.
  * For import: This will be the source GCM.
- * @return GCM filename.
+ * @return GCM filename
  */
 QString WorkerObject::gcmFilename(void) const
 {
@@ -194,7 +195,7 @@ QString WorkerObject::gcmFilename(void) const
  * Set the GCM filename.
  * For extract: This will be the destination GCM.
  * For import: This will be the source GCM.
- * @param filename GCM filename.
+ * @param filename GCM filename
  */
 void WorkerObject::setGcmFilename(QString filename)
 {
@@ -205,7 +206,7 @@ void WorkerObject::setGcmFilename(QString filename)
 
 /**
  * Get the recryption key.
- * @return Recryption key. (-1 for no recryption)
+ * @return Recryption key (-1 for no recryption)
  */
 int WorkerObject::recryptionKey(void) const
 {
@@ -215,7 +216,7 @@ int WorkerObject::recryptionKey(void) const
 
 /**
  * Set the recryption key.
- * @param recryption_key Recryption key. (-1 for no recryption)
+ * @param recryption_key Recryption key (-1 for no recryption)
  */
 void WorkerObject::setRecryptionKey(int recryption_key)
 {
@@ -225,7 +226,7 @@ void WorkerObject::setRecryptionKey(int recryption_key)
 
 /**
  * Get the flags. (operation-specific)
- * @return Flags.
+ * @return Flags
  */
 unsigned int WorkerObject::flags(void) const
 {
@@ -235,7 +236,7 @@ unsigned int WorkerObject::flags(void) const
 
 /**
 * Set the flags. (operation-specific)
-* @param flags Flags.
+* @param flags Flags
 */
 void WorkerObject::setFlags(unsigned int flags)
 {

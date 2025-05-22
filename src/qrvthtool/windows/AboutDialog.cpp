@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * AboutDialog.cpp: About Dialog.                                          *
  *                                                                         *
- * Copyright (c) 2013-2024 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -39,37 +39,39 @@ static const QChar chrBullet(0x2022);  // U+2022: BULLET
 #include "ui_AboutDialog.h"
 class AboutDialogPrivate
 {
-	public:
-		explicit AboutDialogPrivate(AboutDialog *q);
+public:
+	explicit AboutDialogPrivate(AboutDialog *q);
 
-	protected:
-		AboutDialog *const q_ptr;
-		Q_DECLARE_PUBLIC(AboutDialog)
-	private:
-		Q_DISABLE_COPY(AboutDialogPrivate)
+protected:
+	AboutDialog *const q_ptr;
+	Q_DECLARE_PUBLIC(AboutDialog)
+private:
+	Q_DISABLE_COPY(AboutDialogPrivate)
 
-	public:
-		Ui::AboutDialog ui;
+public:
+	Ui::AboutDialog ui;
 
-		bool scrlAreaInit;
+	bool scrlAreaInit;
 
-		// Initialize the About Dialog text.
-		void initAboutDialogText(void);
+	/**
+	 * Initialize the About Dialog text.
+	 */
+	void initAboutDialogText(void);
 
-		/**
-		 * Initialize the "Credits" tab.
-		 */
-		void initCreditsTab(void);
+	/**
+	 * Initialize the "Credits" tab.
+	 */
+	void initCreditsTab(void);
 
-		/**
-		 * Initialize the "Libraries" tab.
-		 */
-		void initLibrariesTab(void);
+	/**
+	 * Initialize the "Libraries" tab.
+	 */
+	void initLibrariesTab(void);
 
-		/**
-		 * Initialize the "Support" tab.
-		 */
-		void initSupportTab(void);
+	/**
+	 * Initialize the "Support" tab.
+	 */
+	void initSupportTab(void);
 };
 
 AboutDialogPrivate::AboutDialogPrivate(AboutDialog* q)

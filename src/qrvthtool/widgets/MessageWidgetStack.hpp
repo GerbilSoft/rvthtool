@@ -14,33 +14,33 @@
 class MessageWidgetStackPrivate;
 class MessageWidgetStack : public QWidget
 {
-	Q_OBJECT
-	typedef QWidget super;
+Q_OBJECT
+typedef QWidget super;
 
-	public:
-		explicit MessageWidgetStack(QWidget *parent = 0);
-		virtual ~MessageWidgetStack();
+public:
+	explicit MessageWidgetStack(QWidget *parent = 0);
+	virtual ~MessageWidgetStack();
 
-	protected:
-		MessageWidgetStackPrivate *const d_ptr;
-		Q_DECLARE_PRIVATE(MessageWidgetStack)
-	private:
-		Q_DISABLE_COPY(MessageWidgetStack)
+protected:
+	MessageWidgetStackPrivate *const d_ptr;
+	Q_DECLARE_PRIVATE(MessageWidgetStack)
+private:
+	Q_DISABLE_COPY(MessageWidgetStack)
 
-	public:
-		/**
-		 * Show a message.
-		 * @param msg Message text. (supports Qt RichText formatting)
-		 * @param icon Icon.
-		 * @param timeout Timeout, in milliseconds. (0 for no timeout)
-		 * @param closeOnDestroy Close the message when the specified QObject is destroyed.
-		 */
-		void showMessage(const QString &msg, MessageWidget::MsgIcon icon, int timeout = 0, QObject *closeOnDestroy = 0);
+public:
+	/**
+	 * Show a message.
+	 * @param msg Message text (supports Qt RichText formatting)
+	 * @param icon Icon
+	 * @param timeout Timeout, in milliseconds (0 for no timeout)
+	 * @param closeOnDestroy Close the message when the specified QObject is destroyed.
+	 */
+	void showMessage(const QString &msg, MessageWidget::MsgIcon icon, int timeout = 0, QObject *closeOnDestroy = 0);
 
-	protected slots:
-		/**
-		 * A MessageWidget has been destroyed.
-		 * @param obj QObject that was destroyed.
-		 */
-		void messageWidget_destroyed_slot(QObject *obj);
+protected slots:
+	/**
+	 * A MessageWidget has been destroyed.
+	 * @param obj QObject that was destroyed
+	 */
+	void messageWidget_destroyed_slot(QObject *obj);
 };

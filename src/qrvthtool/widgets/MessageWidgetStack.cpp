@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * MessageWidgetStack.hpp: Message widget stack.                           *
  *                                                                         *
- * Copyright (c) 2014-2023 by David Korth.                                 *
+ * Copyright (c) 2014-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -21,26 +21,26 @@
 
 class MessageWidgetStackPrivate
 {
-	public:
-		explicit MessageWidgetStackPrivate(MessageWidgetStack *q);
-		~MessageWidgetStackPrivate();
+public:
+	explicit MessageWidgetStackPrivate(MessageWidgetStack *q);
+	~MessageWidgetStackPrivate();
 
-	protected:
-		MessageWidgetStack *const q_ptr;
-		Q_DECLARE_PUBLIC(MessageWidgetStack)
-	private:
-		Q_DISABLE_COPY(MessageWidgetStackPrivate)
+protected:
+	MessageWidgetStack *const q_ptr;
+	Q_DECLARE_PUBLIC(MessageWidgetStack)
+private:
+	Q_DISABLE_COPY(MessageWidgetStackPrivate)
 
-	public:
-		struct Ui_MessageWidgetStack {
-			QVBoxLayout *vboxMain;
+public:
+	struct Ui_MessageWidgetStack {
+		QVBoxLayout *vboxMain;
 
-			void setupUi(QWidget *MessageWidgetStack);
-		};
-		Ui_MessageWidgetStack ui;
+		void setupUi(QWidget *MessageWidgetStack);
+	};
+	Ui_MessageWidgetStack ui;
 
-		// All active MessageWidgets.
-		std::set<MessageWidget*> messageWidgets;
+	// All active MessageWidgets
+	std::set<MessageWidget*> messageWidgets;
 };
 
 MessageWidgetStackPrivate::MessageWidgetStackPrivate(MessageWidgetStack *q)
@@ -89,9 +89,9 @@ MessageWidgetStack::~MessageWidgetStack()
 
 /**
  * Show a message.
- * @param msg Message text. (supports Qt RichText formatting)
- * @param icon Icon.
- * @param timeout Timeout, in milliseconds. (0 for no timeout)
+ * @param msg Message text (supports Qt RichText formatting)
+ * @param icon Icon
+ * @param timeout Timeout, in milliseconds (0 for no timeout)
  * @param closeOnDestroy Close the message when the specified QObject is destroyed.
  */
 void MessageWidgetStack::showMessage(const QString &msg, MessageWidget::MsgIcon icon, int timeout, QObject *closeOnDestroy)
@@ -123,7 +123,7 @@ void MessageWidgetStack::showMessage(const QString &msg, MessageWidget::MsgIcon 
 
 /**
  * A MessageWidget has been destroyed.
- * @param obj QObject that was destroyed.
+ * @param obj QObject that was destroyed
  */
 void MessageWidgetStack::messageWidget_destroyed_slot(QObject *obj)
 {

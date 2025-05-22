@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * QRvtHToolWindow.cpp: Main window.                                       *
  *                                                                         *
- * Copyright (c) 2018-2023 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -55,121 +55,121 @@
 #include "ui_QRvtHToolWindow.h"
 class QRvtHToolWindowPrivate
 {
-	public:
-		explicit QRvtHToolWindowPrivate(QRvtHToolWindow *q);
-		~QRvtHToolWindowPrivate();
+public:
+	explicit QRvtHToolWindowPrivate(QRvtHToolWindow *q);
+	~QRvtHToolWindowPrivate();
 
-	protected:
-		QRvtHToolWindow *const q_ptr;
-		Q_DECLARE_PUBLIC(QRvtHToolWindow)
-	private:
-		Q_DISABLE_COPY(QRvtHToolWindowPrivate)
+protected:
+	QRvtHToolWindow *const q_ptr;
+	Q_DECLARE_PUBLIC(QRvtHToolWindow)
+private:
+	Q_DISABLE_COPY(QRvtHToolWindowPrivate)
 
-	public:
-		Ui::QRvtHToolWindow ui;
+public:
+	Ui::QRvtHToolWindow ui;
 
-		// About dialog
-		AboutDialog *aboutDialog;
+	// About dialog
+	AboutDialog *aboutDialog;
 
-		// RVT-H Reader disk image
-		RvtH *rvth;
-		RvtHModel *model;
-		RvtHSortFilterProxyModel *proxyModel;
+	// RVT-H Reader disk image
+	RvtH *rvth;
+	RvtHModel *model;
+	RvtHSortFilterProxyModel *proxyModel;
 
-		// Filename.
-		QString filename;
+	// Filename
+	QString filename;
 
-		// TODO: Config class like mcrecover?
-		QString lastPath;
+	// TODO: Config class like mcrecover?
+	QString lastPath;
 
-		// NHCD table status for the frame title.
-		QString nhcd_status;
+	// NHCD table status for the frame title
+	QString nhcd_status;
 
-		// Last icon ID.
-		RvtHModel::IconID lastIconID;
+	// Last icon ID
+	RvtHModel::IconID lastIconID;
 
-		// Initialized columns?
-		bool cols_init;
+	// Initialized columns?
+	bool cols_init;
 
-		// Enable write operations?
-		// Should be enabled for RVT-H Readers with valid
-		// NHCD tables and disabled otherwise.
-		bool write_enabled;
+	// Enable write operations?
+	// Should be enabled for RVT-H Readers with valid
+	// NHCD tables and disabled otherwise.
+	bool write_enabled;
 
-		/**
-		 * Update the RVT-H Reader disk image's QTreeView.
-		 */
-		void updateLstBankList(void);
+	/**
+	 * Update the RVT-H Reader disk image's QTreeView.
+	 */
+	void updateLstBankList(void);
 
-		/**
-		 * Update the "enabled" status of the QActions.
-		 */
-		void updateActionEnableStatus(void);
+	/**
+	 * Update the "enabled" status of the QActions.
+	 */
+	void updateActionEnableStatus(void);
 
-		/**
-		 * Update the window title.
-		 */
-		void updateWindowTitle(void);
+	/**
+	 * Update the window title.
+	 */
+	void updateWindowTitle(void);
 
-		/**
-		 * Get the display filename for the given filename.
-		 *
-		 * This removes the directories and returns only the filename,
-		 * except in the case of device files.
-		 *
-		 * @param filename Full filename.
-		 * @return Display filename.
-		 */
-		static QString getDisplayFilename(const QString &filename);
+	/**
+	 * Get the display filename for the given filename.
+	 *
+	 * This removes the directories and returns only the filename,
+	 * except in the case of device files.
+	 *
+	 * @param filename Full filename.
+	 * @return Display filename.
+	 */
+	static QString getDisplayFilename(const QString &filename);
 
-	public:
-		/**
-		 * Initialize the toolbar.
-		 */
-		void initToolbar(void);
+public:
+	/**
+	 * Initialize the toolbar.
+	 */
+	void initToolbar(void);
 
-		/**
-		 * Retranslate the toolbar.
-		 */
-		void retranslateToolbar(void);
+	/**
+	 * Retranslate the toolbar.
+	 */
+	void retranslateToolbar(void);
 
-		// Recryption Key widgets.
-		QLabel *lblRecryptionKey;
-		QComboBox *cboRecryptionKey;
+	// Recryption Key widgets
+	QLabel *lblRecryptionKey;
+	QComboBox *cboRecryptionKey;
 
-	public:
-		// Status bar widgets.
-		QLabel *lblMessage;
-		QToolButton *btnCancel;
-		QProgressBar *progressBar;
+public:
+	// Status bar widgets
+	QLabel *lblMessage;
+	QToolButton *btnCancel;
+	QProgressBar *progressBar;
 
-		// Worker thread.
-		QThread *workerThread;
-		WorkerObject *workerObject;
+	// Worker thread
+	QThread *workerThread;
+	WorkerObject *workerObject;
 
-		// UI busy counter
-		int uiBusyCounter;
+	// UI busy counter
+	int uiBusyCounter;
 
-		// Taskbar Button Manager.
-		TaskbarButtonManager *taskbarButtonManager;
+	// Taskbar Button Manager
+	TaskbarButtonManager *taskbarButtonManager;
 
-	public:
-		// Update status.
-		bool updateStatus_didInitialUpdate;
-		int updateStatus_bank;
+public:
+	// Update status
+	bool updateStatus_didInitialUpdate;
+	int updateStatus_bank;
 
-	public:
-		/**
-		 * Get the selected bank number.
-		 * @return Bank number, or -1 if no banks are selected.
-		 */
-		int selectedBankNumber(void) const;
+public:
+	/**
+	 * Get the selected bank number.
+	 * @return Bank number, or -1 if no banks are selected.
+	 */
+	int selectedBankNumber(void) const;
 
-		/**
-		 * Get the selected bank entry.
-		 * @return Bank entry, or nullptr if no banks are selected.
-		 */
-		const RvtH_BankEntry *selectedBankEntry(void) const;
+	/**
+	 * Get the selected bank entry.
+	 * @return Bank entry, or nullptr if no banks are selected.
+	 */
+	const RvtH_BankEntry *selectedBankEntry(void) const;
 };
 
 QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
@@ -1380,9 +1380,9 @@ void QRvtHToolWindow::lstBankList_selectionModel_selectionChanged(
 
 /**
  * Update the status bar.
- * @param text Status bar text.
- * @param progress_value Progress bar value. (If -1, ignore this.)
- * @param progress_max Progress bar maximum. (If -1, ignore this.)
+ * @param text Status bar text
+ * @param progress_value Progress bar value (If -1, ignore this.)
+ * @param progress_max Progress bar maximum (If -1, ignore this.)
  */
 void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progress_value, int progress_max)
 {
@@ -1413,8 +1413,8 @@ void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progres
 
 /**
  * Process is finished.
- * @param text Status bar text.
- * @param err Error code. (0 on success)
+ * @param text Status bar text
+ * @param err Error code (0 on success)
  */
 void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 {

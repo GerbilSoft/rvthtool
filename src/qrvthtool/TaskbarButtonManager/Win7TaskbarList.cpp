@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * Win7TaskbarList.cpp: Windows 7 ITaskBarList3 implementation.            *
  *                                                                         *
- * Copyright (c) 2013-2019 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -20,29 +20,29 @@
 #include "TaskbarButtonManager_p.hpp"
 class Win7TaskbarListPrivate : public TaskbarButtonManagerPrivate
 {
-	public:
-		explicit Win7TaskbarListPrivate(Win7TaskbarList *const q);
-		virtual ~Win7TaskbarListPrivate();
+public:
+	explicit Win7TaskbarListPrivate(Win7TaskbarList *const q);
+	virtual ~Win7TaskbarListPrivate();
 
-	private:
-		typedef TaskbarButtonManagerPrivate super;
-		Q_DECLARE_PUBLIC(Win7TaskbarList)
-		Q_DISABLE_COPY(Win7TaskbarListPrivate);
+private:
+	typedef TaskbarButtonManagerPrivate super;
+	Q_DECLARE_PUBLIC(Win7TaskbarList)
+	Q_DISABLE_COPY(Win7TaskbarListPrivate);
 
-	public:
-		/**
-		 * Update the ITaskbarList3 status.
-		 */
-		void update(void);
+public:
+	/**
+	 * Update the ITaskbarList3 status.
+	 */
+	void update(void);
 
-		/**
-		 * Release the ITaskbarList3 object.
-		 */
-		void close(void);
+	/**
+	 * Release the ITaskbarList3 object.
+	 */
+	void close(void);
 
-	private:
-		// Win7TaskbarList.
-		ITaskbarList3 *w7taskbar;
+private:
+	// Win7TaskbarList.
+	ITaskbarList3 *w7taskbar;
 };
 
 Win7TaskbarListPrivate::Win7TaskbarListPrivate(Win7TaskbarList *const q)
@@ -134,7 +134,7 @@ bool Win7TaskbarList::IsUsable(void)
  *
  * TODO: Make a separate protected function that setWindow() calls?
  *
- * @param window Window.
+ * @param window Window
  */
 void Win7TaskbarList::setWindow(QWidget *window)
 {

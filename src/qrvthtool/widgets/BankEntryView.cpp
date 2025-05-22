@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * BankEntryView.cpp: Bank Entry view widget.                              *
  *                                                                         *
- * Copyright (c) 2018-2023 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -25,43 +25,43 @@
 #include "ui_BankEntryView.h"
 class BankEntryViewPrivate
 {
-	public:
-		explicit BankEntryViewPrivate(BankEntryView *q);
+public:
+	explicit BankEntryViewPrivate(BankEntryView *q);
 
-	protected:
-		BankEntryView *const q_ptr;
-		Q_DECLARE_PUBLIC(BankEntryView)
-	private:
-		Q_DISABLE_COPY(BankEntryViewPrivate)
+protected:
+	BankEntryView *const q_ptr;
+	Q_DECLARE_PUBLIC(BankEntryView)
+private:
+	Q_DISABLE_COPY(BankEntryViewPrivate)
 
-	public:
-		// UI
-		Ui::BankEntryView ui;
+public:
+	// UI
+	Ui::BankEntryView ui;
 
-		const RvtH_BankEntry *bankEntry;
+	const RvtH_BankEntry *bankEntry;
 
-		static inline int calc_frac_part(quint64 size, quint64 mask);
+	static inline int calc_frac_part(quint64 size, quint64 mask);
 
-		/**
-		 * Format a file size.
-		 * TODO: Move to a common file so other files can use this?
-		 * @param size File size.
-		 * @return Formatted file size.
-		 */
-		static QString formatFileSize(quint64 size);
+	/**
+	 * Format a file size.
+	 * TODO: Move to a common file so other files can use this?
+	 * @param size File size
+	 * @return Formatted file size
+	 */
+	static QString formatFileSize(quint64 size);
 
-		/**
-		 * Get a string for ticket/TMD status.
-		 * @param sig_type Signature type.
-		 * @param sig_status Signature status.
-		 * @return String for ticket/TMD status.
-		 */
-		static QString sigStatusString(RVL_SigType_e sig_type, RVL_SigStatus_e sig_status);
+	/**
+	 * Get a string for ticket/TMD status.
+	 * @param sig_type Signature type
+	 * @param sig_status Signature status
+	 * @return String for ticket/TMD status
+	 */
+	static QString sigStatusString(RVL_SigType_e sig_type, RVL_SigStatus_e sig_status);
 
-		/**
-		 * Update the widget display.
-		 */
-		void updateWidgetDisplay(void);
+	/**
+	 * Update the widget display.
+	 */
+	void updateWidgetDisplay(void);
 };
 
 BankEntryViewPrivate::BankEntryViewPrivate(BankEntryView *q)
@@ -85,8 +85,8 @@ inline int BankEntryViewPrivate::calc_frac_part(quint64 size, quint64 mask)
 /**
  * Format a file size.
  * TODO: Move to a common file so other files can use this?
- * @param size File size.
- * @return Formatted file size.
+ * @param size File size
+ * @return Formatted file size
  */
 QString BankEntryViewPrivate::formatFileSize(quint64 size)
 {
@@ -152,9 +152,9 @@ QString BankEntryViewPrivate::formatFileSize(quint64 size)
 
 /**
  * Get a string for ticket/TMD status.
- * @param sig_type Signature type.
- * @param sig_status Signature status.
- * @return String for ticket/TMD status.
+ * @param sig_type Signature type
+ * @param sig_status Signature status
+ * @return String for ticket/TMD status
  */
 QString BankEntryViewPrivate::sigStatusString(
 	RVL_SigType_e sig_type, RVL_SigStatus_e sig_status)
@@ -481,7 +481,7 @@ BankEntryView::~BankEntryView()
 
 /**
  * Get the RvtH_BankEntry being displayed.
- * @return RvtH_BankEntry.
+ * @return RvtH_BankEntry
  */
 const RvtH_BankEntry *BankEntryView::bankEntry(void) const
 {
@@ -491,7 +491,7 @@ const RvtH_BankEntry *BankEntryView::bankEntry(void) const
 
 /**
  * Set the RvtH_BankEntry being displayed.
- * @param bankEntry RvtH_BankEntry.
+ * @param bankEntry RvtH_BankEntry
  */
 void BankEntryView::setBankEntry(const RvtH_BankEntry *bankEntry)
 {
