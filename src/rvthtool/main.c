@@ -2,7 +2,7 @@
  * RVT-H Tool                                                              *
  * main.c: Main program file.                                              *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -164,7 +164,7 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 	setlocale(LC_ALL, "");
 
 	_fputts(_T("RVT-H Tool v") _T(VERSION_STRING) _T("\n")
-		_T("Copyright (c) 2018-2024 by David Korth.\n")
+		_T("Copyright (c) 2018-2025 by David Korth.\n")
 		_T("This program is NOT licensed or endorsed by Nintendo Co., Ltd.\n"), stdout);
 #ifdef RP_GIT_VERSION
 	fputs(RP_GIT_VERSION "\n"

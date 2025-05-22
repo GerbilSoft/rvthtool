@@ -164,7 +164,7 @@ void AboutDialogPrivate::initCreditsTab(void)
 
 	QString credits;
 	credits.reserve(4096);
-	credits += QStringLiteral("Copyright (c) 2018-2024 by David Korth.<br/>This program is <b>NOT</b> licensed or endorsed by Nintendo Co., Ltd.");
+	credits += QStringLiteral("Copyright (c) 2018-2025 by David Korth.<br/>This program is <b>NOT</b> licensed or endorsed by Nintendo Co., Ltd.");
 
 	enum CreditType_t {
 		CT_CONTINUE = 0,	// Continue previous type.
