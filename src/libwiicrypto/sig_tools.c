@@ -2,7 +2,7 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * sig_tools.c: Simplified signature handling.                             *
  *                                                                         *
- * Copyright (c) 2018-2019 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -10,9 +10,10 @@
 #include "cert.h"
 #include "aesw.h"
 
-// C includes.
+// C includes
 #include <assert.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 /**
@@ -291,11 +292,9 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	aesw_encrypt(aesw, ticket->enc_title_key, sizeof(ticket->enc_title_key));
 
 	// Update the issuer.
-	// NOTE: MSVC Secure Overloads will change strncpy() to strncpy_s(),
-	// which doesn't clear the buffer. Hence, we'll need to explicitly
-	// clear the buffer first.
+	// NOTE: Clearing the buffer and using snprintf().
 	memset(ticket->issuer, 0, sizeof(ticket->issuer));
-	strncpy(ticket->issuer, issuer, sizeof(ticket->issuer));
+	snprintf(ticket->issuer, sizeof(ticket->issuer), "%s", issuer);
 
 	// We're done here
 	aesw_free(aesw);

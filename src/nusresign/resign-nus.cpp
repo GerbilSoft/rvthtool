@@ -2,7 +2,7 @@
  * RVT-H Tool: NUS Resigner                                                *
  * resign-nus.cpp: Re-sign an NUS directory. (Wii U)                       *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -355,8 +355,11 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 	updateExtraCerts(tmd_data.get(), tmd_size, true, toPki);
 
 	// Set the new issuers.
-	strncpy(pTicket->issuer, s_issuer_xs, sizeof(pTicket->issuer));
-	strncpy(pTmdHeader->rvl.issuer, s_issuer_cp, sizeof(pTmdHeader->rvl.issuer));
+	// NOTE: Clearing the buffer and using snprintf().
+	memset(pTicket->issuer, 0, sizeof(pTicket->issuer));
+	memset(pTmdHeader->rvl.issuer, 0, sizeof(pTmdHeader->rvl.issuer));
+	snprintf(pTicket->issuer, sizeof(pTicket->issuer), "%s", s_issuer_xs);
+	snprintf(pTmdHeader->rvl.issuer, sizeof(pTmdHeader->rvl.issuer), "%s", s_issuer_cp);
 
 	// Re-sign the ticket and TMD.
 	// NOTE: TMD signature only covers the TMD header.

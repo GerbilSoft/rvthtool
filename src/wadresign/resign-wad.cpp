@@ -632,11 +632,9 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	}
 
 	// Change the issuer.
-	// NOTE: MSVC Secure Overloads will change strncpy() to strncpy_s(),
-	// which doesn't clear the buffer. Hence, we'll need to explicitly
-	// clear the buffer first.
+	// NOTE: Clearing the buffer and using snprintf().
 	memset(tmdHeader->issuer, 0, sizeof(tmdHeader->issuer));
-	strncpy(tmdHeader->issuer, issuer_TMD, sizeof(tmdHeader->issuer));
+	snprintf(tmdHeader->issuer, sizeof(tmdHeader->issuer), "%s", issuer_TMD);
 	// Sign the TMD.
 	// TODO: Error checking.
 	if (likely(toKey != RVL_KEY_DEBUG)) {
