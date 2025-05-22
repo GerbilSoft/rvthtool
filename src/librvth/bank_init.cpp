@@ -322,7 +322,7 @@ int rvth_init_BankEntry_AppLoader(RvtH_BankEntry *entry)
 	uint8_t sector_buf[LBA_SIZE*2];
 
 	// Physical memory size is 24 MB.
-	static const uint32_t physMemSize = 24*1024*1024;
+	static constexpr uint32_t physMemSize = 24U*1024U*1024U;
 
 	// BI2 fields.
 	uint32_t debugMonSize;

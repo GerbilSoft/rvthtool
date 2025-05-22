@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * RvtHModel.hpp: QAbstractListModel for RvtH objects.                     *
  *                                                                         *
- * Copyright (c) 2018-2024 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -350,9 +350,9 @@ QVariant RvtHModel::data(const QModelIndex& index, int role) const
 	// HACK: Increase icon width on Windows.
 	// Figure out a better method later.
 #ifdef Q_OS_WIN
-	static const int iconWadj = 8;
+	static constexpr int iconWadj = 8;
 #else
-	static const int iconWadj = 0;
+	static constexpr int iconWadj = 0;
 #endif
 
 	switch (entry->type) {

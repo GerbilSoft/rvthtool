@@ -28,11 +28,11 @@ using std::array;
 static const array<char, 4> CISO_MAGIC = {{'C','I','S','O'}};
 
 typedef struct _CisoHeader {
-	char magic[4];			// "CISO"
-	uint32_t block_size;		// LE32
-	uint8_t map[CISO_MAP_SIZE];	// 0 == unused; 1 == used; other == invalid
+	char magic[4];				// "CISO"
+	uint32_t block_size;			// LE32
+	uint8_t map[CisoReader::CISO_MAP_SIZE];	// 0 == unused; 1 == used; other == invalid
 } CisoHeader;
-ASSERT_STRUCT(CisoHeader, 4+4+CISO_MAP_SIZE);
+ASSERT_STRUCT(CisoHeader, 4+4+CisoReader::CISO_MAP_SIZE);
 
 /**
  * Is a given disc image supported by the CISO reader?

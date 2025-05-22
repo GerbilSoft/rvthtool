@@ -28,7 +28,7 @@ static bool progress_callback(const RvtH_Progress_State *state, void *userdata)
 {
 	UNUSED(userdata);
 
-	#define MEGABYTE (1048576 / LBA_SIZE)
+	static constexpr uint32_t MEGABYTE = (1048576U / LBA_SIZE);
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:
 			printf("\rExtracting: %4u MiB / %4u MiB copied...",

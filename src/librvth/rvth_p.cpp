@@ -349,7 +349,7 @@ int RvtHPrivate::openHDD(const RefFilePtr &f_img)
 		}
 
 		// Assuming a default 8-bank system.
-		static const unsigned int bankCount_default = 8;
+		static constexpr unsigned int bankCount_default = 8;
 		entries.resize(bankCount_default);
 
 		file = f_img;

@@ -203,7 +203,7 @@ QMap<QString, QString> TranslationManager::enumerate(void) const
 		nameFilters << QLatin1String(nameFilters_c[i]);
 
 	// Search the paths for TS files.
-	static const QDir::Filters filters = (QDir::Files | QDir::Readable);
+	static constexpr QDir::Filters filters = (QDir::Files | QDir::Readable);
 
 	Q_D(const TranslationManager);
 	QMap<QString, QString> tsMap;

@@ -65,18 +65,18 @@ public:
 public:
 	// Colors
 	// TODO: Use system colors on KDE?
-	static const QRgb colorCritical = 0xEE4444;
-	static const QRgb colorQuestion = 0x66EE66;
-	static const QRgb colorWarning = 0xEECC66;
-	static const QRgb colorInformation = 0x66CCEE;
+	static constexpr QRgb colorCritical = 0xEE4444;
+	static constexpr QRgb colorQuestion = 0x66EE66;
+	static constexpr QRgb colorWarning = 0xEECC66;
+	static constexpr QRgb colorInformation = 0x66CCEE;
 
 public:
-	QTimer* tmrTimeout;		// Message timeout
-	QTimeLine* timeLine;		// Animation timeline
-	MessageWidget::MsgIcon icon;	// Icon
-	static const int iconSz = 22;	// Icon size
-	bool timeout;			// True if message was dismissed via timeout.
-	bool animateOnShow;		// Animate the widget on show?
+	QTimer* tmrTimeout;			// Message timeout
+	QTimeLine* timeLine;			// Animation timeline
+	MessageWidget::MsgIcon icon;		// Icon
+	static constexpr int iconSz = 22;	// Icon size
+	bool timeout;				// True if message was dismissed via timeout.
+	bool animateOnShow;			// Animate the widget on show?
 };
 
 MessageWidgetPrivate::MessageWidgetPrivate(MessageWidget *q)

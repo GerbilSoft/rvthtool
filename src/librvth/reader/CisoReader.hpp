@@ -50,15 +50,16 @@ public:
 	 */
 	uint32_t read(void *ptr, uint32_t lba_start, uint32_t lba_len) final;
 
-private:
-	#define CISO_HEADER_SIZE 0x8000
-	#define CISO_MAP_SIZE (CISO_HEADER_SIZE - sizeof(uint32_t) - (sizeof(char) * 4))
+public:
+	static constexpr size_t CISO_HEADER_SIZE = 0x8000U;
+	static constexpr size_t CISO_MAP_SIZE = (CISO_HEADER_SIZE - sizeof(uint32_t) - (sizeof(char) * 4U));
 
 	// 32 KB minimum block size (GCN/Wii sector)
 	// 16 MB maximum block size
-	#define CISO_BLOCK_SIZE_MIN (32768)
-	#define CISO_BLOCK_SIZE_MAX (16*1024*1024)
+	static constexpr size_t CISO_BLOCK_SIZE_MIN = 32768;
+	static constexpr size_t CISO_BLOCK_SIZE_MAX = 16U*1024U*1024U;
 
+private:
 	// NOTE: reader.lba_len is the virtual image size.
 	// real_lba_len is the actual image size.
 	uint32_t m_real_lba_len;

@@ -75,7 +75,7 @@ bool WorkerObjectPrivate::progress_callback(const RvtH_Progress_State *state, vo
 	WorkerObject *const q = d->q_ptr;
 
 	// TODO: Don't show the bank number if the source image is a standalone disc image.
-	#define MEGABYTE (1048576 / LBA_SIZE)
+	static constexpr uint32_t MEGABYTE = (1048576U / LBA_SIZE);
 	QString text;
 	switch (state->type) {
 		case RVTH_PROGRESS_EXTRACT:

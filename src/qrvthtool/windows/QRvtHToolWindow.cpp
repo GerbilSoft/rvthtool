@@ -582,7 +582,7 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	// Set up the main splitter sizes.
 	// We want the card info panel to be 160px wide at startup.
 	// TODO: Save positioning settings somewhere?
-	static const int BankInfoPanelWidth = 256;
+	static constexpr int BankInfoPanelWidth = 256;
 	QList<int> sizes;
 	sizes.append(this->width() - BankInfoPanelWidth);
 	sizes.append(BankInfoPanelWidth);
