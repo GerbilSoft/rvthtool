@@ -2,7 +2,7 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * cert.c: Certificate management.                                         *
  *                                                                         *
- * Copyright (c) 2018-2022 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -93,7 +93,7 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 	unsigned int data_hash_offset;
 	// DER to check.
 	const uint8_t *der_data;
-	size_t der_size;
+	unsigned int der_size;
 
 	// Determine the signature length.
 	verify_cert = (const RVL_Cert*)data;
@@ -192,12 +192,12 @@ static int cert_verify_int(const RVL_Cert *issuer_cert, const uint8_t *data, siz
 	if (likely(!isSha2)) {
 		// SHA-1 signature.
 		der_data = pkcs1_der_sha1;
-		der_size = sizeof(pkcs1_der_sha1);
+		der_size = (unsigned int)sizeof(pkcs1_der_sha1);
 		hash_digest_size = SHA1_DIGEST_SIZE;
 	} else {
 		// SHA-256 signature.
 		der_data = pkcs1_der_sha256;
-		der_size = sizeof(pkcs1_der_sha256);
+		der_size = (unsigned int)sizeof(pkcs1_der_sha256);
 		hash_digest_size = SHA256_DIGEST_SIZE;
 	}
 

@@ -140,13 +140,17 @@ int query(void)
 			printf("*** ERROR enumerating RVT-H Reader devices: %s\n", strerror(err));
 			if (err == EACCES) {
 #ifdef _WIN32
+				// TODO: Switch to VersionHelpers at some point.
 				OSVERSIONINFO osvi;
 				osvi.dwOSVersionInfoSize = sizeof(osvi);
+#pragma warning(push)
+#pragma warning(disable: 4996)
 				if (!GetVersionEx(&osvi)) {
 					// GetVersionEx() failed.
 					// Assume it's an old version of Windows.
 					osvi.dwMajorVersion = 0;
 				}
+#pragma warning(pop)
 				if (osvi.dwMajorVersion >= 6) {
 					printf("*** Try rerunning rvthtool using an elevated command prompt.\n");
 				} else {

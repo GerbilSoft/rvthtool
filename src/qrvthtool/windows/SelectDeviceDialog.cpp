@@ -277,13 +277,17 @@ void SelectDeviceDialogPrivate::refreshDeviceList(void)
 			s_err += QString::fromUtf8(strerror(err));
 			if (err == EACCES) {
 #ifdef _WIN32
+				// TODO: Switch to VersionHelpers at some point.
 				OSVERSIONINFO osvi;
 				osvi.dwOSVersionInfoSize = sizeof(osvi);
+#pragma warning(push)
+#pragma warning(disable: 4996)
 				if (!GetVersionEx(&osvi)) {
 					// GetVersionEx() failed.
 					// Assume it's an old version of Windows.
 					osvi.dwMajorVersion = 0;
 				}
+#pragma warning(pop)
 				if (osvi.dwMajorVersion >= 6) {
 					s_err += QStringLiteral("\n\n") +
 						SelectDeviceDialog::tr("Try rerunning qrvthtool as Administrator.");

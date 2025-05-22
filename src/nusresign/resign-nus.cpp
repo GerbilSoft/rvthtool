@@ -172,7 +172,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 
 	// Get the ticket and TMD sizes.
 	fseeko(f_tik, 0, SEEK_END);
-	const size_t tik_size = ftello(f_tik);
+	const size_t tik_size = static_cast<size_t>(ftello(f_tik));
 	if (tik_size < sizeof(WUP_Ticket)) {
 		fclose(f_tik);
 		fclose(f_tmd);
@@ -185,7 +185,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 		return -EIO;
 	}
 	fseeko(f_tmd, 0, SEEK_END);
-	const size_t tmd_size = ftello(f_tmd);
+	const size_t tmd_size = static_cast<size_t>(ftello(f_tmd));
 	if (tmd_size < (sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable))) {
 		fclose(f_tik);
 		fclose(f_tmd);

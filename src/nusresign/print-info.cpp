@@ -162,7 +162,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 		// Should be at least SHA1_DIGEST_SIZE and a multiple of SHA1_DIGEST_SIZE.
 		// Maximum of 256*20 bytes for the H3 file, or 64 GB of coverage.
 		fseeko(f_h3, 0, SEEK_END);
-		hash_h3_len = ftello(f_h3);
+		hash_h3_len = static_cast<size_t>(ftello(f_h3));
 		if (hash_h3_len == 0 || hash_h3_len % SHA1_DIGEST_SIZE != 0 || hash_h3_len > (SHA1_DIGEST_SIZE * 256)) {
 			// Invalid size.
 			fclose(f_h3);
@@ -201,7 +201,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 	aesw_set_key(aesw, title_key, 16);
 	aesw_set_iv(aesw, iv, sizeof(iv));
 
-	// Read buffer.
+	// Read buffer
 	unique_ptr<uint8_t[]> buf(new uint8_t[READ_BUFFER_SIZE]);
 
 	// Read the content, decrypt it, and hash it.
@@ -254,7 +254,7 @@ static int verify_content(const TCHAR *nus_dir, const uint8_t title_key[16], con
 			// Update the SHA-1.
 			// NOTE: Only uses the actual content, not the
 			// aligned data required for decryption.
-			sha1_update(&sha1, data_sz, buf.get());
+			sha1_update(&sha1, static_cast<size_t>(data_sz), buf.get());
 		}
 
 		// Finalize the SHA-1 and compare it.
@@ -481,7 +481,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 
 	// Get the ticket and TMD sizes.
 	fseeko(f_tik, 0, SEEK_END);
-	const size_t tik_size = ftello(f_tik);
+	const size_t tik_size = static_cast<size_t>(ftello(f_tik));
 	if (tik_size < sizeof(WUP_Ticket)) {
 		fclose(f_tik);
 		fclose(f_tmd);
@@ -494,7 +494,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 		return -EIO;
 	}
 	fseeko(f_tmd, 0, SEEK_END);
-	const size_t tmd_size = ftello(f_tmd);
+	const size_t tmd_size = static_cast<size_t>(ftello(f_tmd));
 	if (tmd_size < (sizeof(WUP_TMD_Header) + sizeof(WUP_TMD_ContentInfoTable))) {
 		fclose(f_tik);
 		fclose(f_tmd);

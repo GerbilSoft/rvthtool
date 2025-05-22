@@ -2,7 +2,7 @@
  * RVT-H Tool (libwiicrypto)                                               *
  * cert_store.c: Certificate store.                                        *
  *                                                                         *
- * Copyright (c) 2018 by David Korth.                                      *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -143,8 +143,6 @@ const char *const RVL_Cert_Issuers[RVL_CERT_ISSUER_MAX] = {
  */
 RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI pki)
 {
-	unsigned int i;
-
 	if (!s_issuer || s_issuer[0] == 0) {
 		// Unknown certificate.
 		// NOTE: If issuer is NULL, this is probably the root
@@ -192,10 +190,10 @@ RVL_Cert_Issuer cert_get_issuer_from_name_with_pki(const char *s_issuer, RVL_PKI
 			break;
 	}
 
-	for (i = min; i <= max; i++) {
+	for (RVL_Cert_Issuer i = min; i <= max; i++) {
 		if (!strcmp(s_issuer, RVL_Cert_Issuers[i])) {
 			// Found a match!
-			return (RVL_Cert_Issuer)i;
+			return i;
 		}
 	}
 
