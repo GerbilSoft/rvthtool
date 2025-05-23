@@ -1,9 +1,9 @@
 /***************************************************************************
  * RVT-H Tool                                                              *
  * show-table.cpp: Print out the NHCD Bank Table for debugging an invalid  *
- * bank                                                                    *
+ * bank.                                                                   *
  *                                                                         *
- * Copyright (c) 2023 by David Korth.                                      *
+ * Copyright (c) 2023-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -61,30 +61,30 @@ int show_table(const TCHAR *rvth_filename)
 		return 1;
 	}
 
-	// Print out the raw bank status.
-	_ftprintf(stdout, _T("[%s] NHCD Bank Table:\n"), rvth_filename);
-	_fputts(_T("-      Status: "), stdout);
+	// Print out the raw NHCD status.
+	const TCHAR *s_nhcd_status;
 	switch (rvth->nhcd_status()) {
 		case NHCD_STATUS_OK:
-			_fputts(_T("OK"), stdout);
+			s_nhcd_status = _T("OK");
 			break;
 		case NHCD_STATUS_UNKNOWN:
-			_fputts(_T("UNKNOWN"), stdout);
+			s_nhcd_status = _T("UNKNOWN");
 			break;
 		case NHCD_STATUS_MISSING:
-			_fputts(_T("MISSING"), stdout);
+			s_nhcd_status = _T("MISSING");
 			break;
 		case NHCD_STATUS_HAS_MBR:
-			_fputts(_T("HAS_MBR"), stdout);
+			s_nhcd_status = _T("HAS_MBR");
 			break;
 		case NHCD_STATUS_HAS_GPT:
-			_fputts(_T("HAS_GPT"), stdout);
+			s_nhcd_status = _T("HAS_GPT");
 			break;
 		default:
-			_fputts(_T("???"), stdout);
+			s_nhcd_status = _T("???");
 			break;
 	}
-	_fputtc(_T('\n'), stdout);
+	_ftprintf(stdout, _T("[%s] NHCD Bank Table:\n"), rvth_filename);
+	_ftprintf(stdout, _T("-      Status: %s\n"), s_nhcd_status);
 
 	NHCD_BankTable_Header* header = rvth->nhcd_header();
 	if (header == nullptr) {
