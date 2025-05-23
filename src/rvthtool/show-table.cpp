@@ -23,13 +23,19 @@ static void print_table(NHCD_BankTable_Header* header) {
 	_tprintf(_T("-        x00C: 0x%08X (expected: 0x00000000)\n"), le32_to_cpu(header->x00C));
 	_tprintf(_T("-        x010: 0x%08X (expected: 0x002FF000)\n"), le32_to_cpu(header->x010));
 
-	_fputts(_T("- unk table:\n"), stdout);
-	for (uint8_t row = 0; row < 41; ++row) {
-		uint16_t idx = row * 12;
-		_tprintf(_T("  %#02x"), header->unk[idx]);
-		idx += 1;
-		for (; idx < (row + 1) * 12; ++idx) {
-			_tprintf(_T(" %#02x"), header->unk[idx]);
+	_fputts(_T("- Raw sector view:\n"), stdout);
+	const uint8_t *p = reinterpret_cast<const uint8_t*>(header);
+	for (unsigned int i = 0; i < static_cast<unsigned int>(sizeof(*header)); i += 16) {
+		_tprintf(_T("%04X: "), i);
+		for (unsigned int j = 0; j < 16; j++, p++) {
+			if (i + j >= static_cast<unsigned int>(sizeof(*header))) {
+				break;
+			}
+
+			if (j == 8) {
+				_fputtc(_T(' '), stdout);
+			}
+			_tprintf(_T(" %02X"), *p);
 		}
 		_fputtc(_T('\n'), stdout);
 	}
