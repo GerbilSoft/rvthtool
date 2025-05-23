@@ -24,57 +24,57 @@
         <translation>&amp;5upp0r7</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="90"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="92"/>
         <source>Version %1</source>
         <translation>v3r510n %1</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="200"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="202"/>
         <source>Testers:</source>
         <translation>73573r5:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="203"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="205"/>
         <source>UI Translators:</source>
         <translation>u1 7r4n5l470r5:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="242"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="244"/>
         <source>Internal copy of %1.</source>
         <extracomment>Using an internal copy of a library.</extracomment>
         <translation>1n73rn4l c0py 0f %1.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="244"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="246"/>
         <source>Compiled with %1.</source>
         <extracomment>Compiled with a specific version of an external library.</extracomment>
         <translation>c0mp1l3d w17h %1.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="246"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="248"/>
         <source>Using %1.</source>
         <extracomment>Using an external library, e.g. libpcre.so</extracomment>
         <translation>u51n6 %1.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="248"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="250"/>
         <source>License: %1</source>
         <extracomment>License: (libraries with only a single license)</extracomment>
         <translation>l1c3n53: %1</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="250"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="252"/>
         <source>Licenses: %1</source>
         <extracomment>Licenses: (libraries with multiple licenses)</extracomment>
         <translation>l1c3n535: %1</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="335"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="337"/>
         <source>For technical support, you can visit the following websites:</source>
         <translation>f0r 73chn1c4l 5upp0r7, y0u c4n v1517 7h3 f0ll0w1n6 w3b51735:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="361"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="363"/>
         <source>You can also email the developer directly:</source>
         <translation>y0u c4n 4l50 3m41l 7h3 d3v3l0p3r d1r3c7ly:</translation>
     </message>
@@ -137,7 +137,7 @@
         <translation>7md 516:</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="103"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="104"/>
         <source>byte(s)</source>
         <translation>
             <numerusform>by73</numerusform>
@@ -145,98 +145,98 @@
         </translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="108"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="109"/>
         <source>KiB</source>
         <translation>k1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="113"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="114"/>
         <source>MiB</source>
         <translation>m1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="142"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="143"/>
         <source>%1 %2</source>
         <extracomment>%1 == localized value, %2 == suffix (e.g. MiB)</extracomment>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="168"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="230"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="283"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="335"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="169"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="231"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="289"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="341"/>
         <source>Unknown</source>
         <translation>unkn0wn</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="171"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="341"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="172"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="347"/>
         <source>Debug</source>
         <translation>d3bu6</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="174"/>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="344"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="175"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="350"/>
         <source>Retail</source>
         <translation>r3741l</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="187"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="188"/>
         <source>realsigned</source>
         <translation>r34l516n3d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="191"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="192"/>
         <source>INVALID</source>
         <translation>1nv4l1d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="195"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="196"/>
         <source>fakesigned</source>
         <translation>f4k3516n3d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="268"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="269"/>
         <source>[DELETED]</source>
         <translation>[d3l373d]</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="350"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="356"/>
         <source>vWii</source>
         <translation>vw11</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="233"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="234"/>
         <source>Empty</source>
         <translation>3mp7y</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="236"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="237"/>
         <source>GameCube</source>
         <translation>64m3cub3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="239"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="240"/>
         <source>Wii (Single-Layer)</source>
         <translation>w11 (51n6l3-l4y3r)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="242"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="243"/>
         <source>Wii (Dual-Layer)</source>
         <translation>w11 (du4l-l4y3r)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="245"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="246"/>
         <source>Wii (DL Bank 2)</source>
         <translation>w11 (dl b4nk 2)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="338"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="344"/>
         <source>None</source>
         <translation>n0n3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="347"/>
+        <location filename="../src/qrvthtool/widgets/BankEntryView.cpp" line="353"/>
         <source>Korean</source>
         <translation>k0r34n</translation>
     </message>
@@ -577,43 +577,43 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
 <context>
     <name>RvtHModel</name>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="531"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="537"/>
         <source>#</source>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="532"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="538"/>
         <source>Type</source>
         <translation>7yp3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="533"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="539"/>
         <source>Title</source>
         <translation>717l3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="535"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="541"/>
         <source>Game ID</source>
         <extracomment>6-character game ID, e.g. GALE01.</extracomment>
         <translation>64m3 1d</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="536"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="542"/>
         <source>Disc #</source>
         <translation>d15c #</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="537"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="543"/>
         <source>Revision</source>
         <translation>r3v1510n</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="538"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="544"/>
         <source>Region</source>
         <translation>r3610n</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/RvtHModel.cpp" line="539"/>
+        <location filename="../src/qrvthtool/RvtHModel.cpp" line="545"/>
         <source>IOS</source>
         <translation>105</translation>
     </message>
@@ -626,7 +626,7 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
         <translation>53l3c7 rv7-h r34d3r d3v1c3</translation>
     </message>
     <message numerus="yes">
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="165"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="168"/>
         <source>byte(s)</source>
         <translation>
             <numerusform>by73</numerusform>
@@ -634,67 +634,67 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
         </translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="170"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="173"/>
         <source>KiB</source>
         <translation>k1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="175"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="178"/>
         <source>MiB</source>
         <translation>m1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="180"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="183"/>
         <source>GiB</source>
         <translation>61b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="185"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="188"/>
         <source>TiB</source>
         <translation>71b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="190"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="193"/>
         <source>PiB</source>
         <translation>p1b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="195"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="198"/>
         <source>EiB</source>
         <translation>31b</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="272"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="275"/>
         <source>ERROR enumerating RVT-H Reader devices:</source>
         <translation>3rr0r 3num3r471n6 rv7-h r34d3r d3v1c35:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="286"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="293"/>
         <source>Try rerunning qrvthtool as Administrator.</source>
         <translation>7ry r3runn1n6 qrv7h700l 45 4dm1n157r470r.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="289"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="296"/>
         <source>Try rerunning qrvthtool using an Administrator account.</source>
         <translation>7ry r3runn1n6 qrv7h700l u51n6 4n 4dm1n157r470r 4cc0un7.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="292"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="299"/>
         <source>Try rerunning qrvthtool as root.</source>
         <translation>7ry r3runn1n6 qrv7h700l 45 r007.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="298"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="305"/>
         <source>No RVT-H Reader devices found.</source>
         <translation>n0 rv7-h r34d3r d3v1c35 f0und.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="322"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="329"/>
         <source>ERROR: Device querying is not supported in this build.</source>
         <translation>3rr0r: d3v1c3 qu3ry1n6 15 n07 5upp0r73d 1n 7h15 bu1ld.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="378"/>
+        <location filename="../src/qrvthtool/windows/SelectDeviceDialog.cpp" line="385"/>
         <source>&amp;Refresh</source>
         <translation>&amp;r3fr35h</translation>
     </message>
@@ -729,82 +729,82 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
 <context>
     <name>WorkerObject</name>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="81"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="82"/>
         <source>Extracting Bank %1 to %2: %L3 MiB / %L4 MiB copied...</source>
         <translation>3x7r4c71n6 b4nk %1 70 %2: %L3 m1b / %L4 m1b c0p13d...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="88"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="89"/>
         <source>Importing from %1 to Bank %2: %L3 MiB / %L4 MiB copied...</source>
         <translation>1mp0r71n6 fr0m %1 70 b4nk %2: %L3 m1b / %L4 m1b c0p13d...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="98"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="99"/>
         <source>Recrypting the ticket(s) and TMD(s)...</source>
         <translation>r3cryp71n6 7h3 71ck37(5) 4nd 7md(5)...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="102"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="103"/>
         <source>Recrypting Bank %1 to %2: %L3 MiB / %L4 MiB copied...</source>
         <translation>r3cryp71n6 b4nk %1 70 %2: %L3 m1b / %L4 m1b c0p13d...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="274"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="275"/>
         <source>doExtract() ERROR: rvth object is not set.</source>
         <translation>d03x7r4c7() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="278"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="279"/>
         <source>doExtract() ERROR: Bank number is not set.</source>
         <translation>d03x7r4c7() 3rr0r: b4nk numb3r 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="280"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="281"/>
         <source>doExtract() ERROR: Bank number %1 is out of range.</source>
         <translation>d03x7r4c7() 3rr0r: b4nk numb3r %1 15 0u7 0f r4n63.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="285"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="286"/>
         <source>doExtract() ERROR: gcmFilename is not set.</source>
         <translation>d03x7r4c7() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="302"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="303"/>
         <source>Bank %1 extracted into %2 successfully.</source>
         <translation>b4nk %1 3x7r4c73d 1n70 %2 5ucc355fully.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="306"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="307"/>
         <source>doExtract() ERROR extracting Bank %1 into %2: %3</source>
         <translation>d03x7r4c7() 3rr0r 3x7r4c71n6 b4nk %1 1n70 %2: %3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="324"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="325"/>
         <source>doImport() ERROR: rvth object is not set.</source>
         <translation>d01mp0r7() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="328"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
         <source>doImport() ERROR: Bank number is not set.</source>
         <translation>d01mp0r7() 3rr0r: b4nk numb3r 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="330"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="331"/>
         <source>doImport() ERROR: Bank number %1 is out of range.</source>
         <translation>d01mp0r7() 3rr0r: b4nk numb3r %1 15 0u7 0f r4n63.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="335"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="336"/>
         <source>doImport() ERROR: gcmFilename is not set.</source>
         <translation>d01mp0r7() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="352"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="353"/>
         <source>%1 imported into Bank %2 successfully.</source>
         <translation>%1 1mp0r73d 1n70 b4nk %2 5ucc355fully.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="356"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
         <source>doImport() ERROR importing %1 into Bank %2: %3</source>
         <translation>d01mp0r7() 3rr0r 1mp0r71n6 %1 1n70 b4nk %2: %3</translation>
     </message>
