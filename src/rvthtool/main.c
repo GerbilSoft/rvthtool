@@ -92,9 +92,6 @@ static void print_help(const TCHAR *argv0)
 		_T("list rvth.img\n")
 		_T("- List banks in the specified RVT-H device or disk image.\n")
 		_T("\n")
-		_T("show-table rvth.img\n")
-		_T("- Print out the raw NHCD Bank Table information for debugging.\n")
-		_T("\n")
 		_T("extract ") _T(DEVICE_NAME_EXAMPLE) _T(" bank# disc.gcm\n")
 		_T("- Extract the specified bank number from rvth.img to disc.gcm.\n")
 		_T("\n")
@@ -114,6 +111,9 @@ static void print_help(const TCHAR *argv0)
 		_T("\n")
 		_T("verify ") _T(DEVICE_NAME_EXAMPLE) _T(" bank#\n")
 		_T("- Verify all hashes on an encrypted Wii or RVT-R bank or disc image.\n")
+		_T("\n")
+		_T("show-table rvth.img\n")
+		_T("- Print out the raw NHCD Bank Table information for debugging.\n")
 		_T("\n")
 		_T("query\n")
 		_T("- Query all available RVT-H Reader devices and list them.\n")
@@ -269,13 +269,6 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			return EXIT_FAILURE;
 		}
 		ret = list_banks(argv[optind+1]);
-	} else if (!_tcscmp(argv[optind], _T("show-table"))) {
-		// Print raw table information.
-		if (argc < optind+2) {
-			print_error(argv[0], _T("RVT-H device or disk image not specified"));
-			return EXIT_FAILURE;
-		}
-		ret = show_table(argv[optind+1]);
 	} else if (!_tcscmp(argv[optind], _T("extract"))) {
 		// Extract a bank.
 		if (argc < optind+3) {
@@ -327,6 +320,13 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 			// Two or more parameters specified.
 			ret = verify(argv[optind+1], argv[optind+2]);
 		}
+	} else if (!_tcscmp(argv[optind], _T("show-table"))) {
+		// Print raw table information.
+		if (argc < optind+2) {
+			print_error(argv[0], _T("RVT-H device or disk image not specified"));
+			return EXIT_FAILURE;
+		}
+		ret = show_table(argv[optind+1]);
 	} else if (!_tcscmp(argv[optind], _T("query"))) {
 		// Query RVT-H Reader devices.
 		// NOTE: Not checking HAVE_QUERY. If querying isn't available,
