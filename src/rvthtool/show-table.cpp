@@ -17,11 +17,11 @@
 #include "libwiicrypto/byteswap.h"
 
 static void print_table(NHCD_BankTable_Header* header) {
-	_ftprintf(stdout, _T("- Table Magic (Expected Value: 0x%#08x): 0x%#08x\n"), be32_to_cpu(NHCD_BANKTABLE_MAGIC), header->magic);
-	_ftprintf(stdout, _T("- x004 (expected: 0x00000001): 0x%#08x\n"), header->x004);
-	_ftprintf(stdout, _T("- bank_count (expected: 0x00000008): 0x%#08x\n"), header->bank_count);
-	_ftprintf(stdout, _T("- x00C (expected: 0x00000000): 0x%#08x\n"), header->x00C);
-	_ftprintf(stdout, _T("- x010 (expected: 0x002FF000): 0x%#08x\n"), header->x010);
+	_ftprintf(stdout, _T("- Table Magic: 0x%08X (expected: 0x%08X, \"NHCD\")\n"), le32_to_cpu(header->magic), be32_to_cpu(NHCD_BANKTABLE_MAGIC));
+	_ftprintf(stdout, _T("-        x004: 0x%08X (expected: 0x00000001)\n"), le32_to_cpu(header->x004));
+	_ftprintf(stdout, _T("-  Bank Count: 0x%08X (expected: 0x00000008)\n"), le32_to_cpu(header->bank_count));
+	_ftprintf(stdout, _T("-        x00C: 0x%08X (expected: 0x00000000)\n"), le32_to_cpu(header->x00C));
+	_ftprintf(stdout, _T("-        x010: 0x%08X (expected: 0x002FF000)\n"), le32_to_cpu(header->x010));
 
 	_fputts(_T("- unk table:\n"), stdout);
 	for (uint8_t row = 0; row < 41; ++row) {
@@ -63,7 +63,7 @@ int show_table(const TCHAR *rvth_filename)
 
 	// Print out the raw bank status.
 	_ftprintf(stdout, _T("[%s] NHCD Bank Table:\n"), rvth_filename);
-	_fputts(_T("- Status: "), stdout);
+	_fputts(_T("-      Status: "), stdout);
 	switch (rvth->nhcd_status()) {
 		case NHCD_STATUS_OK:
 			_fputts(_T("OK"), stdout);
