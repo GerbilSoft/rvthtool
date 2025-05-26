@@ -665,8 +665,23 @@ void ConfigStore::unregisterChangeNotification(const QString &property, QObject 
 void ConfigStore::notifyAll(void)
 {
 	// Invoke methods for registered objects.
+	// NOTE: To prevent deadlocks, we'll need to build up a list of
+	// objects and methods to invoke, then invoke them.
 	Q_D(ConfigStore);
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
+
+	struct ToInvoke_t {
+		QObject *object;
+		int method_idx;
+		QVariant value;
+
+		ToInvoke_t(QObject *object, int method_idx, const QVariant &value)
+			: object(object)
+			, method_idx(method_idx)
+			, value(value)
+		{ }
+	};
+	std::vector<ToInvoke_t> toInvoke;
 
 	for (auto &kv : d->signalMaps) {
 		const QString &property = kv.first;
@@ -689,8 +704,14 @@ void ConfigStore::notifyAll(void)
 				signalMapVector.erase(signalMapVector.begin() + i);
 			} else {
 				// Invoke this method.
-				ConfigStorePrivate::InvokeQtMethod(smap.object, smap.method_idx, value);
+				toInvoke.emplace_back(smap.object, smap.method_idx, value);
 			}
 		}
+	}
+	mtxLocker.unlock();
+
+	// Now invoke the methods.
+	for (const auto &p : toInvoke) {
+		ConfigStorePrivate::InvokeQtMethod(p.object, p.method_idx, p.value);
 	}
 }
