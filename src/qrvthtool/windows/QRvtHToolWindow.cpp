@@ -98,7 +98,7 @@ public:
 	bool write_enabled;
 
 	/**
-	 * Update grpBankList's title.
+	 * Update the RVT-H Reader disk image's QGroupBox title.
 	 */
 	void updateGrpBankListTitle(void);
 
@@ -250,15 +250,18 @@ QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 }
 
 /**
- * Update grpBankList's title.
+ * Update the RVT-H Reader disk image's QGroupBox title.
  */
 void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 {
 	if (!rvth) {
-		// Set the group box's title.
+		// No RVT-H Reader is loaded.
 		ui.grpBankList->setTitle(QRvtHToolWindow::tr("No RVT-H Reader disk image loaded."));
 		return;
 	}
+
+	// Mask device serial numbers?
+	const bool mask = cfg->get(QLatin1String("maskDeviceSerialNumbers")).toBool();
 
 	// Show the filename and device type.
 	const QString displayFilename = getDisplayFilename(filename);
@@ -272,7 +275,7 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 
 #ifdef HAVE_QUERY
 			QString qs_full_serial;
-# ifdef _WIN32
+#  ifdef _WIN32
 			wchar_t *const s_full_serial = rvth_get_device_serial_number(
 				reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
 			if (s_full_serial) {
@@ -280,25 +283,27 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 					reinterpret_cast<const char16_t*>(s_full_serial));
 				free(s_full_serial);
 			}
-# else /* !_WIN32 */
+#  else /* !_WIN32 */
 			char *const s_full_serial = rvth_get_device_serial_number(
 				filename.toUtf8().constData(), nullptr);
 			if (s_full_serial) {
 				qs_full_serial = QString::fromUtf8(s_full_serial);
 				free(s_full_serial);
 			}
-# endif /* _WIN32 */
+#  endif /* _WIN32 */
+#endif /* HAVE_QUERY */
 
 			if (!qs_full_serial.isEmpty()) {
-				const bool mask = cfg->get(QLatin1String("maskDeviceSerialNumbers")).toBool();
 				if (mask) {
+					// Mask the last 5 digits.
 					// TODO: qsizetype?
-					const int size = static_cast<int>(qs_full_serial.size());
+					const int size = qs_full_serial.size();
 					if (size > 5) {
 						for (int i = size - 5; i < size; i++) {
 							qs_full_serial[i] = QChar(L'x');
 						}
 					} else {
+						// Mask the entire thing?
 						qs_full_serial = QString(size, QChar(L'x'));
 					}
 				}
@@ -306,7 +311,6 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 				imageType += QChar(L' ');
 				imageType += qs_full_serial;
 			}
-#endif /* HAVE_QUERY */
 
 			break;
 		}
@@ -332,11 +336,11 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 		if (!nhcd_status.isEmpty()) {
 			ui.grpBankList->setTitle(
 				QRvtHToolWindow::tr("%1 [%2] [%3]")
-				.arg(displayFilename, imageType, nhcd_status));
+					.arg(displayFilename, imageType, nhcd_status));
 		} else {
 			ui.grpBankList->setTitle(
 				QRvtHToolWindow::tr("%1 [%2]")
-				.arg(displayFilename, imageType));
+					.arg(displayFilename, imageType));
 		}
 	} else {
 		ui.grpBankList->setTitle(displayFilename);
@@ -348,7 +352,7 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
  */
 void QRvtHToolWindowPrivate::updateLstBankList(void)
 {
-	// Update the bank list title.
+	// Update grpBankList's title.
 	updateGrpBankListTitle();
 
 	// Show the QTreeView headers if an RVT-H Reader disk image is loaded.
@@ -790,6 +794,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename, bool isDevice)
 	}
 	d->lblMessage->setText(text);
 	markUiBusy();
+	QCoreApplication::processEvents();
 
 	// Open the specified RVT-H Reader disk image.
 	// NOTE: RvtH expects native separators.
@@ -1609,6 +1614,8 @@ void QRvtHToolWindow::maskDeviceSerialNumbers_cfg_slot(const QVariant &mask)
 {
 	Q_D(QRvtHToolWindow);
 	d->ui.actionMaskDeviceSerialNumbers->setChecked(mask.toBool());
+
+	// Update grpBankList's title.
 	d->updateGrpBankListTitle();
 }
 
@@ -1619,6 +1626,7 @@ void QRvtHToolWindow::maskDeviceSerialNumbers_cfg_slot(const QVariant &mask)
 void QRvtHToolWindow::on_menuLanguage_languageChanged(const QString &locale)
 {
 	Q_D(QRvtHToolWindow);
+
 	// TODO: Verify that the specified locale is valid.
 	// (LanguageMenu::isLanguageSupported() or something?)
 	// d->cfg->set() will trigger a notification.
