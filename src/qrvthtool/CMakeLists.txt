@@ -1,5 +1,6 @@
 # RVT-H Tool Qt GUI frontend
 PROJECT(qrvthtool LANGUAGES CXX)
+SET(CMAKE_AUTOMOC ON)
 
 # Main binary directory. Needed for git_version.h
 INCLUDE_DIRECTORIES("${CMAKE_BINARY_DIR}")
@@ -164,17 +165,13 @@ SET(qrvthtool_SRCS
 	windows/AboutDialog.cpp
 	)
 
-# Headers without Qt objects
+# Headers
 SET(qrvthtool_H
-	MessageSound.hpp
-	)
-
-# Headers with Qt objects
-SET(qrvthtool_MOC_H
 	RvtHModel.hpp
 	RvtHSortFilterProxyModel.hpp
 	TranslationManager.hpp
 	WorkerObject.hpp
+	MessageSound.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp
@@ -187,7 +184,6 @@ SET(qrvthtool_MOC_H
 	windows/SelectDeviceDialog.hpp
 	windows/AboutDialog.hpp
 	)
-QT_WRAP_CPP(qrvthtool_MOC_SRCS ${qrvthtool_MOC_H})
 
 # UI files
 SET(qrvthtool_UIS
@@ -204,10 +200,10 @@ SET(qrvthtool_TBM_SRCS
 	TaskbarButtonManager/TaskbarButtonManager.cpp
 	TaskbarButtonManager/TaskbarButtonManagerFactory.cpp
 	)
-SET(qrvthtool_TBM_MOC_H
+SET(qrvthtool_TBM_H
 	TaskbarButtonManager/TaskbarButtonManager.hpp
+	TaskbarButtonManager/TaskbarButtonManager_p.hpp
 	)
-SET(qrvthtool_TBM_H TaskbarButtonManager/TaskbarButtonManager_p.hpp)
 
 IF(WIN32)
 	# Windows: Use ITaskbarList3. (Win7+)
@@ -215,8 +211,8 @@ IF(WIN32)
 		${qrvthtool_TBM_SRCS}
 		TaskbarButtonManager/Win7TaskbarList.cpp
 		)
-	SET(qrvthtool_TBM_MOC_H
-		${qrvthtool_TBM_MOC_H}
+	SET(qrvthtool_TBM_H
+		${qrvthtool_TBM_H}
 		TaskbarButtonManager/Win7TaskbarList.hpp
 		)
 ELSEIF(UNIX AND NOT APPLE)
@@ -240,14 +236,13 @@ ELSEIF(UNIX AND NOT APPLE)
 			TaskbarButtonManager/DockManager.cpp
 			TaskbarButtonManager/UnityLauncher.cpp
 			)
-		SET(qrvthtool_TBM_MOC_H
-			${qrvthtool_TBM_MOC_H}
+		SET(qrvthtool_TBM_H
+			${qrvthtool_TBM_H}
 			TaskbarButtonManager/DockManager.hpp
 			TaskbarButtonManager/UnityLauncher.hpp
 			)
 	ENDIF(HAVE_QtDBus)
 ENDIF()
-QT_WRAP_CPP(qrvthtool_TBM_MOC_SRCS ${qrvthtool_TBM_MOC_H})
 
 ######################
 # Qt resource files. #
@@ -286,11 +281,9 @@ ENDIF(WIN32)
 ADD_EXECUTABLE(qrvthtool WIN32 MACOSX_BUNDLE
 	${qrvthtool_SRCS} ${qrvthtool_H}
 	${qrvthtool_UIS_H}
-	${qrvthtool_MOC_SRCS}
 	${qrvthtool_RCC_O}
 	${qrvthtool_RC}
 	${qrvthtool_TBM_SRCS}
-	${qrvthtool_TBM_MOC_SRCS}
 	)
 ADD_DEPENDENCIES(qrvthtool git_version)
 DO_SPLIT_DEBUG(qrvthtool)
