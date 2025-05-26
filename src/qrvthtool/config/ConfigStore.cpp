@@ -12,7 +12,6 @@
 // Qt includes.
 #include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
-#include <QtCore/QHash>
 #include <QtCore/QDir>
 #include <QtCore/QString>
 #include <QtCore/QVariant>
@@ -82,7 +81,7 @@ public:
 
 	// Current settings
 	// TODO: Use const char* for the key instead of QString?
-	QHash<QString, QVariant> settings;
+	map<QString, QVariant> settingsMap;
 
 	/**
 	 * Signal mappings
@@ -287,12 +286,14 @@ void ConfigStore::reset(void)
 {
 	// Initialize settings with DefaultSettings.
 	Q_D(ConfigStore);
-	d->settings.clear();
+	d->settingsMap.clear();
 	for (const ConfigDefaults::DefaultSetting *def = &ConfigDefaults::DefaultSettings[0];
 	     def->key != nullptr; def++)
 	{
-		d->settings.insert(QLatin1String(def->key),
-			(def->value ? QLatin1String(def->value) : QString()));
+		d->settingsMap.emplace(
+			QLatin1String(def->key),
+			(def->value) ? QLatin1String(def->value) : QString()
+		);
 	}
 }
 
@@ -305,9 +306,10 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 {
 	Q_D(ConfigStore);
 
+	// Get the current property value.
+	auto settingsIter = d->settingsMap.find(key);
 #ifndef NDEBUG
-	// Make sure this property exists.
-	if (!d->settings.contains(key)) {
+	if (settingsIter == d->settingsMap.end()) {
 		// Property does not exist. Print a warning.
 		// TODO: Make this an error, since it won't be saved?
 		fprintf(stderr, "ConfigStore: Property '%s' has no default value. FIX THIS!\n",
@@ -317,14 +319,17 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 
 	// Get the default value.
 	const ConfigDefaults::DefaultSetting *def = ConfigDefaults::Instance()->get(key);
-	if (!def)
+	if (!def) {
 		return;
+	}
 
 	if (!(def->flags & ConfigDefaults::DefaultSetting::DEF_ALLOW_SAME_VALUE)) {
 		// Check if the new value is the same as the old value.
-		QVariant oldValue = d->settings.value(key);
-		if (value == oldValue)
-			return;
+		if (settingsIter != d->settingsMap.end()) {
+			if (value == settingsIter->second) {
+				return;
+			}
+		}
 	}
 
 	// Verify that this value passes validation.
@@ -334,15 +339,15 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 	}
 
 	// Set the new value.
-	d->settings.insert(key, newValue);
+	d->settingsMap[key] = newValue;
 
 	// Invoke methods for registered objects.
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
-	auto iter = d->signalMaps.find(key);
-	if (iter == d->signalMaps.end()) {
+	auto signalIter = d->signalMaps.find(key);
+	if (signalIter == d->signalMaps.end()) {
 		return;
 	}
-	vector<ConfigStorePrivate::SignalMap> &signalMapVector = iter->second;
+	vector<ConfigStorePrivate::SignalMap> &signalMapVector = signalIter->second;
 
 	// Process the signal map vector in reverse-order.
 	// Reverse order makes it easier to remove deleted objects.
@@ -366,17 +371,19 @@ QVariant ConfigStore::get(const QString &key) const
 {
 	Q_D(const ConfigStore);
 
+	// Get the current property value.
+	auto settingsIter = d->settingsMap.find(key);
+	if (settingsIter == d->settingsMap.end()) {
 #ifndef NDEBUG
-	// Make sure this property exists.
-	if (!d->settings.contains(key)) {
 		// Property does not exist. Print a warning.
 		// TODO: Make this an error, since it won't be saved?
 		fprintf(stderr, "ConfigStore: Property '%s' has no default value. FIX THIS!\n",
 			key.toUtf8().constData());
-	}
 #endif
+		return {};
+	}
 
-	return d->settings.value(key);
+	return settingsIter->second;
 }
 
 /**
@@ -423,15 +430,15 @@ int ConfigStore::load(const QString &filename)
 	QSettings qSettings(filename, QSettings::IniFormat);
 
 	// NOTE: Only known settings will be loaded.
-	d->settings.clear();
+	d->settingsMap.clear();
 	// TODO: Add function to get sizeof(DefaultSettings) from ConfigDefaults.
-	d->settings.reserve(32);
+	//d->settingsMap.reserve(32);
 
 	// Load known settings from the configuration file.
 	for (const ConfigDefaults::DefaultSetting *def = &ConfigDefaults::DefaultSettings[0];
 	     def->key != nullptr; def++)
 	{
-		const QString key = QLatin1String(def->key);
+		QString key = QLatin1String(def->key);
 		QVariant value = qSettings.value(key, QLatin1String(def->value));
 
 		// Validate this value.
@@ -441,7 +448,7 @@ int ConfigStore::load(const QString &filename)
 			value = QVariant(QLatin1String(def->value));
 		}
 
-		d->settings.insert(key, value);
+		d->settingsMap.emplace(std::move(key), std::move(value));
 	}
 
 	// Finished loading settings.
@@ -456,7 +463,6 @@ int ConfigStore::load(const QString &filename)
  */
 int ConfigStore::load(void)
 {
-	Q_D(ConfigStore);
 	const QString cfgFilename = ConfigStorePrivate::ConfigPath +
 		QLatin1String(ConfigDefaults::DefaultConfigFilename);
 	return load(cfgFilename);
@@ -500,11 +506,16 @@ int ConfigStore::save(const QString &filename) const
 	for (const ConfigDefaults::DefaultSetting *def = &ConfigDefaults::DefaultSettings[0];
 	     def->key != nullptr; def++)
 	{
-		if (def->flags & ConfigDefaults::DefaultSetting::DEF_NO_SAVE)
+		if (def->flags & ConfigDefaults::DefaultSetting::DEF_NO_SAVE) {
 			continue;
+		}
 
 		const QString key = QLatin1String(def->key);
-		QVariant value = d->settings.value(key, QLatin1String(def->value));
+		auto settingsIter = d->settingsMap.find(key);
+		QVariant value = (settingsIter != d->settingsMap.end())
+			? settingsIter->second
+			: QLatin1String(def->value);
+
 		if (def->hex_digits > 0) {
 			// Convert to hexadecimal.
 			unsigned int uint_val = value.toString().toUInt(nullptr, 0);
@@ -638,7 +649,10 @@ void ConfigStore::notifyAll(void)
 		}
 
 		// Get the property value.
-		const QVariant value = d->settings.value(property);
+		auto settingsIter = d->settingsMap.find(property);
+		const QVariant &value  = (settingsIter != d->settingsMap.end())
+			? settingsIter->second
+			: QVariant();
 
 		// Process the signal map vector in reverse-order.
 		// Reverse order makes it easier to remove deleted objects.
