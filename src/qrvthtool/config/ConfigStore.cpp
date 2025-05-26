@@ -17,7 +17,6 @@
 #include <QtCore/QString>
 #include <QtCore/QVariant>
 #include <QtCore/QPointer>
-#include <QtCore/QVector>
 #include <QtCore/QMutex>
 #include <QtCore/QMutexLocker>
 
@@ -27,6 +26,12 @@
 
 // Default settings.
 #include "ConfigDefaults.hpp"
+
+// C++ STL classes
+#include <map>
+#include <vector>
+using std::map;
+using std::vector;
 
 class ConfigStorePrivate
 {
@@ -90,8 +95,13 @@ public:
 	struct SignalMap {
 		QPointer<QObject> object;
 		int method_idx;
+
+		SignalMap(QPointer<QObject> object, int method_idx)
+			: object(object)
+			, method_idx(method_idx)
+		{ }
 	};
-	QHash<QString, QVector<SignalMap>* > signalMaps;
+	map<QString, vector<SignalMap> > signalMaps;
 	QMutex mtxSignalMaps;
 };
 
@@ -162,7 +172,6 @@ void ConfigStorePrivate::InitConfigPath(void)
 ConfigStorePrivate::~ConfigStorePrivate()
 {
 	// Delete all the signal map vectors.
-	qDeleteAll(signalMaps);
 	signalMaps.clear();
 }
 
@@ -329,17 +338,18 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 
 	// Invoke methods for registered objects.
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
-	QVector<ConfigStorePrivate::SignalMap> *signalMapVector = d->signalMaps.value(key, nullptr);
-	if (!signalMapVector) {
+	auto iter = d->signalMaps.find(key);
+	if (iter == d->signalMaps.end()) {
 		return;
 	}
+	vector<ConfigStorePrivate::SignalMap> &signalMapVector = iter->second;
 
 	// Process the signal map vector in reverse-order.
 	// Reverse order makes it easier to remove deleted objects.
-	for (int i = (signalMapVector->size() - 1); i >= 0; i--) {
-		const ConfigStorePrivate::SignalMap &smap = signalMapVector->at(i);
+	for (int i = static_cast<int>(signalMapVector.size()) - 1; i >= 0; i--) {
+		ConfigStorePrivate::SignalMap &smap = signalMapVector[i];
 		if (smap.object.isNull()) {
-			signalMapVector->remove(i);
+			signalMapVector.erase(signalMapVector.begin() + i);
 		} else {
 			// Invoke this method.
 			ConfigStorePrivate::InvokeQtMethod(smap.object, smap.method_idx, newValue);
@@ -535,13 +545,15 @@ void ConfigStore::registerChangeNotification(const QString &property, QObject *o
 
 	// Get the vector of signal maps for this property.
 	Q_D(ConfigStore);
+	vector<ConfigStorePrivate::SignalMap> *signalMapVector;
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
-	QVector<ConfigStorePrivate::SignalMap>* signalMapVector =
-		d->signalMaps.value(property, nullptr);
-	if (!signalMapVector) {
+	auto iter = d->signalMaps.find(property);
+	if (iter != d->signalMaps.end()) {
+		signalMapVector = &iter->second;
+	} else {
 		// No vector found. Create one.
-		signalMapVector = new QVector<ConfigStorePrivate::SignalMap>();
-		d->signalMaps.insert(property, signalMapVector);
+		auto ret = d->signalMaps.emplace(property, vector<ConfigStorePrivate::SignalMap>());
+		signalMapVector = &ret.first->second;
 	}
 
 	// Look up the method index.
@@ -549,8 +561,9 @@ void ConfigStore::registerChangeNotification(const QString &property, QObject *o
 	if (method_idx < 0) {
 		// NOTE: The first character of method indicates whether it's a signal or slot.
 		// This is useless in error messages, so we'll use method+1.
-		if (*method != 0)
+		if (*method != 0) {
 			method++;
+		}
 		fprintf(stderr, "ConfigStore::registerChangeNotification(): "
 			"No such method %s::%s\n",
 			object->metaObject()->className(), method);
@@ -558,10 +571,7 @@ void ConfigStore::registerChangeNotification(const QString &property, QObject *o
 	}
 
 	// Add this object and slot to the signal maps vector.
-	ConfigStorePrivate::SignalMap smap;
-	smap.object = object;
-	smap.method_idx = method_idx;
-	signalMapVector->append(smap);
+	signalMapVector->emplace_back(object, method_idx);
 }
 
 /**
@@ -579,11 +589,11 @@ void ConfigStore::unregisterChangeNotification(const QString &property, QObject 
 	// Get the vector of signal maps for this property.
 	Q_D(ConfigStore);
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
-	QVector<ConfigStorePrivate::SignalMap>* signalMapVector =
-		d->signalMaps.value(property, nullptr);
-	if (!signalMapVector) {
+	auto iter = d->signalMaps.find(property);
+	if (iter == d->signalMaps.end()) {
 		return;
 	}
+	vector<ConfigStorePrivate::SignalMap> &signalMapVector = iter->second;
 
 	// Get the method index.
 	int method_idx = -1;
@@ -596,15 +606,15 @@ void ConfigStore::unregisterChangeNotification(const QString &property, QObject 
 
 	// Process the signal map vector in reverse-order.
 	// Reverse order makes it easier to remove deleted objects.
-	for (int i = (signalMapVector->size() - 1); i >= 0; i--) {
-		const ConfigStorePrivate::SignalMap &smap = signalMapVector->at(i);
+	for (int i = static_cast<int>(signalMapVector.size()) - 1; i >= 0; i--) {
+		const ConfigStorePrivate::SignalMap &smap = signalMapVector[i];
 		if (smap.object.isNull()) {
-			signalMapVector->remove(i);
+			signalMapVector.erase(signalMapVector.begin() + i);
 		} else if (smap.object == object) {
 			// Found the object.
 			if (method == nullptr || method_idx == smap.method_idx) {
 				// Found a matching signal map.
-				signalMapVector->remove(i);
+				signalMapVector.erase(signalMapVector.begin() + i);
 			}
 		}
 	}
@@ -620,10 +630,10 @@ void ConfigStore::notifyAll(void)
 	Q_D(ConfigStore);
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
 
-	foreach (const QString &property, d->signalMaps.keys()) {
-		QVector<ConfigStorePrivate::SignalMap> *signalMapVector =
-			d->signalMaps.value(property);
-		if (signalMapVector->isEmpty()) {
+	for (auto &kv : d->signalMaps) {
+		const QString &property = kv.first;
+		vector<ConfigStorePrivate::SignalMap> &signalMapVector = kv.second;
+		if (signalMapVector.empty()) {
 			continue;
 		}
 
@@ -632,10 +642,10 @@ void ConfigStore::notifyAll(void)
 
 		// Process the signal map vector in reverse-order.
 		// Reverse order makes it easier to remove deleted objects.
-		for (int i = (signalMapVector->size() - 1); i >= 0; i--) {
-			const ConfigStorePrivate::SignalMap &smap = signalMapVector->at(i);
+		for (int i = static_cast<int>(signalMapVector.size()) - 1; i >= 0; i--) {
+			ConfigStorePrivate::SignalMap &smap = signalMapVector[i];
 			if (smap.object.isNull()) {
-				signalMapVector->remove(i);
+				signalMapVector.erase(signalMapVector.begin() + i);
 			} else {
 				// Invoke this method.
 				ConfigStorePrivate::InvokeQtMethod(smap.object, smap.method_idx, value);
