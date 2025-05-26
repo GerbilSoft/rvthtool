@@ -260,9 +260,6 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 		return;
 	}
 
-	// Mask device serial numbers?
-	const bool mask = cfg->get(QLatin1String("maskDeviceSerialNumbers")).toBool();
-
 	// Show the filename and device type.
 	const QString displayFilename = getDisplayFilename(filename);
 	QString imageType;
@@ -294,10 +291,11 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 #endif /* HAVE_QUERY */
 
 			if (!qs_full_serial.isEmpty()) {
+				const bool mask = cfg->get(QLatin1String("maskDeviceSerialNumbers")).toBool();
 				if (mask) {
 					// Mask the last 5 digits.
 					// TODO: qsizetype?
-					const int size = qs_full_serial.size();
+					const int size = static_cast<int>(qs_full_serial.size());
 					if (size > 5) {
 						for (int i = size - 5; i < size; i++) {
 							qs_full_serial[i] = QChar(L'x');
