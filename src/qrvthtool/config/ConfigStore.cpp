@@ -361,12 +361,27 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 	d->settingsMap[key] = newValue;
 
 	// Invoke methods for registered objects.
+	// NOTE: To prevent deadlocks, we'll need to build up a list of
+	// objects and methods to invoke, then invoke them.
 	QMutexLocker mtxLocker(&d->mtxSignalMaps);
 	auto signalIter = d->signalMaps.find(key);
 	if (signalIter == d->signalMaps.end()) {
 		return;
 	}
 	vector<ConfigStorePrivate::SignalMap> &signalMapVector = signalIter->second;
+
+	struct ToInvoke_t {
+		QObject *object;
+		int method_idx;
+		QVariant value;
+
+		ToInvoke_t(QObject *object, int method_idx, const QVariant &value)
+			: object(object)
+			, method_idx(method_idx)
+			, value(value)
+		{ }
+	};
+	std::vector<ToInvoke_t> toInvoke;
 
 	// Process the signal map vector in reverse-order.
 	// Reverse order makes it easier to remove deleted objects.
@@ -376,8 +391,14 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 			signalMapVector.erase(signalMapVector.begin() + i);
 		} else {
 			// Invoke this method.
-			ConfigStorePrivate::InvokeQtMethod(smap.object, smap.method_idx, newValue);
+			toInvoke.emplace_back(smap.object, smap.method_idx, value);
 		}
+	}
+	mtxLocker.unlock();
+
+	// Now invoke the methods.
+	for (const auto &p : toInvoke) {
+		ConfigStorePrivate::InvokeQtMethod(p.object, p.method_idx, p.value);
 	}
 }
 
