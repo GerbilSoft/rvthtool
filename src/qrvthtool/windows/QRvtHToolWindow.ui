@@ -279,10 +279,10 @@
     <string>Mask Device &amp;Serial Numbers</string>
    </property>
    <property name="toolTip">
-    <string>If enabled, the last five digits of RVT-H Reader serial numbers will be hidden. Useful for screenshots.</string>
+    <string>Hide the last five digits of RVT-H Reader serial numbers. Useful for screenshots.</string>
    </property>
    <property name="statusTip">
-    <string>If enabled, the last five digits of RVT-H Reader serial numbers will be hidden. Useful for screenshots.</string>
+    <string>Hide the last five digits of RVT-H Reader serial numbers. Useful for screenshots.</string>
    </property>
   </action>
  </widget>
