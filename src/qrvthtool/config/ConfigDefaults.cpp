@@ -27,7 +27,7 @@ public:
 
 public:
 	// Default settings
-	static const array<ConfigDefaults::DefaultSetting, 2> defaultSettings;
+	static const array<ConfigDefaults::DefaultSetting, 3> defaultSettings;
 
 	// Internal settings map
 	map<QString, const ConfigDefaults::DefaultSetting*> defaultSettingsMap;
@@ -42,10 +42,13 @@ ConfigDefaults ConfigDefaultsPrivate::ms_Instance;
 const char *const ConfigDefaults::DefaultConfigFilename = "qrvthtool.conf";
 
 // Default settings
-const array<ConfigDefaults::DefaultSetting, 2> ConfigDefaultsPrivate::defaultSettings = {{
+const array<ConfigDefaults::DefaultSetting, 3> ConfigDefaultsPrivate::defaultSettings = {{
 	/** General settings **/
 	{"lastPath",		"", 0, 0,	ConfigDefaults::DefaultSetting::ValidationType::None, 0, 0},
 	{"language",		"", 0, 0,	ConfigDefaults::DefaultSetting::ValidationType::None, 0, 0},
+
+	/** Options **/
+	{"maskDeviceSerialNumbers", "false", 0, 0, ConfigDefaults::DefaultSetting::ValidationType::Boolean, 0, 0},
 }};
 
 ConfigDefaultsPrivate::ConfigDefaultsPrivate()

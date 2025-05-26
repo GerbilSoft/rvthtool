@@ -98,6 +98,11 @@ public:
 	bool write_enabled;
 
 	/**
+	 * Update the RVT-H Reader disk image's QGroupBox title.
+	 */
+	void updateGrpBankListTitle(void);
+
+	/**
 	 * Update the RVT-H Reader disk image's QTreeView.
 	 */
 	void updateLstBankList(void);
@@ -220,6 +225,8 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	// Configuration signals
 	cfg->registerChangeNotification(QLatin1String("language"),
 		q, SLOT(setTranslation_cfg_slot(QVariant)));
+	cfg->registerChangeNotification(QLatin1String("maskDeviceSerialNumbers"),
+		q, SLOT(maskDeviceSerialNumbers_cfg_slot(QVariant)));
 }
 
 QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
@@ -243,82 +250,110 @@ QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 }
 
 /**
+ * Update the RVT-H Reader disk image's QGroupBox title.
+ */
+void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
+{
+	if (!rvth) {
+		// No RVT-H Reader is loaded.
+		ui.grpBankList->setTitle(QRvtHToolWindow::tr("No RVT-H Reader disk image loaded."));
+		return;
+	}
+
+	// Mask device serial numbers?
+	const bool mask = cfg->get(QLatin1String("maskDeviceSerialNumbers")).toBool();
+
+	// Show the filename and device type.
+	const QString displayFilename = getDisplayFilename(filename);
+	QString imageType;
+	switch (rvth->imageType()) {
+		// HDDs (multiple banks)
+		case RVTH_ImageType_HDD_Reader: {
+			// TODO: Option to hide the serial number?
+			// TODO: Handle pErr.
+			imageType = QRvtHToolWindow::tr("RVT-H Reader");
+
+#ifdef HAVE_QUERY
+			QString qs_full_serial;
+#  ifdef _WIN32
+			wchar_t *const s_full_serial = rvth_get_device_serial_number(
+				reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
+			if (s_full_serial) {
+				qs_full_serial = QString::fromUtf16(
+					reinterpret_cast<const char16_t*>(s_full_serial));
+				free(s_full_serial);
+			}
+#  else /* !_WIN32 */
+			char *const s_full_serial = rvth_get_device_serial_number(
+				filename.toUtf8().constData(), nullptr);
+			if (s_full_serial) {
+				qs_full_serial = QString::fromUtf8(s_full_serial);
+				free(s_full_serial);
+			}
+#  endif /* _WIN32 */
+#endif /* HAVE_QUERY */
+
+			if (!qs_full_serial.isEmpty()) {
+				if (mask) {
+					// Mask the last 5 digits.
+					// TODO: qsizetype?
+					const int size = qs_full_serial.size();
+					if (size > 5) {
+						for (int i = size - 5; i < size; i++) {
+							qs_full_serial[i] = QChar(L'x');
+						}
+					} else {
+						// Mask the entire thing?
+						qs_full_serial = QString(size, QChar(L'x'));
+					}
+				}
+
+				imageType += QChar(L' ');
+				imageType += qs_full_serial;
+			}
+
+			break;
+		}
+
+		case RVTH_ImageType_HDD_Image:
+			imageType = QRvtHToolWindow::tr("RVT-H Reader Disk Image");
+			break;
+
+		// GCMs (single banks)
+		// TODO: CISO/WBFS?
+		case RVTH_ImageType_GCM:
+			imageType = QRvtHToolWindow::tr("Disc Image");
+			break;
+		case RVTH_ImageType_GCM_SDK:
+			imageType = QRvtHToolWindow::tr("SDK Disc Image");
+			break;
+
+		default:
+			break;
+	}
+
+	if (!imageType.isEmpty()) {
+		if (!nhcd_status.isEmpty()) {
+			ui.grpBankList->setTitle(
+				QRvtHToolWindow::tr("%1 [%2] [%3]")
+					.arg(displayFilename, imageType, nhcd_status));
+		} else {
+			ui.grpBankList->setTitle(
+				QRvtHToolWindow::tr("%1 [%2]")
+					.arg(displayFilename, imageType));
+		}
+	} else {
+		ui.grpBankList->setTitle(displayFilename);
+	}
+}
+
+/**
  * Update the RVT-H Reader disk image's QTreeView.
  */
 void QRvtHToolWindowPrivate::updateLstBankList(void)
 {
-	if (!rvth) {
-		// Set the group box's title.
-		ui.grpBankList->setTitle(QRvtHToolWindow::tr("No RVT-H Reader disk image loaded."));
-	} else {
-		// Show the filename and device type.
-		const QString displayFilename = getDisplayFilename(filename);
-		QString imageType;
-		switch (rvth->imageType()) {
-			// HDDs (multiple banks)
-			case RVTH_ImageType_HDD_Reader: {
-				// TODO: Option to hide the serial number?
-				// TODO: Handle pErr.
-				imageType = QRvtHToolWindow::tr("RVT-H Reader");
-
-#ifdef HAVE_QUERY
-				QString qs_full_serial;
-# ifdef _WIN32
-				wchar_t *const s_full_serial = rvth_get_device_serial_number(
-					reinterpret_cast<const wchar_t*>(filename.utf16()), nullptr);
-				if (s_full_serial) {
-					qs_full_serial = QString::fromUtf16(
-						reinterpret_cast<const char16_t*>(s_full_serial));
-					free(s_full_serial);
-				}
-# else /* !_WIN32 */
-				char *const s_full_serial = rvth_get_device_serial_number(
-					filename.toUtf8().constData(), nullptr);
-				if (s_full_serial) {
-					qs_full_serial = QString::fromUtf8(s_full_serial);
-					free(s_full_serial);
-				}
-# endif /* _WIN32 */
-
-				if (!qs_full_serial.isEmpty()) {
-					imageType += QChar(L' ');
-					imageType += qs_full_serial;
-				}
-#endif /* HAVE_QUERY */
-
-				break;
-			}
-			case RVTH_ImageType_HDD_Image:
-				imageType = QRvtHToolWindow::tr("RVT-H Reader Disk Image");
-				break;
-
-			// GCMs (single banks)
-			// TODO: CISO/WBFS?
-			case RVTH_ImageType_GCM:
-				imageType = QRvtHToolWindow::tr("Disc Image");
-				break;
-			case RVTH_ImageType_GCM_SDK:
-				imageType = QRvtHToolWindow::tr("SDK Disc Image");
-				break;
-
-			default:
-				break;
-		}
-
-		if (!imageType.isEmpty()) {
-			if (!nhcd_status.isEmpty()) {
-				ui.grpBankList->setTitle(
-					QRvtHToolWindow::tr("%1 [%2] [%3]")
-					.arg(displayFilename, imageType, nhcd_status));
-			} else {
-				ui.grpBankList->setTitle(
-					QRvtHToolWindow::tr("%1 [%2]")
-					.arg(displayFilename, imageType));
-			}
-		} else {
-			ui.grpBankList->setTitle(displayFilename);
-		}
-	}
+	// Update grpBankList's title.
+	updateGrpBankListTitle();
 
 	// Show the QTreeView headers if an RVT-H Reader disk image is loaded.
 	ui.lstBankList->setHeaderHidden(!rvth);
@@ -1562,12 +1597,36 @@ void QRvtHToolWindow::btnCancel_clicked(void)
 /** Configuration slots **/
 
 /**
+ * "Mask Device Serial Numbers" option was changed by the user.
+ * @param mask If true, mask device serial numbers.
+ */
+void QRvtHToolWindow::on_actionMaskDeviceSerialNumbers_triggered(bool mask)
+{
+	Q_D(QRvtHToolWindow);
+	d->cfg->set(QLatin1String("maskDeviceSerialNumbers"), mask);
+}
+
+/**
+ * "Mask Device Serial Numbers" option was changed by the configuration.
+ * @param mask If true, mask device serial numbers.
+ */
+void QRvtHToolWindow::maskDeviceSerialNumbers_cfg_slot(const QVariant &mask)
+{
+	Q_D(QRvtHToolWindow);
+	d->ui.actionMaskDeviceSerialNumbers->setChecked(mask.toBool());
+
+	// Update grpBankList's title.
+	d->updateGrpBankListTitle();
+}
+
+/**
  * UI language was changed by the user.
  * @param locale Locale tag, e.g. "en_US".
  */
 void QRvtHToolWindow::on_menuLanguage_languageChanged(const QString &locale)
 {
 	Q_D(QRvtHToolWindow);
+
 	// TODO: Verify that the specified locale is valid.
 	// (LanguageMenu::isLanguageSupported() or something?)
 	// d->cfg->set() will trigger a notification.

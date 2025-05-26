@@ -124,6 +124,18 @@ protected slots:
 	/** Configuration slots **/
 
 	/**
+	 * "Mask Device Serial Numbers" option was changed by the user.
+	 * @param mask If true, mask device serial numbers.
+	 */
+	void on_actionMaskDeviceSerialNumbers_triggered(bool mask);
+
+	/**
+	 * "Mask Device Serial Numbers" option was changed by the configuration.
+	 * @param mask If true, mask device serial numbers.
+	 */
+	void maskDeviceSerialNumbers_cfg_slot(const QVariant &mask);
+
+	/**
 	 * UI language was changed by the user.
 	 * @param locale Locale tag, e.g. "en_US".
 	 */

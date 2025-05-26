@@ -92,7 +92,7 @@
      <x>0</x>
      <y>0</y>
      <width>890</width>
-     <height>32</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -121,7 +121,14 @@
      <string>&amp;Language</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuOptions">
+    <property name="title">
+     <string>&amp;Options</string>
+    </property>
+    <addaction name="actionMaskDeviceSerialNumbers"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuOptions"/>
    <addaction name="menuLanguage"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -158,8 +165,7 @@
   </widget>
   <action name="actionOpenDiskImage">
    <property name="icon">
-    <iconset theme="document-open">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-open"/>
    </property>
    <property name="text">
     <string>&amp;Open Disk Image...</string>
@@ -173,8 +179,7 @@
   </action>
   <action name="actionExit">
    <property name="icon">
-    <iconset theme="application-exit">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="application-exit"/>
    </property>
    <property name="text">
     <string>E&amp;xit</string>
@@ -185,8 +190,7 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset theme="help-about">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="help-about"/>
    </property>
    <property name="text">
     <string>&amp;About</string>
@@ -197,8 +201,7 @@
   </action>
   <action name="actionClose">
    <property name="icon">
-    <iconset theme="document-close">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-close"/>
    </property>
    <property name="text">
     <string>&amp;Close</string>
@@ -212,8 +215,7 @@
   </action>
   <action name="actionOpenDevice">
    <property name="icon">
-    <iconset theme="drive-harddisk">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="drive-harddisk"/>
    </property>
    <property name="text">
     <string>Open RVT-&amp;H Reader...</string>
@@ -227,8 +229,7 @@
   </action>
   <action name="actionExtract">
    <property name="icon">
-    <iconset theme="document-export">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-export"/>
    </property>
    <property name="text">
     <string>E&amp;xtract...</string>
@@ -239,8 +240,7 @@
   </action>
   <action name="actionImport">
    <property name="icon">
-    <iconset theme="document-import">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="document-import"/>
    </property>
    <property name="text">
     <string>&amp;Import...</string>
@@ -251,8 +251,7 @@
   </action>
   <action name="actionDelete">
    <property name="icon">
-    <iconset theme="edit-delete">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-delete"/>
    </property>
    <property name="text">
     <string>&amp;Delete</string>
@@ -263,14 +262,27 @@
   </action>
   <action name="actionUndelete">
    <property name="icon">
-    <iconset theme="edit-undo">
-     <normaloff>.</normaloff>.</iconset>
+    <iconset theme="edit-undo"/>
    </property>
    <property name="text">
     <string>&amp;Undelete</string>
    </property>
    <property name="toolTip">
     <string>Undelete the selected bank.</string>
+   </property>
+  </action>
+  <action name="actionMaskDeviceSerialNumbers">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Mask Device &amp;Serial Numbers</string>
+   </property>
+   <property name="toolTip">
+    <string>If enabled, the last five digits of RVT-H Reader serial numbers will be hidden. Useful for screenshots.</string>
+   </property>
+   <property name="statusTip">
+    <string>If enabled, the last five digits of RVT-H Reader serial numbers will be hidden. Useful for screenshots.</string>
    </property>
   </action>
  </widget>
