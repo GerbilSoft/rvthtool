@@ -39,14 +39,19 @@ private:
 public:
 	static inline void sendMessage(const QVariantMap &map)
 	{
-		QDBusMessage message = QDBusMessage::createSignal(
-			QStringLiteral("/qrvthtool"),
+		QDBusMessage signal = QDBusMessage::createSignal(
+			QStringLiteral("/"),
 			QStringLiteral("com.canonical.Unity.LauncherEntry"),
 			QStringLiteral("Update"));
-		QVariantList args;
-		args << QStringLiteral("application://" DESKTOP_FILENAME) << map;
-		message.setArguments(args);
-		if (!QDBusConnection::sessionBus().send(message)) {
+
+		// Set the application ID
+		signal << QStringLiteral("application://" DESKTOP_FILENAME);
+
+		// Set the properties
+		signal << map;
+
+		// Send the signal
+		if (!QDBusConnection::sessionBus().send(signal)) {
 			qWarning("Unable to send message");
 		}
 	}
@@ -102,6 +107,8 @@ void UnityLauncher::update(void)
 {
 	// Update the Unity Launcher Entry.
 	// TODO: Optimize DockManager to use progressBar* directly?
+	// FIXME: Broken on Qt6 for some reason... (QtDBus crashes)
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 	Q_D(UnityLauncher);
 	if (d->progressBarValue < 0) {
 		// Progress bar is hidden.
@@ -114,4 +121,5 @@ void UnityLauncher::update(void)
 		map.insert(QStringLiteral("progress-visible"), true);
 		d->sendMessage(map);
 	}
+#endif /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
 }
