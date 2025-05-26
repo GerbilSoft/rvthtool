@@ -113,6 +113,10 @@ int main(int argc, char *argv[])
 	// Initialize the QRvtHToolWindow.
 	QRvtHToolWindow *window = new QRvtHToolWindow();
 
+	// Show the window.
+	window->show();
+	QCoreApplication::processEvents();
+
 	// If a filename was specified, open it.
 	QStringList args = app->arguments();
 	if (args.size() >= 2) {
@@ -125,9 +129,6 @@ int main(int argc, char *argv[])
 #endif /* _WIN32 */
 		window->openRvtH(QDir::fromNativeSeparators(filename), isDevice);
 	}
-
-	// Show the window.
-	window->show();
 
 	// Run the Qt UI.
 	return app->exec();

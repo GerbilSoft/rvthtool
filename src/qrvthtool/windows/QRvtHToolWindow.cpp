@@ -759,6 +759,7 @@ void QRvtHToolWindow::openRvtH(const QString &filename, bool isDevice)
 	}
 	d->lblMessage->setText(text);
 	markUiBusy();
+	QCoreApplication::processEvents();
 
 	// Open the specified RVT-H Reader disk image.
 	// NOTE: RvtH expects native separators.
