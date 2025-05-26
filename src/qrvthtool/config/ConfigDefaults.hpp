@@ -70,7 +70,7 @@ public:
 		uint8_t flags;
 
 		// Parameter validation
-		enum class ValidationType {
+		enum class ValidationType : uint8_t {
 			None,		// No validation
 			Boolean,	// Boolean (normalize to true/false)
 			Color,		// QColor
@@ -79,6 +79,7 @@ public:
 			Max
 		};
 		ValidationType validation;
+
 		int range_min;
 		int range_max;
 	};
