@@ -8,6 +8,7 @@
 
 #include "config.qrvthtool.h"
 #include "TranslationManager.hpp"
+#include "config/ConfigStore.hpp"
 
 // Qt includes.
 #include <QtCore/QTranslator>
@@ -91,14 +92,11 @@ TranslationManagerPrivate::TranslationManagerPrivate(TranslationManager *q)
 #endif /* Q_OS_WIN */
 
 	// Search the user's configuration directory.
-	// TODO
-#if 0
 	QDir configDir(ConfigStore::ConfigPath());
 	if (configDir != QDir(QCoreApplication::applicationDirPath())) {
 		pathList.append(configDir.absoluteFilePath(QStringLiteral("translations")));
 		pathList.append(configDir.absolutePath());
 	}
-#endif
 }
 
 TranslationManagerPrivate::~TranslationManagerPrivate()

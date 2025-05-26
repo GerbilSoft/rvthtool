@@ -152,6 +152,10 @@ SET(qrvthtool_SRCS
 	TranslationManager.cpp
 	WorkerObject.cpp
 	MessageSound.cpp
+	PathFuncs.cpp
+
+	config/ConfigStore.cpp
+	config/ConfigDefaults.cpp
 
 	widgets/BankEntryView.cpp
 	widgets/LanguageMenu.cpp
@@ -172,6 +176,10 @@ SET(qrvthtool_H
 	TranslationManager.hpp
 	WorkerObject.hpp
 	MessageSound.hpp
+	PathFuncs.hpp
+
+	config/ConfigStore.hpp
+	config/ConfigDefaults.hpp
 
 	widgets/BankEntryView.hpp
 	widgets/LanguageMenu.hpp

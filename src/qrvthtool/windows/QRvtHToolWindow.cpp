@@ -40,15 +40,19 @@
 // Worker object for the worker thread.
 #include "WorkerObject.hpp"
 
-// Taskbar Button Manager.
+// Taskbar Button Manager
 #include "TaskbarButtonManager/TaskbarButtonManager.hpp"
 #include "TaskbarButtonManager/TaskbarButtonManagerFactory.hpp"
 #ifdef Q_OS_WIN
-# include <windows.h>
+#  include <windows.h>
 #endif /* Q_OS_WIN */
 
-// Other windows.
+// Other windows
 #include "AboutDialog.hpp"
+
+// Configuration
+#include "config/ConfigStore.hpp"
+#include "PathFuncs.hpp"
 
 /** QRvtHToolWindowPrivate **/
 
@@ -154,6 +158,10 @@ public:
 	TaskbarButtonManager *taskbarButtonManager;
 
 public:
+	// Configuration
+	ConfigStore *cfg;
+
+public:
 	// Update status
 	bool updateStatus_didInitialUpdate;
 	int updateStatus_bank;
@@ -190,6 +198,7 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 	, workerObject(nullptr)
 	, uiBusyCounter(0)
 	, taskbarButtonManager(nullptr)
+	, cfg(new ConfigStore(q))
 	, updateStatus_didInitialUpdate(false)
 	, updateStatus_bank(0)
 {
@@ -198,10 +207,17 @@ QRvtHToolWindowPrivate::QRvtHToolWindowPrivate(QRvtHToolWindow *q)
 			 q, &QRvtHToolWindow::rvthModel_layoutChanged);
 	QObject::connect(model, &RvtHModel::rowsInserted,
 			 q, &QRvtHToolWindow::rvthModel_rowsInserted);
+
+	// Configuration signals
+	cfg->registerChangeNotification(QLatin1String("language"),
+		q, SLOT(setTranslation_cfg_slot(QVariant)));
 }
 
 QRvtHToolWindowPrivate::~QRvtHToolWindowPrivate()
 {
+	// Save the configuration.
+	cfg->save();
+
 	if (workerThread) {
 		// Worker thread is still running...
 		// TODO: Cancel it instead of simply quitting.
@@ -575,10 +591,6 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 #endif
 #endif
 
-	// Initialize the Language Menu.
-	// TODO: Load/save the language setting somewhere?
-	d->ui.menuLanguage->setLanguage(QString());
-
 	// Set up the main splitter sizes.
 	// We want the card info panel to be 160px wide at startup.
 	// TODO: Save positioning settings somewhere?
@@ -649,6 +661,9 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	// Initialize the Taskbar Button Manager. (Non-Windows systems)
 	d->taskbarButtonManager = TaskbarButtonManagerFactory::createManager(this);
 #endif /* Q_OS_WIN */
+
+	// Emit all configuration signals.
+	d->cfg->notifyAll();
 }
 
 QRvtHToolWindow::~QRvtHToolWindow()
@@ -1478,4 +1493,29 @@ void QRvtHToolWindow::btnCancel_clicked(void)
 		// (may need librvth changes)
 		d->workerObject->cancel();
 	}
+}
+
+/** Configuration slots **/
+
+/**
+ * UI language was changed by the user.
+ * @param locale Locale tag, e.g. "en_US".
+ */
+void QRvtHToolWindow::on_menuLanguage_languageChanged(const QString &locale)
+{
+	Q_D(QRvtHToolWindow);
+	// TODO: Verify that the specified locale is valid.
+	// (LanguageMenu::isLanguageSupported() or something?)
+	// d->cfg->set() will trigger a notification.
+	d->cfg->set(QLatin1String("language"), locale);
+}
+
+/**
+ * UI language was changed by the configuration.
+ * @param locale Locale tag, e.g. "en_US".
+ */
+void QRvtHToolWindow::setTranslation_cfg_slot(const QVariant &locale)
+{
+	Q_D(QRvtHToolWindow);
+	d->ui.menuLanguage->setLanguage(locale.toString());
 }

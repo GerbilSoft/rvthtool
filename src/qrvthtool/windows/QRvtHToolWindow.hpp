@@ -119,4 +119,19 @@ protected slots:
 	 * Cancel button was pressed.
 	 */
 	void btnCancel_clicked(void);
+
+protected slots:
+	/** Configuration slots **/
+
+	/**
+	 * UI language was changed by the user.
+	 * @param locale Locale tag, e.g. "en_US".
+	 */
+	void on_menuLanguage_languageChanged(const QString &locale);
+
+	/**
+	 * UI language was changed by the configuration.
+	 * @param locale Locale tag, e.g. "en_US".
+	 */
+	void setTranslation_cfg_slot(const QVariant &locale);
 };

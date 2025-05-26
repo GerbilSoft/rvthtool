@@ -98,7 +98,7 @@ LanguageMenuPrivate::LanguageMenuPrivate(LanguageMenu *q)
 	hashActions.reserve(tsMap.size());
 	foreach (const QString &locale, tsMap.keys()) {
 		const QString &language = tsMap.value(locale);
-		if (hashActions.contains(language)) {
+		if (language.isEmpty() || hashActions.contains(language)) {
 			// FIXME: Duplicate language?
 			continue;
 		}
