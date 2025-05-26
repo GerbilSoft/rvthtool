@@ -64,23 +64,15 @@
         </item>
        </layout>
       </widget>
-      <widget class="QSplitter" name="splitterInfo">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
+      <widget class="QGroupBox" name="grpBankInfo">
+       <property name="title">
+        <string>Bank Information</string>
        </property>
-       <property name="childrenCollapsible">
-        <bool>false</bool>
-       </property>
-       <widget class="QGroupBox" name="grpBankInfo">
-        <property name="title">
-         <string>Bank Information</string>
-        </property>
-        <layout class="QVBoxLayout" name="vboxBankInfo">
-         <item>
-          <widget class="BankEntryView" name="bevBankEntryView" native="true"/>
-         </item>
-        </layout>
-       </widget>
+       <layout class="QVBoxLayout" name="vboxBankInfo">
+        <item>
+         <widget class="BankEntryView" name="bevBankEntryView" native="true"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
