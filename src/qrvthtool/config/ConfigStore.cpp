@@ -196,14 +196,27 @@ QVariant ConfigStorePrivate::Validate(const QString &name, const QVariant &value
 			return value;
 
 		case ConfigDefaults::DefaultSetting::ValidationType::Boolean:
-			if (!value.canConvert(QVariant::Bool))
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+			if (!value.canConvert(QMetaType(QMetaType::Bool))) {
 				return QVariant();
+			}
+#else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
+			if (!value.canConvert(QVariant::Bool)) {
+				return QVariant();
+			}
+#endif
 			return QVariant(value.toBool());
 
 		case ConfigDefaults::DefaultSetting::ValidationType::Range: {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+			if (!value.canConvert(QMetaType(QMetaType::Int))) {
+				return QVariant();
+			}
+#else /* QT_VERSION < QT_VERSION_CHECK(6, 0, 0) */
 			if (!value.canConvert(QVariant::Int)) {
 				return QVariant();
 			}
+#endif
 			int val = value.toString().toInt(nullptr, 0);
 			if (val < def->range_min || val > def->range_max) {
 				return QVariant();
