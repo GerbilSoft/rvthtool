@@ -300,9 +300,16 @@ void ConfigStore::reset(void)
 	// Initialize settings with DefaultSettings.
 	Q_D(ConfigStore);
 	d->settingsMap.clear();
-	for (const ConfigDefaults::DefaultSetting *def = &ConfigDefaults::DefaultSettings[0];
-	     def->key != nullptr; def++)
-	{
+
+	const ConfigDefaults *const configDefaults = ConfigDefaults::Instance();
+	vector<QString> settingNames = configDefaults->getAllSettingNames();
+	for (const QString &p : settingNames) {
+		const ConfigDefaults::DefaultSetting *const def = configDefaults->get(p);
+		assert(def);
+		if (!def) {
+			continue;
+		}
+
 		d->settingsMap.emplace(
 			QLatin1String(def->key),
 			(def->value) ? QLatin1String(def->value) : QString()
@@ -321,18 +328,17 @@ void ConfigStore::set(const QString &key, const QVariant &value)
 
 	// Get the current property value.
 	auto settingsIter = d->settingsMap.find(key);
-#ifndef NDEBUG
-	if (settingsIter == d->settingsMap.end()) {
-		// Property does not exist. Print a warning.
-		// TODO: Make this an error, since it won't be saved?
-		fprintf(stderr, "ConfigStore: Property '%s' has no default value. FIX THIS!\n",
-			key.toUtf8().constData());
-	}
-#endif
 
 	// Get the default value.
-	const ConfigDefaults::DefaultSetting *def = ConfigDefaults::Instance()->get(key);
+	const ConfigDefaults *const configDefaults = ConfigDefaults::Instance();
+	const ConfigDefaults::DefaultSetting *const def = configDefaults->get(key);
 	if (!def) {
+#ifndef NDEBUG
+		// Property does not exist. Print a warning.
+		// TODO: Make this an error, since it won't be saved?
+		fprintf(stderr, "ConfigStore::set(): Property '%s' has no default value. FIX THIS!\n",
+			key.toUtf8().constData());
+#endif /* NDEBUG */
 		return;
 	}
 
@@ -390,7 +396,7 @@ QVariant ConfigStore::get(const QString &key) const
 #ifndef NDEBUG
 		// Property does not exist. Print a warning.
 		// TODO: Make this an error, since it won't be saved?
-		fprintf(stderr, "ConfigStore: Property '%s' has no default value. FIX THIS!\n",
+		fprintf(stderr, "ConfigStore::get(): Property '%s' has no default value. FIX THIS!\n",
 			key.toUtf8().constData());
 #endif
 		return {};
@@ -448,9 +454,15 @@ int ConfigStore::load(const QString &filename)
 	//d->settingsMap.reserve(32);
 
 	// Load known settings from the configuration file.
-	for (const ConfigDefaults::DefaultSetting *def = &ConfigDefaults::DefaultSettings[0];
-	     def->key != nullptr; def++)
-	{
+	const ConfigDefaults *const configDefaults = ConfigDefaults::Instance();
+	vector<QString> settingNames = configDefaults->getAllSettingNames();
+	for (const QString &p : settingNames) {
+		const ConfigDefaults::DefaultSetting *const def = configDefaults->get(p);
+		assert(def);
+		if (!def) {
+			continue;
+		}
+
 		QString key = QLatin1String(def->key);
 		QVariant value = qSettings.value(key, QLatin1String(def->value));
 
@@ -516,10 +528,12 @@ int ConfigStore::save(const QString &filename) const
 	// NOTE: Only known settings will be saved.
 	
 	// Save known settings to the configuration file.
-	for (const ConfigDefaults::DefaultSetting *def = &ConfigDefaults::DefaultSettings[0];
-	     def->key != nullptr; def++)
-	{
-		if (def->flags & ConfigDefaults::DefaultSetting::DEF_NO_SAVE) {
+	const ConfigDefaults *const configDefaults = ConfigDefaults::Instance();
+	vector<QString> settingNames = configDefaults->getAllSettingNames();
+	for (const QString &p : settingNames) {
+		const ConfigDefaults::DefaultSetting *const def = configDefaults->get(p);
+		assert(def);
+		if (!def || (def->flags & ConfigDefaults::DefaultSetting::DEF_NO_SAVE)) {
 			continue;
 		}
 

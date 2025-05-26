@@ -11,28 +11,33 @@
 // C includes
 #include <stdint.h>
 
+// C++ STL classes
+#include <vector>
+
 // Qt includes
-#include <QtCore/QHash>
 #include <QtCore/QString>
 
+class ConfigDefaultsPrivate;
 class ConfigDefaults
 {
 public:
+	friend class ConfigDefaultsPrivate;
 	static ConfigDefaults *Instance(void);
 
 private:
 	ConfigDefaults();
-	~ConfigDefaults();
+	~ConfigDefaults() = default;
 	Q_DISABLE_COPY(ConfigDefaults)
 
-	static ConfigDefaults *ms_Instance;
+private:
+	ConfigDefaultsPrivate *const d_ptr;
+	Q_DECLARE_PRIVATE(ConfigDefaults);
 
 public:
 	// Default configuration filename
 	static const char *const DefaultConfigFilename;
 
-	// Default settings
-	// TODO: Make this private.
+	// Default settings struct
 	struct DefaultSetting {
 		const char *key;
 		const char *value;
@@ -77,7 +82,12 @@ public:
 		int range_min;
 		int range_max;
 	};
-	static const DefaultSetting DefaultSettings[];
+
+	/**
+	 * Get a vector of all DefaultSetting names.
+	 * @return Vector of all DefaultSetting names.
+	 */
+	std::vector<QString> getAllSettingNames(void) const;
 
 	/**
 	 * Get a DefaultSetting struct.
@@ -85,18 +95,4 @@ public:
 	 * @return DefaultSetting struct, or nullptr if not found.
 	 */
 	const DefaultSetting *get(const QString &key) const;
-
-private:
-	// Internal settings hash
-	QHash<QString, const DefaultSetting*> defaultSettingsHash;
 };
-
-/**
- * Get a DefaultSetting struct.
- * @param key Setting key
- * @return DefaultSetting struct, or nullptr if not found.
- */
-inline const ConfigDefaults::DefaultSetting *ConfigDefaults::get(const QString &key) const
-{
-	return defaultSettingsHash.value(key, nullptr);
-}
