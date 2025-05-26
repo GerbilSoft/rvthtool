@@ -40,9 +40,17 @@ QString makeRelative(const QString &basePath, const QString &filePath, const QSt
 		fileDir.cdUp();
 	} while (!fileDir.isRoot());
 
-	return (fileIsInBase)
-		? (prefix + baseDir.relativeFilePath(filePath))
-		: filePath;
+	if (fileIsInBase) {
+		QString qs_ret = prefix + baseDir.relativeFilePath(filePath);
+		// WORKAROUND: If this is the application's directory, the relative path
+		// may end up being "./.".
+		if (qs_ret == QLatin1String("./.")) {
+			qs_ret = QLatin1String(".");
+		}
+		return qs_ret;
+	}
+
+	return filePath;
 }
 
 } // namespace PathFuncs

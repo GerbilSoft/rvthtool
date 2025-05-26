@@ -83,9 +83,6 @@ public:
 	// Filename
 	QString filename;
 
-	// TODO: Config class like mcrecover?
-	QString lastPath;
-
 	// NHCD table status for the frame title
 	QString nhcd_status;
 
@@ -160,6 +157,18 @@ public:
 public:
 	// Configuration
 	ConfigStore *cfg;
+
+	/**
+	 * Get the last path.
+	 * @return Last path
+	 */
+	QString lastPath(void) const;
+
+	/**
+	 * Set the last path.
+	 * @param path Last path
+	 */
+	void setLastPath(const QString &path);
 
 public:
 	// Update status
@@ -533,6 +542,61 @@ void QRvtHToolWindowPrivate::retranslateToolbar(void)
 	cboRecryptionKey->setItemText(2, QRvtHToolWindow::tr("Korean (fakesigned)"));
 	cboRecryptionKey->setItemText(3, QRvtHToolWindow::tr("Debug (realsigned)"));
 	cboRecryptionKey->setCurrentIndex(0);
+}
+
+/**
+ * Get the last path.
+ * @return Last path
+ */
+QString QRvtHToolWindowPrivate::lastPath(void) const
+{
+	// TODO: Cache the last absolute path?
+
+	// NOTE: Path is stored using native separators.
+	QString path = QDir::fromNativeSeparators(
+		cfg->get(QLatin1String("lastPath")).toString());
+
+	// If this is a relative path, convert to absolute.
+	if (path == QLatin1String(".")) {
+		// Application directory
+		path = QCoreApplication::applicationDirPath();
+	} else if (path.startsWith(QLatin1String("./"))) {
+		// Path is relative to the application directory.
+		QDir applicationDir(QCoreApplication::applicationDirPath());
+		path.remove(0, 2);
+		path = applicationDir.absoluteFilePath(path);
+	} else if (path.startsWith(QLatin1String("~/"))) {
+		// Path is relative to the user's home directory.
+		path.remove(0, 2);
+		path = QDir::home().absoluteFilePath(path);
+	}
+
+	return path;
+}
+
+/**
+ * Set the last path.
+ * @param path Last path
+ */
+void QRvtHToolWindowPrivate::setLastPath(const QString &path)
+{
+	// TODO: Relative to application directory on Windows?
+	QFileInfo fileInfo(path);
+	QString lastPath;
+	if (fileInfo.isDir())
+		lastPath = path;
+	else
+		lastPath = fileInfo.dir().absolutePath();
+
+	// Make this path relative to the application directory.
+	lastPath = PathFuncs::makeRelativeToApplication(lastPath);
+#ifndef Q_OS_WIN
+	// Make this path relative to the user's home directory.
+	lastPath = PathFuncs::makeRelativeToHome(lastPath);
+#endif /* !Q_OS_WIN */
+
+	cfg->set(QLatin1String("lastPath"),
+		 QDir::toNativeSeparators(lastPath));
 }
 
 /**
@@ -991,17 +1055,16 @@ void QRvtHToolWindow::on_actionOpenDiskImage_triggered(void)
 		allFilter;
 
 	// Get the filename.
-	// TODO: d->lastPath()
 	QString filename = QFileDialog::getOpenFileName(this,
 			tr("Open RVT-H Reader Disk Image"),	// Dialog title
-			d->lastPath,				// Default filename
+			d->lastPath(),				// Default filename
 			filters);				// Filters
 
 	if (!filename.isEmpty()) {
 		// Filename is selected.
 
 		// Save the last path.
-		d->lastPath = QFileInfo(filename).absolutePath();
+		d->setLastPath(QFileInfo(filename).absolutePath());
 
 		// Open the RVT-H Reader disk image.
 		openRvtH(filename, false);
