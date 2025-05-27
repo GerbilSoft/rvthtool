@@ -266,7 +266,6 @@ void QRvtHToolWindowPrivate::updateGrpBankListTitle(void)
 	switch (rvth->imageType()) {
 		// HDDs (multiple banks)
 		case RVTH_ImageType_HDD_Reader: {
-			// TODO: Option to hide the serial number?
 			// TODO: Handle pErr.
 			imageType = QRvtHToolWindow::tr("RVT-H Reader");
 
