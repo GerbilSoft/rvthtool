@@ -6,7 +6,7 @@
     <message>
       <location filename="../src/qrvthtool/windows/AboutDialog.ui" line="14"/>
       <source>About RVT-H Tool</source>
-      <translation type="unfinished">About RVT-H Tool</translation>
+      <translation>Über RVT-H Tool</translation>
     </message>
     <message>
       <location filename="../src/qrvthtool/windows/AboutDialog.ui" line="86"/>
