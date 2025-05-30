@@ -597,6 +597,11 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
         <source>ERROR undeleting Bank %1: %2</source>
         <translation>3rr0r und3l371n6 b4nk %1: %2</translation>
     </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="1568"/>
+        <source>%1: %2</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>QTreeViewOpt</name>
@@ -656,6 +661,144 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
     </message>
 </context>
 <context>
+    <name>RvtH|Error</name>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="35"/>
+        <source>Success</source>
+        <translation>5ucc355</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="37"/>
+        <source>Unrecognized file format</source>
+        <translation>unr3c06n1z3d f1l3 f0rm47</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="39"/>
+        <source>Bank table magic is incorrect</source>
+        <translation>b4nk 74bl3 m461c 15 1nc0rr3c7</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="41"/>
+        <source>No banks found</source>
+        <translation>n0 b4nk5 f0und</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="43"/>
+        <source>Bank status is unknown</source>
+        <translation>b4nk 5747u5 15 unkn0wn</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="45"/>
+        <source>Bank is empty</source>
+        <translation>b4nk 15 3mp7y</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="47"/>
+        <source>Bank is second bank of a dual-layer image</source>
+        <translation>b4nk 15 53c0nd b4nk 0f 4 du4l-l4y3r 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="49"/>
+        <source>Operation can only be performed on a device, not an image file</source>
+        <translation>0p3r4710n c4n 0nly b3 p3rf0rm3d 0n 4 d3v1c3, n07 4n 1m463 f1l3</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="51"/>
+        <source>Bank is deleted</source>
+        <translation>b4nk 15 d3l373d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="53"/>
+        <source>Bank is not deleted</source>
+        <translation>b4nk 15 n07 d3l373d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="55"/>
+        <source>RVT-H object is not an HDD image</source>
+        <translation>rv7-h 0bj3c7 15 n07 4n hdd 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="57"/>
+        <source>Wii game partition not found</source>
+        <translation>w11 64m3 p4r71710n n07 f0und</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="59"/>
+        <source>RVT-H bank count field is invalid</source>
+        <translation>rv7-h b4nk c0un7 f13ld 15 1nv4l1d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="61"/>
+        <source>Operation cannot be performed on devices or HDD images</source>
+        <translation>0p3r4710n c4nn07 b3 p3rf0rm3d 0n d3v1c35 0r hdd 1m4635</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="63"/>
+        <source>Source image does not fit in an RVT-H bank</source>
+        <translation>50urc3 1m463 d035 n07 f17 1n 4n rv7-h b4nk</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="65"/>
+        <source>Destination bank is not empty or deleted</source>
+        <translation>d3571n4710n b4nk 15 n07 3mp7y 0r d3l373d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="67"/>
+        <source>Wii-specific operation was requested on a non-Wii image</source>
+        <translation>w11-5p3c1f1c 0p3r4710n w45 r3qu3573d 0n 4 n0n-w11 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="69"/>
+        <source>Image is unencrypted</source>
+        <translation>1m463 15 un3ncryp73d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="71"/>
+        <source>Image is encrypted</source>
+        <translation>1m463 15 3ncryp73d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="73"/>
+        <source>Wii partition table is corrupted</source>
+        <translation>w11 p4r71710n 74bl3 15 c0rrup73d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="75"/>
+        <source>At least one Wii partition header is corrupted</source>
+        <translation>47 l3457 0n3 w11 p4r71710n h34d3r 15 c0rrup73d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="77"/>
+        <source>Certificate has an unknown issuer</source>
+        <translation>c3r71f1c473 h45 4n unkn0wn 155u3r</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="82"/>
+        <source>Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.</source>
+        <translation>3x73nd3d b4nk 74bl3: c4nn07 u53 b4nk 1 f0r 4 du4l-l4y3r 1m463.</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="84"/>
+        <source>Cannot use the last bank for a Dual-Layer image</source>
+        <translation>c4nn07 u53 7h3 l457 b4nk f0r 4 du4l-l4y3r 1m463</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="86"/>
+        <source>The second bank for the Dual-Layer image is not empty or deleted</source>
+        <translation>7h3 53c0nd b4nk f0r 7h3 du4l-l4y3r 1m463 15 n07 3mp7y 0r d3l373d</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="88"/>
+        <source>The two banks are not contiguous</source>
+        <translation>7h3 7w0 b4nk5 4r3 n07 c0n716u0u5</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="93"/>
+        <source>NDEV headers for GCN are currently not supported.</source>
+        <translation>nd3v h34d3r5 f0r 6cn 4r3 curr3n7ly n07 5upp0r73d.</translation>
+    </message>
+</context>
+<context>
     <name>SelectDeviceDialog</name>
     <message>
         <location filename="../src/qrvthtool/windows/SelectDeviceDialog.ui" line="14"/>
@@ -701,15 +844,15 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
 <context>
     <name>TranslationManager</name>
     <message>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="173"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="184"/>
         <source>David Korth</source>
         <comment>ts-author</comment>
         <extracomment>Translation file author. Put your name here.</extracomment>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="176"/>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="223"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="187"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="233"/>
         <source>Default</source>
         <comment>ts-language</comment>
         <extracomment>Language this translation provides, e.g. &quot;English (US)&quot;.</extracomment>
@@ -717,8 +860,8 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
         <translation>1337 5p34k</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="179"/>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="216"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="190"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="226"/>
         <source>C</source>
         <comment>ts-locale</comment>
         <extracomment>Locale name, e.g. &quot;en_US&quot;.</extracomment>
@@ -749,25 +892,25 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="277"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="332"/>
         <source>%1() ERROR: rvth object is not set.</source>
         <translation>%1() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="281"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="333"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="336"/>
         <source>%1() ERROR: Bank number is not set.</source>
         <translation>%1() 3rr0r: b4nk numb3r 15 n07 537.</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="283"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="335"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="338"/>
         <source>%1() ERROR: Bank number %2 is out of range.</source>
         <translation>%1() 3rr0r: b4nk numb3r %2 15 0u7 0f r4n63.</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="288"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="340"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="343"/>
         <source>%1() ERROR: gcmFilename is not set.</source>
         <translation>%1() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
     </message>
@@ -778,18 +921,28 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="309"/>
-        <source>ERROR extracting Bank %1 into %2: %3</source>
-        <translation>3rr0r 3x7r4c71n6 b4nk %1 1n70 %2: %3</translation>
+        <source>Extraction operation cancelled.</source>
+        <translation>3x7r4c710n 0p3r4710n c4nc3ll3d.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="312"/>
+        <source>ERROR extracting Bank %1 into %2</source>
+        <translation>3rr0r 3x7r4c71n6 b4nk %1 1n70 %2</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="364"/>
+        <source>Import operation cancelled.</source>
+        <translation>1mp0r7 0p3r4710n c4nc3ll3d.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="367"/>
+        <source>ERROR importing %1 into Bank %2</source>
+        <translation>3rr0r 1mp0r71n6 %1 1n70 b4nk %2</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="360"/>
         <source>%1 imported into Bank %2 successfully.</source>
         <translation>%1 1mp0r73d 1n70 b4nk %2 5ucc355fully.</translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="361"/>
-        <source>ERROR importing %1 into Bank %2: %3</source>
-        <translation>3rr0r 1mp0r71n6 %1 1n70 b4nk %2: %3</translation>
     </message>
 </context>
 </TS>

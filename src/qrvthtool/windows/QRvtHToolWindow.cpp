@@ -1535,20 +1535,40 @@ void QRvtHToolWindow::workerObject_updateStatus(const QString &text, int progres
 void QRvtHToolWindow::workerObject_finished(const QString &text, int err)
 {
 	Q_D(QRvtHToolWindow);
-	d->lblMessage->setText(text);
 
 	// Hide the Cancel button.
 	d->btnCancel->setVisible(false);
 
 	if (err == 0) {
 		// Process completed.
+		d->lblMessage->setText(text);
 		d->progressBar->setValue(d->progressBar->maximum());
 		MessageSound::play(QMessageBox::Information, text, this);
 	} else {
 		// Process failed.
 		// TODO: Change progress bar to red?
 		// TOOD: Critical vs. warning.
-		MessageSound::play(QMessageBox::Warning, text, this);
+		if (err == -ECANCELED) {
+			// Operation was cancelled. Show the message as-is.
+			d->lblMessage->setText(text);
+			MessageSound::play(QMessageBox::Warning, text, this);
+		} else {
+			// Other error. Append the error message.
+			QString errmsg;
+			if (err >= 0) {
+				errmsg = QCoreApplication::translate("RvtH|Error", rvth_error(err));
+			} else {
+				// POSIX error code.
+				// TODO: QIODevice has some translations, but it requires
+				// getting the C version first...
+				errmsg = QString::fromUtf8(rvth_error(err));
+			}
+
+			// tr: %1 == general error from worker object; %2 == actual error message
+			QString fullmsg = tr("%1: %2").arg(text, errmsg);
+			d->lblMessage->setText(fullmsg);
+			MessageSound::play(QMessageBox::Warning, fullmsg, this);
+		}
 	}
 
 	// TODO: Hide the progress bar on success after 5 seconds.

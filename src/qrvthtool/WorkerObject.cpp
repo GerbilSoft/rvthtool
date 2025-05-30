@@ -304,10 +304,13 @@ void WorkerObject::doExtract(void)
 		// Successfully extracted.
 		emit finished(tr("Bank %1 extracted into %2 successfully.")
 			.arg(d->bank+1).arg(d->gcmFilenameOnly), ret);
+	} else if (ret == -ECANCELED) {
+		// Operation cancelled.
+		emit finished(tr("Extraction operation cancelled."), ret);
 	} else {
 		// An error occurred...
-		emit finished(tr("ERROR extracting Bank %1 into %2: %3")
-			.arg(d->bank+1).arg(d->gcmFilenameOnly).arg(ret), ret);
+		emit finished(tr("ERROR extracting Bank %1 into %2")
+			.arg(d->bank+1).arg(d->gcmFilenameOnly), ret);
 	}
 }
 
@@ -356,9 +359,12 @@ void WorkerObject::doImport(void)
 		// Successfully extracted.
 		emit finished(tr("%1 imported into Bank %2 successfully.")
 			.arg(d->gcmFilenameOnly).arg(d->bank+1), ret);
+	} else if (ret == -ECANCELED) {
+		// Operation cancelled.
+		emit finished(tr("Import operation cancelled."), ret);
 	} else {
 		// An error occurred...
-		emit finished(tr("ERROR importing %1 into Bank %2: %3")
-			.arg(d->gcmFilenameOnly).arg(d->bank+1).arg(ret), ret);
+		emit finished(tr("ERROR importing %1 into Bank %2")
+			.arg(d->gcmFilenameOnly).arg(d->bank+1), ret);
 	}
 }

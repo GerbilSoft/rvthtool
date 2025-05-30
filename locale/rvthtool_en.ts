@@ -596,6 +596,11 @@ Default is None, which retains the original key.</source>
         <source>ERROR undeleting Bank %1: %2</source>
         <translation></translation>
     </message>
+    <message>
+        <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="1568"/>
+        <source>%1: %2</source>
+        <translation></translation>
+    </message>
 </context>
 <context>
     <name>QTreeViewOpt</name>
@@ -655,6 +660,144 @@ Default is None, which retains the original key.</source>
     </message>
 </context>
 <context>
+    <name>RvtH|Error</name>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="35"/>
+        <source>Success</source>
+        <translation>Success</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="37"/>
+        <source>Unrecognized file format</source>
+        <translation>Unrecognized file format</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="39"/>
+        <source>Bank table magic is incorrect</source>
+        <translation>Bank table magic is incorrect</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="41"/>
+        <source>No banks found</source>
+        <translation>No banks found</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="43"/>
+        <source>Bank status is unknown</source>
+        <translation>Bank status is unknown</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="45"/>
+        <source>Bank is empty</source>
+        <translation>Bank is empty</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="47"/>
+        <source>Bank is second bank of a dual-layer image</source>
+        <translation>Bank is second bank of a dual-layer image</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="49"/>
+        <source>Operation can only be performed on a device, not an image file</source>
+        <translation>Operation can only be performed on a device, not an image file</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="51"/>
+        <source>Bank is deleted</source>
+        <translation>Bank is deleted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="53"/>
+        <source>Bank is not deleted</source>
+        <translation>Bank is not deleted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="55"/>
+        <source>RVT-H object is not an HDD image</source>
+        <translation>RVT-H object is not an HDD image</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="57"/>
+        <source>Wii game partition not found</source>
+        <translation>Wii game partition not found</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="59"/>
+        <source>RVT-H bank count field is invalid</source>
+        <translation>RVT-H bank count field is invalid</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="61"/>
+        <source>Operation cannot be performed on devices or HDD images</source>
+        <translation>Operation cannot be performed on devices or HDD images</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="63"/>
+        <source>Source image does not fit in an RVT-H bank</source>
+        <translation>Source image does not fit in an RVT-H bank</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="65"/>
+        <source>Destination bank is not empty or deleted</source>
+        <translation>Destination bank is not empty or deleted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="67"/>
+        <source>Wii-specific operation was requested on a non-Wii image</source>
+        <translation>Wii-specific operation was requested on a non-Wii image</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="69"/>
+        <source>Image is unencrypted</source>
+        <translation>Image is unencrypted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="71"/>
+        <source>Image is encrypted</source>
+        <translation>Image is encrypted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="73"/>
+        <source>Wii partition table is corrupted</source>
+        <translation>Wii partition table is corrupted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="75"/>
+        <source>At least one Wii partition header is corrupted</source>
+        <translation>At least one Wii partition header is corrupted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="77"/>
+        <source>Certificate has an unknown issuer</source>
+        <translation>Certificate has an unknown issuer</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="82"/>
+        <source>Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.</source>
+        <translation>Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="84"/>
+        <source>Cannot use the last bank for a Dual-Layer image</source>
+        <translation>Cannot use the last bank for a Dual-Layer image</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="86"/>
+        <source>The second bank for the Dual-Layer image is not empty or deleted</source>
+        <translation>The second bank for the Dual-Layer image is not empty or deleted</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="88"/>
+        <source>The two banks are not contiguous</source>
+        <translation>The two banks are not contiguous</translation>
+    </message>
+    <message>
+        <location filename="../src/librvth/rvth_error.c" line="93"/>
+        <source>NDEV headers for GCN are currently not supported.</source>
+        <translation>NDEV headers for GCN are currently not supported.</translation>
+    </message>
+</context>
+<context>
     <name>SelectDeviceDialog</name>
     <message>
         <location filename="../src/qrvthtool/windows/SelectDeviceDialog.ui" line="14"/>
@@ -700,23 +843,23 @@ Default is None, which retains the original key.</source>
 <context>
     <name>TranslationManager</name>
     <message>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="173"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="184"/>
         <source>David Korth</source>
         <comment>ts-author</comment>
         <extracomment>Translation file author. Put your name here.</extracomment>
         <translation></translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="176"/>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="223"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="187"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="233"/>
         <source>Default</source>
         <comment>ts-language</comment>
         <extracomment>Language this translation provides, e.g. &quot;English (US)&quot;.</extracomment>
         <translation>English (US)</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="179"/>
-        <location filename="../src/qrvthtool/TranslationManager.cpp" line="216"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="190"/>
+        <location filename="../src/qrvthtool/TranslationManager.cpp" line="226"/>
         <source>C</source>
         <comment>ts-locale</comment>
         <extracomment>Locale name, e.g. &quot;en_US&quot;.</extracomment>
@@ -747,25 +890,25 @@ Default is None, which retains the original key.</source>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="277"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="332"/>
         <source>%1() ERROR: rvth object is not set.</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="281"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="333"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="336"/>
         <source>%1() ERROR: Bank number is not set.</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="283"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="335"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="338"/>
         <source>%1() ERROR: Bank number %2 is out of range.</source>
         <translation></translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="288"/>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="340"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="343"/>
         <source>%1() ERROR: gcmFilename is not set.</source>
         <translation></translation>
     </message>
@@ -776,17 +919,27 @@ Default is None, which retains the original key.</source>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="309"/>
-        <source>ERROR extracting Bank %1 into %2: %3</source>
-        <translation></translation>
+        <source>Extraction operation cancelled.</source>
+        <translation>Extraction operation cancelled.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="312"/>
+        <source>ERROR extracting Bank %1 into %2</source>
+        <translation>ERROR extracting Bank %1 into %2</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="364"/>
+        <source>Import operation cancelled.</source>
+        <translation>Import operation cancelled.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="367"/>
+        <source>ERROR importing %1 into Bank %2</source>
+        <translation>ERROR importing %1 into Bank %2</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="360"/>
         <source>%1 imported into Bank %2 successfully.</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="361"/>
-        <source>ERROR importing %1 into Bank %2: %3</source>
         <translation></translation>
     </message>
 </context>
