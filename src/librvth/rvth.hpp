@@ -398,6 +398,17 @@ public:
 public:
 	/** Verification functions (verify.cpp) **/
 
+	union WiiErrorCount_t {
+		struct {
+			unsigned int h0;
+			unsigned int h1;
+			unsigned int h2;
+			unsigned int h3;
+			unsigned int h4;
+		};
+		unsigned int errs[5];
+	};
+
 	/**
 	 * Verify partitions in a Wii disc image.
 	 *
@@ -415,13 +426,13 @@ public:
 	 * the H4 hash is correct.
 	 *
 	 * @param bank		[in] Bank number (0-7)
-	 * @param errors	[out] Error counts for all 5 hash tables
+	 * @param errorCount	[out] Error counts for all 5 hash tables
 	 * @param callback	[in,opt] Progress callback
 	 * @param userdata	[in,opt] User data for progress callback
 	 * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
 	 */
 	int verifyWiiPartitions(unsigned int bank,
-		unsigned int error_count[5] = nullptr,
+		WiiErrorCount_t *errorCount = nullptr,
 		RvtH_Verify_Progress_Callback callback = nullptr,
 		void *userdata = nullptr);
 };

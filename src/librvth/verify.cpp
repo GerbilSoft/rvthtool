@@ -115,20 +115,20 @@ static bool is_block_zero(const uint8_t *pData, size_t size)
  * the H4 hash is correct.
  *
  * @param bank		[in] Bank number (0-7)
- * @param errors	[out] Error counts for all 5 hash tables
+ * @param errorCount	[out] Error counts for all 5 hash tables
  * @param callback	[in,opt] Progress callback
  * @param userdata	[in,opt] User data for progress callback
  * @return Error code. (If negative, POSIX error; otherwise, see RvtH_Errors.)
  */
 int RvtH::verifyWiiPartitions(unsigned int bank,
-	unsigned int error_count[5],
+	WiiErrorCount_t *errorCount,
 	RvtH_Verify_Progress_Callback callback,
 	void *userdata)
 {
 	int ret = 0;	// errno or RvtH_Errors
-	if (error_count) {
-		for (unsigned int i = 0; i < 5; i++) {
-			error_count[i] = 0;
+	if (errorCount) {
+		for (size_t i = 0; i < ARRAY_SIZE(errorCount->errs); i++) {
+			errorCount->errs[i] = 0;
 		}
 	}
 
@@ -381,8 +381,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 		sha1_digest(&sha1, digest.size(), digest.data());
 		if (memcmp(pContentEntry->sha1_hash, digest.data(), SHA1_DIGEST_SIZE) != 0) {
 			state.is_zero = is_block_zero((const uint8_t*)H3_tbl.get(), 512);	// only check one LBA
-			if (error_count) {
-				error_count[4]++;
+			if (errorCount) {
+				errorCount->h4++;
 			}
 			if (callback) {
 				state.type = RVTH_VERIFY_ERROR_REPORT;
@@ -469,8 +469,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 			sha1_digest(&sha1, digest.size(), digest.data());
 			if (memcmp(H3_entry, digest.data(), digest.size()) != 0) {
 				state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[0], sizeof(gdata_enc[0]));
-				if (error_count) {
-					error_count[3]++;
+				if (errorCount) {
+					errorCount->h3++;
 				}
 				if (callback) {
 					state.type = RVTH_VERIFY_ERROR_REPORT;
@@ -489,8 +489,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				           sizeof(gdata[0].hashes.H2)) != 0)
 				{
 					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
-					if (error_count) {
-						error_count[2]++;
+					if (errorCount) {
+						errorCount->h2++;
 					}
 					if (callback) {
 						state.type = RVTH_VERIFY_ERROR_REPORT;
@@ -510,8 +510,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				sha1_digest(&sha1, digest.size(), digest.data());
 				if (memcmp(gdata[0].hashes.H2[sg], digest.data(), digest.size()) != 0) {
 					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
-					if (error_count) {
-						error_count[2]++;
+					if (errorCount) {
+						errorCount->h2++;
 					}
 					if (callback) {
 						state.type = RVTH_VERIFY_ERROR_REPORT;
@@ -536,8 +536,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					           sizeof(gdata[0].hashes.H1)) != 0)
 					{
 						state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
-						if (error_count) {
-							error_count[1]++;
+						if (errorCount) {
+							errorCount->h1++;
 						}
 						if (callback) {
 							state.type = RVTH_VERIFY_ERROR_REPORT;
@@ -557,8 +557,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 				sha1_digest(&sha1, digest.size(), digest.data());
 				if (memcmp(gdata[sector].hashes.H1[sector % 8], digest.data(), digest.size()) != 0) {
 					state.is_zero = is_block_zero((const uint8_t*)&gdata_enc[sector], sizeof(gdata_enc[sector]));
-					if (error_count) {
-						error_count[1]++;
+					if (errorCount) {
+						errorCount->h1++;
 					}
 					if (callback) {
 						state.type = RVTH_VERIFY_ERROR_REPORT;
@@ -580,8 +580,8 @@ int RvtH::verifyWiiPartitions(unsigned int bank,
 					sha1_digest(&sha1, digest.size(), digest.data());
 					if (memcmp(gdata[sector].hashes.H0[kb], digest.data(), digest.size()) != 0) {
 						state.is_zero = is_block_zero(&gdata_enc[sector].data[kb * 1024], 1024);
-						if (error_count) {
-							error_count[0]++;
+						if (errorCount) {
+							errorCount->h0++;
 						}
 						if (callback) {
 							state.type = RVTH_VERIFY_ERROR_REPORT;
