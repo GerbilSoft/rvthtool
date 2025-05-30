@@ -196,6 +196,17 @@ void TranslationManager::setTranslation(const QString &locale)
 	//: Locale name, e.g. "en_US".
 	QString tsLocale = tr("C", "ts-locale");
 	Q_UNUSED(tsLocale)
+
+#ifdef __linux__
+	// Setting LANG and LC_ALL may help with Qt's base translations...
+	tsLocale += QLatin1String(".UTF-8");
+	QByteArray tsLocale_utf8 = tsLocale.toUtf8();
+	setenv("LANG", tsLocale_utf8.constData(), 1);
+	setenv("LC_ALL", tsLocale_utf8.constData(), 1);
+
+	// Reinstall a translator to force Qt to update based on LANG and LC_ALL.
+	qApp->installTranslator(d->prgTranslator);
+#endif /* __linux__ */
 }
 
 /**
