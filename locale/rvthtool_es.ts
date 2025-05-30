@@ -29,52 +29,52 @@
       <translation type="unfinished">Version %1</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="202"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="204"/>
       <source>Testers:</source>
       <translation type="unfinished">Testers:</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="205"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="207"/>
       <source>UI Translators:</source>
       <translation type="unfinished">UI Translators:</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="244"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="246"/>
       <source>Internal copy of %1.</source>
       <extracomment>Using an internal copy of a library.</extracomment>
       <translation type="unfinished">Internal copy of %1.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="246"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="248"/>
       <source>Compiled with %1.</source>
       <extracomment>Compiled with a specific version of an external library.</extracomment>
       <translation type="unfinished">Compiled with %1.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="248"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="250"/>
       <source>Using %1.</source>
       <extracomment>Using an external library, e.g. libpcre.so</extracomment>
       <translation type="unfinished">Using %1.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="250"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="252"/>
       <source>License: %1</source>
       <extracomment>License: (libraries with only a single license)</extracomment>
       <translation type="unfinished">License: %1</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="252"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="254"/>
       <source>Licenses: %1</source>
       <extracomment>Licenses: (libraries with multiple licenses)</extracomment>
       <translation type="unfinished">Licenses: %1</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="337"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="339"/>
       <source>For technical support, you can visit the following websites:</source>
       <translation type="unfinished">For technical support, you can visit the following websites:</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="363"/>
+      <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="365"/>
       <source>You can also email the developer directly:</source>
       <translation type="unfinished">You can also email the developer directly:</translation>
     </message>
@@ -747,64 +747,48 @@ Default is None, which retains the original key.</translation>
       <translation type="unfinished">Recrypting Bank %1 to %2: %L3 MiB / %L4 MiB copied...</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="275"/>
-      <source>doExtract() ERROR: rvth object is not set.</source>
-      <translation type="unfinished">doExtract() ERROR: rvth object is not set.</translation>
-    </message>
-    <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="279"/>
-      <source>doExtract() ERROR: Bank number is not set.</source>
-      <translation type="unfinished">doExtract() ERROR: Bank number is not set.</translation>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="277"/>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
+      <source>%1() ERROR: rvth object is not set.</source>
+      <translation type="unfinished">%1() ERROR: rvth object is not set.</translation>
     </message>
     <message>
       <location filename="../src/qrvthtool/WorkerObject.cpp" line="281"/>
-      <source>doExtract() ERROR: Bank number %1 is out of range.</source>
-      <translation type="unfinished">doExtract() ERROR: Bank number %1 is out of range.</translation>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="333"/>
+      <source>%1() ERROR: Bank number is not set.</source>
+      <translation type="unfinished">%1() ERROR: Bank number is not set.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="286"/>
-      <source>doExtract() ERROR: gcmFilename is not set.</source>
-      <translation type="unfinished">doExtract() ERROR: gcmFilename is not set.</translation>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="283"/>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="335"/>
+      <source>%1() ERROR: Bank number %2 is out of range.</source>
+      <translation type="unfinished">%1() ERROR: Bank number %2 is out of range.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="303"/>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="288"/>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="340"/>
+      <source>%1() ERROR: gcmFilename is not set.</source>
+      <translation type="unfinished">%1() ERROR: gcmFilename is not set.</translation>
+    </message>
+    <message>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="305"/>
       <source>Bank %1 extracted into %2 successfully.</source>
       <translation type="unfinished">Bank %1 extracted into %2 successfully.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="307"/>
-      <source>doExtract() ERROR extracting Bank %1 into %2: %3</source>
-      <translation type="unfinished">doExtract() ERROR extracting Bank %1 into %2: %3</translation>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="309"/>
+      <source>ERROR extracting Bank %1 into %2: %3</source>
+      <translation type="unfinished">ERROR extracting Bank %1 into %2: %3</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="325"/>
-      <source>doImport() ERROR: rvth object is not set.</source>
-      <translation type="unfinished">doImport() ERROR: rvth object is not set.</translation>
-    </message>
-    <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
-      <source>doImport() ERROR: Bank number is not set.</source>
-      <translation type="unfinished">doImport() ERROR: Bank number is not set.</translation>
-    </message>
-    <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="331"/>
-      <source>doImport() ERROR: Bank number %1 is out of range.</source>
-      <translation type="unfinished">doImport() ERROR: Bank number %1 is out of range.</translation>
-    </message>
-    <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="336"/>
-      <source>doImport() ERROR: gcmFilename is not set.</source>
-      <translation type="unfinished">doImport() ERROR: gcmFilename is not set.</translation>
-    </message>
-    <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="353"/>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
       <source>%1 imported into Bank %2 successfully.</source>
       <translation type="unfinished">%1 imported into Bank %2 successfully.</translation>
     </message>
     <message>
-      <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
-      <source>doImport() ERROR importing %1 into Bank %2: %3</source>
-      <translation type="unfinished">doImport() ERROR importing %1 into Bank %2: %3</translation>
+      <location filename="../src/qrvthtool/WorkerObject.cpp" line="361"/>
+      <source>ERROR importing %1 into Bank %2: %3</source>
+      <translation type="unfinished">ERROR importing %1 into Bank %2: %3</translation>
     </message>
   </context>
 </TS>
