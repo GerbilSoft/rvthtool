@@ -794,8 +794,8 @@ Default is None, which retains the original key.</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="93"/>
-      <source>NDEV headers for GCN are currently not supported.</source>
-      <translation type="unfinished">NDEV headers for GCN are currently not supported.</translation>
+      <source>NDEV headers for GCN are currently not supported</source>
+      <translation type="unfinished">NDEV headers for GCN are currently not supported</translation>
     </message>
   </context>
   <context>
