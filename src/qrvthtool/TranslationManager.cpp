@@ -40,7 +40,7 @@ public:
 	static TranslationManager *instance;
 
 	// QTranslators
-	QTranslator *qtTranslator;
+	array<QTranslator*, 2> qtTranslator;	// 0 == qt, 1 == qtbase
 	QTranslator *prgTranslator;
 
 	// List of paths to check for translations.
@@ -53,13 +53,9 @@ TranslationManager *TranslationManagerPrivate::instance = nullptr;
 
 TranslationManagerPrivate::TranslationManagerPrivate(TranslationManager *q)
 	: q_ptr(q)
-	, qtTranslator(new QTranslator())
+	, qtTranslator({new QTranslator(), new QTranslator()})
 	, prgTranslator(new QTranslator())
 {
-	// Install the QTranslators.
-	QCoreApplication::installTranslator(qtTranslator);
-	QCoreApplication::installTranslator(prgTranslator);
-
 	// Determine which paths to check for translations.
 	pathList.clear();
 
@@ -105,7 +101,8 @@ TranslationManagerPrivate::TranslationManagerPrivate(TranslationManager *q)
 
 TranslationManagerPrivate::~TranslationManagerPrivate()
 {
-	delete qtTranslator;
+	delete qtTranslator[0];
+	delete qtTranslator[1];
 	delete prgTranslator;
 }
 
@@ -136,6 +133,11 @@ void TranslationManager::setTranslation(const QString &locale)
 {
 	Q_D(TranslationManager);
 
+	// Remove the QTranslators, if they were installed.
+	qApp->removeTranslator(d->qtTranslator[0]);
+	qApp->removeTranslator(d->qtTranslator[1]);
+	qApp->removeTranslator(d->prgTranslator);
+
 	// Initialize the Qt translation system.
 	const array<QString, 2> qtLocales = {
 		QStringLiteral("qt_") + locale,
@@ -148,11 +150,11 @@ void TranslationManager::setTranslation(const QString &locale)
 	// Check the Qt library path first.
 	for (size_t i = 0; i < qtLocales.size(); i++) {
 #  if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-		auto path = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
+		QString path = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
 #  else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
-		auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+		QString path = QLibraryInfo::location(QLibraryInfo::TranslationsPath));
 #  endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
-		isLoaded[i] = d->qtTranslator->load(qtLocales[i], path);
+		isLoaded[i] = d->qtTranslator[i]->load(qtLocales[i], path);
 	}
 #endif
 
@@ -165,7 +167,7 @@ void TranslationManager::setTranslation(const QString &locale)
 					continue;
 				}
 
-				isLoaded[i] = d->qtTranslator->load(qtLocales[i], path);
+				isLoaded[i] = d->qtTranslator[i]->load(qtLocales[i], path);
 			}
 		}
 	}
@@ -177,6 +179,11 @@ void TranslationManager::setTranslation(const QString &locale)
 			break;
 		}
 	}
+
+	// Add the new QTranslators.
+	qApp->installTranslator(d->qtTranslator[0]);
+	qApp->installTranslator(d->qtTranslator[1]);
+	qApp->installTranslator(d->prgTranslator);
 
 	/** Translation file information. **/
 
