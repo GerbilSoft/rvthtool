@@ -96,7 +96,7 @@ LanguageMenuPrivate::LanguageMenuPrivate(LanguageMenu *q)
 	q->addSeparator();
 	QMap<QString, QString> tsMap = TranslationManager::instance()->enumerate();
 	hashActions.reserve(tsMap.size());
-	foreach (const QString &locale, tsMap.keys()) {
+	for (const QString &locale : tsMap.keys()) {
 		const QString &language = tsMap.value(locale);
 		if (language.isEmpty() || hashActions.contains(language)) {
 			// FIXME: Duplicate language?

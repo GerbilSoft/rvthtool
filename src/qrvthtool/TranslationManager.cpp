@@ -219,7 +219,7 @@ QMap<QString, QString> TranslationManager::enumerate(void) const
 	for (const QString &path : d->pathList) {
 		QDir dir(path);
 		QFileInfoList files = dir.entryInfoList(nameFilters, filters);
-		foreach (const QFileInfo &file, files) {
+		for (const QFileInfo &file : files) {
 			// Get the locale information.
 			// TODO: Also get the author information?
 			if (tmpTs.load(file.absoluteFilePath())) {
