@@ -257,7 +257,7 @@ void AboutDialogPrivate::initLibrariesTab(void)
 
 	// Icon set.
 	sLibraries = QStringLiteral(
-		"Icon set is based on KDE's Oxygen icons. (5.46.0)<br/>Copyright (C) 2005-2018 by David Vignoni.<br/>");
+		"Icon set is based on KDE's Oxygen icons. (6.1.0)<br/>Copyright (C) 2005-2024 by David Vignoni.<br/>");
 	sLibraries += sLicenses.arg(QStringLiteral("CC BY-SA 3.0, GNU LGPL v2.1+"));
 
 	// TODO: Don't show compiled-with version if the same as in-use version?
