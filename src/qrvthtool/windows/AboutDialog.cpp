@@ -183,7 +183,9 @@ void AboutDialogPrivate::initCreditsTab(void)
 
 	// Credits data.
 	static const CreditsData_t CreditsData[] = {
-		//{CT_TRANSLATORS,	"", nullptr, "en_GB"},
+		{CT_TRANSLATORS,	"crediar", nullptr, "de"},
+		{CT_CONTINUE,		"Moddimation", nullptr, "de"},
+
 		{CT_MAX, nullptr, nullptr, nullptr}
 	};
 	
@@ -212,7 +214,7 @@ void AboutDialogPrivate::initCreditsTab(void)
 		}
 
 		// Append the contributor's name.
-		credits += ql1BRBR + sIndent + chrBullet + QChar(L' ');
+		credits += ql1BR + sIndent + chrBullet + QChar(L' ');
 		if (creditsData->url) {
 			credits += QStringLiteral("<a href='%1'>")
 				.arg(QLatin1String(creditsData->url));
