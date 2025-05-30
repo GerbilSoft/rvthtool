@@ -29,52 +29,52 @@
         <translation>v3r510n %1</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="202"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="204"/>
         <source>Testers:</source>
         <translation>73573r5:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="205"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="207"/>
         <source>UI Translators:</source>
         <translation>u1 7r4n5l470r5:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="244"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="246"/>
         <source>Internal copy of %1.</source>
         <extracomment>Using an internal copy of a library.</extracomment>
         <translation>1n73rn4l c0py 0f %1.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="246"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="248"/>
         <source>Compiled with %1.</source>
         <extracomment>Compiled with a specific version of an external library.</extracomment>
         <translation>c0mp1l3d w17h %1.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="248"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="250"/>
         <source>Using %1.</source>
         <extracomment>Using an external library, e.g. libpcre.so</extracomment>
         <translation>u51n6 %1.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="250"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="252"/>
         <source>License: %1</source>
         <extracomment>License: (libraries with only a single license)</extracomment>
         <translation>l1c3n53: %1</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="252"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="254"/>
         <source>Licenses: %1</source>
         <extracomment>Licenses: (libraries with multiple licenses)</extracomment>
         <translation>l1c3n535: %1</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="337"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="339"/>
         <source>For technical support, you can visit the following websites:</source>
         <translation>f0r 73chn1c4l 5upp0r7, y0u c4n v1517 7h3 f0ll0w1n6 w3b51735:</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="363"/>
+        <location filename="../src/qrvthtool/windows/AboutDialog.cpp" line="365"/>
         <source>You can also email the developer directly:</source>
         <translation>y0u c4n 4l50 3m41l 7h3 d3v3l0p3r d1r3c7ly:</translation>
     </message>
@@ -748,64 +748,48 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
         <translation>r3cryp71n6 b4nk %1 70 %2: %L3 m1b / %L4 m1b c0p13d...</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="275"/>
-        <source>doExtract() ERROR: rvth object is not set.</source>
-        <translation>d03x7r4c7() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="279"/>
-        <source>doExtract() ERROR: Bank number is not set.</source>
-        <translation>d03x7r4c7() 3rr0r: b4nk numb3r 15 n07 537.</translation>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="277"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
+        <source>%1() ERROR: rvth object is not set.</source>
+        <translation>%1() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
     </message>
     <message>
         <location filename="../src/qrvthtool/WorkerObject.cpp" line="281"/>
-        <source>doExtract() ERROR: Bank number %1 is out of range.</source>
-        <translation>d03x7r4c7() 3rr0r: b4nk numb3r %1 15 0u7 0f r4n63.</translation>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="333"/>
+        <source>%1() ERROR: Bank number is not set.</source>
+        <translation>%1() 3rr0r: b4nk numb3r 15 n07 537.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="286"/>
-        <source>doExtract() ERROR: gcmFilename is not set.</source>
-        <translation>d03x7r4c7() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="283"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="335"/>
+        <source>%1() ERROR: Bank number %2 is out of range.</source>
+        <translation>%1() 3rr0r: b4nk numb3r %2 15 0u7 0f r4n63.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="303"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="288"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="340"/>
+        <source>%1() ERROR: gcmFilename is not set.</source>
+        <translation>%1() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
+    </message>
+    <message>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="305"/>
         <source>Bank %1 extracted into %2 successfully.</source>
         <translation>b4nk %1 3x7r4c73d 1n70 %2 5ucc355fully.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="307"/>
-        <source>doExtract() ERROR extracting Bank %1 into %2: %3</source>
-        <translation>d03x7r4c7() 3rr0r 3x7r4c71n6 b4nk %1 1n70 %2: %3</translation>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="309"/>
+        <source>ERROR extracting Bank %1 into %2: %3</source>
+        <translation>3rr0r 3x7r4c71n6 b4nk %1 1n70 %2: %3</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="325"/>
-        <source>doImport() ERROR: rvth object is not set.</source>
-        <translation>d01mp0r7() 3rr0r: rv7h 0bj3c7 15 n07 537.</translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="329"/>
-        <source>doImport() ERROR: Bank number is not set.</source>
-        <translation>d01mp0r7() 3rr0r: b4nk numb3r 15 n07 537.</translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="331"/>
-        <source>doImport() ERROR: Bank number %1 is out of range.</source>
-        <translation>d01mp0r7() 3rr0r: b4nk numb3r %1 15 0u7 0f r4n63.</translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="336"/>
-        <source>doImport() ERROR: gcmFilename is not set.</source>
-        <translation>d01mp0r7() 3rr0r: 6cmf1l3n4m3 15 n07 537.</translation>
-    </message>
-    <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="353"/>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
         <source>%1 imported into Bank %2 successfully.</source>
         <translation>%1 1mp0r73d 1n70 b4nk %2 5ucc355fully.</translation>
     </message>
     <message>
-        <location filename="../src/qrvthtool/WorkerObject.cpp" line="357"/>
-        <source>doImport() ERROR importing %1 into Bank %2: %3</source>
-        <translation>d01mp0r7() 3rr0r 1mp0r71n6 %1 1n70 b4nk %2: %3</translation>
+        <location filename="../src/qrvthtool/WorkerObject.cpp" line="361"/>
+        <source>ERROR importing %1 into Bank %2: %3</source>
+        <translation>3rr0r 1mp0r71n6 %1 1n70 b4nk %2: %3</translation>
     </message>
 </context>
 </TS>

@@ -270,20 +270,22 @@ void WorkerObject::cancel(void)
 void WorkerObject::doExtract(void)
 {
 	// NOTE: Callback is set to use the private class.
+	const QString fn(QLatin1String("doImport"));
+
 	Q_D(WorkerObject);
 	if (!d->rvth) {
-		emit finished(tr("doExtract() ERROR: rvth object is not set."), -EINVAL);
+		emit finished(tr("%1() ERROR: rvth object is not set.").arg(fn), -EINVAL);
 		return;
 	} else if (d->bank >= d->rvth->bankCount()) {
 		if (d->bank == ~0U) {
-			emit finished(tr("doExtract() ERROR: Bank number is not set."), -EINVAL);
+			emit finished(tr("%1() ERROR: Bank number is not set.").arg(fn), -EINVAL);
 		} else {
-			emit finished(tr("doExtract() ERROR: Bank number %1 is out of range.")
-				.arg(d->bank+1), -ERANGE);
+			emit finished(tr("%1() ERROR: Bank number %2 is out of range.")
+				.arg(fn).arg(d->bank+1), -ERANGE);
 		}
 		return;
 	} else if (d->gcmFilename.isEmpty()) {
-		emit finished(tr("doExtract() ERROR: gcmFilename is not set."), -EINVAL);
+		emit finished(tr("%1() ERROR: gcmFilename is not set.").arg(fn), -EINVAL);
 		return;
 	}
 
@@ -304,7 +306,7 @@ void WorkerObject::doExtract(void)
 			.arg(d->bank+1).arg(d->gcmFilenameOnly), ret);
 	} else {
 		// An error occurred...
-		emit finished(tr("doExtract() ERROR extracting Bank %1 into %2: %3")
+		emit finished(tr("ERROR extracting Bank %1 into %2: %3")
 			.arg(d->bank+1).arg(d->gcmFilenameOnly).arg(ret), ret);
 	}
 }
@@ -320,20 +322,22 @@ void WorkerObject::doExtract(void)
 void WorkerObject::doImport(void)
 {
 	// NOTE: Callback is set to use the private class.
+	const QString fn(QLatin1String("doImport"));
+
 	Q_D(WorkerObject);
 	if (!d->rvth) {
-		emit finished(tr("doImport() ERROR: rvth object is not set."), -EINVAL);
+		emit finished(tr("%1() ERROR: rvth object is not set.").arg(fn), -EINVAL);
 		return;
 	} else if (d->bank >= d->rvth->bankCount()) {
 		if (d->bank == ~0U) {
-			emit finished(tr("doImport() ERROR: Bank number is not set."), -EINVAL);
+			emit finished(tr("%1() ERROR: Bank number is not set.").arg(fn), -EINVAL);
 		} else {
-			emit finished(tr("doImport() ERROR: Bank number %1 is out of range.")
-				.arg(d->bank+1), -ERANGE);
+			emit finished(tr("%1() ERROR: Bank number %2 is out of range.")
+				.arg(fn).arg(d->bank+1), -ERANGE);
 		}
 		return;
 	} else if (d->gcmFilename.isEmpty()) {
-		emit finished(tr("doImport() ERROR: gcmFilename is not set."), -EINVAL);
+		emit finished(tr("%1() ERROR: gcmFilename is not set.").arg(fn), -EINVAL);
 		return;
 	}
 
@@ -354,7 +358,7 @@ void WorkerObject::doImport(void)
 			.arg(d->gcmFilenameOnly).arg(d->bank+1), ret);
 	} else {
 		// An error occurred...
-		emit finished(tr("doImport() ERROR importing %1 into Bank %2: %3")
+		emit finished(tr("ERROR importing %1 into Bank %2: %3")
 			.arg(d->gcmFilenameOnly).arg(d->bank+1).arg(ret), ret);
 	}
 }
