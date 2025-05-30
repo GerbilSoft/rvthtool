@@ -8,8 +8,10 @@
 
 #include "BankEntryView.hpp"
 
-// For LBA_TO_BYTES()
+// for LBA_TO_BYTES()
 #include "nhcd_structs.h"
+// for formatSize()
+#include "../FormatSize.hpp"
 
 // C includes (C++ namespace)
 #include <cassert>
@@ -40,16 +42,6 @@ public:
 
 	const RvtH_BankEntry *bankEntry;
 
-	static inline int calc_frac_part(quint64 size, quint64 mask);
-
-	/**
-	 * Format a file size.
-	 * TODO: Move to a common file so other files can use this?
-	 * @param size File size
-	 * @return Formatted file size
-	 */
-	static QString formatFileSize(quint64 size);
-
 	/**
 	 * Get a string for ticket/TMD status.
 	 * @param sig_type Signature type
@@ -68,87 +60,6 @@ BankEntryViewPrivate::BankEntryViewPrivate(BankEntryView *q)
 	: q_ptr(q)
 	, bankEntry(nullptr)
 { }
-
-inline int BankEntryViewPrivate::calc_frac_part(quint64 size, quint64 mask)
-{
-	float f = static_cast<float>(size & (mask - 1)) / static_cast<float>(mask);
-	unsigned int frac_part = static_cast<unsigned int>(f * 1000.0f);
-
-	// MSVC added round() and roundf() in MSVC 2013.
-	// Use our own rounding code instead.
-	unsigned int round_adj = (frac_part % 10 > 5);
-	frac_part /= 10;
-	frac_part += round_adj;
-	return frac_part;
-}
-
-/**
- * Format a file size.
- * TODO: Move to a common file so other files can use this?
- * @param size File size
- * @return Formatted file size
- */
-QString BankEntryViewPrivate::formatFileSize(quint64 size)
-{
-	QLocale locale(QLocale::system());
-
-	// Localized suffix.
-	QString suffix;
-	// frac_part is always 0 to 100.
-	// If whole_part >= 10, frac_part is divided by 10.
-	unsigned int whole_part, frac_part;
-
-	// TODO: Optimize this?
-	if (size < (2ULL << 10)) {
-		// tr: Bytes (< 1,024)
-		suffix = BankEntryView::tr("byte(s)", "", (int)size);
-		whole_part = static_cast<unsigned int>(size);
-		frac_part = 0;
-	} else if (size < (2ULL << 20)) {
-		// tr: Kilobytes
-		suffix = BankEntryView::tr("KiB");
-		whole_part = static_cast<unsigned int>(size >> 10);
-		frac_part = calc_frac_part(size, (1ULL << 10));
-	} else {
-		// tr: Megabytes
-		suffix = BankEntryView::tr("MiB");
-		whole_part = static_cast<unsigned int>(size >> 20);
-		frac_part = calc_frac_part(size, (1ULL << 20));
-	}
-
-	// Localize the whole part.
-	QString s_value = locale.toString(whole_part);
-
-	if (size >= (2LL << 10)) {
-		// Fractional part.
-		int frac_digits = 2;
-		if (whole_part >= 10) {
-			unsigned int round_adj = (frac_part % 10 > 5);
-			frac_part /= 10;
-			frac_part += round_adj;
-			frac_digits = 1;
-		}
-
-		// Get the localized decimal point.
-		s_value += locale.decimalPoint();
-
-		// Append the fractional part using the required number of digits.
-		char buf[16];
-		snprintf(buf, sizeof(buf), "%0*u", frac_digits, frac_part);
-		s_value += QLatin1String(buf);
-	}
-
-	if (!suffix.isEmpty()) {
-		//: %1 == localized value, %2 == suffix (e.g. MiB)
-		return BankEntryView::tr("%1 %2").arg(s_value, suffix);
-	} else {
-		return s_value;
-	}
-
-	// Should not get here...
-	assert(!"Invalid code path.");
-	return QStringLiteral("QUACK");
-}
 
 /**
  * Get a string for ticket/TMD status.
@@ -251,7 +162,7 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 	ui.lblTypeTitle->show();
 
 	// Size
-	ui.lblSize->setText(formatFileSize(LBA_TO_BYTES(bankEntry->lba_len)));
+	ui.lblSize->setText(formatSize(LBA_TO_BYTES(bankEntry->lba_len)));
 	ui.lblSize->show();
 	ui.lblSizeTitle->show();
 

@@ -153,6 +153,7 @@ SET(qrvthtool_SRCS
 	WorkerObject.cpp
 	MessageSound.cpp
 	PathFuncs.cpp
+	FormatSize.cpp
 
 	config/ConfigStore.cpp
 	config/ConfigDefaults.cpp
@@ -177,6 +178,7 @@ SET(qrvthtool_H
 	WorkerObject.hpp
 	MessageSound.hpp
 	PathFuncs.hpp
+	FormatSize.hpp
 
 	config/ConfigStore.hpp
 	config/ConfigDefaults.hpp

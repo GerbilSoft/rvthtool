@@ -14,6 +14,8 @@
 
 // for the RVT-H Reader icon
 #include "../RvtHModel.hpp"
+// for formatSize()
+#include "../FormatSize.hpp"
 
 #ifdef _WIN32
 #  include "libwiicrypto/win32/Win32_sdk.h"
@@ -64,15 +66,6 @@ public:
 #endif /* _WIN32 */
 
 private:
-	static inline int calc_frac_part(int64_t size, int64_t mask);
-
-	/**
-	* Format a block device size.
-	* @param size	[in] Block device size
-	* @return Formatted block device size.
-	*/
-	static QString format_size(int64_t size);
-
 	/**
 	 * Add a device to the list.
 	 * @param queryData DeviceQueryData
@@ -129,102 +122,6 @@ SelectDeviceDialogPrivate::~SelectDeviceDialogPrivate()
 #endif /* _WIN32 */
 }
 
-inline int SelectDeviceDialogPrivate::calc_frac_part(int64_t size, int64_t mask)
-{
-	float f = (float)(size & (mask - 1)) / (float)mask;
-	int frac_part = (int)(f * 1000.0f);
-
-	// MSVC added round() and roundf() in MSVC 2013.
-	// Use our own rounding code instead.
-	int round_adj = (frac_part % 10 > 5);
-	frac_part /= 10;
-	frac_part += round_adj;
-	return frac_part;
-}
-
-/**
- * Format a block device size.
- * @param size	[in] Block device size
- * @return Formatted block device size.
- */
-QString SelectDeviceDialogPrivate::format_size(int64_t size)
-{
-	QString sbuf;
-	sbuf.reserve(16);
-
-	// frac_part is always 0 to 100.
-	// If whole_part >= 10, frac_part is divided by 10.
-	int whole_part, frac_part;
-
-	// TODO: Optimize this?
-	const QLocale sysLocale = QLocale::system();
-	QString suffix;
-	if (size < 0) {
-		// Invalid size. Print the value as-is.
-		whole_part = (int)size;
-		frac_part = 0;
-	} else if (size < (2LL << 10)) {
-		// tr: Bytes (< 1,024)
-		suffix = SelectDeviceDialog::tr("byte(s)", nullptr, size);
-		whole_part = (int)size;
-		frac_part = 0;
-	} else if (size < (2LL << 20)) {
-		// tr: Kilobytes
-		suffix = SelectDeviceDialog::tr("KiB");
-		whole_part = (int)(size >> 10);
-		frac_part = calc_frac_part(size, (1LL << 10));
-	} else if (size < (2LL << 30)) {
-		// tr: Megabytes
-		suffix = SelectDeviceDialog::tr("MiB");
-		whole_part = (int)(size >> 20);
-		frac_part = calc_frac_part(size, (1LL << 20));
-	} else if (size < (2LL << 40)) {
-		// tr: Gigabytes
-		suffix = SelectDeviceDialog::tr("GiB");
-		whole_part = (int)(size >> 30);
-		frac_part = calc_frac_part(size, (1LL << 30));
-	} else if (size < (2LL << 50)) {
-		// tr: Terabytes
-		suffix = SelectDeviceDialog::tr("TiB");
-		whole_part = (int)(size >> 40);
-		frac_part = calc_frac_part(size, (1LL << 40));
-	} else if (size < (2LL << 60)) {
-		// tr: Petabytes
-		suffix = SelectDeviceDialog::tr("PiB");
-		whole_part = (int)(size >> 50);
-		frac_part = calc_frac_part(size, (1LL << 50));
-	} else /*if (size < (2ULL << 70))*/ {
-		// tr: Exabytes
-		suffix = SelectDeviceDialog::tr("EiB");
-		whole_part = (int)(size >> 60);
-		frac_part = calc_frac_part(size, (1LL << 60));
-	}
-
-	sbuf = sysLocale.toString(whole_part);
-	if (size >= (2LL << 10)) {
-		// KiB or larger. There is a fractional part.
-		int frac_digits = 2;
-		if (whole_part >= 10) {
-			int round_adj = (frac_part % 10 > 5);
-			frac_part /= 10;
-			frac_part += round_adj;
-			frac_digits = 1;
-		}
-
-		char fdigit[12];
-		snprintf(fdigit, sizeof(fdigit), "%0*d", frac_digits, frac_part);
-		sbuf += sysLocale.decimalPoint();
-		sbuf += QLatin1String(fdigit);
-	}
-
-	if (!suffix.isEmpty()) {
-		sbuf += QChar(L' ');
-		sbuf += suffix;
-	}
-
-	return sbuf;
-}
-
 /**
  * Add a device to the list.
  * @param queryData DeviceQueryData
@@ -234,7 +131,7 @@ void SelectDeviceDialogPrivate::addDevice(const DeviceQueryData &queryData)
 	// Create the string.
 	QString text = queryData.device_name + QChar(L'\n') +
 		queryData.usb_serial + QChar(L'\n') +
-		format_size(queryData.size);
+		formatSize(static_cast<off64_t>(queryData.size));
 
 	// Create the QListWidgetItem.
 	// TODO: Verify that QListWidget takes ownership.
