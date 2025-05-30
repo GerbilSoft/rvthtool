@@ -600,7 +600,7 @@ Standard ist keine, der den Originalschlüssel beibehält.</translation>
     <message>
       <location filename="../src/qrvthtool/windows/QRvtHToolWindow.cpp" line="1568"/>
       <source>%1: %2</source>
-      <translation type="unfinished">%1: %2</translation>
+      <translation>%1: %2</translation>
     </message>
   </context>
   <context>
@@ -794,8 +794,8 @@ Standard ist keine, der den Originalschlüssel beibehält.</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="93"/>
-      <source>NDEV headers for GCN are currently not supported.</source>
-      <translation type="unfinished">NDEV headers for GCN are currently not supported.</translation>
+      <source>NDEV headers for GCN are currently not supported</source>
+      <translation type="unfinished">NDEV headers for GCN are currently not supported</translation>
     </message>
   </context>
   <context>
