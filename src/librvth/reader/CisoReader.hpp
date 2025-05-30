@@ -10,6 +10,9 @@
 
 #include "Reader.hpp"
 
+// C++ STL classes
+#include <array>
+
 class CisoReader : public Reader
 {
 public:
@@ -70,5 +73,5 @@ private:
 	// Block map.
 	// 0x0000 == first block after CISO header.
 	// 0xFFFF == empty block.
-	uint16_t m_blockMap[CISO_MAP_SIZE];
+	std::array<uint16_t, CISO_MAP_SIZE> m_blockMap;
 };

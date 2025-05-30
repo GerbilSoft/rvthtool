@@ -19,19 +19,23 @@
 #include "libwiicrypto/gcn_structs.h"
 #include "libwiicrypto/wii_structs.h"
 
-// C includes.
+// C includes
 #include <stdlib.h>
 
-// C includes. (C++ namespace)
+// C includes (C++ namespace)
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <cstdlib>
 
+// C++ STL classes
+#include <array>
+using std::array;
+
 // NDDEMO header.
 // Used in early GameCube tech demos.
 // Note the lack of a GameCube magic number.
-static const uint8_t nddemo_header[64] = {
+static const array<uint8_t, 64> nddemo_header = {{
 	0x30, 0x30, 0x00, 0x45, 0x30, 0x31, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -40,7 +44,7 @@ static const uint8_t nddemo_header[64] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
+}};
 
 // Volume group and partition table.
 // NOTE: Only reading the first partition table,
@@ -84,7 +88,7 @@ int rvth_disc_header_identify(const GCN_DiscHeader *discHeader)
 	}
 
 	// Check for GameCube NDDEMO.
-	if (!memcmp(discHeader, nddemo_header, sizeof(nddemo_header))) {
+	if (!memcmp(discHeader, nddemo_header.data(), nddemo_header.size())) {
 		// NDDEMO header found.
 		return RVTH_BankType_GCN;
 	}

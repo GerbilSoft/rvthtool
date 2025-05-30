@@ -74,7 +74,7 @@ private:
 
 	// Icons for COL_TYPE.
 	// TODO: QMutexLocker?
-	static QIcon ms_icons[RvtHModel::ICON_MAX];
+	static array<QIcon, RvtHModel::ICON_MAX> ms_icons;
 
 public:
 	/**
@@ -94,7 +94,7 @@ public:
 
 /** RvtHModelPrivate **/
 
-QIcon RvtHModelPrivate::ms_icons[RvtHModel::ICON_MAX];
+array<QIcon, RvtHModel::ICON_MAX> RvtHModelPrivate::ms_icons;
 
 RvtHModelPrivate::RvtHModelPrivate(RvtHModel *q)
 	: q_ptr(q)

@@ -15,6 +15,10 @@
 // C includes
 #include <string.h>
 
+// C++ STl classes
+#include <array>
+using std::array;
+
 // Qt includes
 #include <QtCore/QString>
 #include <QtCore/QStringList>
@@ -182,24 +186,20 @@ void AboutDialogPrivate::initCreditsTab(void)
 	};
 
 	// Credits data.
-	static const CreditsData_t CreditsData[] = {
+	static const array<CreditsData_t, 2> CreditsData = {{
 		{CT_TRANSLATORS,	"crediar", nullptr, "de"},
 		{CT_CONTINUE,		"Moddimation", nullptr, "de"},
-
-		{CT_MAX, nullptr, nullptr, nullptr}
-	};
+	}};
 	
 	CreditType_t lastCreditType = CT_CONTINUE;
-	for (const CreditsData_t *creditsData = &CreditsData[0];
-	     creditsData->type < CT_MAX; creditsData++)
-	{
-		if (creditsData->type != CT_CONTINUE &&
-		    creditsData->type != lastCreditType)
+	for (const CreditsData_t &p : CreditsData) {
+		if (p.type != CT_CONTINUE &&
+		    p.type != lastCreditType)
 		{
 			// New credit type.
 			QString creditType;
 
-			switch (creditsData->type) {
+			switch (p.type) {
 				case CT_TESTERS:
 					creditType = AboutDialog::tr("Testers:");
 					break;
@@ -215,17 +215,17 @@ void AboutDialogPrivate::initCreditsTab(void)
 
 		// Append the contributor's name.
 		credits += ql1BR + sIndent + chrBullet + QChar(L' ');
-		if (creditsData->url) {
+		if (p.url) {
 			credits += QStringLiteral("<a href='%1'>")
-				.arg(QLatin1String(creditsData->url));
+				.arg(QLatin1String(p.url));
 		}
-		credits += QString::fromUtf8(creditsData->name);
-		if (creditsData->url) {
+		credits += QString::fromUtf8(p.name);
+		if (p.url) {
 			credits += QStringLiteral("</a>");
 		}
-		if (creditsData->sub) {
+		if (p.sub) {
 			credits += QStringLiteral(" (%1)")
-				.arg(QLatin1String(creditsData->sub));
+				.arg(QLatin1String(p.sub));
 		}
 	}
 
@@ -346,16 +346,13 @@ void AboutDialogPrivate::initSupportTab(void)
 
 	// Support sites.
 	// TODO: Other sites?
-	static const supportSite_t supportSites[] = {
+	static const array<supportSite_t, 1> supportSites = {{
 		{"GitHub", "https://github.com/GerbilSoft/rvthtool"},
-		{nullptr, nullptr}
-	};
+	}};
 
-	for (const supportSite_t *supportSite = &supportSites[0];
-	     supportSite->name != nullptr; supportSite++)
-	{
+	for (const supportSite_t &p : supportSites) {
 		QString siteUrlHtml = QStringLiteral("<a href=\"%1\">%2</a>")
-			.arg(QLatin1String(supportSite->url), QLatin1String(supportSite->name));
+			.arg(QLatin1String(p.url), QLatin1String(p.name));
 
 		sSupport += chrBullet + QChar(L' ') + siteUrlHtml + ql1BR;
 	}

@@ -101,7 +101,6 @@ CisoReader::CisoReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_
 	int ret;
 	int err = 0;
 	size_t size;
-	unsigned int i;
 	uint16_t physBlockIdx = 0;
 	uint16_t maxLogicalBlockUsed = 0;
 
@@ -163,10 +162,10 @@ CisoReader::CisoReader(const RefFilePtr &file, uint32_t lba_start, uint32_t lba_
 	m_block_size_lba = BYTES_TO_LBA(le32_to_cpu(cisoHeader->block_size));
 
 	// Clear the CISO block map initially.
-	memset(m_blockMap, 0xFF, sizeof(m_blockMap));
+	m_blockMap.fill(0xFF);
 
 	// Parse the CISO block map.
-	for (i = 0; i < ARRAY_SIZE(m_blockMap); i++) {
+	for (unsigned int i = 0; i < static_cast<unsigned int>(m_blockMap.size()); i++) {
 		switch (cisoHeader->map[i]) {
 			case 0:
 				// Empty block.
