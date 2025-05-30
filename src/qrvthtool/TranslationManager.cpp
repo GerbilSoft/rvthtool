@@ -152,7 +152,7 @@ void TranslationManager::setTranslation(const QString &locale)
 #  if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
 		QString path = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
 #  else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
-		QString path = QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+		QString path = QLibraryInfo::location(QLibraryInfo::TranslationsPath);
 #  endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
 		isLoaded[i] = d->qtTranslator[i]->load(qtLocales[i], path);
 	}
