@@ -42,10 +42,12 @@ QString makeRelative(const QString &basePath, const QString &filePath, const QSt
 
 	if (fileIsInBase) {
 		QString qs_ret = prefix + baseDir.relativeFilePath(filePath);
-		// WORKAROUND: If this is the application's directory, the relative path
-		// may end up being "./.".
+		// WORKAROUND: If this is the application's directory or the user's home directory,
+		// the relative path may end up being "./." or "~/.".
 		if (qs_ret == QLatin1String("./.")) {
 			qs_ret = QLatin1String(".");
+		} else if (qs_ret == QLatin1String("~/.")) {
+			qs_ret = QLatin1String("~");
 		}
 		return qs_ret;
 	}

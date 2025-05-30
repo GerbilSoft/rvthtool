@@ -374,48 +374,50 @@ void QRvtHToolWindowPrivate::updateActionEnableStatus(void)
 		ui.actionImport->setEnabled(false);
 		ui.actionDelete->setEnabled(false);
 		ui.actionUndelete->setEnabled(false);
-	} else {
-		// RVT-H Reader image is loaded.
-		// TODO: Disable open, scan, and save (all) if we're scanning.
-		ui.actionClose->setEnabled(true);
+		return;
+	}
 
-		// If a bank is selected, enable the actions.
-		const RvtH_BankEntry *const entry = ui.bevBankEntryView->bankEntry();
-		if (entry) {
-			// Enable Extract if the bank is *not* empty.
-			ui.actionExtract->setEnabled(entry->type != RVTH_BankType_Empty);
+	// RVT-H Reader image is loaded.
+	// TODO: Disable open, scan, and save (all) if we're scanning.
+	ui.actionClose->setEnabled(true);
 
-			// d->write_enabled indicates if we can use writing functions.
-			// True if using an actual RVT-H Reader with valid NHCD table;
-			// false otherwise.
-			if (this->write_enabled) {
-				if (entry->type == RVTH_BankType_Empty) {
-					// Bank is empty.
-					// Enable Import; disable Delete and Undelete.
-					ui.actionImport->setEnabled(true);
-					ui.actionDelete->setEnabled(false);
-					ui.actionUndelete->setEnabled(false);
-				} else {
-					// Bank is not empty.
-					// Enable Import and Undelete if the bank is deleted.
-					// Enable Delete if the bank is not deleted.
-					ui.actionImport->setEnabled(entry->is_deleted);
-					ui.actionUndelete->setEnabled(entry->is_deleted);
-					ui.actionDelete->setEnabled(!entry->is_deleted);
-				}
-			} else {
-				// Not an RVT-H Reader. Disable all writing functions.
-				ui.actionImport->setEnabled(false);
-				ui.actionDelete->setEnabled(false);
-				ui.actionUndelete->setEnabled(false);
-			}
-		} else {
-			// No entry. Disable everything.
-			ui.actionExtract->setEnabled(false);
-			ui.actionImport->setEnabled(false);
+	// If a bank is selected, enable the actions.
+	const RvtH_BankEntry *const entry = ui.bevBankEntryView->bankEntry();
+	if (!entry) {
+		// No entry. Disable everything.
+		ui.actionExtract->setEnabled(false);
+		ui.actionImport->setEnabled(false);
+		ui.actionDelete->setEnabled(false);
+		ui.actionUndelete->setEnabled(false);
+		return;
+	}
+
+	// Enable Extract if the bank is *not* empty.
+	ui.actionExtract->setEnabled(entry->type != RVTH_BankType_Empty);
+
+	// d->write_enabled indicates if we can use writing functions.
+	// True if using an actual RVT-H Reader with valid NHCD table;
+	// false otherwise.
+	if (this->write_enabled) {
+		if (entry->type == RVTH_BankType_Empty) {
+			// Bank is empty.
+			// Enable Import; disable Delete and Undelete.
+			ui.actionImport->setEnabled(true);
 			ui.actionDelete->setEnabled(false);
 			ui.actionUndelete->setEnabled(false);
+		} else {
+			// Bank is not empty.
+			// Enable Import and Undelete if the bank is deleted.
+			// Enable Delete if the bank is not deleted.
+			ui.actionImport->setEnabled(entry->is_deleted);
+			ui.actionUndelete->setEnabled(entry->is_deleted);
+			ui.actionDelete->setEnabled(!entry->is_deleted);
 		}
+	} else {
+		// Not an RVT-H Reader. Disable all writing functions.
+		ui.actionImport->setEnabled(false);
+		ui.actionDelete->setEnabled(false);
+		ui.actionUndelete->setEnabled(false);
 	}
 }
 
@@ -532,11 +534,8 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 
 	// Recryption key.
 	ui.toolBar->insertSeparator(ui.actionAbout);
-	lblRecryptionKey = new QLabel(QRvtHToolWindow::tr("Recryption Key:"), q);
+	lblRecryptionKey = new QLabel(q);
 	lblRecryptionKey->setObjectName(QStringLiteral("lblRecryptionKey"));
-	lblRecryptionKey->setToolTip(QRvtHToolWindow::tr(
-		"Set the encryption key to use when extracting disc images.\n"
-		"Default is None, which retains the original key."));
 	lblRecryptionKey->setContentsMargins(4, 0, 4, 0);
 	ui.toolBar->insertWidget(ui.actionAbout, lblRecryptionKey);
 
@@ -546,7 +545,7 @@ void QRvtHToolWindowPrivate::initToolbar(void)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Retail);	// Retail (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Korean);	// Korean (fakesigned)
 	cboRecryptionKey->addItem(QString(), RVL_CryptoType_Debug);	// Debug (fakesigned)
-	//cboRecryptionKey->addItem(QString(), RVL_CryptoType_Debug);	// vWii (fakesigned) [FIXME: Not usable for discs...}
+	//cboRecryptionKey->addItem(QString(), RVL_CryptoType_vWii);	// vWii (fakesigned) [FIXME: Not usable for discs...}
 	cboRecryptionKey->setCurrentIndex(0);
 	ui.toolBar->insertWidget(ui.actionAbout, cboRecryptionKey);
 
@@ -573,6 +572,7 @@ void QRvtHToolWindowPrivate::retranslateToolbar(void)
 	cboRecryptionKey->setItemText(1, QRvtHToolWindow::tr("Retail (fakesigned)"));
 	cboRecryptionKey->setItemText(2, QRvtHToolWindow::tr("Korean (fakesigned)"));
 	cboRecryptionKey->setItemText(3, QRvtHToolWindow::tr("Debug (realsigned)"));
+	//cboRecryptionKey->setItemText(4, "vWii (fakesigned)");	// FIXME: Not usable for discs...
 	cboRecryptionKey->setCurrentIndex(0);
 }
 
@@ -592,6 +592,9 @@ QString QRvtHToolWindowPrivate::lastPath(void) const
 	if (path == QLatin1String(".")) {
 		// Application directory
 		path = QCoreApplication::applicationDirPath();
+	} else if (path == QLatin1String("~")) {
+		// Home directory
+		path = QDir::home().absolutePath();
 	} else if (path.startsWith(QLatin1String("./"))) {
 		// Path is relative to the application directory.
 		QDir applicationDir(QCoreApplication::applicationDirPath());
@@ -639,12 +642,14 @@ int QRvtHToolWindowPrivate::selectedBankNumber(void) const
 {
 	// Only one bank can be selected.
 	QItemSelectionModel *const selectionModel = ui.lstBankList->selectionModel();
-	if (!selectionModel->hasSelection())
+	if (!selectionModel->hasSelection()) {
 		return -1;
+	}
 
-	QModelIndex index = ui.lstBankList->selectionModel()->currentIndex();
-	if (!index.isValid())
+	QModelIndex index = selectionModel->currentIndex();
+	if (!index.isValid()) {
 		return -1;
+	}
 
 	return proxyModel->mapToSource(index).row();
 }
@@ -730,8 +735,8 @@ QRvtHToolWindow::QRvtHToolWindow(QWidget *parent)
 	d->btnCancel->setFocusPolicy(Qt::NoFocus);
 	d->btnCancel->setToolTip(tr("Cancel the current operation."));
 	d->btnCancel->setStyleSheet(QStringLiteral("margin: 0px; padding: 0px;"));
-	if (QIcon::hasThemeIcon(QStringLiteral("dialog-close"))) {
-		d->btnCancel->setIcon(QIcon::fromTheme(QStringLiteral("dialog-close")));
+	if (QIcon::hasThemeIcon(QStringLiteral("process-stop"))) {
+		d->btnCancel->setIcon(QIcon::fromTheme(QStringLiteral("process-stop")));
 	} else {
 		d->btnCancel->setIcon(style()->standardIcon(
 			QStyle::SP_DialogCloseButton, nullptr, d->btnCancel));
@@ -1182,12 +1187,14 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 
 	// Only one bank can be selected.
 	QItemSelectionModel *const selectionModel = d->ui.lstBankList->selectionModel();
-	if (!selectionModel->hasSelection())
+	if (!selectionModel->hasSelection()) {
 		return;
+	}
 
 	QModelIndex index = d->ui.lstBankList->selectionModel()->currentIndex();
-	if (!index.isValid())
+	if (!index.isValid()) {
 		return;
+	}
 
 	const unsigned int bank = d->proxyModel->mapToSource(index).row();
 
@@ -1198,8 +1205,9 @@ void QRvtHToolWindow::on_actionExtract_triggered(void)
 		// TODO: Remove extra space from the filename filter?
 		tr("GameCube/Wii Disc Images") + QStringLiteral(" (*.gcm);;") +
 		tr("All Files") + QStringLiteral(" (*)"));
-	if (filename.isEmpty())
+	if (filename.isEmpty()) {
 		return;
+	}
 
 	// Disable the main UI widgets.
 	markUiBusy();
@@ -1282,8 +1290,9 @@ void QRvtHToolWindow::on_actionImport_triggered(void)
 		// TODO: Remove extra space from the filename filter?
 		tr("GameCube/Wii Disc Images") + QStringLiteral(" (*.gcm *.wbfs *.ciso);;") +
 		tr("All Files") + QStringLiteral(" (*)"));
-	if (filename.isEmpty())
+	if (filename.isEmpty()) {
 		return;
+	}
 
 	// Disable the main UI widgets.
 	markUiBusy();
