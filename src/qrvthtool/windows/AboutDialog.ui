@@ -41,7 +41,7 @@
         </sizepolicy>
        </property>
        <property name="pixmap">
-        <pixmap resource="../resources/hw/hw.qrc">:/hw/128x128/rvth.png</pixmap>
+        <pixmap resource="../resources/hw/hw.qrc">:/hw/128x128-crop/rvth.png</pixmap>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

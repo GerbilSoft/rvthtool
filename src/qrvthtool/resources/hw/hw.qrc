@@ -39,5 +39,6 @@
     <file>48x48/rvth.png</file>
     <file>64x64/rvth.png</file>
     <file>128x128/rvth.png</file>
+    <file>128x128-crop/rvth.png</file>
   </qresource>
 </RCC>
