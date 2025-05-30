@@ -10,13 +10,17 @@
 #include "TranslationManager.hpp"
 #include "config/ConfigStore.hpp"
 
-// Qt includes.
+// Qt includes
 #include <QtCore/QTranslator>
 #include <QtCore/QCoreApplication>
 #include <QtCore/QVector>
 #include <QtCore/QString>
 #include <QtCore/QDir>
 #include <QtCore/QLibraryInfo>
+
+// C++ STL classes
+#include <array>
+using std::array;
 
 /** TranslationManagerPrivate **/
 
@@ -133,35 +137,42 @@ void TranslationManager::setTranslation(const QString &locale)
 	Q_D(TranslationManager);
 
 	// Initialize the Qt translation system.
-	QString qtLocale = QStringLiteral("qt_") + locale;
-	bool isQtSysTranslator = false;
+	const array<QString, 2> qtLocales = {
+		QStringLiteral("qt_") + locale,
+		QStringLiteral("qtbase_") + locale,
+	};
+	array<bool, 2> isLoaded = {false, false};
+
 #if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
 	// Qt on Unix (but not Mac) is usually installed system-wide.
 	// Check the Qt library path first.
+	for (size_t i = 0; i < qtLocales.size(); i++) {
 #  if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-	isQtSysTranslator = d->qtTranslator->load(qtLocale,
-		QLibraryInfo::path(QLibraryInfo::TranslationsPath));
+		auto path = QLibraryInfo::path(QLibraryInfo::TranslationsPath);
 #  else /* QT_VERSION < QT_VERSION_CHECK(6,0,0) */
-	isQtSysTranslator = d->qtTranslator->load(qtLocale,
-		QLibraryInfo::location(QLibraryInfo::TranslationsPath));
+		auto path = QLibraryInfo::location(QLibraryInfo::TranslationsPath));
 #  endif /* QT_VERSION >= QT_VERSION_CHECK(6,0,0) */
-#else
-	// Suppress warnings that isQtSysTranslator is used but not set.
-	Q_UNUSED(isQtSysTranslator)
+		isLoaded[i] = d->qtTranslator->load(qtLocales[i], path);
+	}
 #endif
-	if (!isQtSysTranslator) {
+
+	if (!isLoaded[0] || !isLoaded[1]) {
 		// System-wide translations aren't installed.
 		// Check other paths.
-		foreach (const QString &path, d->pathList) {
-			if (d->qtTranslator->load(qtLocale, path)) {
-				break;
+		for (const QString &path : d->pathList) {
+			for (size_t i = 0; i < qtLocales.size(); i++) {
+				if (isLoaded[i]) {
+					continue;
+				}
+
+				isLoaded[i] = d->qtTranslator->load(qtLocales[i], path);
 			}
 		}
 	}
 
 	// Initialize the application translator.
 	QString prgLocale = QStringLiteral("rvthtool_") + locale;
-	foreach (const QString &path, d->pathList) {
+	for (const QString &path : d->pathList) {
 		if (d->prgTranslator->load(prgLocale, path)) {
 			break;
 		}
@@ -192,13 +203,12 @@ QMap<QString, QString> TranslationManager::enumerate(void) const
 	// Name filters.
 	// Remember that compiled translations have the
 	// extension *.qm, not *.ts.
-	static const char nameFilters_c[4][5] = {
-		"*.qm", "*.qM", "*.Qm", "*.QM",
+	const QStringList nameFilters = {
+		QLatin1String("*.qm"),
+		QLatin1String("*.qM"),
+		QLatin1String("*.Qm"),
+		QLatin1String("*.QM"),
 	};
-
-	QStringList nameFilters;
-	for (int i = 0; i < 4; i++)
-		nameFilters << QLatin1String(nameFilters_c[i]);
 
 	// Search the paths for TS files.
 	static constexpr QDir::Filters filters = (QDir::Files | QDir::Readable);
@@ -206,7 +216,7 @@ QMap<QString, QString> TranslationManager::enumerate(void) const
 	Q_D(const TranslationManager);
 	QMap<QString, QString> tsMap;
 	QTranslator tmpTs;
-	foreach (const QString &path, d->pathList) {
+	for (const QString &path : d->pathList) {
 		QDir dir(path);
 		QFileInfoList files = dir.entryInfoList(nameFilters, filters);
 		foreach (const QFileInfo &file, files) {
