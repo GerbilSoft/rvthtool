@@ -90,7 +90,7 @@ const char *rvth_error(int err)
 		// NDEV option
 
 		// tr: RVTH_ERROR_NDEV_GCN_NOT_SUPPORTED
-		QT_TRANSLATE_NOOP("RvtH|Error", "NDEV headers for GCN are currently not supported."),
+		QT_TRANSLATE_NOOP("RvtH|Error", "NDEV headers for GCN are currently not supported"),
 	};
 	static_assert(ARRAY_SIZE(errtbl) == RVTH_ERROR_MAX, "Missing error descriptions!");
 

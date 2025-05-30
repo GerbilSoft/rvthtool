@@ -794,8 +794,8 @@ d3f4ul7 15 n0n3, wh1ch r3741n5 7h3 0r161n4l k3y.</translation>
     </message>
     <message>
         <location filename="../src/librvth/rvth_error.c" line="93"/>
-        <source>NDEV headers for GCN are currently not supported.</source>
-        <translation>nd3v h34d3r5 f0r 6cn 4r3 curr3n7ly n07 5upp0r73d.</translation>
+        <source>NDEV headers for GCN are currently not supported</source>
+        <translation>nd3v h34d3r5 f0r 6cn 4r3 curr3n7ly n07 5upp0r73d</translation>
     </message>
 </context>
 <context>
