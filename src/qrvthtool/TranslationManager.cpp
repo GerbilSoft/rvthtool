@@ -180,22 +180,19 @@ void TranslationManager::setTranslation(const QString &locale)
 		}
 	}
 
-	// Add the new QTranslators.
-	qApp->installTranslator(d->qtTranslator[0]);
-	qApp->installTranslator(d->qtTranslator[1]);
-	qApp->installTranslator(d->prgTranslator);
-
-	/** Translation file information. **/
+	/** Translation file information **/
 
 	//: Translation file author. Put your name here.
-	QString tsAuthor = tr("David Korth", "ts-author");
+	QString tsAuthor = d->prgTranslator->translate("TranslationManager", "David Korth", "ts-author");
 	Q_UNUSED(tsAuthor)
 	//: Language this translation provides, e.g. "English (US)".
-	QString tsLanguage = tr("Default", "ts-language");
+	QString tsLanguage = d->prgTranslator->translate("TranslationManager", "Default", "ts-language");
 	Q_UNUSED(tsLanguage)
 	//: Locale name, e.g. "en_US".
-	QString tsLocale = tr("C", "ts-locale");
-	Q_UNUSED(tsLocale)
+	QString tsLocale = d->prgTranslator->translate("TranslationManager", "C", "ts-locale");
+	if (tsLocale.isEmpty() || tsLocale == QLatin1String("1337")) {
+		tsLocale = QLatin1String("C");
+	}
 
 #ifdef __linux__
 	// Setting LANG and LC_ALL may help with Qt's base translations...
@@ -203,10 +200,12 @@ void TranslationManager::setTranslation(const QString &locale)
 	QByteArray tsLocale_utf8 = tsLocale.toUtf8();
 	setenv("LANG", tsLocale_utf8.constData(), 1);
 	setenv("LC_ALL", tsLocale_utf8.constData(), 1);
-
-	// Reinstall a translator to force Qt to update based on LANG and LC_ALL.
-	qApp->installTranslator(d->prgTranslator);
 #endif /* __linux__ */
+
+	// Add the new QTranslators.
+	qApp->installTranslator(d->qtTranslator[0]);
+	qApp->installTranslator(d->qtTranslator[1]);
+	qApp->installTranslator(d->prgTranslator);
 }
 
 /**
