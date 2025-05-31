@@ -2,20 +2,20 @@
 cmake --version
 
 :: FIXME: Restore MinGW-w64 support?
-set compiler=msvc2013
+set compiler=msvc2015
 
-if "%compiler%" == "msvc2013" goto :msvc2013
+if "%compiler%" == "msvc2015" goto :msvc2015
 if "%compiler%" == "mingw-w64" goto :mingw-w64
 echo *** ERROR: Unsupported compiler '%compiler%'.
 exit /b 1
 
-:msvc2013
+:msvc2015
 set PreferredToolArchitecture=x64
-set "CMAKE_GENERATOR=Visual Studio 12 2013"
-set CMAKE_GENERATOR_TOOLSET=v120_xp
+set "CMAKE_GENERATOR=Visual Studio 14 2015"
+set CMAKE_GENERATOR_TOOLSET=v140_xp
 if "%platform%" == "x64" set "CMAKE_GENERATOR=%CMAKE_GENERATOR% Win64"
-if "%platform%" == "x86" set Qt5_DIR=C:\Qt\5.8\msvc2013\lib\cmake\Qt5
-if "%platform%" == "x64" set Qt5_DIR=C:\Qt\5.8\msvc2013_64\lib\cmake\Qt5
+if "%platform%" == "x86" set Qt5_DIR=C:\Qt\5.13\msvc2015\lib\cmake\Qt5
+if "%platform%" == "x64" set Qt5_DIR=C:\Qt\5.13\msvc2015_64\lib\cmake\Qt5
 mkdir build
 cd build
 cmake .. -G "%CMAKE_GENERATOR%" -DCMAKE_GENERATOR_TOOLSET=%CMAKE_GENERATOR_TOOLSET% -DBUILD_TESTING=ON -DQt5_DIR=%Qt5_DIR%
