@@ -665,137 +665,137 @@ Standard ist keine, der den Originalschlüssel beibehält.</translation>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="35"/>
       <source>Success</source>
-      <translation type="unfinished">Success</translation>
+      <translation>Erfolg</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="37"/>
       <source>Unrecognized file format</source>
-      <translation type="unfinished">Unrecognized file format</translation>
+      <translation>Unbekanntes Dateiformat</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="39"/>
       <source>Bank table magic is incorrect</source>
-      <translation type="unfinished">Bank table magic is incorrect</translation>
+      <translation>Speicherbank ist leer</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="41"/>
       <source>No banks found</source>
-      <translation type="unfinished">No banks found</translation>
+      <translation>Keine Speicherbanken gefunden</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="43"/>
       <source>Bank status is unknown</source>
-      <translation type="unfinished">Bank status is unknown</translation>
+      <translation>Bankstatus ist unbekannt</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="45"/>
       <source>Bank is empty</source>
-      <translation type="unfinished">Bank is empty</translation>
+      <translation>Speicherbank ist leer</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="47"/>
       <source>Bank is second bank of a dual-layer image</source>
-      <translation type="unfinished">Bank is second bank of a dual-layer image</translation>
+      <translation>Speicherbank ist zweite Bank von einem Dual-Schicht-Abbild</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="49"/>
       <source>Operation can only be performed on a device, not an image file</source>
-      <translation type="unfinished">Operation can only be performed on a device, not an image file</translation>
+      <translation>Operation kann nur auf einem Gerät, nicht auf einem Abbild durchgeführt werden</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="51"/>
       <source>Bank is deleted</source>
-      <translation type="unfinished">Bank is deleted</translation>
+      <translation>Speicherbank wurde gelöscht</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="53"/>
       <source>Bank is not deleted</source>
-      <translation type="unfinished">Bank is not deleted</translation>
+      <translation>Speicherbank wurde nicht gelöscht</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="55"/>
       <source>RVT-H object is not an HDD image</source>
-      <translation type="unfinished">RVT-H object is not an HDD image</translation>
+      <translation>RVT-H Objekt ist kein HDD-Abbild</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="57"/>
       <source>Wii game partition not found</source>
-      <translation type="unfinished">Wii game partition not found</translation>
+      <translation>Wii Spiel-Partition wurde nicht gefunden</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="59"/>
       <source>RVT-H bank count field is invalid</source>
-      <translation type="unfinished">RVT-H bank count field is invalid</translation>
+      <translation>RVT-H Banknummer-Feld ist fehlerhaft</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="61"/>
       <source>Operation cannot be performed on devices or HDD images</source>
-      <translation type="unfinished">Operation cannot be performed on devices or HDD images</translation>
+      <translation>Operation kann nicht auf Geräten oder HDD-Abbildern durchgeführt werden</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="63"/>
       <source>Source image does not fit in an RVT-H bank</source>
-      <translation type="unfinished">Source image does not fit in an RVT-H bank</translation>
+      <translation>Quellabbild passt nicht in eine RVT-H Speicherbank</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="65"/>
       <source>Destination bank is not empty or deleted</source>
-      <translation type="unfinished">Destination bank is not empty or deleted</translation>
+      <translation>Ziel-Speicherbank ist nicht leer oder gelöscht</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="67"/>
       <source>Wii-specific operation was requested on a non-Wii image</source>
-      <translation type="unfinished">Wii-specific operation was requested on a non-Wii image</translation>
+      <translation>Wii-Spezifische Operation wurde angefordert auf einem nicht-Wii Abbild</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="69"/>
       <source>Image is unencrypted</source>
-      <translation type="unfinished">Image is unencrypted</translation>
+      <translation>Abbild ist unverschlüsselt</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="71"/>
       <source>Image is encrypted</source>
-      <translation type="unfinished">Image is encrypted</translation>
+      <translation>Abbild ist verschlüsselt</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="73"/>
       <source>Wii partition table is corrupted</source>
-      <translation type="unfinished">Wii partition table is corrupted</translation>
+      <translation>Wii Partitionstabelle ist korrupt</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="75"/>
       <source>At least one Wii partition header is corrupted</source>
-      <translation type="unfinished">At least one Wii partition header is corrupted</translation>
+      <translation>Ein oder mehr Wii Partitionen-Header sind korrupt</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="77"/>
       <source>Certificate has an unknown issuer</source>
-      <translation type="unfinished">Certificate has an unknown issuer</translation>
+      <translation>Zertifikat hat einen unbekannten Aussteller</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="82"/>
       <source>Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.</source>
-      <translation type="unfinished">Extended Bank Table: Cannot use Bank 1 for a Dual-Layer image.</translation>
+      <translation>Erweiterte Banktabelle: Kann Speicherbank 1 nicht für ein Dual-Schicht-Abbild nutzen.</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="84"/>
       <source>Cannot use the last bank for a Dual-Layer image</source>
-      <translation type="unfinished">Cannot use the last bank for a Dual-Layer image</translation>
+      <translation>Kann die letzte Speicherbank nicht für ein Dual-Schicht-Abbild nutzen</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="86"/>
       <source>The second bank for the Dual-Layer image is not empty or deleted</source>
-      <translation type="unfinished">The second bank for the Dual-Layer image is not empty or deleted</translation>
+      <translation>Die zweite Speicherbank für das Dual-Schicht-Abbild ist nicht leer oder gelöscht</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="88"/>
       <source>The two banks are not contiguous</source>
-      <translation type="unfinished">The two banks are not contiguous</translation>
+      <translation>Die beiden Speicherbänke sind nicht zusammenhängend</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="93"/>
       <source>NDEV headers for GCN are currently not supported</source>
-      <translation type="unfinished">NDEV headers for GCN are currently not supported</translation>
+      <translation>NDEV-Header für GCN werden momentan nicht unterstützt</translation>
     </message>
   </context>
   <context>
@@ -921,7 +921,7 @@ Standard ist keine, der den Originalschlüssel beibehält.</translation>
     <message>
       <location filename="../src/qrvthtool/WorkerObject.cpp" line="309"/>
       <source>Extraction operation cancelled.</source>
-      <translation type="unfinished">Extraction operation cancelled.</translation>
+      <translation>Extrahieren abgebrochen.</translation>
     </message>
     <message>
       <location filename="../src/qrvthtool/WorkerObject.cpp" line="312"/>
@@ -931,7 +931,7 @@ Standard ist keine, der den Originalschlüssel beibehält.</translation>
     <message>
       <location filename="../src/qrvthtool/WorkerObject.cpp" line="364"/>
       <source>Import operation cancelled.</source>
-      <translation type="unfinished">Import operation cancelled.</translation>
+      <translation>Importieren abgebrochen.</translation>
     </message>
     <message>
       <location filename="../src/qrvthtool/WorkerObject.cpp" line="367"/>
