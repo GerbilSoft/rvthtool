@@ -176,7 +176,9 @@ ENDIF(ENABLE_NLS)
 # Project subdirectories.
 ADD_SUBDIRECTORY(extlib)
 ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(doc)
+IF(INSTALL_DOC)
+	ADD_SUBDIRECTORY(doc)
+ENDIF(INSTALL_DOC)
 
 # TODO: Print build summary indicating what plugins will be built.
 # (Some other project had something like this...)
@@ -197,6 +199,16 @@ SET(CPACK_PACKAGE_VERSION ${VERSION_STRING})
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
 SET(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 #SET(CPACK_RESOURCE_FILE_WELCOME "${CMAKE_SOURCE_DIR}/doc/WELCOME.txt")
+
+IF(INSTALL_DOC)
+	# Additional document files for the root directory.
+	# TODO: Convert from Unix line endings to Windows when
+	# compiling for Windows?
+	INCLUDE(DirInstallPaths)
+	INSTALL(FILES NETWORK.md
+		DESTINATION "${DIR_INSTALL_DOC_ROOT}"
+		COMPONENT "doc")
+ENDIF(INSTALL_DOC)
 
 # CPack: Source package settings.
 # NOTE: Double-escape is required because the unescaped

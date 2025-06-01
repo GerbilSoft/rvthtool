@@ -52,3 +52,6 @@ OPTION(ENABLE_NLS "Enable NLS using Qt's built-in localization system." ON)
 IF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	OPTION(ENABLE_NIXOS "Enable special handling for NixOS builds." OFF)
 ENDIF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+
+# Install documentation
+OPTION(INSTALL_DOC "Install documentation." ON)
