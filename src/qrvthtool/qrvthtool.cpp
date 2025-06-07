@@ -2,7 +2,7 @@
  * RVT-H Tool (librvth)                                                    *
  * qrvthtool.cpp: Main program.                                            *
  *                                                                         *
- * Copyright (c) 2018-2023 by David Korth.                                 *
+ * Copyright (c) 2018-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -10,22 +10,27 @@
 
 #include "windows/QRvtHToolWindow.hpp"
 
-// Qt includes.
+// Qt includes
 #include <QApplication>
 #include <QtCore/QDir>
+
+// KDE
+#ifdef HAVE_KF_CoreAddons
+#  include <KAboutData>
+#endif /* HAVE_KF_CoreAddons */
 
 // TranslationManager
 #include "TranslationManager.hpp"
 
 #ifdef _WIN32
-# include <windows.h>
-# include <tchar.h>
+#  include <windows.h>
+#  include <tchar.h>
 extern UINT WM_TaskbarButtonCreated;
 UINT WM_TaskbarButtonCreated;
 
 // MSGFLT_ADD (requires _WIN32_WINNT >= 0x0600)
 #ifndef MSGFLT_ADD
-# define MSGFLT_ADD 1
+#  define MSGFLT_ADD 1
 #endif
 
 /**
@@ -89,6 +94,27 @@ int main(int argc, char *argv[])
 #if QT_VERSION >= QT_VERSION_CHECK(5,7,0)
 	app->setDesktopFileName(QStringLiteral("com.gerbilsoft.qrvthtool"));
 #endif /* QT_VERSION >= QT_VERSION_CHECK(5,7,0) */
+
+#ifdef HAVE_KF_CoreAddons
+	// Set up KAboutData.
+	QString applicationDisplayName = QStringLiteral("RVT-H Tool");
+	KAboutData aboutData(
+		app->applicationName(),		// componentName
+		applicationDisplayName,		// displayName
+		app->applicationVersion(),	// version
+		applicationDisplayName,		// shortDescription (TODO: Better value?)
+		KAboutLicense::GPL_V2,		// licenseType
+		QStringLiteral("Copyright (c) 2018-2025 by David Korth."),	// copyrightStatement
+		QString(),			// otherText
+		QLatin1String("https://github.com/GerbilSoft/rvthtool"),	// homePageAddress
+		QLatin1String("https://github.com/GerbilSoft/rvthtool/issues")	// bugAddress
+	);
+	KAboutData::setApplicationData(aboutData);
+#endif /* HAVE_KF_CoreAddons */
+
+	// Initialize KCrash.
+	// FIXME: It shows bugs.kde.org as the bug reporting address, which isn't wanted...
+	//KCrash::initialize();
 
 	// Initialize the TranslationManager.
 	TranslationManager *const tsm = TranslationManager::instance();

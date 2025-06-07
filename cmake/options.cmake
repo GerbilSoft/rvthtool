@@ -45,6 +45,14 @@ ENDIF(INSTALL_DEBUG AND NOT SPLIT_DEBUG)
 SET(QT_VERSION AUTO CACHE STRING "Qt version to use (default is 'AUTO' to auto-detect Qt6 or Qt5)")
 SET_PROPERTY(CACHE QT_VERSION PROPERTY STRINGS AUTO 6 5)
 
+# Enable KDE integration (defaults to ON on Linux)
+IF(WIN32 OR APPLE)
+	SET(ENABLE_KDE_DEFAULT OFF)
+ELSE(WIN32 OR APPLE)
+	SET(ENABLE_KDE_DEFAULT ON)
+ENDIF(WIN32 OR APPLE)
+OPTION(ENABLE_KDE "Enable KDE integration." ${ENABLE_KDE_DEFAULT})
+
 # Translations
 OPTION(ENABLE_NLS "Enable NLS using Qt's built-in localization system." ON)
 

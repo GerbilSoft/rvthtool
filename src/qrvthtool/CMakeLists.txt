@@ -105,8 +105,10 @@ ELSE()
         SET(QRVTHTOOL_TRANSLATIONS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/${DIR_INSTALL_TRANSLATIONS}")
 ENDIF()
 
-# KF5/KF6: Check for KWidgetsAddons headers for notification sounds.
-IF(UNIX AND NOT APPLE)
+# KDE integration for:
+# - KCoreAddons: KAboutData
+# - KWidgetsAddons: Notification sounds
+IF(ENABLE_KDE)
 	# Reference: http://www.proli.net/2014/06/21/porting-your-project-to-qt5kf5/
 	# Find KF5/KF6 Extra CMake Modules.
 	FIND_PACKAGE(ECM ${ECM_MINIMUM_VERSION} NO_MODULE)
@@ -129,16 +131,20 @@ IF(UNIX AND NOT APPLE)
 		# NOTE: Not needed because KDECompilerSettings isn't used.
 		#STRING(REPLACE "-std=iso9899:1990" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 
-		# Find KF5/KF6. (TODO: Version?)
-		FIND_PACKAGE(${KF_NS} ${KF_MIN} COMPONENTS WidgetsAddons)
+		# Find KDE Frameworks.
+		FIND_PACKAGE(${KF_NS} ${KF_MIN} COMPONENTS CoreAddons WidgetsAddons)
+
+		IF(${KF_NS}CoreAddons_FOUND)
+			SET(HAVE_KF_CoreAddons 1)
+		ENDIF(${KF_NS}CoreAddons_FOUND)
+
 		IF(${KF_NS}WidgetsAddons_FOUND)
 			SET(HAVE_KF_WidgetsAddons 1)
-
 			# KDE code uses pthread_once().
 			FIND_PACKAGE(Threads REQUIRED)
 		ENDIF(${KF_NS}WidgetsAddons_FOUND)
 	ENDIF()
-ENDIF(UNIX AND NOT APPLE)
+ENDIF(ENABLE_KDE)
 
 
 # Write the config.h file.
@@ -320,6 +326,10 @@ ENDIF(ENABLE_DBUS AND HAVE_QtDBus)
 IF(CMAKE_THREAD_LIBS_INIT)
 	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 ENDIF(CMAKE_THREAD_LIBS_INIT)
+
+IF(HAVE_KF_CoreAddons)
+	TARGET_LINK_LIBRARIES(qrvthtool PRIVATE ${KF_NS}::CoreAddons)
+ENDIF(HAVE_KF_CoreAddons)
 
 IF(HAVE_KF_WidgetsAddons)
 	# NOTE: The library isn't actually needed, but we need to

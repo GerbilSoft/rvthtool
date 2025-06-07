@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * config.qrvthtool.h.in: QRvthTool configuration. (source file)           *
  *                                                                         *
- * Copyright (c) 2013-2024 by David Korth.                                 *
+ * Copyright (c) 2013-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -14,6 +14,9 @@
 
 /* Program version. */
 #define VERSION_STRING "@VERSION_STRING@"
+
+/* Define to 1 if you have CoreAddons from KDE Frameworks. */
+#cmakedefine HAVE_KF_CoreAddons 1
 
 /* Define to 1 if you have WidgetsAddons from KDE Frameworks. */
 #cmakedefine HAVE_KF_WidgetsAddons 1
