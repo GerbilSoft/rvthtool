@@ -904,6 +904,11 @@ void QRvtHToolWindow::closeRvtH(void)
 	d->filename.clear();
 	d->nhcd_status.clear();
 
+	// Clear the status bar.
+	d->btnCancel->setVisible(false);
+	d->progressBar->setVisible(false);
+	d->lblMessage->clear();
+
 	// Update the UI.
 	d->updateLstBankList();
 	d->updateWindowTitle();
