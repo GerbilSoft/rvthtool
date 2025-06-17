@@ -413,7 +413,7 @@ ENDIF(DIR_INSTALL_XDG_DESKTOP)
 
 # AppStream metainfo XML
 IF(DIR_INSTALL_XDG_APPSTREAM)
-	INSTALL(FILES com.gerbilsoft.qrvthtool.metainfo.xml
+	INSTALL(FILES resources/xdg/com.gerbilsoft.qrvthtool.metainfo.xml
 		DESTINATION "${DIR_INSTALL_XDG_APPSTREAM}"
 		COMPONENT "xdg")
 ENDIF(DIR_INSTALL_XDG_APPSTREAM)
