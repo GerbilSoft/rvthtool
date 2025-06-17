@@ -1,3 +1,10 @@
+rvthtool (2.0-1ppa2~plucky1) plucky; urgency=medium
+
+  * Build for Ubuntu 25.04 "Plucky" Puffin.
+  * Switch to Qt 6.
+
+ -- David Korth <gerbilsoft@gerbilsoft.com>  Tue, 17 Jun 2025 00:32:21 -0400
+
 rvthtool (2.0-1ppa2~noble1) noble; urgency=medium
 
   * Build for Ubuntu 24.04 "Noble" Numbat.

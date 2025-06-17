@@ -9,9 +9,9 @@ Build-Depends:
  libgmp3-dev,
  nettle-dev,
  libudev-dev,
- qtbase5-dev,
- qttools5-dev-tools,
- qttools5-dev
+ qt6-base-dev,
+ qt6-tools-dev-tools,
+ qt6-tools-dev
 Standards-Version: 3.9.8
 Homepage: https://github.com/GerbilSoft/rvthtool
 Vcs-Git: https://github.com/GerbilSoft/rvthtool
