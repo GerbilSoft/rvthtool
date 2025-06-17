@@ -1,3 +1,9 @@
+rvthtool (2.0-1ppa2~jammy1) jammy; urgency=medium
+
+  * Build for Ubuntu 22.04 "Jammy" Jellyfish.
+
+ -- David Korth <gerbilsoft@gerbilsoft.com>  Tue, 17 Jun 2025 00:15:56 -0400
+
 rvthtool (2.0-1ppa2~focal1) focal; urgency=medium
 
   * Build for Ubuntu 20.04 "Focal" Fossa.
