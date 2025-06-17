@@ -274,7 +274,7 @@ void AboutDialogPrivate::initLibrariesTab(void)
 	sLibraries += sCompiledWith.arg(qtVersionCompiled) + ql1BR;
 	sLibraries += sUsingDll.arg(qtVersion);
 #endif /* QT_IS_STATIC */
-	sLibraries += QStringLiteral("<br/>Copyright (C) 1995-2019 The Qt Company Ltd. and/or its subsidiaries.<br/>");
+	sLibraries += QStringLiteral("<br/>Copyright (C) 1995-2025 The Qt Company Ltd. and/or its subsidiaries.<br/>");
 	sLibraries += sLicenses.arg(QStringLiteral("GNU LGPL v2.1+, GNU GPL v2+"));
 
 	/** nettle **/
@@ -312,7 +312,7 @@ void AboutDialogPrivate::initLibrariesTab(void)
 
 #ifdef HAVE_NETTLE_3
 	if (nettle_minor >= 1) {
-		sLibraries += QStringLiteral("Copyright (C) 2001-2023 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
+		sLibraries += QStringLiteral("Copyright (C) 2001-2024 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
 	} else {
 		sLibraries += QStringLiteral("Copyright (C) 2001-2014 Niels Möller.<br/><a href='https://www.lysator.liu.se/~nisse/nettle/'>https://www.lysator.liu.se/~nisse/nettle/</a><br/>");
 	}
