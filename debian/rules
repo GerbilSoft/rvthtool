@@ -22,8 +22,3 @@ override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	CTEST_OUTPUT_ON_FAILURE=1 $(MAKE) -C build test
 endif
-
-# Remove the extra LICENSE file.
-override_dh_auto_install:
-	dh_auto_install
-	rm $(DESTDIR)/usr/share/doc/rvthtool/LICENSE
