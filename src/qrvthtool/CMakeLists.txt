@@ -427,12 +427,12 @@ IF(TARGET ${QT_NS}::windeployqt)
 	# execute windeployqt in a tmp directory after build
 	# NOTE: Some options are only available in Qt6.
 	IF(OUR_QT_VERSION GREATER 5)	# >= 6
-		SET(QTWINDEPLOY_NO_SYSTEM_DXC_COMPILER "--no-system-dxc-compiler")
-		SET(QTWINDEPLOY_EXCLUDE_PLUGINS "--exclude-plugins qcertonlybackend,qschannelbackend,qtuiotouchplugin,qdirect2d,qminimal,qoffscreen,qgif,qico,qjpeg,qnetworklistmanager")
-		SET(QTWINDEPLOY_NO_FFMPEG "--no-ffmpeg")
+		SET(QTWINDEPLOY_NO_SYSTEM_DXC_COMPILER --no-system-dxc-compiler)
+		SET(QTWINDEPLOY_EXCLUDE_PLUGINS --exclude-plugins qcertonlybackend,qschannelbackend,qtuiotouchplugin,qdirect2d,qminimal,qoffscreen,qgif,qico,qjpeg,qnetworklistmanager)
+		SET(QTWINDEPLOY_NO_FFMPEG --no-ffmpeg)
 	ELSE(OUR_QT_VERSION GREATER 5)	# <= 5
-		SET(QTWINDEPLOY_NO_WEBKIT2 "--no-webkit2")
-		SET(QTWINDEPLOY_NO_ANGLE "--no-angle")
+		SET(QTWINDEPLOY_NO_WEBKIT2 --no-webkit2)
+		SET(QTWINDEPLOY_NO_ANGLE --no-angle)
 	ENDIF(OUR_QT_VERSION GREATER 5)
 
 	ADD_CUSTOM_COMMAND(TARGET qrvthtool POST_BUILD
