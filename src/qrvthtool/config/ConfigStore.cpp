@@ -9,7 +9,7 @@
 #include "ConfigStore.hpp"
 #include "git.h"
 
-// Qt includes.
+// Qt includes
 #include <QtCore/QCoreApplication>
 #include <QtCore/QSettings>
 #include <QtCore/QDir>
@@ -23,8 +23,11 @@
 #include <QtCore/QMetaObject>
 #include <QtCore/QMetaMethod>
 
-// Default settings.
+// Default settings
 #include "ConfigDefaults.hpp"
+
+// C includes (C++ namespace)
+#include <cassert>
 
 // C++ STL classes
 #include <map>
