@@ -1,3 +1,9 @@
+rvthtool (2.0-1ppa2~focal1) focal; urgency=medium
+
+  * Build for Ubuntu 20.04 "Focal" Fossa.
+
+ -- David Korth <gerbilsoft@gerbilsoft.com>  Tue, 17 Jun 2025 00:07:05 -0400
+
 rvthtool (2.0-1ppa2~bionic3) bionic; urgency=medium
 
   * qttools5-dev is needed in Ubuntu 18.04+ for Qt5LinguistTools.
