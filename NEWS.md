@@ -1,34 +1,37 @@
 # Changes
 
-## v2.0 - GUI Release (released 2022/??/??)
+## v2.0 - GUI Release (released 2025/??/??)
 
-New features:
-* GUI frontend written using the Qt Toolkit.
-* [Win32] Implemented the `query` command.
-* wadresign: Command line tool to recrypt and resign WAD files.
-  * Can decrypt WADs using any key: retail, Korean, debug
-  * Can encrypt WADs using any key. The resulting WAD will be fakesigned if
-    encrypting for retail or Korean, or realsigned if encrypting for debug.
-  * Both standard and BroadOn WAD format are supported for both input and
-    output.
-  * **WARNING:** Use with caution if converting system titles for use
-    on real hardware.
-* nusresign: Command line tool to recrypt and resign NUS/WUP packages.
-  * Can decrypt and encrypt from and to retail and debug.
-  * The resulting NUS package will be fakesigned if encrypting for retail,
-    or realsigned if encrypting for debug.
-  * **WARNING:** Use with caution if converting system titles for use
-    on real hardware.
+* New features:
+  * GUI frontend written using the Qt Toolkit.
+    * Qt5 and Qt6 are supported.
+    * The precompiled Windows build uses a patched version of
+      Qt 6.8.3 that supports Windows 7.
+  * [Win32] Implemented the `query` command.
+  * wadresign: Command line tool to recrypt and resign WAD files.
+    * Can decrypt WADs using any key: retail, Korean, debug
+    * Can encrypt WADs using any key. The resulting WAD will be fakesigned if
+      encrypting for retail or Korean, or realsigned if encrypting for debug.
+    * Both standard and BroadOn WAD format are supported for both input and
+      output.
+    * **WARNING:** Use with caution if converting system titles for use
+      on real hardware.
+  * nusresign: Command line tool to recrypt and resign NUS/WUP packages.
+    * Can decrypt and encrypt from and to retail and debug.
+    * The resulting NUS package will be fakesigned if encrypting for retail,
+      or realsigned if encrypting for debug.
+    * **WARNING:** Use with caution if converting system titles for use
+      on real hardware.
 
-Low-level changes:
-* Rewrote librvth using C++ to improve maintainability.
+* Low-level changes:
+  * Rewrote librvth using C++ to improve maintainability.
 
-Other changes:
-* Realsigned tickets and TMDs are now explicitly indicated as such.
+* Other changes:
+  * Realsigned tickets and TMDs are now explicitly indicated as such.
 
-Bug fixes:
-* Dual-layer images weren't imported properly before. Debug builds asserted
-  at 4489 MB, but release builds silently failed.
+* Bug fixes:
+  * Dual-layer images weren't imported properly before. Debug builds asserted
+    at 4489 MB, but release builds silently failed.
 
 ## v1.1.1 - Brown Paper Bag Release (released 2018/09/17)
 
