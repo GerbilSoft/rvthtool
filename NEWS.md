@@ -1,6 +1,6 @@
 # Changes
 
-## v2.0 - GUI Release (released 2025/??/??)
+## v2.0 - GUI Release (released 2025/06/16)
 
 * New features:
   * GUI frontend written using the Qt Toolkit.

@@ -9,6 +9,12 @@ This is an open-source tool for managing RVT-H Reader consoles.
 
 ## Current Features
 
+New in v2.0:
+* A graphical UI frontend using the Qt Toolkit is now included.
+* New command line tools `wadresign` and `nusresign` for re-signing
+  Wii WADs and Wii U NUS packages, respectively.
+
+Other features:
 * Lists all disc images currently installed on the RVT-H system.
 * Can find "deleted" images that aren't accessible on the RVT-H but are still
   present on the HDD, and has an option to undelete these images.
@@ -42,8 +48,6 @@ This is an open-source tool for managing RVT-H Reader consoles.
   with an HDD larger than 40 GB.
   * Bank 1 will be relocated to before the bank table, limiting it to GameCube
     images.
-
-A future version will also add a GUI.
 
 ## Usage
 
@@ -88,7 +92,7 @@ $ ./rvthtool query
 /dev/sdb
 - Manufacturer:  Nintendo Co., Ltd.
 - Product Name:  RVT-H READER
-- Serial Number: 20xxxxxx
+- Serial Number: 2000xxxx
 - HDD Firmware:  01.0
 - HDD Vendor:    WDC     
 - HDD Model:     WD800BEVE-00UYT0
