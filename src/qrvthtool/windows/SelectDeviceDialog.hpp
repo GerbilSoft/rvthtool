@@ -14,6 +14,9 @@
 #include "librvth/query.h"
 Q_DECLARE_METATYPE(RvtH_Listen_State_e)
 
+// Configuration
+class ConfigStore;
+
 /**
  * Convert a TCHAR string to QString.
  * @param str TCHAR string
@@ -77,7 +80,7 @@ Q_OBJECT
 typedef QDialog super;
 	
 public:
-	explicit SelectDeviceDialog(QWidget *parent = nullptr);
+	explicit SelectDeviceDialog(ConfigStore *cfg, QWidget *parent = nullptr);
 	virtual ~SelectDeviceDialog();
 
 protected:
@@ -149,4 +152,13 @@ protected slots:
 	 * @param state Device state
 	 */
 	void deviceStateChanged(const DeviceQueryData &queryData, RvtH_Listen_State_e state);
+
+protected slots:
+	/** Configuration slots **/
+
+	/**
+	 * "Mask Device Serial Numbers" option was changed by the configuration.
+	 * @param mask If true, mask device serial numbers.
+	 */
+	void maskDeviceSerialNumbers_cfg_slot(const QVariant &mask);
 };

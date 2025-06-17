@@ -32,13 +32,16 @@
 #include <QPushButton>
 #include <QMetaMethod>
 
+// Configuration
+#include "config/ConfigStore.hpp"
+
 /** SelectDeviceDialogPrivate **/
 
 #include "ui_SelectDeviceDialog.h"
 class SelectDeviceDialogPrivate
 {
 public:
-	explicit SelectDeviceDialogPrivate(SelectDeviceDialog *q);
+	explicit SelectDeviceDialogPrivate(ConfigStore *cfg, SelectDeviceDialog *q);
 	~SelectDeviceDialogPrivate();
 
 protected:
@@ -49,6 +52,9 @@ private:
 
 public:
 	Ui::SelectDeviceDialog ui;
+
+	// Configuration
+	ConfigStore *const cfg;
 
 	// RVT-H Reader icon
 	QIcon rvthReaderIcon;
@@ -95,8 +101,9 @@ public:
 		const RvtH_QueryEntry *entry, RvtH_Listen_State_e state, void *userdata);
 };
 
-SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
+SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(ConfigStore *cfg, SelectDeviceDialog *q)
 	: q_ptr(q)
+	, cfg(cfg)
 	, sel_device(nullptr)
 	, listener(nullptr)
 #ifdef _WIN32
@@ -108,6 +115,10 @@ SelectDeviceDialogPrivate::SelectDeviceDialogPrivate(SelectDeviceDialog *q)
 
 	// Set the window icon.
 	q->setWindowIcon(rvthReaderIcon);
+
+	// Configuration signals
+	cfg->registerChangeNotification(QLatin1String("maskDeviceSerialNumbers"),
+		q, SLOT(maskDeviceSerialNumbers_cfg_slot(QVariant)));
 }
 
 SelectDeviceDialogPrivate::~SelectDeviceDialogPrivate()
@@ -128,10 +139,32 @@ SelectDeviceDialogPrivate::~SelectDeviceDialogPrivate()
  */
 void SelectDeviceDialogPrivate::addDevice(const DeviceQueryData &queryData)
 {
+	const bool mask = cfg->get(QLatin1String("maskDeviceSerialNumbers")).toBool();
+
 	// Create the string.
-	QString text = queryData.device_name + QChar(L'\n') +
-		queryData.usb_serial + QChar(L'\n') +
-		formatSize(static_cast<off64_t>(queryData.size));
+	QString text = queryData.device_name + QChar(L'\n');
+	if (mask) {
+		// Mask the last 5 digits.
+		// TODO: qsizetype?
+		QString qs_full_serial = queryData.usb_serial;
+		const int size = static_cast<int>(qs_full_serial.size());
+		if (size > 5) {
+			for (int i = size - 5; i < size; i++) {
+				qs_full_serial[i] = QChar(L'x');
+			}
+		} else {
+			// Mask the entire thing?
+			qs_full_serial = QString(size, QChar(L'x'));
+		}
+
+		text += qs_full_serial;
+	} else {
+		// Show the full serial number.
+		text += queryData.usb_serial;
+	}
+
+	text += QChar(L'\n');
+	text += formatSize(static_cast<off64_t>(queryData.size));
 
 	// Create the QListWidgetItem.
 	// TODO: Verify that QListWidget takes ownership.
@@ -251,12 +284,12 @@ void SelectDeviceDialogPrivate::rvth_listener_callback(
 
 /** SelectDeviceDialog **/
 
-SelectDeviceDialog::SelectDeviceDialog(QWidget *parent)
+SelectDeviceDialog::SelectDeviceDialog(ConfigStore *cfg, QWidget *parent)
 	: super(parent,
 		Qt::WindowSystemMenuHint |
 		Qt::WindowTitleHint |
 		Qt::WindowCloseButtonHint)
-	, d_ptr(new SelectDeviceDialogPrivate(this))
+	, d_ptr(new SelectDeviceDialogPrivate(cfg, this))
 {
 	Q_D(SelectDeviceDialog);
 	d->ui.setupUi(this);
@@ -533,4 +566,14 @@ void SelectDeviceDialog::deviceStateChanged(const DeviceQueryData &queryData, Rv
 			}
 			break;
 	}
+}
+
+/**
+ * "Mask Device Serial Numbers" option was changed by the configuration.
+ * @param mask If true, mask device serial numbers.
+ */
+void SelectDeviceDialog::maskDeviceSerialNumbers_cfg_slot(const QVariant &mask)
+{
+	Q_D(SelectDeviceDialog);
+	d->refreshDeviceList();
 }

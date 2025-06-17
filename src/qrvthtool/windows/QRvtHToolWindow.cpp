@@ -1120,7 +1120,8 @@ void QRvtHToolWindow::on_actionOpenDiskImage_triggered(void)
 void QRvtHToolWindow::on_actionOpenDevice_triggered(void)
 {
 	// Prompt the user to select a device.
-	SelectDeviceDialog *const selectDeviceDialog = new SelectDeviceDialog();
+	Q_D(QRvtHToolWindow);
+	SelectDeviceDialog *const selectDeviceDialog = new SelectDeviceDialog(d->cfg, this);
 	selectDeviceDialog->setObjectName(QStringLiteral("selectDeviceDialog"));
 	int ret = selectDeviceDialog->exec();
 	if (ret == QDialog::Accepted) {
