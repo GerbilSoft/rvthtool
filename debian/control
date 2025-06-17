@@ -10,7 +10,8 @@ Build-Depends:
  nettle-dev,
  libudev-dev,
  qtbase5-dev,
- qttools5-dev-tools
+ qttools5-dev-tools,
+ qttools5-dev
 Standards-Version: 3.9.8
 Homepage: https://github.com/GerbilSoft/rvthtool
 Vcs-Git: https://github.com/GerbilSoft/rvthtool
