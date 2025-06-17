@@ -675,7 +675,7 @@ Standard ist keine, der den Originalschlüssel beibehält.</translation>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="39"/>
       <source>Bank table magic is incorrect</source>
-      <translation>Speicherbank ist leer</translation>
+      <translation>Banktabellen-Kennwert ist nicht korrekt</translation>
     </message>
     <message>
       <location filename="../src/librvth/rvth_error.c" line="41"/>
