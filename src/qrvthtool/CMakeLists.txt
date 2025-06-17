@@ -425,14 +425,28 @@ ENDIF(DIR_INSTALL_XDG_APPSTREAM)
 INCLUDE(qt_windeploy.cmake)
 IF(TARGET ${QT_NS}::windeployqt)
 	# execute windeployqt in a tmp directory after build
+	# NOTE: Some options are only available in Qt6.
+	IF(OUR_QT_VERSION GREATER 5)	# >= 6
+		SET(QTWINDEPLOY_NO_SYSTEM_DXC_COMPILER "--no-system-dxc-compiler")
+		SET(QTWINDEPLOY_EXCLUDE_PLUGINS "--exclude-plugins qcertonlybackend,qschannelbackend,qtuiotouchplugin,qdirect2d,qminimal,qoffscreen,qgif,qico,qjpeg,qnetworklistmanager")
+		SET(QTWINDEPLOY_NO_FFMPEG "--no-ffmpeg")
+	ELSE(OUR_QT_VERSION GREATER 5)	# <= 5
+		SET(QTWINDEPLOY_NO_WEBKIT2 "--no-webkit2")
+		SET(QTWINDEPLOY_NO_ANGLE "--no-angle")
+	ENDIF(OUR_QT_VERSION GREATER 5)
+
 	ADD_CUSTOM_COMMAND(TARGET qrvthtool POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
 		COMMAND set PATH=%PATH%$<SEMICOLON>${qt_install_prefix}/bin
 		COMMAND ${QT_NS}::windeployqt ${WINDEPLOY_NO_SVG}
 			--no-system-d3d-compiler
-			--no-system-dxc-compiler
+			${QTWINDEPLOY_NO_SYSTEM_DXC_COMPILER}
 			--no-compiler-runtime
-			--exclude-plugins qcertonlybackend,qschannelbackend,qtuiotouchplugin,qdirect2d,qminimal,qoffscreen,qgif,qico,qjpeg,qnetworklistmanager
+			${QTWINDEPLOY_EXCLUDE_PLUGINS}
+			${QTWINDEPLOY_NO_WEBKIT2}
+			${QTWINDEPLOY_NO_ANGLE}
+			--no-opengl-sw
+			${QTWINDEPLOY_NO_FFMPEG}
 			--dir "${CMAKE_CURRENT_BINARY_DIR}/windeployqt"
 			"$<TARGET_FILE_DIR:qrvthtool>/$<TARGET_FILE_NAME:qrvthtool>"
 	)
