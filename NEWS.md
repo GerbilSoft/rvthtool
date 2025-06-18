@@ -1,5 +1,10 @@
 # Changes
 
+## v2.0.1 (released 2025/06/17)
+
+* Bug fixes:
+  * Fix Windows UI issues: missing icons, proper dark mode support.
+
 ## v2.0 - GUI Release (released 2025/06/16)
 
 * New features:
