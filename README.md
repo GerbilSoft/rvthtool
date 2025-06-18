@@ -132,9 +132,7 @@ In addition, this tool supports reading early devkit WADs, which makes it
 possible to convert them to run on emulators and/or later devkits.
 
 **WARNING:** Use with caution if converting a system title for installation
-on real hardware, since this may result in a bricked system. Bricked Wii U
-systems may be recoverable using [udpih + Recovery Menu](https://github.com/GaryOderNichts/udpih)
-and/or [de_Fuse](https://github.com/StroopwafelCFW/wii_u_modchip).
+on real hardware, since this may result in an unrecoverable brick.
 
 ## nusresign
 
@@ -143,4 +141,6 @@ any Wii U keyset. Conversion to Debug will be realsigned. Conversion to retail
 will be unsigned.
 
 **WARNING:** Use with caution if converting a system title for installation
-on real hardware, since this may result in an unrecoverable brick.
+on real hardware, since this may result in a bricked system. Bricked Wii U
+systems may be recoverable using [udpih + Recovery Menu](https://github.com/GaryOderNichts/udpih)
+and/or [de_Fuse](https://github.com/StroopwafelCFW/wii_u_modchip).
