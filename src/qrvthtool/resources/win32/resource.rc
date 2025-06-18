@@ -2,7 +2,7 @@
  * RVT-H Tool (qrvthtool)                                                  *
  * resource.rc: Win32 resource script.                                     *
  *                                                                         *
- * Copyright (c) 2016-2019 by David Korth.                                 *
+ * Copyright (c) 2016-2025 by David Korth.                                 *
  * SPDX-License-Identifier: GPL-2.0-or-later                               *
  ***************************************************************************/
 
@@ -13,7 +13,7 @@
 #include "resource.h"
 
 /** Manifest **/
-ISOLATIONAWARE_MANIFEST_RESOURCE_ID	RT_MANIFEST	"resources\\win32\\qrvthtool.exe.manifest"
+CREATEPROCESS_MANIFEST_RESOURCE_ID	RT_MANIFEST	"resources\\win32\\qrvthtool.exe.manifest"
 
 /** Icons **/
 IDI_QRVTHTOOL	ICON	"resources\\win32\\qrvthtool.ico"

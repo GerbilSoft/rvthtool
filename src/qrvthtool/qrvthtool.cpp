@@ -33,6 +33,9 @@ UINT WM_TaskbarButtonCreated;
 #  define MSGFLT_ADD 1
 #endif
 
+// VersionHelpers
+#include "rp_versionhelpers.h"
+
 /**
  * Register the TaskbarButtonCreated message.
  */
@@ -84,7 +87,16 @@ int main(int argc, char *argv[])
 #  endif /* QT_VERSION >= 0x050600 */
 #endif /* QT_VERSION >= QT_VERSION_CHECK(5,0,0) && QT_VERSION < QT_VERSION_CHECK(6,0,0) */
 
-	QApplication *app = new QApplication(argc, argv);
+#ifdef _WIN32
+	// Windows: Set the "fusion" theme if using Windows 10 or later.
+	// This is needed for proper Dark Mode support.
+	// NOTE: It's recommended to set the style *before* creating the QApplication.
+	if (IsWindows10OrGreater()) {
+		QApplication::setStyle(QLatin1String("fusion"));
+	}
+#endif /* _WIN32 */
+
+	QApplication *const app = new QApplication(argc, argv);
 	app->setApplicationName(QStringLiteral("qrvthtool"));
 	app->setOrganizationDomain(QStringLiteral("gerbilsoft.com"));
 	app->setOrganizationName(QStringLiteral("GerbilSoft"));
@@ -127,13 +139,12 @@ int main(int argc, char *argv[])
 #endif /* _WIN32 */
 
 #if defined(_WIN32) || defined(__APPLE__)
-	// Check if an icon theme is available.
-	if (!QIcon::hasThemeIcon(QStringLiteral("application-exit"))) {
-		// Icon theme is not available.
-		// Use the built-in Oxygen icon theme.
-		// Reference: http://tkrotoff.blogspot.com/2010/02/qiconfromtheme-under-windows.html
-		QIcon::setThemeName(QStringLiteral("oxygen"));
-	}
+	// Use the built-in Oxygen icon theme.
+	// Reference: http://tkrotoff.blogspot.com/2010/02/qiconfromtheme-under-windows.html
+
+	// NOTE: On Windows 10, Qt6 has a built-in monochrome icon theme,
+	// but it's missing some icons.
+	QIcon::setThemeName(QStringLiteral("oxygen"));
 #endif /* _WIN32 || __APPLE__ */
 
 	// Initialize the QRvtHToolWindow.
