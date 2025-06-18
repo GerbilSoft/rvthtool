@@ -92,7 +92,7 @@ $ ./rvthtool query
 /dev/sdb
 - Manufacturer:  Nintendo Co., Ltd.
 - Product Name:  RVT-H READER
-- Serial Number: 2000xxxx
+- Serial Number: 2000xxxxx
 - HDD Firmware:  01.0
 - HDD Vendor:    WDC     
 - HDD Model:     WD800BEVE-00UYT0
