@@ -2,8 +2,9 @@
 
 This is an open-source tool for managing RVT-H Reader consoles.
 
-[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)<br>
-[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/l83tx6d16gqr4ov2?svg=true)](https://ci.appveyor.com/project/GerbilSoft/rvthtool/branch/master)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![AppVeyor Build status](https://ci.appveyor.com/api/projects/status/l83tx6d16gqr4ov2?svg=true)](https://ci.appveyor.com/project/GerbilSoft/rvthtool/branch/master)<br>
+[![Crowdin](https://badges.crowdin.net/rvthtool/localized.svg)](https://crowdin.com/project/rvthtool)
 
 ![RVT-H Reader, RVT-R Reader, Wii RVL-001, and Commodore 1541C](doc/RVT.jpg)
 
