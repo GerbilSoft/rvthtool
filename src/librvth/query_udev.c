@@ -419,39 +419,46 @@ static void *rvth_listener_thread(void *listener_arg)
 	while (!listener->stop) {
 		// FIXME: Improve error handling.
 		int ret = poll(pfds, 1, 500);
-		if (ret > 0 && (pfds[0].revents & POLLIN)) {
-			const char *action;
+		if (ret <= 0) {
+			// No events, or an error occurred.
+			// TODO: Improve error handling.
+			continue;
+		}
 
-			struct udev_device *const dev = udev_monitor_receive_device(listener->mon);
-			if (!dev) {
-				continue;
+		if (!(pfds[0].revents & POLLIN)) {
+			// No incoming data...
+			continue;
+		}
+
+		struct udev_device *const dev = udev_monitor_receive_device(listener->mon);
+		if (!dev) {
+			continue;
+		}
+
+		// Check if this is "add" or "remove".
+		const char *action = udev_device_get_action(dev);
+		if (!action) {
+			continue;
+		}
+
+		if (!strcmp(action, "add")) {
+			// Device added.
+			RvtH_QueryEntry *const entry = rvth_parse_udev_device(dev, NULL);
+			if (entry) {
+				listener->callback(listener, entry, RVTH_LISTEN_CONNECTED, listener->userdata);
+				rvth_query_free(entry);
 			}
-
-			// Check if this is "add" or "remove".
-			action = udev_device_get_action(dev);
-			if (!action) {
-				continue;
-			}
-
-			if (!strcmp(action, "add")) {
-				// Device added.
-				RvtH_QueryEntry *const entry = rvth_parse_udev_device(dev, NULL);
-				if (entry) {
-					listener->callback(listener, entry, RVTH_LISTEN_CONNECTED, listener->userdata);
-					rvth_query_free(entry);
-				}
-			} else if (!strcmp(action, "remove")) {
-				// Deivce removed.
-				// NOTE: Can't get the correct parent USB device for
-				// the block device on removal. The caller will have
-				// to verify if this device node is in its list.
-				// TODO: Monitor USB devices too?
-				RvtH_QueryEntry *const entry = calloc(1, sizeof(*entry));
-				if (entry) {
-					entry->device_name = udev_device_get_devnode(dev);
-					listener->callback(listener, entry, RVTH_LISTEN_DISCONNECTED, listener->userdata);
-					free(entry);
-				}
+		} else if (!strcmp(action, "remove")) {
+			// Deivce removed.
+			// NOTE: Can't get the correct parent USB device for
+			// the block device on removal. The caller will have
+			// to verify if this device node is in its list.
+			// TODO: Monitor USB devices too?
+			RvtH_QueryEntry *const entry = calloc(1, sizeof(*entry));
+			if (entry) {
+				entry->device_name = udev_device_get_devnode(dev);
+				listener->callback(listener, entry, RVTH_LISTEN_DISCONNECTED, listener->userdata);
+				free(entry);
 			}
 		}
 	}
