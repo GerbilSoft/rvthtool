@@ -412,17 +412,13 @@ static void *rvth_listener_thread(void *listener_arg)
 	RvtH_ListenForDevices *const listener = (RvtH_ListenForDevices*)listener_arg;
 	const int fd = listener->fd;
 
+	struct timeval tv = {0, 500*1000000};
 	while (!listener->stop) {
 		fd_set fds;
-		struct timeval tv;
-		int ret;
-
 		FD_ZERO(&fds);
 		FD_SET(fd, &fds);
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
 
-		ret = select(fd + 1, &fds, NULL, NULL, &tv);
+		int ret = select(fd + 1, &fds, NULL, NULL, &tv);
 		if (ret > 0 && FD_ISSET(fd, &fds)) do {
 			const char *action;
 
@@ -456,10 +452,6 @@ static void *rvth_listener_thread(void *listener_arg)
 				}
 			}
 		} while (0);
-
-		// Yield the thread and wait 500ms.
-		sched_yield();
-		usleep(500*1000);
 	}
 
 	// TODO
