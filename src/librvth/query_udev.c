@@ -14,6 +14,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -412,24 +413,25 @@ static void *rvth_listener_thread(void *listener_arg)
 	RvtH_ListenForDevices *const listener = (RvtH_ListenForDevices*)listener_arg;
 	const int fd = listener->fd;
 
-	struct timeval tv = {0, 500*1000000};
-	while (!listener->stop) {
-		fd_set fds;
-		FD_ZERO(&fds);
-		FD_SET(fd, &fds);
+	// pollfd
+	struct pollfd pfds[1] = {{fd, POLLIN, 0}};
 
-		int ret = select(fd + 1, &fds, NULL, NULL, &tv);
-		if (ret > 0 && FD_ISSET(fd, &fds)) do {
+	while (!listener->stop) {
+		// FIXME: Improve error handling.
+		int ret = poll(pfds, 1, 500);
+		if (ret > 0 && (pfds[0].revents & POLLIN)) {
 			const char *action;
 
 			struct udev_device *const dev = udev_monitor_receive_device(listener->mon);
-			if (!dev)
-				break;
+			if (!dev) {
+				continue;
+			}
 
 			// Check if this is "add" or "remove".
 			action = udev_device_get_action(dev);
-			if (!action)
-				break;
+			if (!action) {
+				continue;
+			}
 
 			if (!strcmp(action, "add")) {
 				// Device added.
@@ -451,7 +453,7 @@ static void *rvth_listener_thread(void *listener_arg)
 					free(entry);
 				}
 			}
-		} while (0);
+		}
 	}
 
 	// TODO
