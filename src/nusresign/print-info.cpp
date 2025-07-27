@@ -524,7 +524,7 @@ int print_nus_info(const TCHAR *nus_dir, bool verify)
 
 	unique_ptr<uint8_t[]> tmd_data(new uint8_t[tmd_size]);
 	sz_read = fread(tmd_data.get(), 1, tmd_size, f_tmd);
-	if (sz_read != tik_size) {
+	if (sz_read != tmd_size) {
 		fclose(f_tmd);
 		_fputts(_T("*** ERROR reading TMD file: Short read.\n"), stderr);
 		return -EIO;
