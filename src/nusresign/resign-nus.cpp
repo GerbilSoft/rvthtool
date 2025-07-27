@@ -214,7 +214,7 @@ int resign_nus(const TCHAR *nus_dir, int recrypt_key)
 
 	unique_ptr<uint8_t[]> tmd_data(new uint8_t[tmd_size]);
 	sz_read = fread(tmd_data.get(), 1, tmd_size, f_tmd);
-	if (sz_read != tik_size) {
+	if (sz_read != tmd_size) {
 		fclose(f_tik);
 		fclose(f_tmd);
 		_fputts(_T("*** ERROR reading TMD file: Short read.\n"), stderr);
