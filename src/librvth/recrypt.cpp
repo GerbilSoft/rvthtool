@@ -413,8 +413,10 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			toKey = RVL_KEY_KOREAN;
 			break;
 		case RVL_CryptoType_vWii:
-			// TODO: RVL_CryptoType_vWii_Debug?
 			toKey = vWii_KEY_RETAIL;
+			break;
+		case RVL_CryptoType_vWii_Debug:
+			toKey = vWii_KEY_DEBUG;
 			break;
 		default:
 			// Invalid key index.
@@ -709,8 +711,7 @@ int RvtH::recryptWiiPartitions(unsigned int bank,
 			entry->tmd.sig_status = RVL_SigStatus_OK;
 			break;
 		case vWii_KEY_DEBUG:
-			// TODO: RVL_CryptoType_vWii_Debug?
-			entry->crypto_type = RVL_CryptoType_vWii;
+			entry->crypto_type = RVL_CryptoType_vWii_Debug;
 			entry->ticket.sig_type = RVL_SigType_Debug;
 			entry->ticket.sig_status = RVL_SigStatus_OK;
 			entry->tmd.sig_type = RVL_SigType_Debug;

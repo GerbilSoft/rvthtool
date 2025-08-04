@@ -22,12 +22,13 @@ extern "C" {
 
 // Encryption types.
 typedef enum {
-	RVL_CryptoType_Unknown	= 0,	// Unknown encryption.
-	RVL_CryptoType_None	= 1,	// No encryption.
-	RVL_CryptoType_Debug	= 2,	// RVT-R encryption.
-	RVL_CryptoType_Retail	= 3,	// Retail encryption.
-	RVL_CryptoType_Korean	= 4,	// Korean retail encryption.
-	RVL_CryptoType_vWii	= 5,	// vWii (for WADs only) [retail/debug?]
+	RVL_CryptoType_Unknown		= 0,	// Unknown encryption.
+	RVL_CryptoType_None		= 1,	// No encryption.
+	RVL_CryptoType_Debug		= 2,	// RVT-R encryption.
+	RVL_CryptoType_Retail		= 3,	// Retail encryption.
+	RVL_CryptoType_Korean		= 4,	// Korean retail encryption.
+	RVL_CryptoType_vWii		= 5,	// vWii (retail) (for WADs only)
+	RVL_CryptoType_vWii_Debug	= 6,	// vWii (debug) (for WADs only)
 
 	RVL_CryptoType_MAX
 } RVL_CryptoType_e;

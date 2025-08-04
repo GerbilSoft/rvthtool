@@ -38,7 +38,8 @@ int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_t *cryp
 	if (!strncmp(ticket->issuer,
 	    RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Retail.
+		// Retail
+		// TODO: Heuristic for invalid key indexes? (retail vs. Korean)
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
@@ -58,7 +59,8 @@ int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_t *cryp
 	else if (!strncmp(ticket->issuer,
 		 RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TICKET], sizeof(ticket->issuer)))
 	{
-		// Debug.
+		// Debug
+		// TODO: Heuristic for invalid key indexes? (debug vs. Korean)
 		switch (ticket->common_key_index) {
 			case 0:
 			default:
@@ -71,9 +73,8 @@ int decrypt_title_key(const RVL_Ticket *ticket, uint8_t *titleKey, uint8_t *cryp
 				*crypto_type = RVL_CryptoType_Korean;
 				break;
 			case 2:
-				// TODO: RVL_CryptoType_vWii_Debug?
 				commonKey = RVL_AES_Keys[vWii_KEY_DEBUG];
-				*crypto_type = RVL_CryptoType_Debug;
+				*crypto_type = RVL_CryptoType_vWii_Debug;
 				break;
 		}
 	}

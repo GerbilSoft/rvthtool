@@ -212,6 +212,10 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					// WARNING: This is most likely NOT VALID for discs.
 					// Keeping it in here anyway for completeness.
 					recrypt_key = RVL_CryptoType_vWii;
+				} else if (!_tcsicmp(optarg, _T("vWii-debug"))) {
+					// WARNING: This is most likely NOT VALID for discs.
+					// Keeping it in here anyway for completeness.
+					recrypt_key = RVL_CryptoType_vWii_Debug;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
 					return EXIT_FAILURE;

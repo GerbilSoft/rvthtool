@@ -24,7 +24,7 @@
  */
 const char *RVL_CryptoType_toString(RVL_CryptoType_e cryptoType)
 {
-	// FIXME: Add RVL_CryptoType_Korean_Debug and RVL_CryptoType_vWii_Debug?
+	// FIXME: Add RVL_CryptoType_Korean_Debug?
 	static const char *const crypto_type_tbl[] = {
 		// tr: RVL_CryptoType_Unknown
 		"Unknown",
@@ -38,6 +38,8 @@ const char *RVL_CryptoType_toString(RVL_CryptoType_e cryptoType)
 		"Korean",
 		// tr: RVL_CryptoType_vWii
 		"vWii",
+		// tr: RVL_CryptoType_vWii_Debug
+		"vWii (debug)",
 	};
 
 	assert(cryptoType >= RVL_CryptoType_Unknown);
@@ -175,6 +177,7 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	RVL_AES_Keys_e fromKey;
 	const uint8_t *key_from, *key_to;
 	const char *issuer;
+	uint8_t toKeyIndex;
 	uint8_t iv[16];	// based on Title ID
 
 	// TODO: Error checking.
@@ -266,6 +269,25 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 			return -EINVAL;
 	}
 
+	// Common key index
+	switch (toKey) {
+		case RVL_KEY_RETAIL:
+		case RVL_KEY_DEBUG:
+			toKeyIndex = 0;
+			break;
+		case RVL_KEY_KOREAN:
+		case RVL_KEY_KOREAN_DEBUG:
+			toKeyIndex = 1;
+			break;
+		case vWii_KEY_RETAIL:
+		case vWii_KEY_DEBUG:
+			toKeyIndex = 2;
+			break;
+		default:
+			assert(!"Unsupported toKey value.");
+			return -EINVAL;
+	}
+
 	// Initialize the AES context.
 	errno = 0;
 	aesw = aesw_new();
@@ -295,6 +317,9 @@ int sig_recrypt_ticket(RVL_Ticket *ticket, RVL_AES_Keys_e toKey)
 	// NOTE: Clearing the buffer and using snprintf().
 	memset(ticket->issuer, 0, sizeof(ticket->issuer));
 	snprintf(ticket->issuer, sizeof(ticket->issuer), "%s", issuer);
+
+	// Update the common key index.
+	ticket->common_key_index = toKeyIndex;
 
 	// We're done here
 	aesw_free(aesw);

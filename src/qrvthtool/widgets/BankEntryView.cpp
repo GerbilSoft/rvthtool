@@ -266,6 +266,9 @@ void BankEntryViewPrivate::updateWidgetDisplay(void)
 			case RVL_CryptoType_vWii:
 				s_encryption = BankEntryView::tr("vWii");
 				break;
+			case RVL_CryptoType_vWii_Debug:
+				s_encryption = BankEntryView::tr("vWii (debug)");
+				break;
 		}
 		ui.lblEncryption->setText(s_encryption);
 		ui.lblEncryption->show();

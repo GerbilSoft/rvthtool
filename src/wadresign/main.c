@@ -160,6 +160,8 @@ int RVTH_CDECL _tmain(int argc, TCHAR *argv[])
 					recrypt_key = RVL_CryptoType_Korean;
 				} else if (!_tcsicmp(optarg, _T("vWii"))) {
 					recrypt_key = RVL_CryptoType_vWii;
+				} else if (!_tcsicmp(optarg, _T("vWii-debug"))) {
+					recrypt_key = RVL_CryptoType_vWii_Debug;
 				} else {
 					print_error(argv[0], _T("unknown encryption key '%s'"), optarg);
 					return EXIT_FAILURE;

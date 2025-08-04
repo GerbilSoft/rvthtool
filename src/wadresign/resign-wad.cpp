@@ -248,7 +248,7 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 	// Check the encryption key.
 	switch (cert_get_issuer_from_name(buf->ticket.issuer)) {
 		case RVL_CERT_ISSUER_PPKI_TICKET:
-			// Retail may be either Common Key or Korean Key.
+			// Determine which retail key is in use.
 			switch (buf->ticket.common_key_index) {
 				case 0:
 					src_key = RVL_CryptoType_Retail;
@@ -279,6 +279,36 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			}
 			break;
 		case RVL_CERT_ISSUER_DPKI_TICKET:
+			// Determine which debug key is in use.
+			// TODO: Secure2/Korean?
+			switch (buf->ticket.common_key_index) {
+				case 0:
+					src_key = RVL_CryptoType_Retail;
+					s_fromKey = _T("debug");
+					break;
+				/*case 1:
+					src_key = RVL_CryptoType_Korean;
+					s_fromKey = _T("Korean (debug)");
+					break;*/
+				case 2:
+					src_key = RVL_CryptoType_vWii_Debug;
+					s_fromKey = _T("vWii (debug)");
+					break;
+				default: {
+					// NOTE: A good number of retail WADs have an
+					// incorrect common key index for some reason.
+					// NOTE 2: Warning is already printed by
+					// print_wad_info(), so don't print one here.
+					/*if (buf->ticket.title_id.u8[7] == 'K') {
+						src_key = RVL_CryptoType_Korean;
+						s_fromKey = _T("Korean (debug)");
+					} else*/ {
+						src_key = RVL_CryptoType_Retail;
+						s_fromKey = _T("retail");
+					}
+					break;
+				}
+			}
 			src_key = RVL_CryptoType_Debug;
 			s_fromKey = _T("debug");
 			break;
@@ -295,12 +325,17 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 		output_format = (isDestBwf ? WAD_Format_BroadOn : WAD_Format_Standard);
 		switch (src_key) {
 			case RVL_CryptoType_Retail:
-			case RVL_CryptoType_Korean:
-			case RVL_CryptoType_vWii:
+			case RVL_CryptoType_Korean:	// TODO: Debug Korean?
 				recrypt_key = RVL_CryptoType_Debug;
 				break;
 			case RVL_CryptoType_Debug:
 				recrypt_key = RVL_CryptoType_Retail;
+				break;
+			case RVL_CryptoType_vWii:
+				recrypt_key = RVL_CryptoType_vWii_Debug;
+				break;
+			case RVL_CryptoType_vWii_Debug:
+				recrypt_key = RVL_CryptoType_vWii;
 				break;
 			default:
 				// Should not happen...
@@ -354,9 +389,12 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 			s_toKey = _T("Korean (fakesigned)");
 			break;
 		case RVL_CryptoType_vWii:
-			// TODO: Add RVL_CryptoType_vWii_Debug?
 			toKey = vWii_KEY_RETAIL;
 			s_toKey = _T("vWii (fakesigned)");
+			break;
+		case RVL_CryptoType_vWii_Debug:
+			toKey = vWii_KEY_DEBUG;
+			s_toKey = _T("vWii (debug) (realsigned)");
 			break;
 		default:
 			// Invalid key index.
@@ -389,25 +427,34 @@ int resign_wad(const TCHAR *src_wad, const TCHAR *dest_wad, int recrypt_key, int
 
 	// Get the certificates.
 	// TODO: Parse existing certificate chain to determine the ordering.
-	if (toKey != RVL_KEY_DEBUG) {
-		// Retail certificates.
-		// Order: CA, TMD, Ticket
-		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_CA);
-		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TMD);
-		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TICKET);
-		cert_ms		= NULL;
-		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TMD];
-		cert_chain_size	= static_cast<uint32_t>(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket));
-	} else {
-		// Debug certificates.
-		// Order: CA, TMD, Ticket, MS
-		// FIXME: Not "dev" - MS is the "Mastering Server".
-		cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_CA);
-		cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TMD);
-		cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TICKET);
-		cert_ms		= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DPKI_MS);
-		issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TMD];
-		cert_chain_size	= static_cast<uint32_t>(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_ms));
+	switch (toKey) {
+		case RVL_KEY_RETAIL:
+		case RVL_KEY_KOREAN:
+		case vWii_KEY_RETAIL:
+		default:	// FIXME: Show an error message instead for "default".
+			// Retail certificates
+			// Order: CA, TMD, Ticket
+			cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_CA);
+			cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TMD);
+			cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_PPKI_TICKET);
+			cert_ms		= NULL;
+			issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_PPKI_TMD];
+			cert_chain_size	= static_cast<uint32_t>(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket));
+			break;
+
+		case RVL_KEY_DEBUG:
+		case RVL_KEY_KOREAN_DEBUG:
+		case vWii_KEY_DEBUG:
+			// Debug certificates
+			// Order: CA, TMD, Ticket, MS
+			// FIXME: Not "dev" - MS is the "Mastering Server".
+			cert_CA		= (const RVL_Cert_RSA4096_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_CA);
+			cert_TMD	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TMD);
+			cert_ticket	= (const RVL_Cert_RSA2048*)cert_get(RVL_CERT_ISSUER_DPKI_TICKET);
+			cert_ms		= (const RVL_Cert_RSA2048_ECC*)cert_get(RVL_CERT_ISSUER_DPKI_MS);
+			issuer_TMD	= RVL_Cert_Issuers[RVL_CERT_ISSUER_DPKI_TMD];
+			cert_chain_size	= static_cast<uint32_t>(sizeof(*cert_CA) + sizeof(*cert_TMD) + sizeof(*cert_ticket) + sizeof(*cert_ms));
+			break;
 	}
 
 	// Determine the data offset.
